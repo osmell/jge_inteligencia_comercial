@@ -89,6 +89,15 @@ class SalesStatsController extends Controller
             }, "ventas-por-{$dimension}-{$range}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
         }
 
+        if ($format === 'pdf') {
+            $content = $this->exporter->buildSalesPdf($from, $to, $filters, $request->user()->name, $compare);
+
+            return response($content, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => "attachment; filename=\"ventas-{$range}.pdf\"",
+            ]);
+        }
+
         $path = $this->exporter->buildWorkbook($from, $to, $filters, $request->user()->name, $compare);
 
         return response()->download($path, "ventas-{$range}.xlsx")->deleteFileAfterSend();

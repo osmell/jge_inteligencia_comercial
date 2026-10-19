@@ -324,7 +324,7 @@ class SalesStatsApiTest extends TestCase
         $this->assertSame('2026-10-10', $log->new_values['from']);
 
         $this->getJson('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'csv'])))->assertUnprocessable()->assertJsonValidationErrors(['dimension']);
-        $this->getJson('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'pdf'])))->assertUnprocessable()->assertJsonValidationErrors(['format']);
+        $this->getJson('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'docx'])))->assertUnprocessable()->assertJsonValidationErrors(['format']);
         $this->getJson('/api/v1/sales/export?'.http_build_query($this->range()))->assertUnprocessable()->assertJsonValidationErrors(['format']);
         $this->assertSame(1, AuditLog::where('event', 'sales.exported')->count());      // lo inválido no se audita
 
@@ -332,6 +332,21 @@ class SalesStatsApiTest extends TestCase
         $seller->companies()->attach($this->a);
         $this->actingAs($seller, 'sanctum')->getJson('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'xlsx'])))->assertForbidden();
         $this->assertSame(1, AuditLog::where('event', 'sales.exported')->count());
+    }
+
+    public function test_pdf_export_is_a_pdf_audited_and_includes_the_comparison(): void
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->get('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'pdf', 'company_id' => $this->a->id, 'compare_from' => '2026-10-01', 'compare_to' => '2026-10-07'])))
+            ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $this->assertStringContainsString('ventas-2026-10-10_2026-10-16.pdf', $response->headers->get('Content-Disposition'));
+
+        $log = AuditLog::where('event', 'sales.exported')->sole();
+        $this->assertSame('pdf', $log->new_values['format']);
+        $this->assertSame('all', $log->new_values['dimension']);
+        $this->assertSame('2026-10-01', $log->new_values['compare']['from']);
     }
 
     private function rankings(array $params = [], ?User $as = null): TestResponse

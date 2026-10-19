@@ -279,4 +279,18 @@ class SellerGoalsApiTest extends TestCase
         $this->actingAs($sin, 'sanctum')->getJson('/api/v1/sales/goals/export?month=2026-10')->assertForbidden();
         $this->assertSame(1, AuditLog::where('event', 'goals.exported')->count());
     }
+
+    public function test_goals_pdf_export(): void
+    {
+        CarbonImmutable::setTestNow('2026-10-16');
+        $this->save([['seller_id' => $this->ana->id, 'amount' => 3100]]);
+
+        $response = $this->actingAs($this->admin, 'sanctum')->get('/api/v1/sales/goals/export?month=2026-10&format=pdf')
+            ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+
+        $this->assertStringStartsWith('%PDF-', $response->getContent());
+        $this->assertSame('pdf', AuditLog::where('event', 'goals.exported')->sole()->new_values['format']);
+
+        $this->actingAs($this->admin, 'sanctum')->getJson('/api/v1/sales/goals/export?month=2026-10&format=docx')->assertUnprocessable();
+    }
 }

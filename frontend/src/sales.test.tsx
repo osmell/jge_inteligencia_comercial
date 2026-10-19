@@ -331,6 +331,14 @@ describe('exportación', () => {
     await waitFor(() => expect(last('/sales/export')).toContain('format=csv&dimension=product'))
   })
 
+  it('exporta el reporte en PDF con el periodo y la comparación vigentes', async () => {
+    render(<SalesDashboardPage />)
+    await screen.findByRole('table', { name: 'Ventas por vendedor' })
+    await userEvent.click(screen.getByRole('button', { name: 'Exportar a PDF' }))
+
+    await waitFor(() => expect(last('/sales/export')).toContain('format=pdf'))
+  })
+
   it('muestra el error si la exportación falla y no se puede exportar con un rango inválido', async () => {
     render(<SalesDashboardPage />)
     await screen.findByRole('table', { name: 'Ventas por vendedor' })

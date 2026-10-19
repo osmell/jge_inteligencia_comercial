@@ -49,14 +49,23 @@ class SellerGoalsController extends Controller
         return response()->json(['data' => ['changed' => $changed]]);
     }
 
-    /** Descarga las metas del mes en CSV. Queda registrado en la auditoría. */
+    /** Descarga las metas del mes en CSV o PDF. Queda registrado en la auditoría. */
     public function export(SellerGoalsRequest $request): Response
     {
         $month = $request->validated('month');
         $companyId = $request->integer('company_id') ?: null;
-        $rows = $this->goals->progress($request->user(), $month, $companyId)['rows'];
+        $format = $request->validated('format') ?? 'csv';
+        $progress = $this->goals->progress($request->user(), $month, $companyId);
+        $rows = $progress['rows'];
 
-        $this->audit->record('goals.exported', $request->user(), new: ['month' => $month, 'company_id' => $companyId, 'rows' => count($rows)]);
+        $this->audit->record('goals.exported', $request->user(), new: ['month' => $month, 'format' => $format, 'company_id' => $companyId, 'rows' => count($rows)]);
+
+        if ($format === 'pdf') {
+            return response($this->exporter->buildGoalsPdf($progress, $request->user()->name), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => "attachment; filename=\"metas-{$month}.pdf\"",
+            ]);
+        }
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w');

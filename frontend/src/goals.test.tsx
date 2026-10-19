@@ -102,7 +102,10 @@ describe('metas de ventas', () => {
     renderPage()
 
     await u.click(await screen.findByRole('button', { name: 'Exportar a CSV' }))
-    await waitFor(() => expect(calls.some((c) => c.path.startsWith('/sales/goals/export?month='))).toBe(true))
+    await waitFor(() => expect(calls.some((c) => c.path.startsWith('/sales/goals/export?month=') && c.path.endsWith('format=csv'))).toBe(true))
+
+    await u.click(screen.getByRole('button', { name: 'Exportar a PDF' }))
+    await waitFor(() => expect(calls.some((c) => c.path.endsWith('format=pdf'))).toBe(true))
   })
 
   it('un mes inválido no consulta', async () => {

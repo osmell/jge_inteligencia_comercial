@@ -81,7 +81,7 @@ export default function SalesDashboardPage() {
   const [branchId, setBranchId] = useState('')
   const [chips, setChips] = useState<Chip[]>([])
   const [dimension, setDimension] = useState<Dimension>('seller')
-  const [exporting, setExporting] = useState<'xlsx' | 'csv' | null>(null)
+  const [exporting, setExporting] = useState<'xlsx' | 'csv' | 'pdf' | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
 
   const range = preset === 'custom' ? custom : presetRange(preset)
@@ -134,7 +134,7 @@ export default function SalesDashboardPage() {
     setChips((prev) => [...prev.filter((c) => c.param !== param), { param, value: row.key, label: `${DIMENSION_LABEL[picked]}: ${row.label}` }])
   }
 
-  async function exportReport(format: 'xlsx' | 'csv') {
+  async function exportReport(format: 'xlsx' | 'csv' | 'pdf') {
     setExporting(format)
     setExportError(null)
     try {
@@ -163,6 +163,9 @@ export default function SalesDashboardPage() {
           <div className="flex flex-wrap gap-2">
             <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'xlsx'} disabled={!enabled || exporting !== null} onClick={() => void exportReport('xlsx')}>
               Exportar a Excel
+            </Button>
+            <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'pdf'} disabled={!enabled || exporting !== null} onClick={() => void exportReport('pdf')}>
+              Exportar a PDF
             </Button>
             <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'csv'} disabled={!enabled || exporting !== null} onClick={() => void exportReport('csv')}>
               {`CSV por ${DIMENSION_LABEL[dimension].toLowerCase()}`}

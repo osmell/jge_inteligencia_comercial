@@ -61,7 +61,7 @@ export default function GoalsPage() {
   const [saving, setSaving] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const [exporting, setExporting] = useState(false)
+  const [exporting, setExporting] = useState<'csv' | 'pdf' | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
 
   const validMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(month)
@@ -75,15 +75,15 @@ export default function GoalsPage() {
   const editing = drafts !== null
   const behind = rows.filter((r) => r.behind_pace)
 
-  async function exportCsv() {
-    setExporting(true)
+  async function exportFile(format: 'csv' | 'pdf') {
+    setExporting(format)
     setExportError(null)
     try {
-      await download(`/sales/goals/export?${query}`, `metas-${month}.csv`)
+      await download(`/sales/goals/export?${query}&format=${format}`, `metas-${month}.${format}`)
     } catch (e) {
       setExportError(e instanceof Error ? e.message : 'No se pudo exportar las metas.')
     } finally {
-      setExporting(false)
+      setExporting(null)
     }
   }
 
@@ -155,7 +155,10 @@ export default function GoalsPage() {
         action={
           !editing && (
             <div className="flex flex-wrap gap-2">
-              <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting} disabled={!validMonth || rows.length === 0} onClick={() => void exportCsv()}>
+              <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'pdf'} disabled={!validMonth || rows.length === 0 || exporting !== null} onClick={() => void exportFile('pdf')}>
+                Exportar a PDF
+              </Button>
+              <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'csv'} disabled={!validMonth || rows.length === 0 || exporting !== null} onClick={() => void exportFile('csv')}>
                 Exportar a CSV
               </Button>
               {canEdit && (

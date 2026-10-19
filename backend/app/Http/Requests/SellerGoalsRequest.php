@@ -39,6 +39,10 @@ class SellerGoalsRequest extends FormRequest
             ];
         }
 
+        if (str_ends_with($this->path(), 'goals/export')) {
+            return $rules + ['format' => ['nullable', Rule::in(['csv', 'pdf'])]];
+        }
+
         return $rules;
     }
 }

@@ -112,5 +112,11 @@ Decisiones del responsable: la meta es de **venta neta (sin IVA)**; la fija el s
 - **Pendiente de confirmar con el responsable:** devoluciones y notas de crédito (decisión #13) restarán a la venta de la meta solo cuando se importen; hoy se mide con las líneas de venta cargadas. 
 - **Verificación:** pruebas de cálculo, alcance, permisos, auditoría y validaciones (backend 180, frontend 55); en PostgreSQL la suma de vendedores del mes coincide con SQL directo.
 
+### Paso 8 — Exportación a PDF
+- **Ventas:** `GET /sales/export?format=pdf` con el mismo periodo, comparación y filtros de la pantalla. Hoja A4 horizontal con indicadores, avisos de comparación y las primeras 15 filas (por venta neta) de compañía, sucursal, vendedor, categoría, producto y cliente; si hay más, el pie de la tabla lo dice y remite al Excel. Mes y día quedan solo en Excel/CSV.
+- **Metas:** `GET /sales/goals/export?month&format=pdf` con totales, semáforo en texto y la tabla por vendedor. Botones «Exportar a PDF» en `/ventas` y `/metas`.
+- Mismas reglas que las demás exportaciones: respeta el ámbito del usuario, exige `sales.view` y queda en auditoría (`sales.exported` / `goals.exported`, con el formato). Generado con `dompdf/dompdf` sin recursos externos ni PHP embebido, porque el contenido viene de archivos importados.
+- Revisado a mano con datos demo en PostgreSQL: cifras iguales a la pantalla (p. ej., 383 435,79 de venta neta del 1 al 19 de octubre).
+
 ### Siguiente
-Revisión visual en navegador (incluida la vista móvil) de `/ventas` y `/metas`, y los criterios de aceptación contra un reporte validado (necesita datos reales). Opcional: PDF.
+Revisión visual en navegador (incluida la vista móvil) de `/ventas` y `/metas`, y los criterios de aceptación contra un reporte validado (necesita datos reales). 
