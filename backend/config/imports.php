@@ -18,6 +18,12 @@ return [
     // Cantidad de errores detallados que se guardan por lote (el total sí se cuenta completo).
     'max_stored_errors' => (int) env('IMPORT_MAX_STORED_ERRORS', 1000),
 
+    // Máximo de filas de datos por archivo (protege memoria y tiempo de proceso).
+    'max_rows' => (int) env('IMPORT_MAX_ROWS', 200000),
+
+    // Tipos de importación registrados: clave => clase que implementa App\Imports\Contracts\ImportType.
+    'types' => [],
+
     // Filas mostradas en la vista previa.
     'preview_rows' => 20,
 
