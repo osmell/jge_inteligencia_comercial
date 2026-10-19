@@ -101,8 +101,25 @@ function ErrorsSection({ batch }: { batch: ImportBatch }) {
   )
 }
 
+function CustomersSummary({ batch }: { batch: ImportBatch }) {
+  const c = batch.summary?.customers
+  if (!c) return null
+
+  return (
+    <section>
+      <PageHeader level={2} title="Resumen" description="El archivo maestro inserta los clientes nuevos y actualiza los existentes (compañía + código)." />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label="Nuevos" value={c.new} />
+        <Stat label="Se actualizarán" value={c.updated} hint="Con lo que trae el archivo; una celda vacía borra ese dato" />
+        <Stat label="Sin cambios" value={c.unchanged} />
+      </div>
+    </section>
+  )
+}
+
 function SummarySection({ batch }: { batch: ImportBatch }) {
   const s = batch.summary
+  if (s?.customers) return <CustomersSummary batch={batch} />
   if (!s?.totals) return null
 
   return (
@@ -234,7 +251,11 @@ export default function ImportDetailPage() {
       {!IN_PROGRESS.includes(batch.status) && batch.status !== 'discarded' && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="Filas leídas" value={batch.rows_total} hint={batch.summary?.rows_invalid ? `${batch.summary.rows_invalid} con errores` : undefined} />
-          <Stat label="Documentos" value={batch.documents_total} hint={batch.status === 'rejected' ? undefined : `${batch.documents_new} nuevos · ${batch.documents_duplicate} ya importados`} />
+          <Stat
+            label={batch.type === 'customers' ? 'Clientes' : 'Documentos'}
+            value={batch.documents_total}
+            hint={batch.status === 'rejected' ? undefined : `${batch.documents_new} nuevos · ${batch.documents_duplicate} ${batch.type === 'customers' ? 'sin cambios' : 'ya importados'}`}
+          />
           <Stat label="Errores" value={batch.errors_total} />
           <Stat label="Advertencias" value={batch.warnings_total} />
         </div>
@@ -247,8 +268,17 @@ export default function ImportDetailPage() {
 
       {dialog === 'confirm' && (
         <ConfirmDialog title="Confirmar importación" confirmLabel="Importar" busy={busy} onConfirm={() => void act('confirm')} onCancel={() => setDialog(null)}>
-          <p>Se importarán <strong>{batch.documents_new}</strong> documentos nuevos{batch.documents_duplicate > 0 && <> (los {batch.documents_duplicate} ya importados se omitirán)</>}.</p>
-          <p className="mt-2">Si algo falla durante la importación no se escribe nada. Las ventas importadas no se pueden modificar ni borrar desde la aplicación.</p>
+          {batch.type === 'customers' ? (
+            <>
+              <p>Se crearán <strong>{batch.summary?.customers?.new ?? batch.documents_new}</strong> clientes y se actualizarán <strong>{batch.summary?.customers?.updated ?? 0}</strong> con los datos del archivo.</p>
+              <p className="mt-2">Si algo falla durante la importación no se escribe nada.</p>
+            </>
+          ) : (
+            <>
+              <p>Se importarán <strong>{batch.documents_new}</strong> documentos nuevos{batch.documents_duplicate > 0 && <> (los {batch.documents_duplicate} ya importados se omitirán)</>}.</p>
+              <p className="mt-2">Si algo falla durante la importación no se escribe nada. Las ventas importadas no se pueden modificar ni borrar desde la aplicación.</p>
+            </>
+          )}
         </ConfirmDialog>
       )}
       {dialog === 'discard' && (

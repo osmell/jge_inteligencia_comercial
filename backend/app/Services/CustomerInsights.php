@@ -2,14 +2,16 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\SalesDocument;
 use App\Models\SalesLine;
 use Carbon\CarbonImmutable;
 
 /**
- * Ficha de cliente de solo lectura, construida a partir de las ventas importadas.
- * Un cliente se identifica por su código de origen (`customer_code`); no se crean ni se fusionan clientes por parecido de nombre.
- * Parte de SalesDocument/SalesLine, así que el ámbito de compañía/sucursal del usuario se aplica por el global scope.
+ * Ficha de cliente de solo lectura: datos maestros (tabla `customers`) y su actividad en las ventas importadas.
+ * Un cliente se identifica por compañía + código de origen (el código es único por compañía); nunca se fusionan clientes
+ * por parecido de nombre. Las ventas parten de SalesDocument/SalesLine y los clientes de Customer, así que el ámbito de
+ * compañía/sucursal del usuario se aplica por los global scopes.
  */
 class CustomerInsights
 {
@@ -20,98 +22,105 @@ class CustomerInsights
     public function __construct(private readonly SalesStatistics $stats) {}
 
     /**
-     * Búsqueda por código o nombre, con una fila por código de cliente.
+     * Búsqueda por código, nombre o nombre comercial, con una fila por cliente (compañía + código).
      *
      * @return array{rows: list<array<string, mixed>>, has_more: bool}
      */
     public function search(?string $term, ?int $companyId, string $sort, int $page): array
     {
-        $query = SalesDocument::query()
+        $sales = SalesDocument::query()
             ->join('sales_lines as sl', 'sl.sales_document_id', '=', 'sales_documents.id')
-            ->when($companyId, fn ($q) => $q->where('sales_documents.company_id', $companyId));
+            ->toBase()
+            ->selectRaw('sales_documents.company_id as company_id, sales_documents.customer_code as code')
+            ->selectRaw('count(distinct sales_documents.id) as documents, sum(sl.net_total) as net_total')
+            ->selectRaw('min(sales_documents.issued_on) as first_purchase, max(sales_documents.issued_on) as last_purchase')
+            ->groupBy('sales_documents.company_id', 'sales_documents.customer_code');
+
+        $query = Customer::query()
+            ->join('companies', 'companies.id', '=', 'customers.company_id')
+            ->leftJoinSub($sales, 's', fn ($j) => $j->on('s.company_id', '=', 'customers.company_id')->on('s.code', '=', 'customers.code'))
+            ->when($companyId, fn ($q) => $q->where('customers.company_id', $companyId));
 
         $term = trim((string) $term);
         if ($term !== '') {
             $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower($term)).'%';
             $query->where(fn ($q) => $q
-                ->whereRaw("lower(sales_documents.customer_code) like ? escape '\\'", [$like])
-                ->orWhereRaw("lower(sales_documents.customer_name) like ? escape '\\'", [$like]));
+                ->whereRaw("lower(customers.code) like ? escape '\\'", [$like])
+                ->orWhereRaw("lower(customers.name) like ? escape '\\'", [$like])
+                ->orWhereRaw("lower(coalesce(customers.trade_name, '')) like ? escape '\\'", [$like]));
         }
 
         $order = match ($sort) {
-            'net_total' => 'sum(sl.net_total) desc',
-            'documents' => 'count(distinct sales_documents.id) desc',
-            'name' => 'max(sales_documents.customer_name) asc',
-            default => 'max(sales_documents.issued_on) desc',
+            'net_total' => 'coalesce(s.net_total, 0) desc',
+            'documents' => 'coalesce(s.documents, 0) desc',
+            'name' => 'customers.name asc',
+            default => 's.last_purchase desc nulls last',
         };
 
         $rows = $query->toBase()
-            ->selectRaw('sales_documents.customer_code as code, max(sales_documents.customer_name) as name')
-            ->selectRaw('count(distinct sales_documents.id) as documents, sum(sl.net_total) as net_total')
-            ->selectRaw('min(sales_documents.issued_on) as first_purchase, max(sales_documents.issued_on) as last_purchase')
-            ->groupBy('sales_documents.customer_code')
-            ->orderByRaw($order.', sales_documents.customer_code asc')
+            ->selectRaw('customers.company_id as company_id, companies.name as company, customers.code as code, customers.name as name, customers.trade_name as trade_name')
+            ->selectRaw('coalesce(s.documents, 0) as documents, coalesce(s.net_total, 0) as net_total, s.first_purchase as first_purchase, s.last_purchase as last_purchase')
+            ->orderByRaw($order.', customers.name asc, customers.code asc')
             ->offset(($page - 1) * self::PER_PAGE)
             ->limit(self::PER_PAGE + 1)
             ->get();
 
         return [
             'rows' => $rows->take(self::PER_PAGE)->map(fn ($r) => [
-                'code' => (string) $r->code, 'name' => (string) $r->name, 'documents' => (int) $r->documents,
+                'company_id' => (int) $r->company_id, 'company' => (string) $r->company, 'code' => (string) $r->code, 'name' => (string) $r->name,
+                'trade_name' => $r->trade_name, 'documents' => (int) $r->documents,
                 'net_total' => number_format((float) $r->net_total, 2, '.', ''),
-                'first_purchase' => $this->date($r->first_purchase), 'last_purchase' => $this->date($r->last_purchase),
+                'first_purchase' => $r->first_purchase ? $this->date($r->first_purchase) : null,
+                'last_purchase' => $r->last_purchase ? $this->date($r->last_purchase) : null,
             ])->values()->all(),
             'has_more' => $rows->count() > self::PER_PAGE,
         ];
     }
 
     /**
-     * Resumen del cliente sobre todo el historial disponible. Null si no tiene ventas en el ámbito del usuario.
+     * Datos maestros y resumen de ventas de todo el historial disponible. Null si el cliente no existe en el ámbito del usuario.
      *
      * @return array<string, mixed>|null
      */
-    public function profile(string $code, ?int $companyId, ?CarbonImmutable $today = null): ?array
+    public function profile(int $companyId, string $code, ?CarbonImmutable $today = null): ?array
     {
         $today ??= CarbonImmutable::today();
-        $filters = ['customer_code' => $code] + ($companyId ? ['company_id' => $companyId] : []);
-
-        $overall = $this->stats->overall($filters);
-        if ($overall['first'] === null) {
+        $customer = Customer::query()->with(['company', 'branch'])->where('company_id', $companyId)->where('code', $code)->first();
+        if (! $customer) {
             return null;
         }
 
-        $first = CarbonImmutable::parse($overall['first']);
-        $last = CarbonImmutable::parse($overall['last']);
+        $filters = ['customer_code' => $code, 'company_id' => $companyId];
+        $overall = $this->stats->overall($filters);
+        $hasSales = $overall['first'] !== null;
+        $first = $hasSales ? CarbonImmutable::parse($overall['first']) : null;
+        $last = $hasSales ? CarbonImmutable::parse($overall['last']) : null;
 
-        $docs = fn () => SalesDocument::query()->where('customer_code', $code)->when($companyId, fn ($q) => $q->where('company_id', $companyId));
-
-        $names = $docs()->toBase()->selectRaw('customer_name as name, count(*) as documents, max(issued_on) as last_seen')
-            ->groupBy('customer_name')->orderByRaw('max(issued_on) desc')->get()
-            ->map(fn ($r) => ['name' => (string) $r->name, 'documents' => (int) $r->documents, 'last_seen' => $this->date($r->last_seen)])->all();
-
-        $companies = $docs()->join('companies', 'companies.id', '=', 'sales_documents.company_id')->toBase()
-            ->selectRaw('companies.id as id, companies.name as name, count(*) as documents')->groupBy('companies.id', 'companies.name')->orderBy('companies.name')->get()
-            ->map(fn ($r) => ['id' => (int) $r->id, 'name' => (string) $r->name, 'documents' => (int) $r->documents])->all();
-
-        // Primera venta del sistema en el ámbito del usuario: lo anterior no está reflejado en la ficha.
-        $historyStarts = SalesLine::query()->when($companyId, fn ($q) => $q->where('sales_lines.company_id', $companyId))->min('issued_on');
+        // Primera venta del sistema en esa compañía (en el ámbito del usuario): lo anterior no está reflejado en la ficha.
+        $historyStarts = SalesLine::query()->where('sales_lines.company_id', $companyId)->min('issued_on');
+        $top = fn (string $dimension, int $limit) => $hasSales ? $this->stats->breakdown($dimension, $first, $last, $filters, 'net_total', $limit)['rows'] : [];
+        $dates = $hasSales
+            ? SalesDocument::query()->where('customer_code', $code)->where('company_id', $companyId)->distinct()->orderBy('issued_on')->pluck('issued_on')->map(fn ($d) => $this->date($d))->unique()->values()->all()
+            : [];
 
         return [
-            'code' => $code,
-            'name' => $names[0]['name'],
-            'name_variants' => $names,
-            'companies' => $companies,
+            'customer' => [
+                'id' => $customer->id, 'company_id' => $customer->company_id, 'company' => $customer->company->name, 'branch' => $customer->branch?->name,
+                'code' => $customer->code, 'name' => $customer->name, 'trade_name' => $customer->trade_name, 'contact_name' => $customer->contact_name,
+                'phone' => $customer->phone, 'whatsapp' => $customer->whatsapp, 'email' => $customer->email, 'address' => $customer->address,
+                'source' => $customer->source,
+            ],
             'first_purchase' => $overall['first'],
             'last_purchase' => $overall['last'],
-            'days_since_last_purchase' => (int) $last->diffInDays($today, false),
+            'days_since_last_purchase' => $last ? (int) $last->diffInDays($today, false) : null,
             'history_starts_on' => $historyStarts ? CarbonImmutable::parse($historyStarts)->toDateString() : null,
             'totals' => $overall['kpis'],
-            'frequency' => $this->frequency($docs()->distinct()->orderBy('issued_on')->pluck('issued_on')->map(fn ($d) => $this->date($d))->unique()->values()->all()),
+            'frequency' => $this->frequency($dates),
             'monthly' => $this->monthly($filters, $today),
-            'top_products' => $this->stats->breakdown('product', $first, $last, $filters, 'net_total', 10)['rows'],
-            'top_categories' => $this->stats->breakdown('category', $first, $last, $filters, 'net_total', 5)['rows'],
-            'sellers' => $this->stats->breakdown('seller', $first, $last, $filters, 'net_total', 10)['rows'],
-            'branches' => $this->stats->breakdown('branch', $first, $last, $filters, 'net_total', 10)['rows'],
+            'top_products' => $top('product', 10),
+            'top_categories' => $top('category', 5),
+            'sellers' => $top('seller', 10),
+            'branches' => $top('branch', 10),
             'notes' => ['margin' => 'estimated_with_current_cost', 'documents' => 'distinct_per_group'],
         ];
     }
@@ -121,17 +130,18 @@ class CustomerInsights
      *
      * @return array{rows: list<array<string, mixed>>, has_more: bool}
      */
-    public function purchases(string $code, ?int $companyId, int $page): array
+    public function purchases(int $companyId, string $code, int $page): array
     {
         $rows = SalesDocument::query()
             ->join('sales_lines as sl', 'sl.sales_document_id', '=', 'sales_documents.id')
             ->join('branches', 'branches.id', '=', 'sales_documents.branch_id')
             ->join('sellers', 'sellers.id', '=', 'sales_documents.seller_id')
+            ->join('operators', 'operators.id', '=', 'sales_documents.operator_id')
+            ->where('sales_documents.company_id', $companyId)
             ->where('sales_documents.customer_code', $code)
-            ->when($companyId, fn ($q) => $q->where('sales_documents.company_id', $companyId))
             ->toBase()
             ->selectRaw('sales_documents.id as id, sales_documents.series as series, sales_documents.number as number, sales_documents.issued_on as issued_on')
-            ->selectRaw('max(branches.name) as branch, max(sellers.name) as seller, count(sl.id) as lines')
+            ->selectRaw('max(branches.name) as branch, max(sellers.name) as seller, max(operators.name) as operator, count(sl.id) as lines')
             ->selectRaw('sum(sl.net_total) as net_total, sum(sl.grand_total) as grand_total')
             ->groupBy('sales_documents.id', 'sales_documents.series', 'sales_documents.number', 'sales_documents.issued_on')
             ->orderByDesc('sales_documents.issued_on')->orderByDesc('sales_documents.id')
@@ -141,7 +151,7 @@ class CustomerInsights
         return [
             'rows' => $rows->take(self::PER_PAGE)->map(fn ($r) => [
                 'id' => (int) $r->id, 'document' => "{$r->series}-{$r->number}", 'issued_on' => $this->date($r->issued_on),
-                'branch' => (string) $r->branch, 'seller' => (string) $r->seller, 'lines' => (int) $r->lines,
+                'branch' => (string) $r->branch, 'seller' => (string) $r->seller, 'operator' => (string) $r->operator, 'lines' => (int) $r->lines,
                 'net_total' => number_format((float) $r->net_total, 2, '.', ''), 'grand_total' => number_format((float) $r->grand_total, 2, '.', ''),
             ])->values()->all(),
             'has_more' => $rows->count() > self::PER_PAGE,
@@ -153,9 +163,9 @@ class CustomerInsights
      *
      * @return list<array<string, mixed>>|null
      */
-    public function documentLines(string $code, int $documentId): ?array
+    public function documentLines(int $companyId, string $code, int $documentId): ?array
     {
-        $document = SalesDocument::query()->where('customer_code', $code)->find($documentId);
+        $document = SalesDocument::query()->where('company_id', $companyId)->where('customer_code', $code)->find($documentId);
 
         return $document?->lines()->toBase()->get()->map(fn ($l) => [
             'line' => (int) $l->line_number, 'product_code' => $l->product_code, 'product_name' => $l->product_name, 'category' => $l->category_name,

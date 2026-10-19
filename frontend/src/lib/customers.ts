@@ -1,22 +1,38 @@
 import type { BreakdownRow, Kpis } from './sales'
 
 export interface CustomerListRow {
+  company_id: number
+  company: string
   code: string
   name: string
+  trade_name: string | null
   documents: number
   net_total: string
-  first_purchase: string
-  last_purchase: string
+  first_purchase: string | null
+  last_purchase: string | null
+}
+
+export interface CustomerMaster {
+  id: number
+  company_id: number
+  company: string
+  branch: string | null
+  code: string
+  name: string
+  trade_name: string | null
+  contact_name: string | null
+  phone: string | null
+  whatsapp: string | null
+  email: string | null
+  address: string | null
+  source: 'import' | 'sales'
 }
 
 export interface CustomerProfile {
-  code: string
-  name: string
-  name_variants: { name: string; documents: number; last_seen: string }[]
-  companies: { id: number; name: string; documents: number }[]
-  first_purchase: string
-  last_purchase: string
-  days_since_last_purchase: number
+  customer: CustomerMaster
+  first_purchase: string | null
+  last_purchase: string | null
+  days_since_last_purchase: number | null
   history_starts_on: string | null
   totals: Kpis
   frequency: { purchase_days: number; average_days_between: number | null }
@@ -33,6 +49,7 @@ export interface CustomerPurchase {
   issued_on: string
   branch: string
   seller: string
+  operator: string
   lines: number
   net_total: string
   grand_total: string
@@ -67,5 +84,5 @@ export function sinceLabel(days: number): string {
   return days === 1 ? 'hace 1 día' : `hace ${days} días`
 }
 
-export const profileUrl = (code: string, companyId?: string) =>
-  `/clientes/ficha?${new URLSearchParams({ codigo: code, ...(companyId ? { compania: companyId } : {}) })}`
+export const profileUrl = (code: string, companyId: number | string) =>
+  `/clientes/ficha?${new URLSearchParams({ codigo: code, compania: String(companyId) })}`

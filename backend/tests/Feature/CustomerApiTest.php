@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\Customer;
 use App\Models\Role;
 use App\Models\SalesDocument;
 use App\Models\SalesLine;
@@ -49,9 +50,10 @@ class CustomerApiTest extends TestCase
         $otro = Seller::create(['company_id' => $this->b->id, 'name' => 'Otro', 'normalized_name' => 'otro']);
 
         // Cliente C1: 3 facturas en 3 fechas (0, 10 y 30 días tras la primera). Una de ellas con otro nombre y otro vendedor.
+        Customer::create(['company_id' => $this->a->id, 'branch_id' => $this->a1->id, 'code' => 'C1', 'name' => 'Taller Pérez S.A.', 'trade_name' => 'Taller Pérez', 'contact_name' => 'Pedro', 'phone' => '5555-1234', 'email' => 'taller@example.com', 'source' => 'import']);
         $this->sale($this->a1, $this->ana, 'C1', 'Taller Pérez', '2026-08-01', [['P1', 'Filtro', 'Filtros', 100], ['P2', 'Aceite', 'Aceites', 50]]);
         $this->sale($this->a1, $this->ana, 'C1', 'Taller Pérez', '2026-08-11', [['P1', 'Filtro', 'Filtros', 200]]);
-        $this->sale($this->a2, $luis, 'C1', 'TALLER PEREZ S.A.', '2026-08-31', [['P3', 'Freno', 'Frenos', 300]]);
+        $this->sale($this->a2, $luis, 'C1', 'Taller Pérez', '2026-08-31', [['P3', 'Freno', 'Frenos', 300]]);
         // Otros clientes.
         $this->sale($this->a1, $this->ana, 'C2', 'Ferretería Gómez', '2026-10-01', [['P1', 'Filtro', 'Filtros', 40]]);
         $this->sale($b1, $otro, 'C9', 'Cliente de B', '2026-10-02', [['P1', 'Filtro', 'Filtros', 900]]);
@@ -67,6 +69,7 @@ class CustomerApiTest extends TestCase
     /** @param list<array{0: string, 1: string, 2: string, 3: int}> $lines producto, nombre, categoría, neto */
     private function sale(Branch $branch, Seller $seller, string $code, string $name, string $date, array $lines): void
     {
+        Customer::withoutGlobalScopes()->firstOrCreate(['company_id' => $branch->company_id, 'code' => $code], ['branch_id' => $branch->id, 'name' => $name, 'source' => 'sales']);
         $doc = SalesDocument::factory()->create([
             'company_id' => $branch->company_id, 'branch_id' => $branch->id, 'series' => 'S', 'number' => 'N'.++$this->docSeq,
             'issued_on' => $date, 'customer_code' => $code, 'customer_name' => $name, 'seller_id' => $seller->id, 'lines_count' => count($lines),
@@ -125,9 +128,9 @@ class CustomerApiTest extends TestCase
         $this->assertFalse($second['meta']['has_more']);
     }
 
-    public function test_profile_totals_frequency_and_name_variants(): void
+    public function test_profile_totals_frequency_and_master_data(): void
     {
-        $p = $this->fetch('/profile', ['code' => 'C1'])->assertOk()->json('data');
+        $p = $this->fetch('/profile', ['code' => 'C1', 'company_id' => $this->a->id])->assertOk()->json('data');
 
         $this->assertSame('650.00', $p['totals']['net_total']);
         $this->assertSame(3, $p['totals']['documents']);
@@ -136,8 +139,12 @@ class CustomerApiTest extends TestCase
         $this->assertSame('2026-08-31', $p['last_purchase']);
         $this->assertSame(50, $p['days_since_last_purchase']);               // al 2026-10-20
         $this->assertEquals(['purchase_days' => 3, 'average_days_between' => 15], $p['frequency']);
-        $this->assertSame('TALLER PEREZ S.A.', $p['name']);                   // el más reciente
-        $this->assertSame(['TALLER PEREZ S.A.', 'Taller Pérez'], array_column($p['name_variants'], 'name'));
+        // Los datos maestros mandan sobre el nombre que traían las facturas.
+        $this->assertSame('Taller Pérez S.A.', $p['customer']['name']);
+        $this->assertSame('Taller Pérez', $p['customer']['trade_name']);
+        $this->assertSame('5555-1234', $p['customer']['phone']);
+        $this->assertSame('Centro', $p['customer']['branch']);
+        $this->assertSame($this->a->name, $p['customer']['company']);
         $this->assertSame('2026-08-01', $p['history_starts_on']);
 
         $this->assertSame(['P1', 'P3', 'P2'], array_column($p['top_products'], 'key'));
@@ -150,7 +157,7 @@ class CustomerApiTest extends TestCase
 
     public function test_profile_monthly_series_has_twelve_months_with_zeros(): void
     {
-        $monthly = $this->fetch('/profile', ['code' => 'C1'])->json('data.monthly');
+        $monthly = $this->fetch('/profile', ['code' => 'C1', 'company_id' => $this->a->id])->json('data.monthly');
 
         $this->assertCount(12, $monthly);
         $this->assertSame('2025-11', $monthly[0]['key']);
@@ -161,7 +168,7 @@ class CustomerApiTest extends TestCase
 
     public function test_single_purchase_has_no_average_interval(): void
     {
-        $p = $this->fetch('/profile', ['code' => 'C2'])->json('data');
+        $p = $this->fetch('/profile', ['code' => 'C2', 'company_id' => $this->a->id])->json('data');
 
         $this->assertNull($p['frequency']['average_days_between']);
         $this->assertSame(1, $p['frequency']['purchase_days']);
@@ -169,20 +176,20 @@ class CustomerApiTest extends TestCase
 
     public function test_unknown_customer_is_404_and_code_is_required(): void
     {
-        $this->fetch('/profile', ['code' => 'NOPE'])->assertNotFound();
+        $this->fetch('/profile', ['code' => 'NOPE', 'company_id' => $this->a->id])->assertNotFound();
         $this->fetch('/profile')->assertUnprocessable()->assertJsonValidationErrors(['code']);
         $this->fetch('/purchases')->assertUnprocessable();
-        $this->fetch('/document', ['code' => 'C1'])->assertUnprocessable()->assertJsonValidationErrors(['document_id']);
+        $this->fetch('/document', ['code' => 'C1', 'company_id' => $this->a->id])->assertUnprocessable()->assertJsonValidationErrors(['document_id']);
     }
 
     public function test_codes_with_special_characters_work(): void
     {
-        $this->fetch('/profile', ['code' => '=EVIL'])->assertOk()->assertJsonPath('data.code', '=EVIL');
+        $this->fetch('/profile', ['code' => '=EVIL', 'company_id' => $this->a->id])->assertOk()->assertJsonPath('data.customer.code', '=EVIL');
     }
 
     public function test_purchases_list_and_document_lines(): void
     {
-        $purchases = $this->fetch('/purchases', ['code' => 'C1'])->assertOk()->json('data');
+        $purchases = $this->fetch('/purchases', ['code' => 'C1', 'company_id' => $this->a->id])->assertOk()->json('data');
 
         $this->assertSame(['2026-08-31', '2026-08-11', '2026-08-01'], array_column($purchases, 'issued_on'));
         $this->assertSame('Norte', $purchases[0]['branch']);
@@ -190,13 +197,13 @@ class CustomerApiTest extends TestCase
         $this->assertSame(['300.00', '200.00', '150.00'], array_column($purchases, 'net_total'));
         $this->assertSame(2, $purchases[2]['lines']);
 
-        $lines = $this->fetch('/document', ['code' => 'C1', 'document_id' => $purchases[2]['id']])->assertOk()->json('data');
+        $lines = $this->fetch('/document', ['code' => 'C1', 'company_id' => $this->a->id, 'document_id' => $purchases[2]['id']])->assertOk()->json('data');
         $this->assertSame(['P1', 'P2'], array_column($lines, 'product_code'));
         $this->assertSame('100.00', $lines[0]['net_total']);
 
         // Una factura de otro cliente no se puede leer pasando un código ajeno.
         $other = SalesDocument::where('customer_code', 'C2')->value('id');
-        $this->fetch('/document', ['code' => 'C1', 'document_id' => $other])->assertNotFound();
+        $this->fetch('/document', ['code' => 'C1', 'company_id' => $this->a->id, 'document_id' => $other])->assertNotFound();
     }
 
     public function test_user_only_sees_their_scope_and_needs_the_permission(): void
@@ -209,14 +216,44 @@ class CustomerApiTest extends TestCase
         $user->unsetRelations();
 
         // Solo la sucursal Norte: del cliente C1 ve únicamente la factura de Luis.
-        $p = $this->fetch('/profile', ['code' => 'C1'], $user)->assertOk()->json('data');
+        $p = $this->fetch('/profile', ['code' => 'C1', 'company_id' => $this->a->id], $user)->assertOk()->json('data');
         $this->assertSame('300.00', $p['totals']['net_total']);
-        $this->assertSame(['C1'], array_column($this->fetch('', [], $user)->json('data'), 'code'));
-        $this->fetch('/profile', ['code' => 'C9'], $user)->assertNotFound();
+        // Los datos maestros son de la compañía; las cifras, solo de las sucursales del usuario.
+        $own = collect($this->fetch('', [], $user)->json('data'))->keyBy('code');
+        $this->assertSame(['=EVIL', 'C1', 'C2'], $own->keys()->sort()->values()->all());
+        $this->assertSame('300.00', $own['C1']['net_total']);
+        $this->assertSame('0.00', $own['C2']['net_total']);
+        $this->fetch('/profile', ['code' => 'C9', 'company_id' => $this->b->id], $user)->assertNotFound();
 
         $sin = User::factory()->role(Role::VENDEDOR)->create();
         $sin->companies()->attach($this->a);
         $this->fetch('', [], $sin)->assertForbidden();
-        $this->fetch('/profile', ['code' => 'C1'], $sin)->assertForbidden();
+        $this->fetch('/profile', ['code' => 'C1', 'company_id' => $this->a->id], $sin)->assertForbidden();
+    }
+
+    public function test_the_same_code_in_two_companies_is_two_customers_and_master_only_customers_are_listed(): void
+    {
+        $this->sale($this->a1, $this->ana, 'C9', 'Mismo código en A', '2026-10-05', [['P1', 'Filtro', 'Filtros', 5]]);
+        Customer::create(['company_id' => $this->a->id, 'branch_id' => $this->a1->id, 'code' => 'NUEVO', 'name' => 'Cliente sin compras', 'source' => 'import']);
+
+        $rows = collect($this->fetch('', ['q' => 'c9'])->json('data'));
+        $this->assertSame(2, $rows->count());
+        $this->assertSame('5.00', $rows->firstWhere('company_id', $this->a->id)['net_total']);
+        $this->assertSame('900.00', $rows->firstWhere('company_id', $this->b->id)['net_total']);
+
+        $profile = $this->fetch('/profile', ['code' => 'C9', 'company_id' => $this->a->id])->json('data');
+        $this->assertSame('5.00', $profile['totals']['net_total']);
+
+        $empty = $this->fetch('/profile', ['code' => 'NUEVO', 'company_id' => $this->a->id])->assertOk()->json('data');
+        $this->assertSame('0.00', $empty['totals']['net_total']);
+        $this->assertNull($empty['last_purchase']);
+        $this->assertNull($empty['days_since_last_purchase']);
+        $this->assertSame([], $empty['top_products']);
+        $this->assertCount(12, $empty['monthly']);
+        $listed = collect($this->fetch('', ['q' => 'sin compras'])->json('data'));
+        $this->assertSame(0, $listed[0]['documents']);
+        $this->assertNull($listed[0]['last_purchase']);
+
+        $this->fetch('/profile', ['code' => 'C9'])->assertUnprocessable()->assertJsonValidationErrors(['company_id']);
     }
 }

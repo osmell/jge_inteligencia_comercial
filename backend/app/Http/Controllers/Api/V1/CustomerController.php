@@ -21,22 +21,22 @@ class CustomerController extends Controller
 
     public function profile(CustomersRequest $request): JsonResponse
     {
-        $profile = $this->customers->profile($request->validated('code'), $request->companyId());
-        abort_if($profile === null, 404, 'No hay ventas de este cliente en tu ámbito.');
+        $profile = $this->customers->profile((int) $request->validated('company_id'), $request->validated('code'));
+        abort_if($profile === null, 404, 'Cliente no encontrado.');
 
         return response()->json(['data' => $profile]);
     }
 
     public function purchases(CustomersRequest $request): JsonResponse
     {
-        $result = $this->customers->purchases($request->validated('code'), $request->companyId(), $request->page());
+        $result = $this->customers->purchases((int) $request->validated('company_id'), $request->validated('code'), $request->page());
 
         return response()->json(['data' => $result['rows'], 'meta' => ['page' => $request->page(), 'has_more' => $result['has_more']]]);
     }
 
     public function document(CustomersRequest $request): JsonResponse
     {
-        $lines = $this->customers->documentLines($request->validated('code'), (int) $request->validated('document_id'));
+        $lines = $this->customers->documentLines((int) $request->validated('company_id'), $request->validated('code'), (int) $request->validated('document_id'));
         abort_if($lines === null, 404, 'Factura no encontrada.');
 
         return response()->json(['data' => $lines]);

@@ -3,6 +3,7 @@
 namespace App\Imports\Sales;
 
 use App\Imports\ImportContext;
+use App\Models\Customer;
 use App\Models\Operator;
 use App\Models\SalesDocument;
 use App\Models\SalesLine;
@@ -116,6 +117,7 @@ final class SalesPersister
                 ];
             }
             SalesDocument::insert($rows);
+            $this->ensureCustomers($rows);
 
             // Los ids se recuperan por la clave única (compañía + serie + número) dentro de este lote.
             $numbers = array_column($rows, 'number');
@@ -146,5 +148,25 @@ final class SalesPersister
             ['company_id' => $companyId, 'normalized_name' => $normalized],
             ['name' => $name],
         )->id;
+    }
+
+    /**
+     * Da de alta los clientes que aparecen por primera vez en las ventas (compañía + código). Un cliente que ya existe
+     * no se toca: el archivo maestro es la fuente de sus datos.
+     *
+     * @param  list<array<string, mixed>>  $documents
+     */
+    private function ensureCustomers(array $documents): void
+    {
+        $now = now();
+        $customers = [];
+        foreach ($documents as $d) {
+            $customers["{$d['company_id']}|{$d['customer_code']}"] ??= [
+                'company_id' => $d['company_id'], 'branch_id' => $d['branch_id'], 'code' => $d['customer_code'], 'name' => $d['customer_name'],
+                'source' => 'sales', 'created_at' => $now, 'updated_at' => $now,
+            ];
+        }
+
+        Customer::withoutGlobalScopes()->insertOrIgnore(array_values($customers));
     }
 }

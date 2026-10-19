@@ -21,7 +21,7 @@ class CustomersRequest extends FormRequest
         return [
             'q' => ['nullable', 'string', 'max:100'],
             'code' => [$isSearch ? 'nullable' : 'required', 'string', 'max:255'],
-            'company_id' => ['nullable', 'integer', 'min:1'],
+            'company_id' => [$isSearch ? 'nullable' : 'required', 'integer', 'min:1'],
             'sort' => ['nullable', Rule::in(CustomerInsights::SORTS)],
             'page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'document_id' => [str_ends_with($this->path(), 'document') ? 'required' : 'nullable', 'integer', 'min:1'],

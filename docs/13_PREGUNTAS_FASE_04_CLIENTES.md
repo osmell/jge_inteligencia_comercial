@@ -40,3 +40,13 @@ Contexto: la ficha de solo lectura ya funciona con las ventas importadas. Para p
 19. **Contactos:** ¿se necesitan varios por cliente (compras, pagos, taller) y con qué datos?
 
 *Si hay poco tiempo: con las respuestas a 1, 2, 7, 8 y 9 se puede construir la tabla de clientes y la asignación de vendedores. Las preguntas 12–16 desbloquean las alertas.*
+
+---
+
+## Respuestas recibidas
+- **1:** el código es único **por compañía**; no hay códigos con nombres distintos; los códigos con descripciones duplicadas los ajusta el gerente. Se pidió además cargar productos desde Excel.
+- **2/3 (archivo maestro):** habrá archivo de clientes (compañía, sucursal, código entero, nombre, teléfono, correo, WhatsApp, dirección, nombre comercial, nombre de contacto) con alta y actualización. Los tipos de cliente se crean en la herramienta y son permanentes. No hay clasificación comercial: se pidieron sugerencias.
+- **Asignaciones:** un cliente tiene un vendedor y un facturador; las asignaciones de vendedor las hace el supervisor; cada rol ve su propia información; un cliente sin vendedor se asigna a un vendedor «Tienda <sucursal>» (uno por sucursal).
+- **Reglas:** inactivo tras 30 días (configurable); nuevo = primera compra; recuperado = compra después de 30 días de inactividad; perdido = sin compra tras 90 días.
+- **Reporte:** ventas por cliente con quién vendió y quién facturó. Los contactos del cliente son tres: vendedor, facturador y supervisor.
+- **Atribución de la venta:** si el vendedor manda a facturar, la venta es del vendedor; si la realiza directamente el facturador (clientes de WhatsApp), es del facturador.

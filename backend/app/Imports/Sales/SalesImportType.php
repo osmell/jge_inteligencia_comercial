@@ -7,6 +7,7 @@ use App\Imports\Contracts\ImportType;
 use App\Imports\Decimal;
 use App\Imports\ImportContext;
 use App\Imports\ImportRow;
+use App\Imports\LocationResolver;
 use App\Imports\ParsedRow;
 use App\Models\Branch;
 use App\Models\Company;
@@ -15,7 +16,6 @@ use App\Models\Operator;
 use App\Models\SalesDocument;
 use App\Models\Seller;
 use App\Models\User;
-use App\Services\DataScope;
 use DateTimeImmutable;
 
 /**
@@ -58,11 +58,7 @@ final class SalesImportType implements ImportType
 
     private ?User $user = null;
 
-    /** @var array<string, Company>|null */
-    private ?array $companies = null;
-
-    /** @var array<int, array<string, Branch>> */
-    private array $branches = [];
+    private ?LocationResolver $resolver = null;
 
     /** @var array{seller: array<string, string>, operator: array<string, string>} clave «compañía|nombre normalizado» => nombre */
     private array $people = ['seller' => [], 'operator' => []];
@@ -78,6 +74,7 @@ final class SalesImportType implements ImportType
     public function prepare(ImportBatch $batch): void
     {
         $this->user = $batch->user;
+        $this->resolver = null;
     }
 
     public function columns(): array
@@ -180,44 +177,7 @@ final class SalesImportType implements ImportType
     /** @return array{0: Company|null, 1: Branch|null} */
     private function resolveLocation(ImportRow $row): array
     {
-        $companyText = $row->text('company');
-        $branchText = $row->text('branch');
-        if ($companyText === null || $branchText === null) {
-            return [null, null];
-        }
-
-        $company = $this->companies()[Seller::normalize($companyText)] ?? null;
-        if (! $company) {
-            $row->fail('company', 'unknown_company', "La compañía «{$companyText}» no existe (se busca por código o nombre).");
-
-            return [null, null];
-        }
-        if (! $company->is_active) {
-            $row->fail('company', 'inactive_company', "La compañía «{$companyText}» está inactiva.");
-
-            return [null, null];
-        }
-
-        $allowed = app(DataScope::class)->fullCompanyIds($this->user);
-        if ($allowed !== null && ! in_array($company->id, $allowed, true)) {
-            $row->fail('company', 'company_out_of_scope', "No tienes acceso completo a la compañía «{$companyText}».");
-
-            return [null, null];
-        }
-
-        $branch = $this->branchesOf($company)[Seller::normalize($branchText)] ?? null;
-        if (! $branch) {
-            $row->fail('branch', 'unknown_branch', "La sucursal «{$branchText}» no existe en la compañía «{$company->name}» (se busca por código o nombre).");
-
-            return [$company, null];
-        }
-        if (! $branch->is_active) {
-            $row->fail('branch', 'inactive_branch', "La sucursal «{$branchText}» está inactiva.");
-
-            return [$company, null];
-        }
-
-        return [$company, $branch];
+        return $this->locations()->resolve($row);
     }
 
     /** @param  array<string, string|null>  $amounts */
@@ -377,38 +337,14 @@ final class SalesImportType implements ImportType
         ));
     }
 
-    /** @return array<string, Company> código o nombre normalizado => compañía (el código tiene prioridad) */
-    private function companies(): array
+    private function locations(): LocationResolver
     {
-        if ($this->companies === null) {
-            $all = Company::withoutGlobalScopes()->get();
-            $this->companies = [];
-            foreach ($all as $company) {
-                $this->companies[Seller::normalize($company->code)] = $company;
-            }
-            foreach ($all as $company) {
-                $this->companies[Seller::normalize($company->name)] ??= $company;
-            }
-        }
-
-        return $this->companies;
+        return $this->resolver ??= new LocationResolver($this->user);
     }
 
-    /** @return array<string, Branch> */
-    private function branchesOf(Company $company): array
+    /** @return array<string, Company> */
+    private function companies(): array
     {
-        if (! isset($this->branches[$company->id])) {
-            $all = Branch::withoutGlobalScopes()->where('company_id', $company->id)->get();
-            $map = [];
-            foreach ($all as $branch) {
-                $map[Seller::normalize($branch->code)] = $branch;
-            }
-            foreach ($all as $branch) {
-                $map[Seller::normalize($branch->name)] ??= $branch;
-            }
-            $this->branches[$company->id] = $map;
-        }
-
-        return $this->branches[$company->id];
+        return $this->locations()->companies();
     }
 }

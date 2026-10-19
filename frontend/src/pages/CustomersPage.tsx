@@ -29,7 +29,7 @@ export default function CustomersPage() {
 
   return (
     <section>
-      <PageHeader title="Clientes" description="Clientes que aparecen en las ventas importadas. Se identifican por su código de origen." />
+      <PageHeader title="Clientes" description="Datos maestros de los clientes y su actividad de compra. El código es único por compañía." />
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <div className="w-full sm:w-72">
@@ -48,6 +48,7 @@ export default function CustomersPage() {
       <DataTable label="Clientes">
         <thead>
           <tr>
+            <th className={th}>Compañía</th>
             <th className={th}>Código</th>
             <th className={th}>Nombre</th>
             <th className={`${th} text-right`}>Documentos</th>
@@ -57,18 +58,20 @@ export default function CustomersPage() {
           </tr>
         </thead>
         <tbody>
-          {list.loading && !list.data && <TableSkeleton cols={6} />}
-          {!list.loading && rows.length === 0 && <EmptyRow cols={6}>{term ? 'Ningún cliente coincide con la búsqueda.' : 'Aún no hay ventas importadas.'}</EmptyRow>}
+          {list.loading && !list.data && <TableSkeleton cols={7} />}
+          {!list.loading && rows.length === 0 && <EmptyRow cols={7}>{term ? 'Ningún cliente coincide con la búsqueda.' : 'Aún no hay clientes. Cárgalos desde Importaciones.'}</EmptyRow>}
           {rows.map((r) => (
-            <tr key={r.code} className={tr}>
+            <tr key={`${r.company_id}|${r.code}`} className={tr}>
+              <td className={td}>{r.company}</td>
               <td className={`${td} tabular`}>{r.code}</td>
               <td className={`${td} font-medium`}>
-                <Link className="text-jge-blue hover:underline" to={profileUrl(r.code, companyId)}>{r.name}</Link>
+                <Link className="text-jge-blue hover:underline" to={profileUrl(r.code, r.company_id)}>{r.name}</Link>
+                {r.trade_name && <span className="block text-xs font-normal text-ink-muted">{r.trade_name}</span>}
               </td>
               <td className={`${td} tabular text-right`}>{r.documents}</td>
               <td className={`${td} tabular text-right`}>{formatMoney(r.net_total)}</td>
-              <td className={td}>{formatDate(r.first_purchase)}</td>
-              <td className={td}>{formatDate(r.last_purchase)}</td>
+              <td className={td}>{r.first_purchase ? formatDate(r.first_purchase) : '—'}</td>
+              <td className={td}>{r.last_purchase ? formatDate(r.last_purchase) : 'Sin compras'}</td>
             </tr>
           ))}
         </tbody>

@@ -7,6 +7,7 @@ use App\Imports\ImportRunner;
 use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\Customer;
 use App\Models\ImportBatch;
 use App\Models\Operator;
 use App\Models\Role;
@@ -420,5 +421,21 @@ class SalesImportTest extends TestCase
         $this->assertNotNull($this->error($again->fresh(), 'already_imported'));
         $this->assertSame(1, SalesDocument::withoutGlobalScopes()->count());
         $this->assertSame(1, AuditLog::where('event', 'import.completed')->count());
+    }
+
+    public function test_new_customer_codes_in_sales_create_customers_but_existing_ones_are_not_overwritten(): void
+    {
+        Customer::create(['company_id' => $this->alfa->id, 'branch_id' => $this->central->id, 'code' => 'C001', 'name' => 'Nombre del maestro', 'source' => 'import']);
+
+        $this->imported([
+            $this->line(['Documento' => '0001', 'Código Cliente' => 'C001', 'Nombre Cliente' => 'Nombre de la factura']),
+            $this->line(['Documento' => '0002', 'Código Cliente' => 'C002', 'Nombre Cliente' => 'Cliente Dos']),
+            $this->line(['Documento' => '0003', 'Código Cliente' => 'C002', 'Nombre Cliente' => 'Cliente Dos']),
+        ]);
+
+        $this->assertSame(2, Customer::count());
+        $this->assertSame('Nombre del maestro', Customer::where('code', 'C001')->value('name'));
+        $new = Customer::where('code', 'C002')->sole();
+        $this->assertSame(['Cliente Dos', 'sales', $this->central->id], [$new->name, $new->source, $new->branch_id]);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Imports\Customers\CustomersImportType;
 use App\Imports\Sales\SalesImportType;
 
 /*
@@ -26,10 +27,11 @@ return [
     // Tipos de importación registrados: clave => clase que implementa App\Imports\Contracts\ImportType.
     'types' => [
         'sales' => SalesImportType::class,
+        'customers' => CustomersImportType::class,
     ],
 
     // Nombre visible de cada tipo.
-    'labels' => ['sales' => 'Ventas'],
+    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes'],
 
     // Filas mostradas en la vista previa.
     'preview_rows' => 20,
@@ -76,5 +78,25 @@ return [
         // PENDIENTE: la tasa aún no está definida (docs/10_DECISIONES_PENDIENTES.md). Con valores, Total Impuesto
         // debe ser Total Neto × alguna de estas tasas (dentro de la tolerancia).
         'tax_rates' => [],
+    ],
+
+    // Archivo maestro de clientes: una fila por cliente; inserta los nuevos y actualiza los existentes (compañía + código).
+    'customers' => [
+        'sheet' => null,
+
+        'columns' => [
+            'company' => ['Compañía', 'Compania', 'Código Compañía'],
+            'branch' => ['Sucursal', 'Código Sucursal'],
+            'code' => ['Código', 'Codigo'],
+            'name' => ['Descripción o Nombre', 'Descripcion o Nombre', 'Nombre', 'Descripción', 'Descripcion'],
+            'phone' => ['Teléfono', 'Telefono'],
+            'email' => ['Email', 'Correo'],
+            'whatsapp' => ['Whatsapp', 'WhatsApp'],
+            'address' => ['Dirección', 'Direccion'],
+            'trade_name' => ['Nombre Comercial'],
+            'contact_name' => ['Nombre Contacto'],
+        ],
+
+        'optional' => ['phone', 'email', 'whatsapp', 'address', 'trade_name', 'contact_name'],
     ],
 ];

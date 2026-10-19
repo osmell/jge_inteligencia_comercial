@@ -47,9 +47,10 @@ export default function CustomerProfilePage() {
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState<Record<number, DocumentLine[] | 'loading' | 'error'>>({})
 
-  const base = new URLSearchParams({ code, ...(companyId ? { company_id: companyId } : {}) })
-  const profile = useLoad<{ data: CustomerProfile }>(`/customers/profile?${base}`, { enabled: code !== '' })
-  const purchases = useLoad<{ data: CustomerPurchase[]; meta: { has_more: boolean } }>(`/customers/purchases?${base}&page=${page}`, { enabled: code !== '' })
+  const base = new URLSearchParams({ code, company_id: companyId })
+  const ready = code !== '' && companyId !== ''
+  const profile = useLoad<{ data: CustomerProfile }>(`/customers/profile?${base}`, { enabled: ready })
+  const purchases = useLoad<{ data: CustomerPurchase[]; meta: { has_more: boolean } }>(`/customers/purchases?${base}&page=${page}`, { enabled: ready })
 
   async function toggle(id: number) {
     if (open[id]) {
@@ -68,38 +69,60 @@ export default function CustomerProfilePage() {
   const p = profile.data?.data
   const rows = purchases.data?.data ?? []
 
-  if (code === '') return <Alert tone="warning">Indica un cliente desde el <Link className="underline" to="/clientes">listado</Link>.</Alert>
+  if (!ready) return <Alert tone="warning">Indica un cliente desde el <Link className="underline" to="/clientes">listado</Link>.</Alert>
 
   return (
     <section>
       <PageHeader
-        title={p?.name ?? 'Cliente'}
-        description={p ? `Código ${p.code}` : undefined}
+        title={p?.customer.name ?? 'Cliente'}
+        description={p ? `${p.customer.company} · código ${p.customer.code}` : undefined}
         action={<Link className="text-sm text-jge-blue hover:underline" to="/clientes">← Volver al listado</Link>}
       />
       <FormError message={profile.error} />
 
       {p && (
         <>
+          <Card className="mb-4 p-4">
+            <h2 className="mb-2 text-sm font-semibold text-ink">Datos del cliente</h2>
+            <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              {([
+                ['Nombre comercial', p.customer.trade_name],
+                ['Contacto', p.customer.contact_name],
+                ['Sucursal', p.customer.branch],
+                ['Teléfono', p.customer.phone],
+                ['WhatsApp', p.customer.whatsapp],
+                ['Correo', p.customer.email],
+                ['Dirección', p.customer.address],
+              ] as const).map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-ink-muted">{label}</dt>
+                  <dd className="font-medium">{value || '—'}</dd>
+                </div>
+              ))}
+            </dl>
+            {p.customer.source === 'sales' && (
+              <p className="mt-3 text-xs text-ink-muted">Este cliente se creó al aparecer en las ventas; aún no tiene datos del archivo maestro.</p>
+            )}
+          </Card>
+
           <div className="mb-4 space-y-2">
-            <Alert tone="info">
-              Historial disponible desde el {p.history_starts_on ? formatDate(p.history_starts_on) : formatDate(p.first_purchase)}: las compras anteriores a esa fecha no aparecen en esta ficha.
-            </Alert>
-            {p.name_variants.length > 1 && (
-              <Alert tone="warning">
-                Este código aparece con {p.name_variants.length} nombres distintos en las facturas: {p.name_variants.map((n) => `${n.name} (${n.documents})`).join('; ')}. No se unifican automáticamente.
+            {p.history_starts_on && (
+              <Alert tone="info">
+                Historial de ventas disponible desde el {formatDate(p.history_starts_on)}: las compras anteriores a esa fecha no aparecen en esta ficha.
               </Alert>
             )}
-            {p.companies.length > 1 && (
-              <Alert tone="info">Las cifras suman {p.companies.length} compañías: {p.companies.map((c) => `${c.name} (${c.documents} documentos)`).join('; ')}.</Alert>
-            )}
+            {p.last_purchase === null && <Alert tone="info">Este cliente aún no tiene compras en las ventas importadas.</Alert>}
           </div>
 
           <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
             <Stat label="Venta neta total" value={formatMoney(p.totals.net_total)} />
             <Stat label="Documentos" value={String(p.totals.documents)} />
             <Stat label="Ticket promedio" value={formatMoney(p.totals.average_ticket)} />
-            <Stat label="Última compra" value={formatDate(p.last_purchase)} hint={sinceLabel(p.days_since_last_purchase)} />
+            <Stat
+              label="Última compra"
+              value={p.last_purchase ? formatDate(p.last_purchase) : '—'}
+              hint={p.days_since_last_purchase === null ? undefined : sinceLabel(p.days_since_last_purchase)}
+            />
             <Stat
               label="Frecuencia"
               value={p.frequency.average_days_between === null ? '—' : `cada ${String(p.frequency.average_days_between).replace('.', ',')} días`}
@@ -136,14 +159,15 @@ export default function CustomerProfilePage() {
             <th className={th}>Documento</th>
             <th className={th}>Sucursal</th>
             <th className={th}>Vendedor</th>
+            <th className={th}>Facturó</th>
             <th className={`${th} text-right`}>Líneas</th>
             <th className={`${th} text-right`}>Venta neta</th>
             <th className={`${th} text-right`}>Total facturado</th>
           </tr>
         </thead>
         <tbody>
-          {purchases.loading && !purchases.data && <TableSkeleton cols={8} />}
-          {!purchases.loading && rows.length === 0 && <EmptyRow cols={8}>Sin compras.</EmptyRow>}
+          {purchases.loading && !purchases.data && <TableSkeleton cols={9} />}
+          {!purchases.loading && rows.length === 0 && <EmptyRow cols={9}>Sin compras.</EmptyRow>}
           {rows.flatMap((r) => {
             const detail = open[r.id]
             return [
@@ -163,13 +187,14 @@ export default function CustomerProfilePage() {
                 <td className={`${td} tabular`}>{r.document}</td>
                 <td className={td}>{r.branch}</td>
                 <td className={td}>{r.seller}</td>
+                <td className={td}>{r.operator}</td>
                 <td className={`${td} tabular text-right`}>{r.lines}</td>
                 <td className={`${td} tabular text-right`}>{formatMoney(r.net_total)}</td>
                 <td className={`${td} tabular text-right`}>{formatMoney(r.grand_total)}</td>
               </tr>,
               detail && (
                 <tr key={`${r.id}-lines`}>
-                  <td className="border-b border-line bg-surface-muted px-4 py-3" colSpan={8}>
+                  <td className="border-b border-line bg-surface-muted px-4 py-3" colSpan={9}>
                     {detail === 'loading' ? (
                       <p className="text-sm text-ink-muted">Cargando productos…</p>
                     ) : detail === 'error' ? (

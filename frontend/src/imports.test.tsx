@@ -210,6 +210,22 @@ describe('importaciones', () => {
     expect(screen.queryByRole('button', { name: 'Confirmar importación' })).not.toBeInTheDocument()
   })
 
+  it('un lote de clientes muestra nuevos, actualizados y sin cambios, y su confirmación lo explica', async () => {
+    route('GET /admin/imports/7', json({ data: batch({
+      type: 'customers', type_label: 'Clientes', documents_total: 6, documents_new: 3, documents_duplicate: 1,
+      summary: { rows_invalid: 0, customers: { new: 3, updated: 2, unchanged: 1 }, preview_columns: [], preview: [] },
+    }) }))
+    renderAt('/importaciones/7')
+
+    expect(await screen.findByText('Se actualizarán')).toBeInTheDocument()
+    expect(screen.getByText('Nuevos').closest('div')).toHaveTextContent('3')
+    expect(screen.getByText('1 sin cambios', { exact: false })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar importación' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Confirmar importación' })
+    expect(dialog).toHaveTextContent('Se crearán 3 clientes y se actualizarán 2')
+  })
+
   it('actualiza solo mientras el lote se procesa', async () => {
     route('GET /admin/imports/7', json({ data: batch({ status: 'validating', status_label: 'Validando', can_confirm: false }) }), json({ data: batch() }))
     renderAt('/importaciones/7')
