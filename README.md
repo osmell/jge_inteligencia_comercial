@@ -28,6 +28,14 @@ docker compose exec backend php artisan migrate --seed
 - `backend/.env` se lee desde el volumen montado; **no** añadir `env_file` al Compose (las variables del contenedor tendrían prioridad sobre `phpunit.xml`).
 - Para usar la VM de PostgreSQL: levantar solo `docker-compose.yml` y poner `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` de la VM en `backend/.env`.
 
+### Ventas de demostración
+
+```bash
+docker compose exec -u $(id -u) backend php artisan db:seed --class=DemoSalesSeeder
+```
+
+Genera 12 meses de ventas **ficticias** (≈ 6 000 documentos y 17 000 líneas; 2 compañías, 3 sucursales, 8 vendedores, 5 operadores, 150 clientes y 80 productos) con tendencia, estacionalidad y vendedores de rendimiento distinto, para probar los reportes. Es reproducible, repetible (borra y regenera solo la serie `DEMO`), no se ejecuta en producción y vincula a `vendedor1` y `vendedor2` con sus vendedores. Aparece en Importaciones como «DATOS DE DEMOSTRACIÓN».
+
 ### Usuarios ficticios de desarrollo
 
 Contraseña de todos: `Desarrollo-123` (solo entornos no productivos).
