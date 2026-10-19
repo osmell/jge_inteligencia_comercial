@@ -109,3 +109,10 @@ export function formatBucket(key: string): string {
   }
   return new Date(`${key}T12:00:00`).toLocaleDateString('es', { day: 'numeric', month: 'short' })
 }
+
+export type RankingKey = 'by_net_total' | 'by_units' | 'by_documents' | 'by_margin'
+
+export interface Rankings {
+  data: Record<RankingKey, BreakdownRow[]>
+  meta: { dimension: 'product' | 'category'; limit: number }
+}

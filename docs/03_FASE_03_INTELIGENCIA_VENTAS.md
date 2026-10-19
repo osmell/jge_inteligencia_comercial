@@ -73,5 +73,14 @@ Verificado: typecheck, lint, 37 pruebas (9 nuevas) y build. **Pendiente:** revis
 
 Pendiente: PDF para impresión, si se necesita.
 
+### Paso 5 — Rankings de producto (implementado)
+`GET /api/v1/sales/rankings?dimension=product|category&limit=1..50` (por defecto producto y 10), con el mismo periodo y filtros del dashboard y el mismo ámbito por usuario. Devuelve cuatro listas: `by_net_total`, `by_units`, `by_documents` (frecuencia) y `by_margin`. En la pantalla `/ventas` es la sección «Rankings», con selector Productos / Categorías; elegir un nombre filtra todo el tablero.
+
+- **Frecuencia** = facturas distintas que incluyen el artículo (no líneas ni unidades).
+- **Margen:** ranking por monto de margen estimado, con el costo **actual**; solo entran artículos con al menos una línea con costo válido (> 0). Se muestra también el porcentaje.
+- Los empates se resuelven por clave, de forma estable.
+- Corrección aplicada al desglose general: al ordenar por `margin`, los grupos sin costo van al final tanto en PostgreSQL como en SQLite (`desc nulls last`); antes PostgreSQL los habría puesto primero.
+- Verificado en PostgreSQL con los datos demo: los tres primeros de cada ranking coinciden con una consulta SQL directa.
+
 ### Siguiente
-Metas mensuales por vendedor (requiere definir la regla de metas, decisión #16), rankings de producto por frecuencia y margen, y comparación libre de periodos.
+Comparación libre de periodos (dos rangos elegidos por el usuario) y metas mensuales por vendedor (requiere definir la regla de metas, decisión #16). Con ello se cierra la Fase 3, junto con la revisión visual en navegador pendiente.

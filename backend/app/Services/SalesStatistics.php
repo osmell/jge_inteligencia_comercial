@@ -63,10 +63,11 @@ class SalesStatistics
     /**
      * Desglose por una dimensión.
      *
+     * @param  bool  $costedOnly  deja fuera los grupos sin ninguna línea con costo válido (para rankings de margen)
      * @param  array<string, mixed>  $filters
      * @return array{rows: list<array<string, mixed>>, truncated: bool}
      */
-    public function breakdown(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $sort, int $limit): array
+    public function breakdown(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $sort, int $limit, bool $costedOnly = false): array
     {
         [$key, $label] = $this->dimensionColumns($dimension);
 
@@ -78,8 +79,13 @@ class SalesStatistics
             ->selectRaw($this->aggregates())
             ->groupByRaw($key);
 
+        if ($costedOnly) {
+            $rows->havingRaw('sum(case when sales_lines.line_cost_total > 0 then 1 else 0 end) > 0');
+        }
+
         $chronological = in_array($dimension, ['month', 'day'], true);
-        $rows->orderByRaw($chronological ? "{$key} asc" : $this->sortExpression($sort).' desc, group_key asc');
+        // Los grupos sin dato de la métrica (p. ej. margen sin costo) van al final tanto en PostgreSQL como en SQLite.
+        $rows->orderByRaw($chronological ? "{$key} asc" : $this->sortExpression($sort).' desc nulls last, group_key asc');
 
         // Se pide una fila de más para saber si hubo recorte.
         $result = $chronological ? $rows->toBase()->get() : $rows->limit($limit + 1)->toBase()->get();
@@ -88,6 +94,25 @@ class SalesStatistics
         return [
             'rows' => $result->take($chronological ? PHP_INT_MAX : $limit)->map(fn ($r) => ['key' => (string) $r->group_key, 'label' => (string) $r->group_label, ...$this->format($r)])->values()->all(),
             'truncated' => $truncated,
+        ];
+    }
+
+    /**
+     * Rankings de producto o categoría por venta neta, unidades, frecuencia (facturas distintas que lo incluyen) y margen.
+     * El de margen solo incluye grupos con costo válido y usa el costo actual.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<string, list<array<string, mixed>>>
+     */
+    public function rankings(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, int $limit): array
+    {
+        $top = fn (string $sort, bool $costed = false) => $this->breakdown($dimension, $from, $to, $filters, $sort, $limit, $costed)['rows'];
+
+        return [
+            'by_net_total' => $top('net_total'),
+            'by_units' => $top('units'),
+            'by_documents' => $top('documents'),
+            'by_margin' => $top('margin', true),
         ];
     }
 

@@ -21,6 +21,16 @@ const summary = (o: Record<string, unknown> = {}) => ({
 
 const row = (key: string, label: string, net: string) => ({ key, label, ...kpis({ net_total: net }) })
 
+const rankingsBody = {
+  data: {
+    by_net_total: [row('P1', 'Filtro de aceite', '500.00'), row('P2', 'Pastillas de freno', '300.00')],
+    by_units: [row('P2', 'Pastillas de freno', '300.00')],
+    by_documents: [{ ...row('P1', 'Filtro de aceite', '500.00'), documents: 1 }],
+    by_margin: [{ ...row('P2', 'Pastillas de freno', '300.00'), estimated_margin: '120.00', estimated_margin_pct: 40 }],
+  },
+  meta: { dimension: 'product', limit: 10 },
+}
+
 let urls: string[]
 let respond: (path: string) => unknown
 
@@ -42,6 +52,7 @@ describe('dashboard de ventas', () => {
       if (path.startsWith('/companies')) return { data: [{ id: 1, code: 'A', name: 'Compañía Alfa', is_active: true }, { id: 2, code: 'B', name: 'Compañía Beta', is_active: true }] }
       if (path.startsWith('/branches')) return { data: [{ id: 10, company_id: 1, code: 'C', name: 'Alfa Central', is_active: true }, { id: 20, company_id: 2, code: 'C', name: 'Beta Central', is_active: true }] }
       if (path.startsWith('/sales/summary')) return summary()
+      if (path.startsWith('/sales/rankings')) return rankingsBody
       const dim = new URL(path, 'http://x').searchParams.get('dimension')
       if (dim === 'day') return { data: [{ key: '2026-10-01', ...kpis({ net_total: '400.00' }) }, { key: '2026-10-02', ...kpis({ net_total: '600.00' }) }], meta: { dimension: 'day', truncated: false } }
       if (dim === 'seller') return { data: [row('7', 'María López', '700.00'), row('8', 'Pedro Ruiz', '300.00')], meta: { dimension: 'seller', truncated: false } }
@@ -88,8 +99,9 @@ describe('dashboard de ventas', () => {
     render(<SalesDashboardPage />)
     await userEvent.click(await screen.findByRole('tab', { name: 'Producto' }))
 
-    expect(await screen.findByText('Filtro de aceite')).toBeInTheDocument()
-    expect(last('dimension=product')).toContain('limit=15')
+    expect(within(await screen.findByRole('table', { name: 'Ventas por producto' })).getByText('Filtro de aceite')).toBeInTheDocument()
+    expect(last('/sales/breakdown?')).toContain('dimension=product')
+    expect(last('/sales/breakdown?')).toContain('limit=15')
     expect(screen.getByText(/Se muestran las 15 filas con más venta neta/)).toBeInTheDocument()
     expect(screen.getByText(/no sumes los documentos entre filas/)).toBeInTheDocument()
   })
@@ -130,7 +142,64 @@ describe('dashboard de ventas', () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify(respond(url.replace('http://localhost:8000/api/v1', ''))), { status: url.includes('/sales/') ? 403 : 200 })))
     render(<SalesDashboardPage />)
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('No tienes permiso para realizar esta acción.')
+    expect((await screen.findAllByRole('alert'))[0]).toHaveTextContent('No tienes permiso para realizar esta acción.')
+  })
+})
+
+describe('rankings', () => {
+  beforeEach(() => {
+    respond = (path) => {
+      if (path.startsWith('/companies') || path.startsWith('/branches')) return { data: [] }
+      if (path.startsWith('/sales/summary')) return summary()
+      if (path.startsWith('/sales/rankings')) return rankingsBody
+      return { data: [], meta: { dimension: 'x', truncated: false } }
+    }
+    mockApi()
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('muestra los cuatro rankings con su métrica en texto', async () => {
+    render(<SalesDashboardPage />)
+
+    const byAmount = await screen.findByRole('list', { name: 'Por importe (venta neta)' })
+    expect(within(byAmount).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      expect.stringContaining('Filtro de aceite'), expect.stringContaining('Pastillas de freno'),
+    ])
+    expect(within(byAmount).getByText('500,00')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Por frecuencia' })).getByText('1 factura')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Por margen estimado' })).getByText('120,00 (40,0 %)')).toBeInTheDocument()
+    expect(screen.getByText(/Solo artículos con costo válido/)).toBeInTheDocument()
+    expect(last('/sales/rankings')).toContain('dimension=product&limit=10')
+  })
+
+  it('cambia a categorías y recarga con los filtros del tablero', async () => {
+    render(<SalesDashboardPage />)
+    await screen.findByRole('list', { name: 'Por importe (venta neta)' })
+    await userEvent.click(screen.getByRole('button', { name: 'Categorías' }))
+
+    await waitFor(() => expect(last('/sales/rankings')).toContain('dimension=category'))
+    expect(screen.getByRole('button', { name: 'Categorías' })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('elegir un artículo del ranking filtra todo el tablero', async () => {
+    render(<SalesDashboardPage />)
+    const byAmount = await screen.findByRole('list', { name: 'Por importe (venta neta)' })
+    await userEvent.click(within(byAmount).getByRole('button', { name: 'Pastillas de freno' }))
+
+    await waitFor(() => expect(last('/sales/summary')).toContain('product_code=P2'))
+    expect(last('/sales/rankings')).toContain('product_code=P2')
+    expect(screen.getByRole('button', { name: 'Quitar filtro Producto: Pastillas de freno' })).toBeInTheDocument()
+  })
+
+  it('no consulta rankings con un rango inválido', async () => {
+    render(<SalesDashboardPage />)
+    await screen.findByRole('list', { name: 'Por importe (venta neta)' })
+    await userEvent.selectOptions(screen.getByLabelText('Periodo'), 'custom')
+    await userEvent.clear(screen.getByLabelText('Hasta'))
+    await userEvent.type(screen.getByLabelText('Hasta'), '2020-01-01')
+
+    expect(urls.filter((u) => u.includes('to=2020-01-01'))).toEqual([])
+    expect(screen.queryByRole('list', { name: 'Por importe (venta neta)' })).not.toBeInTheDocument()
   })
 })
 

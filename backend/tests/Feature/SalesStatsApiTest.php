@@ -12,6 +12,7 @@ use App\Models\Seller;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use OpenSpout\Reader\XLSX\Reader;
 use Tests\TestCase;
 
@@ -331,5 +332,66 @@ class SalesStatsApiTest extends TestCase
         $seller->companies()->attach($this->a);
         $this->actingAs($seller, 'sanctum')->getJson('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'xlsx'])))->assertForbidden();
         $this->assertSame(1, AuditLog::where('event', 'sales.exported')->count());
+    }
+
+    private function rankings(array $params = [], ?User $as = null): TestResponse
+    {
+        return $this->actingAs($as ?? $this->admin, 'sanctum')
+            ->getJson('/api/v1/sales/rankings?'.http_build_query($this->range(['company_id' => $this->a->id, ...$params])));
+    }
+
+    public function test_product_rankings_by_amount_units_frequency_and_margin(): void
+    {
+        $data = $this->rankings()->assertOk()->json('data');
+
+        $this->assertSame(['P1', 'P3', 'P2'], array_column($data['by_net_total'], 'key'));     // 300, 300 (empate por clave), 50
+        $this->assertSame(['P1', 'P2', 'P3'], array_column($data['by_units'], 'key'));         // 4, 2, 2
+        $this->assertSame(['P1', 'P2', 'P3'], array_column($data['by_documents'], 'key'));     // frecuencia: 2 facturas, 1, 1
+        $this->assertSame([2, 1, 1], array_column($data['by_documents'], 'documents'));
+        $this->assertSame(['P3', 'P1'], array_column($data['by_margin'], 'key'));              // P2 no tiene costo válido: fuera
+        $this->assertSame(['150.00', '140.00'], array_column($data['by_margin'], 'estimated_margin'));
+    }
+
+    public function test_rankings_respect_limit_dimension_and_filters(): void
+    {
+        $this->assertCount(2, $this->rankings(['limit' => 2])->json('data.by_net_total'));
+
+        $categories = $this->rankings(['dimension' => 'category'])->assertOk();
+        $this->assertSame('category', $categories->json('meta.dimension'));
+        $this->assertSame(['Filtros', 'Frenos', 'Aceites'], array_column($categories->json('data.by_net_total'), 'key'));
+        $this->assertSame(['Frenos', 'Filtros'], array_column($categories->json('data.by_margin'), 'key'));  // Aceites sin costo
+
+        $filtered = $this->rankings(['branch_id' => $this->a2->id])->json('data');
+        $this->assertSame(['P3'], array_column($filtered['by_net_total'], 'key'));
+        $this->assertSame('estimated_with_current_cost', $this->rankings()->json('meta.notes.margin'));
+    }
+
+    public function test_rankings_only_see_the_users_scope_and_require_permission_and_valid_input(): void
+    {
+        $user = User::factory()->role(Role::GERENTE_GENERAL)->create();
+        $user->companies()->attach($this->a);
+        $user->branches()->attach($this->a2);
+        $this->actingAs($this->admin, 'sanctum')
+            ->putJson('/api/v1/admin/role-permissions/'.$user->role_id, ['permissions' => ['sales.view']])->assertOk();
+
+        $this->assertSame(['P3'], array_column($this->rankings([], $user)->assertOk()->json('data.by_net_total'), 'key'));
+        $this->assertSame([], $this->rankings(['company_id' => $this->b->id], $user)->json('data.by_net_total'));
+
+        $seller = User::factory()->role(Role::VENDEDOR)->create();
+        $this->rankings([], $seller)->assertForbidden();
+
+        $this->rankings(['dimension' => 'seller'])->assertUnprocessable();
+        $this->rankings(['limit' => 51])->assertUnprocessable();
+        $this->rankings(['limit' => 0])->assertUnprocessable();
+    }
+
+    public function test_sorting_by_margin_puts_groups_without_cost_last(): void
+    {
+        $rows = $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range(['dimension' => 'product', 'company_id' => $this->a->id, 'sort' => 'margin'])))
+            ->json('data');
+
+        $this->assertSame(['P3', 'P1', 'P2'], array_column($rows, 'key'));
+        $this->assertNull($rows[2]['estimated_margin']);
     }
 }

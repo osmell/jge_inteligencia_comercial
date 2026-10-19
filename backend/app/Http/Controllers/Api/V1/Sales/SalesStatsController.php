@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Sales;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SalesExportRequest;
+use App\Http\Requests\SalesRankingsRequest;
 use App\Http\Requests\SalesStatsRequest;
 use App\Services\AuditLogger;
 use App\Services\SalesReportExporter;
@@ -42,6 +43,21 @@ class SalesStatsController extends Controller
                 'dimension' => $request->validated('dimension'),
                 'truncated' => $result['truncated'],
                 'notes' => ['margin' => 'estimated_with_current_cost', 'documents' => 'distinct_per_group'],
+            ],
+        ]);
+    }
+
+    public function rankings(SalesRankingsRequest $request): JsonResponse
+    {
+        $dimension = $request->validated('dimension') ?? 'product';
+        $limit = (int) ($request->validated('limit') ?? 10);
+
+        return response()->json([
+            'data' => $this->stats->rankings($dimension, $request->from(), $request->to(), $request->filters(), $limit),
+            'meta' => [
+                'dimension' => $dimension,
+                'limit' => $limit,
+                'notes' => ['margin' => 'estimated_with_current_cost', 'documents' => 'distinct_per_group', 'frequency' => 'documents_containing_the_item'],
             ],
         ]);
     }

@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Download, Minus, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { BarChart, InlineBar } from '../components/charts'
+import RankingsPanel from '../components/RankingsPanel'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
 import { download } from '../lib/api'
 import { formatMoney } from '../lib/format'
@@ -94,11 +95,11 @@ export default function SalesDashboardPage() {
   const points = ((enabled ? trend.data?.data : undefined) ?? []).map((r) => ({ key: r.key, value: Number(r.net_total) }))
   const error = enabled ? (summary.error ?? trend.error ?? table.error) : null
 
-  function applyRow(row: BreakdownRow) {
-    const param = DIMENSION_FILTER[dimension]
+  function applyRow(row: BreakdownRow, picked: Dimension = dimension) {
+    const param = DIMENSION_FILTER[picked]
     if (param === 'company_id') return selectCompany(row.key)
     if (param === 'branch_id') return setBranchId(row.key)
-    setChips((prev) => [...prev.filter((c) => c.param !== param), { param, value: row.key, label: `${DIMENSION_LABEL[dimension]}: ${row.label}` }])
+    setChips((prev) => [...prev.filter((c) => c.param !== param), { param, value: row.key, label: `${DIMENSION_LABEL[picked]}: ${row.label}` }])
   }
 
   async function exportReport(format: 'xlsx' | 'csv') {
@@ -292,6 +293,8 @@ export default function SalesDashboardPage() {
           </p>
         </div>
       </div>
+
+      <RankingsPanel filterQuery={filterQuery} enabled={enabled} onPick={(d, row) => applyRow(row, d)} />
     </section>
   )
 }
