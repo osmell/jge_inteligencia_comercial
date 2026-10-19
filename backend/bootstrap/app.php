@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Middleware\EnsurePermission;
+use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -17,12 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         // El permiso se comprueba antes de resolver el modelo: sin permiso siempre 403, nunca 404.
         $middleware->prependToPriorityList(
-            before: \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            prepend: \App\Http\Middleware\EnsurePermission::class,
+            before: SubstituteBindings::class,
+            prepend: EnsurePermission::class,
         );
         $middleware->alias([
-            'permission' => \App\Http\Middleware\EnsurePermission::class,
-            'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+            'permission' => EnsurePermission::class,
+            'active' => EnsureUserIsActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

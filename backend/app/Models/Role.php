@@ -11,8 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Role extends Model
 {
     public const ADMINISTRADOR = 'administrador';
+
     public const GERENTE_GENERAL = 'gerente_general';
+
     public const SUPERVISOR_VENTAS = 'supervisor_ventas';
+
     public const VENDEDOR = 'vendedor';
 
     public function permissions(): BelongsToMany
