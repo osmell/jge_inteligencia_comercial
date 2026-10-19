@@ -167,4 +167,19 @@ class AdminCrudTest extends TestCase
 
         $this->actingAs($user->fresh(), 'sanctum')->getJson('/api/v1/companies')->assertForbidden();
     }
+
+    public function test_validation_messages_are_in_spanish_with_friendly_field_names(): void
+    {
+        $this->actingAs($this->admin, 'sanctum');
+
+        $errors = $this->postJson('/api/v1/admin/users', [])->assertUnprocessable()->json('errors');
+
+        $this->assertSame('El campo usuario es obligatorio.', $errors['username'][0]);
+        $this->assertSame('El campo nombre es obligatorio.', $errors['name'][0]);
+        $this->assertSame('El campo contraseña es obligatorio.', $errors['password'][0]);
+
+        User::factory()->create(['username' => 'mlopez']);
+        $dup = $this->postJson('/api/v1/admin/users', $this->userPayload())->json('errors.username.0');
+        $this->assertSame('El valor de usuario ya está en uso.', $dup);
+    }
 }

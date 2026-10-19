@@ -1,7 +1,8 @@
+import { ChevronLeft, ChevronRight, Filter, ScrollText } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useLoad } from '../lib/useLoad'
 import type { AuditLog, Page } from '../lib/types'
-import { DataTable, FormError, PageHeader, TextField, td, th } from '../components/ui'
+import { Button, DataTable, EmptyRow, FormError, PageHeader, TableSkeleton, TextField, td, th, tr } from '../components/ui'
 
 export default function AuditPage() {
   const [event, setEvent] = useState('')
@@ -22,44 +23,49 @@ export default function AuditPage() {
 
   return (
     <section>
-      <PageHeader title="Auditoría" />
+      <PageHeader title="Auditoría" description="Registro de accesos y cambios. Los registros son de solo lectura." />
       <form onSubmit={onSearch} className="mb-4 flex flex-wrap items-end gap-3" role="search">
-        <div className="w-56"><TextField id="audit-event" label="Evento" placeholder="p. ej. auth.login" value={event} onChange={(e) => setEvent(e.target.value)} /></div>
-        <div className="w-56"><TextField id="audit-user" label="Usuario" value={username} onChange={(e) => setUsername(e.target.value)} /></div>
-        <button type="submit" className="rounded-md bg-jge-blue px-3 py-2 text-sm font-semibold text-white hover:bg-jge-blue-dark">Filtrar</button>
+        <div className="w-full sm:w-56"><TextField id="audit-event" label="Evento" placeholder="p. ej. auth.login" value={event} onChange={(e) => setEvent(e.target.value)} /></div>
+        <div className="w-full sm:w-56"><TextField id="audit-user" label="Usuario" value={username} onChange={(e) => setUsername(e.target.value)} /></div>
+        <Button type="submit" variant="secondary" icon={<Filter className="h-4 w-4" aria-hidden="true" />}>Filtrar</Button>
       </form>
 
       <FormError message={logs.error} />
       <DataTable label="Registros de auditoría">
         <thead><tr><th className={th}>Fecha</th><th className={th}>Usuario</th><th className={th}>Evento</th><th className={th}>Registro</th><th className={th}>IP</th><th className={th}>Detalle</th></tr></thead>
         <tbody>
+          {logs.loading && !page && <TableSkeleton cols={6} />}
           {(page?.data ?? []).map((l) => (
-            <tr key={l.id}>
-              <td className={td}>{new Date(l.created_at).toLocaleString('es')}</td>
-              <td className={td}>{l.username ?? '—'}</td>
-              <td className={td}>{l.event}</td>
+            <tr key={l.id} className={tr}>
+              <td className={`${td} tabular whitespace-nowrap`}>{new Date(l.created_at).toLocaleString('es')}</td>
+              <td className={`${td} font-mono text-[13px]`}>{l.username ?? '—'}</td>
+              <td className={td}><span className="rounded bg-jge-blue-50 px-1.5 py-0.5 font-mono text-[12px] text-jge-blue">{l.event}</span></td>
               <td className={td}>{l.auditable_type ? `${l.auditable_type.split('\\').pop()} #${l.auditable_id}` : '—'}</td>
-              <td className={td}>{l.ip_address ?? '—'}</td>
+              <td className={`${td} tabular font-mono text-[13px]`}>{l.ip_address ?? '—'}</td>
               <td className={td}>
                 {l.old_values || l.new_values ? (
                   <details>
-                    <summary className="cursor-pointer text-jge-blue underline">Ver cambios</summary>
-                    <pre className="mt-1 max-w-xs overflow-x-auto rounded bg-canvas p-2 text-xs">{JSON.stringify({ antes: l.old_values, despues: l.new_values }, null, 2)}</pre>
+                    <summary className="cursor-pointer text-sm font-medium text-jge-blue">Ver cambios</summary>
+                    <pre className="mt-2 max-w-xs overflow-x-auto rounded-lg bg-surface-muted p-3 font-mono text-xs">{JSON.stringify({ antes: l.old_values, despues: l.new_values }, null, 2)}</pre>
                   </details>
                 ) : '—'}
               </td>
             </tr>
           ))}
-          {!logs.loading && page?.data.length === 0 && <tr><td className={td} colSpan={6}>No hay registros para los filtros indicados.</td></tr>}
+          {!logs.loading && page?.data.length === 0 && (
+            <EmptyRow cols={6}><ScrollText className="mx-auto mb-2 h-6 w-6 text-ink-subtle" aria-hidden="true" />No hay registros para los filtros indicados.</EmptyRow>
+          )}
         </tbody>
       </DataTable>
 
       {page && (
-        <nav className="mt-3 flex items-center justify-between text-sm" aria-label="Paginación">
-          <span>Página {page.current_page} de {page.last_page} · {page.total} registros</span>
+        <nav className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm" aria-label="Paginación">
+          <span className="tabular text-ink-muted">Página {page.current_page} de {page.last_page} · {page.total} registros</span>
           <div className="flex gap-2">
-            <button className="rounded-md border border-line px-3 py-1.5 disabled:opacity-50" disabled={page.current_page <= 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}>Anterior</button>
-            <button className="rounded-md border border-line px-3 py-1.5 disabled:opacity-50" disabled={page.current_page >= page.last_page} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>Siguiente</button>
+            <Button variant="secondary" small icon={<ChevronLeft className="h-4 w-4" aria-hidden="true" />} disabled={page.current_page <= 1} onClick={() => setFilters({ ...filters, page: filters.page - 1 })}>Anterior</Button>
+            <Button variant="secondary" small disabled={page.current_page >= page.last_page} onClick={() => setFilters({ ...filters, page: filters.page + 1 })}>
+              Siguiente<ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </Button>
           </div>
         </nav>
       )}

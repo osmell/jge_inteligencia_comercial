@@ -1,18 +1,53 @@
+@import "@fontsource/fira-sans/400.css";
+@import "@fontsource/fira-sans/500.css";
+@import "@fontsource/fira-sans/600.css";
+@import "@fontsource/fira-sans/700.css";
+@import "@fontsource/fira-code/400.css";
+@import "@fontsource/fira-code/500.css";
 @import "tailwindcss";
 
-/* Paleta corporativa JGE (pendiente de validar contra los colores exactos del logo original). */
+/*
+ * Sistema de diseño JGE — estilo corporativo sobrio (Minimalism / Swiss) para panel empresarial.
+ * Colores de marca del contexto maestro (pendientes de validar contra el logo original);
+ * los neutros siguen una escala slate de alto contraste. Todos los pares de texto cumplen WCAG AA.
+ */
 @theme {
-  --color-jge-red: #e50918;
+  /* Marca */
   --color-jge-blue: #07579b;
   --color-jge-blue-dark: #054270;
+  --color-jge-blue-50: #eaf2f9;
+  --color-jge-blue-100: #cfe2f2;
+  --color-jge-navy: #0a2f52;
+  --color-jge-navy-soft: #123f69;
+  --color-jge-red: #e50918;
   --color-jge-charcoal: #353535;
+
+  /* Superficies y texto */
+  --color-canvas: #f4f6f9;
   --color-surface: #ffffff;
-  --color-canvas: #f5f7fa;
+  --color-surface-muted: #f8fafc;
   --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+  --color-ink: #0f172a;
+  --color-ink-muted: #475569;
+  --color-ink-subtle: #64748b;
+
+  /* Estado (siempre acompañados de texto/icono) */
   --color-success: #16803c;
+  --color-success-50: #ecfdf3;
   --color-warning: #b7791f;
+  --color-warning-50: #fff8e6;
   --color-danger: #c62828;
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-danger-50: #fef2f2;
+  --color-info: #07579b;
+  --color-info-50: #eaf2f9;
+
+  --font-sans: "Fira Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --radius-card: 0.625rem;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 1px 3px rgb(15 23 42 / 0.04);
+  --shadow-pop: 0 10px 30px rgb(15 23 42 / 0.18);
 }
 
 html,
@@ -23,11 +58,55 @@ body,
 
 body {
   background-color: var(--color-canvas);
-  color: var(--color-jge-charcoal);
+  color: var(--color-ink);
   font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Cifras alineadas en columnas de datos */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 :focus-visible {
   outline: 2px solid var(--color-jge-blue);
   outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* En superficies oscuras el aro de foco debe verse */
+.on-dark:focus-visible,
+.on-dark *:focus-visible {
+  outline-color: #ffffff;
+}
+
+@keyframes skeleton {
+  0% { opacity: 1; }
+  50% { opacity: 0.45; }
+  100% { opacity: 1; }
+}
+.skeleton {
+  animation: skeleton 1.4s ease-in-out infinite;
+  background: var(--color-line);
+  border-radius: 0.375rem;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.toast-in {
+  animation: toast-in 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

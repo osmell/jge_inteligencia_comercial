@@ -1,11 +1,56 @@
 <?php
 
 return [
+    'array' => 'El campo :attribute debe ser una lista.',
+    'boolean' => 'El campo :attribute debe ser verdadero o falso.',
+    'distinct' => 'El campo :attribute tiene valores repetidos.',
+    'email' => 'El campo :attribute debe ser un correo válido.',
+    'exists' => 'El valor seleccionado en :attribute no es válido.',
+    'file' => 'El campo :attribute debe ser un archivo.',
+    'in' => 'El valor seleccionado en :attribute no es válido.',
+    'integer' => 'El campo :attribute debe ser un número entero.',
+    'max' => [
+        'array' => 'El campo :attribute no debe tener más de :max elementos.',
+        'file' => 'El archivo :attribute no debe superar :max kilobytes.',
+        'numeric' => 'El campo :attribute no debe ser mayor que :max.',
+        'string' => 'El campo :attribute no debe superar :max caracteres.',
+    ],
+    'mimes' => 'El campo :attribute debe ser un archivo de tipo: :values.',
+    'min' => [
+        'array' => 'El campo :attribute debe tener al menos :min elementos.',
+        'file' => 'El archivo :attribute debe pesar al menos :min kilobytes.',
+        'numeric' => 'El campo :attribute debe ser al menos :min.',
+        'string' => 'El campo :attribute debe tener al menos :min caracteres.',
+    ],
+    'present' => 'El campo :attribute debe estar presente.',
+    'prohibited' => 'El campo :attribute no se puede modificar.',
+    'regex' => 'El formato del campo :attribute no es válido.',
     'required' => 'El campo :attribute es obligatorio.',
     'string' => 'El campo :attribute debe ser texto.',
-    'max' => ['string' => 'El campo :attribute no debe superar :max caracteres.'],
+    'unique' => 'El valor de :attribute ya está en uso.',
+
+    'password' => [
+        'letters' => 'La :attribute debe contener al menos una letra.',
+        'numbers' => 'La :attribute debe contener al menos un número.',
+        'mixed' => 'La :attribute debe contener mayúsculas y minúsculas.',
+        'symbols' => 'La :attribute debe contener al menos un símbolo.',
+        'uncompromised' => 'La :attribute aparece en filtraciones de datos; elige otra.',
+    ],
+
     'attributes' => [
         'username' => 'usuario',
         'password' => 'contraseña',
+        'name' => 'nombre',
+        'code' => 'código',
+        'email' => 'correo',
+        'role_id' => 'rol',
+        'is_active' => 'estado',
+        'company_id' => 'compañía',
+        'company_ids' => 'compañías',
+        'company_ids.*' => 'compañía',
+        'branch_ids' => 'sucursales',
+        'branch_ids.*' => 'sucursal',
+        'file' => 'archivo',
+        'type' => 'tipo',
     ],
 ];
