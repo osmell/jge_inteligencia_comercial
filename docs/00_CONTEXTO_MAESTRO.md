@@ -75,6 +75,8 @@ Archivo recibido: `Plantilla Ventas.xlsx`, hoja `Hoja1`. Se observan 18 columnas
 - Nombre Facturador
 
 La muestra contiene filas de detalle por producto y repite el documento en múltiples líneas. La importación debe agrupar lógicamente por documento/serie y preservar cada línea. No asumir que la muestra contiene fecha, compañía, sucursal, moneda, tipo de venta o estado del documento: no aparecen entre las 18 columnas observadas. Confirmar cómo se obtienen esos datos antes de producir KPI temporal, multiempresa, sucursal o crédito.
+**Actualización (2026-10-18):** el responsable del Excel confirmó que se agregarán columnas de fecha, compañía y sucursal; que `Documento` + `Serie` es el identificador único; que `Costo Unit.Vta.` es costo unitario; que Nivel 2 es la categoría (existe Nivel 1 = línea); que no vienen facturas anuladas; y que la columna del facturador se llama `Nombre Operador`. Los datos de la plantilla son ficticios. Detalle y pendientes en `10_DECISIONES_PENDIENTES.md`.
+
 **Observación de calidad:** en la muestra hay valores en que `Venta + Imp` y `Gran Total` no coinciden, y también diferencias aparentes entre `Total Neto`, impuesto y total. No corregir silenciosamente: definir la semántica con el propietario del dato y crear controles de conciliación.
 Los nombres “Nombre Nivel 2 Inv” y “Nombre Facturador” requieren definición funcional. El primero parece una clasificación de inventario, pero no debe darse por hecho que sea línea/categoría hasta confirmación.
 
@@ -129,7 +131,7 @@ Aplicar autorización en backend, no solo ocultar controles en frontend. Todos l
 - Nunca usar datos reales sensibles en fixtures o pruebas.
 - No introducir integración WhatsApp, IA predictiva o automatizaciones externas hasta la fase autorizada.
 
-## 12. Decisiones pendientes críticas
+## 12. Decisiones pendientes críticas (ver estado actualizado en `10_DECISIONES_PENDIENTES.md`; siguen abiertos principalmente el punto 3, importes, y el detalle de costo, devoluciones y operador)
 1. Cómo se identifican compañía y sucursal en la plantilla de ventas, dado que no aparecen en las columnas observadas.
 2. Qué columna representa fecha de factura/venta; no se observa en la plantilla.
 3. Semántica de `Venta + Imp` frente a `Gran Total` y reglas de impuestos/descuentos.
