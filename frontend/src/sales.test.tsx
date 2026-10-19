@@ -2,7 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import SalesDashboardPage from './pages/SalesDashboardPage'
-import { daysBetween, presetRange } from './lib/sales'
+import { daysBetween, presetRange, yearAgoRange } from './lib/sales'
 
 const kpis = (o: Record<string, unknown> = {}) => ({
   net_total: '1000.00', tax_total: '120.00', grand_total: '1120.00', units: '40.00', documents: 10, customers: 6,
@@ -143,6 +143,102 @@ describe('dashboard de ventas', () => {
     render(<SalesDashboardPage />)
 
     expect((await screen.findAllByRole('alert'))[0]).toHaveTextContent('No tienes permiso para realizar esta acción.')
+  })
+})
+
+describe('comparación de periodos', () => {
+  const params = (needle: string) => new URL(last(needle), 'http://x').searchParams
+
+  beforeEach(() => {
+    respond = (path) => {
+      if (path.startsWith('/companies') || path.startsWith('/branches')) return { data: [] }
+      if (path.startsWith('/sales/summary')) return summary()
+      if (path.startsWith('/sales/rankings')) return rankingsBody
+      const dim = new URL(path, 'http://x').searchParams.get('dimension')
+      if (dim === 'seller') {
+        return {
+          data: [
+            { ...row('7', 'María López', '700.00'), previous_net_total: '400.00', net_change_pct: 75 },
+            { ...row('8', 'Pedro Ruiz', '300.00'), previous_net_total: '0.00', net_change_pct: null },
+          ],
+          meta: { dimension: 'seller', truncated: false },
+        }
+      }
+      return { data: [], meta: { dimension: String(dim), truncated: false } }
+    }
+    mockApi()
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('por defecto compara con el periodo anterior automático', async () => {
+    render(<SalesDashboardPage />)
+
+    expect(await screen.findByText(/Comparado con: 2026-09-12 a 2026-09-30/)).toBeInTheDocument()
+    expect(last('/sales/summary')).not.toContain('compare_from')
+    expect(card('Venta neta')).toHaveTextContent('vs. periodo anterior')
+  })
+
+  it('compara con el mismo periodo del año anterior', async () => {
+    render(<SalesDashboardPage />)
+    await screen.findByRole('table', { name: 'Ventas por vendedor' })
+    await userEvent.selectOptions(screen.getByLabelText('Comparar con'), 'year')
+
+    await waitFor(() => expect(last('/sales/summary')).toContain('compare_from'))
+    const p = params('/sales/summary')
+    expect(Number(p.get('compare_from')!.slice(0, 4))).toBe(Number(p.get('from')!.slice(0, 4)) - 1)
+    expect(last('/sales/breakdown?')).toContain('compare_to')
+    expect(card('Venta neta')).toHaveTextContent('vs. periodo comparado')
+  })
+
+  it('compara con otro periodo elegido y valida sus fechas antes de consultar', async () => {
+    render(<SalesDashboardPage />)
+    await screen.findByRole('table', { name: 'Ventas por vendedor' })
+    await userEvent.selectOptions(screen.getByLabelText('Comparar con'), 'custom')
+
+    expect(await screen.findByText('Indica la fecha inicial y la final de comparación.')).toBeInTheDocument()
+    const before = urls.length
+    await userEvent.type(screen.getByLabelText('Comparar desde'), '2026-09-10')
+    await userEvent.type(screen.getByLabelText('Comparar hasta'), '2026-09-01')
+    expect(await screen.findByText('La fecha final no puede ser anterior a la inicial de comparación.')).toBeInTheDocument()
+    expect(urls.length).toBe(before)                                          // no se consultó con fechas inválidas
+
+    await userEvent.clear(screen.getByLabelText('Comparar hasta'))
+    await userEvent.type(screen.getByLabelText('Comparar hasta'), '2026-09-30')
+    await waitFor(() => expect(last('/sales/summary')).toContain('compare_from=2026-09-10&compare_to=2026-09-30'))
+  })
+
+  it('avisa si los periodos son de distinta duración o se traslapan', async () => {
+    const base = respond
+    respond = (path) => path.startsWith('/sales/summary')
+      ? summary({ comparison: 'custom', warnings: ['different_length', 'overlapping_periods'], previous_period: { from: '2026-10-05', to: '2026-10-09', days: 5 } })
+      : base(path)
+    render(<SalesDashboardPage />)
+
+    expect(await screen.findByText(/distinta duración \(19 y 5 días\)/)).toBeInTheDocument()
+    expect(screen.getByText(/se traslapan/)).toBeInTheDocument()
+  })
+
+  it('muestra la variación por fila y «Sin ventas antes» cuando no había base', async () => {
+    render(<SalesDashboardPage />)
+    const table = await screen.findByRole('table', { name: 'Ventas por vendedor' })
+
+    expect(await within(table).findByText('+75,0 %')).toBeInTheDocument()
+    expect(within(table).getByText('Sin ventas antes')).toBeInTheDocument()
+  })
+
+  it('las exportaciones llevan el periodo comparado', async () => {
+    vi.stubGlobal('URL', { ...URL, createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() })
+    render(<SalesDashboardPage />)
+    await screen.findByRole('table', { name: 'Ventas por vendedor' })
+    await userEvent.selectOptions(screen.getByLabelText('Comparar con'), 'year')
+    await userEvent.click(screen.getByRole('button', { name: 'Exportar a Excel' }))
+
+    await waitFor(() => expect(last('/sales/export')).toContain('compare_from='))
+  })
+
+  it('calcula el mismo rango un año antes, incluido el 29 de febrero', () => {
+    expect(yearAgoRange({ from: '2026-10-01', to: '2026-10-19' })).toEqual({ from: '2025-10-01', to: '2025-10-19' })
+    expect(yearAgoRange({ from: '2024-02-01', to: '2024-02-29' })).toEqual({ from: '2023-02-01', to: '2023-02-28' })
   })
 })
 

@@ -23,18 +23,19 @@ class SalesStatsController extends Controller
 
     public function summary(SalesStatsRequest $request): JsonResponse
     {
-        return response()->json(['data' => $this->stats->summary($request->from(), $request->to(), $request->filters())]);
+        return response()->json(['data' => $this->stats->summary($request->from(), $request->to(), $request->filters(), $request->compare())]);
     }
 
     public function breakdown(SalesStatsRequest $request): JsonResponse
     {
-        $result = $this->stats->breakdown(
+        $result = $this->stats->breakdownCompared(
             $request->validated('dimension'),
             $request->from(),
             $request->to(),
             $request->filters(),
             $request->validated('sort') ?? 'net_total',
             (int) ($request->validated('limit') ?? 20),
+            $this->stats->comparisonRange($request->from(), $request->to(), $request->compare()),
         );
 
         return response()->json([
@@ -70,23 +71,25 @@ class SalesStatsController extends Controller
         $from = $request->from();
         $to = $request->to();
         $filters = $request->filters();
+        $compare = $request->compare();
 
         $this->audit->record('sales.exported', $request->user(), new: [
             'format' => $format, 'dimension' => $format === 'csv' ? $dimension : 'all',
             'from' => $from->toDateString(), 'to' => $to->toDateString(), 'filters' => $filters,
+            'compare' => $compare ? ['from' => $compare[0]->toDateString(), 'to' => $compare[1]->toDateString()] : null,
         ]);
 
         $range = "{$from->toDateString()}_{$to->toDateString()}";
 
         if ($format === 'csv') {
-            return response()->streamDownload(function () use ($dimension, $from, $to, $filters) {
+            return response()->streamDownload(function () use ($dimension, $from, $to, $filters, $compare) {
                 $out = fopen('php://output', 'w');
-                $this->exporter->writeCsv($out, $dimension, $from, $to, $filters);
+                $this->exporter->writeCsv($out, $dimension, $from, $to, $filters, $compare);
                 fclose($out);
             }, "ventas-por-{$dimension}-{$range}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
         }
 
-        $path = $this->exporter->buildWorkbook($from, $to, $filters, $request->user()->name);
+        $path = $this->exporter->buildWorkbook($from, $to, $filters, $request->user()->name, $compare);
 
         return response()->download($path, "ventas-{$range}.xlsx")->deleteFileAfterSend();
     }

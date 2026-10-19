@@ -32,6 +32,13 @@ class SalesReportExporter
         'estimated_margin' => 'Margen estimado', 'estimated_margin_pct' => 'Margen estimado %', 'cost_coverage_pct' => 'Cobertura de costo %',
     ];
 
+    private const COMPARISON_HEADERS = ['Venta neta periodo comparado', 'Variación venta neta %'];
+
+    private const COMPARISON_WARNINGS = [
+        'different_length' => 'Los periodos comparados tienen distinta duración: los totales no son equivalentes.',
+        'overlapping_periods' => 'Los periodos comparados se traslapan.',
+    ];
+
     public function __construct(private readonly SalesStatistics $stats) {}
 
     /**
@@ -39,22 +46,24 @@ class SalesReportExporter
      *
      * @param  resource  $out
      * @param  array<string, mixed>  $filters
+     * @param  array{0: CarbonImmutable, 1: CarbonImmutable}|null  $compare
      */
-    public function writeCsv($out, string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters): void
+    public function writeCsv($out, string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, ?array $compare = null): void
     {
         fwrite($out, "\xEF\xBB\xBF");
-        fputcsv($out, [self::LABELS[$dimension], 'Clave', ...array_values(self::METRICS)]);
+        fputcsv($out, [self::LABELS[$dimension], 'Clave', ...array_values(self::METRICS), ...self::COMPARISON_HEADERS]);
 
-        foreach ($this->rows($dimension, $from, $to, $filters) as $row) {
-            fputcsv($out, [self::csvSafe($row['label']), self::csvSafe($row['key']), ...$this->metricValues($row)]);
+        foreach ($this->rows($dimension, $from, $to, $filters, $compare) as $row) {
+            fputcsv($out, [self::csvSafe($row['label']), self::csvSafe($row['key']), ...$this->metricValues($row), $row['previous_net_total'] ?? null, $row['net_change_pct'] ?? null]);
         }
     }
 
     /**
      * @param  array<string, mixed>  $filters
+     * @param  array{0: CarbonImmutable, 1: CarbonImmutable}|null  $compare
      * @return string ruta de un archivo temporal (el llamador lo elimina)
      */
-    public function buildWorkbook(CarbonImmutable $from, CarbonImmutable $to, array $filters, string $generatedBy): string
+    public function buildWorkbook(CarbonImmutable $from, CarbonImmutable $to, array $filters, string $generatedBy, ?array $compare = null): string
     {
         $path = tempnam(sys_get_temp_dir(), 'rpt').'.xlsx';
         $bold = (new Style)->withFontBold(true);
@@ -63,22 +72,27 @@ class SalesReportExporter
         $writer = new Writer;
         $writer->openToFile($path);
 
-        $summary = $this->stats->summary($from, $to, $filters);
+        $summary = $this->stats->summary($from, $to, $filters, $compare);
         $writer->getCurrentSheet()->setName('Resumen');
         $writer->addRow($header(['Reporte de ventas']));
         $writer->addRows([
             Row::fromValues(['Periodo', "{$summary['period']['from']} a {$summary['period']['to']}"]),
-            Row::fromValues(['Periodo anterior', "{$summary['previous_period']['from']} a {$summary['previous_period']['to']}"]),
+            Row::fromValues([$summary['comparison'] === 'custom' ? 'Periodo comparado' : 'Periodo anterior', "{$summary['previous_period']['from']} a {$summary['previous_period']['to']}"]),
             Row::fromValues(['Filtros', $this->describeFilters($filters)]),
             Row::fromValues(['Generado por', $generatedBy]),
             Row::fromValues(['Generado el', now()->format('Y-m-d H:i')]),
             Row::fromValues(['Margen', 'Estimado con el costo actual (no el histórico), solo sobre líneas con costo válido.']),
         ]);
         if (in_array('previous_period_incomplete', $summary['warnings'], true)) {
-            $writer->addRow(Row::fromValues(['Aviso', "El historial empieza el {$summary['first_sale_date']}: la comparación con el periodo anterior es parcial."]));
+            $writer->addRow(Row::fromValues(['Aviso', "El historial empieza el {$summary['first_sale_date']}: la comparación es parcial."]));
+        }
+        foreach (self::COMPARISON_WARNINGS as $code => $text) {
+            if (in_array($code, $summary['warnings'], true)) {
+                $writer->addRow(Row::fromValues(['Aviso', $text]));
+            }
         }
         $writer->addRow(Row::fromValues([]));
-        $writer->addRow($header(['Indicador', 'Periodo', 'Periodo anterior', 'Variación %']));
+        $writer->addRow($header(['Indicador', 'Periodo', 'Periodo comparado', 'Variación %']));
         foreach (['net_total', 'tax_total', 'grand_total', 'units', 'documents', 'customers', 'average_ticket', 'estimated_margin'] as $metric) {
             $writer->addRow(Row::fromValues([
                 self::METRICS[$metric],
@@ -88,9 +102,9 @@ class SalesReportExporter
 
         foreach (SalesStatistics::dimensions() as $dimension) {
             $writer->addNewSheetAndMakeItCurrent()->setName('Por '.mb_strtolower(self::LABELS[$dimension]));
-            $writer->addRow($header([self::LABELS[$dimension], 'Clave', ...array_values(self::METRICS)]));
-            foreach ($this->rows($dimension, $from, $to, $filters) as $row) {
-                $writer->addRow(Row::fromValues([$row['label'], $row['key'], ...array_map($this->number(...), $this->metricValues($row))]));
+            $writer->addRow($header([self::LABELS[$dimension], 'Clave', ...array_values(self::METRICS), ...self::COMPARISON_HEADERS]));
+            foreach ($this->rows($dimension, $from, $to, $filters, $compare) as $row) {
+                $writer->addRow(Row::fromValues([$row['label'], $row['key'], ...array_map($this->number(...), $this->metricValues($row)), $this->number($row['previous_net_total'] ?? null), $row['net_change_pct'] ?? null]));
             }
         }
 
@@ -99,10 +113,14 @@ class SalesReportExporter
         return $path;
     }
 
-    /** @param  array<string, mixed>  $filters  @return list<array<string, mixed>> */
-    private function rows(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters): array
+    /**
+     * @param  array<string, mixed>  $filters
+     * @param  array{0: CarbonImmutable, 1: CarbonImmutable}|null  $compare
+     * @return list<array<string, mixed>>
+     */
+    private function rows(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, ?array $compare): array
     {
-        return $this->stats->breakdown($dimension, $from, $to, $filters, 'net_total', self::MAX_ROWS)['rows'];
+        return $this->stats->breakdownCompared($dimension, $from, $to, $filters, 'net_total', self::MAX_ROWS, $this->stats->comparisonRange($from, $to, $compare))['rows'];
     }
 
     /** @param  array<string, mixed>  $row  @return list<mixed> */

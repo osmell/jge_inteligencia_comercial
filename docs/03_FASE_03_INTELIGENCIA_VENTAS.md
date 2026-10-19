@@ -82,5 +82,19 @@ Pendiente: PDF para impresión, si se necesita.
 - Corrección aplicada al desglose general: al ordenar por `margin`, los grupos sin costo van al final tanto en PostgreSQL como en SQLite (`desc nulls last`); antes PostgreSQL los habría puesto primero.
 - Verificado en PostgreSQL con los datos demo: los tres primeros de cada ranking coinciden con una consulta SQL directa.
 
+### Paso 6 — Comparación libre de periodos (implementado)
+`summary`, `breakdown` y `export` aceptan `compare_from` y `compare_to` (ambos o ninguno; `YYYY-MM-DD`, máximo 1 096 días). Sin ellos se sigue usando el periodo equivalente anterior. En la pantalla, el selector «Comparar con» ofrece: periodo anterior, mismo periodo del año anterior (el 29 de febrero pasa al 28 si el año anterior no es bisiesto) u otro periodo con fechas propias.
+
+- `summary` devuelve `comparison` (`automatic` o `custom`), `previous_period` con sus fechas y días, y los avisos:
+  - `previous_period_incomplete`: la primera venta cargada es posterior al inicio del periodo comparado.
+  - `different_length`: los periodos tienen distinta duración, así que importes, documentos y unidades no son equivalentes (se muestra con las dos duraciones).
+  - `overlapping_periods`: los periodos se traslapan.
+  Los avisos no bloquean la comparación: la advierten.
+- `breakdown` agrega por fila `previous_net_total` y `net_change_pct` (no aplica a mes ni día). Si el grupo no vendió antes, la variación es `null` y la pantalla dice «Sin ventas antes» en lugar de inventar un porcentaje.
+- Excel y CSV incluyen el periodo comparado: en «Resumen» (con sus avisos) y dos columnas más en cada desglose. La auditoría de la exportación guarda el periodo comparado.
+- Si el rango de comparación es inválido, la pantalla lo explica y no consulta.
+- Correcciones al filtrar por fecha: el rango es ahora «>= desde y < hasta + 1 día» (antes `BETWEEN`) y la primera fecha de venta se normaliza; ambos fallaban en SQLite —solo pruebas— cuando el periodo era de un solo día o empezaba justo en la primera venta. PostgreSQL no estaba afectado, y el filtro actual conserva el uso de índices.
+- Verificado en PostgreSQL con los datos demo: totales y variaciones coinciden con SQL directo (p. ej., 30 días contra agosto: +14,51 %); el mismo periodo del año anterior avisa de historial incompleto porque los datos demo empiezan el 2025-11-01.
+
 ### Siguiente
-Comparación libre de periodos (dos rangos elegidos por el usuario) y metas mensuales por vendedor (requiere definir la regla de metas, decisión #16). Con ello se cierra la Fase 3, junto con la revisión visual en navegador pendiente.
+Metas mensuales por vendedor (requiere definir la regla de metas, decisión #16). Es lo único que falta del alcance de la Fase 3, junto con la revisión visual en navegador y los criterios de aceptación contra un reporte validado (necesita datos reales).

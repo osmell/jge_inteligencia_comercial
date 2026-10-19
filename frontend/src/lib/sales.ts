@@ -19,6 +19,7 @@ export interface SalesSummary {
   current: Kpis
   previous: Kpis
   change_pct: Record<KpiKey, number | null>
+  comparison: 'automatic' | 'custom'
   first_sale_date: string | null
   warnings: string[]
 }
@@ -26,6 +27,9 @@ export interface SalesSummary {
 export interface BreakdownRow extends Kpis {
   key: string
   label: string
+  /** Solo en desgloses por entidad (no por mes ni día). */
+  previous_net_total?: string
+  net_change_pct?: number | null
 }
 
 export interface Breakdown {
@@ -88,6 +92,24 @@ export function presetRange(preset: Exclude<Preset, 'custom'>, today = new Date(
     case 'ytd':
       return { from: isoDate(new Date(y, 0, 1)), to: isoDate(today) }
   }
+}
+
+export type Compare = 'previous' | 'year' | 'custom'
+
+export const COMPARE_LABEL: Record<Compare, string> = {
+  previous: 'Periodo anterior',
+  year: 'Mismo periodo del año anterior',
+  custom: 'Otro periodo',
+}
+
+/** Mismo rango un año antes; el 29 de febrero pasa al 28 si el año anterior no es bisiesto. */
+export function yearAgoRange(range: { from: string; to: string }): { from: string; to: string } {
+  const shift = (iso: string) => {
+    const [y, m, d] = iso.split('-').map(Number)
+    const lastDay = new Date(y - 1, m, 0).getDate()
+    return isoDate(new Date(y - 1, m - 1, Math.min(d, lastDay)))
+  }
+  return { from: shift(range.from), to: shift(range.to) }
 }
 
 export function daysBetween(from: string, to: string): number {

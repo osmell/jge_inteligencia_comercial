@@ -17,6 +17,9 @@ class SalesStatsRequest extends FormRequest
         return [
             'from' => ['required', 'date_format:Y-m-d'],
             'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from'],
+            // Periodo de comparación opcional; sin él se usa el equivalente anterior.
+            'compare_from' => ['nullable', 'required_with:compare_to', 'date_format:Y-m-d'],
+            'compare_to' => ['nullable', 'required_with:compare_from', 'date_format:Y-m-d', 'after_or_equal:compare_from'],
             'company_id' => ['nullable', 'integer', 'min:1'],
             'branch_id' => ['nullable', 'integer', 'min:1'],
             'seller_id' => ['nullable', 'integer', 'min:1'],
@@ -40,6 +43,11 @@ class SalesStatsRequest extends FormRequest
             if ($this->from()->diffInDays($this->to()) + 1 > self::MAX_DAYS) {
                 $validator->errors()->add('to', 'El rango máximo es de '.self::MAX_DAYS.' días.');
             }
+
+            $compare = $this->compare();
+            if ($compare && ! $validator->errors()->hasAny(['compare_from', 'compare_to']) && $compare[0]->diffInDays($compare[1]) + 1 > self::MAX_DAYS) {
+                $validator->errors()->add('compare_to', 'El rango máximo es de '.self::MAX_DAYS.' días.');
+            }
         }];
     }
 
@@ -51,6 +59,23 @@ class SalesStatsRequest extends FormRequest
     public function to(): CarbonImmutable
     {
         return CarbonImmutable::parse($this->validated('to'))->startOfDay();
+    }
+
+    /** @return array{0: CarbonImmutable, 1: CarbonImmutable}|null */
+    public function compare(): ?array
+    {
+        $from = $this->input('compare_from');
+        $to = $this->input('compare_to');
+
+        if (! is_string($from) || ! is_string($to) || $from === '' || $to === '') {
+            return null;
+        }
+
+        try {
+            return [CarbonImmutable::createFromFormat('!Y-m-d', $from), CarbonImmutable::createFromFormat('!Y-m-d', $to)];
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /** @return array<string, mixed> */

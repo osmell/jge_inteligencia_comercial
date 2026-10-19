@@ -18,6 +18,9 @@ class SalesStatistics
     /** Dimensiones de desglose: clave => [expresión de grupo, expresión de etiqueta, join necesario]. */
     private const DIMENSIONS = ['company', 'branch', 'seller', 'operator', 'category', 'product', 'customer', 'month', 'day'];
 
+    /** Filas máximas del periodo de comparación al emparejar grupos. */
+    private const COMPARISON_ROWS = 5000;
+
     /** Métricas por las que se puede ordenar un desglose. */
     public const SORTS = ['net_total', 'tax_total', 'grand_total', 'units', 'documents', 'customers', 'margin'];
 
@@ -28,36 +31,91 @@ class SalesStatistics
     }
 
     /**
-     * KPI del periodo y del periodo equivalente anterior (misma duración, inmediatamente antes).
+     * Periodo contra el que se compara: el indicado por el usuario o, por defecto, el equivalente anterior
+     * (misma duración, inmediatamente antes).
      *
-     * @param  array<string, mixed>  $filters
-     * @return array<string, mixed>
+     * @param  array{0: CarbonImmutable, 1: CarbonImmutable}|null  $compare
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable}
      */
-    public function summary(CarbonImmutable $from, CarbonImmutable $to, array $filters): array
+    public function comparisonRange(CarbonImmutable $from, CarbonImmutable $to, ?array $compare = null): array
     {
+        if ($compare) {
+            return $compare;
+        }
+
         $days = (int) $from->diffInDays($to) + 1;
         $previousTo = $from->subDay();
-        $previousFrom = $previousTo->subDays($days - 1);
+
+        return [$previousTo->subDays($days - 1), $previousTo];
+    }
+
+    /**
+     * KPI del periodo y del periodo de comparación, con avisos cuando la comparación no es equivalente.
+     *
+     * @param  array<string, mixed>  $filters
+     * @param  array{0: CarbonImmutable, 1: CarbonImmutable}|null  $compare
+     * @return array<string, mixed>
+     */
+    public function summary(CarbonImmutable $from, CarbonImmutable $to, array $filters, ?array $compare = null): array
+    {
+        $days = (int) $from->diffInDays($to) + 1;
+        [$previousFrom, $previousTo] = $this->comparisonRange($from, $to, $compare);
+        $previousDays = (int) $previousFrom->diffInDays($previousTo) + 1;
 
         $current = $this->kpis($this->base($from, $to, $filters));
         $previous = $this->kpis($this->base($previousFrom, $previousTo, $filters));
 
-        $firstDate = $this->base(null, null, $filters)->min('sales_lines.issued_on');
+        $first = $this->base(null, null, $filters)->min('sales_lines.issued_on');
+        $firstDate = $first ? CarbonImmutable::parse($first)->toDateString() : null;   // SQLite devuelve la fecha con hora
         $warnings = [];
         if ($firstDate === null || $firstDate > $previousFrom->toDateString()) {
             $warnings[] = 'previous_period_incomplete';
         }
+        if ($previousDays !== $days) {
+            $warnings[] = 'different_length';
+        }
+        if ($previousFrom <= $to && $previousTo >= $from) {
+            $warnings[] = 'overlapping_periods';
+        }
 
         return [
             'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString(), 'days' => $days],
-            'previous_period' => ['from' => $previousFrom->toDateString(), 'to' => $previousTo->toDateString(), 'days' => $days],
+            'previous_period' => ['from' => $previousFrom->toDateString(), 'to' => $previousTo->toDateString(), 'days' => $previousDays],
+            'comparison' => $compare ? 'custom' : 'automatic',
             'current' => $current,
             'previous' => $previous,
             'change_pct' => $this->changes($current, $previous),
-            'first_sale_date' => $firstDate ? CarbonImmutable::parse($firstDate)->toDateString() : null,
+            'first_sale_date' => $firstDate,
             'warnings' => $warnings,
             'notes' => ['margin' => 'estimated_with_current_cost'],
         ];
+    }
+
+    /**
+     * Desglose con la venta neta del periodo de comparación y su variación por fila (no aplica a mes ni día).
+     *
+     * @param  array<string, mixed>  $filters
+     * @param  array{0: CarbonImmutable, 1: CarbonImmutable}  $compare
+     * @return array{rows: list<array<string, mixed>>, truncated: bool}
+     */
+    public function breakdownCompared(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $sort, int $limit, array $compare): array
+    {
+        $result = $this->breakdown($dimension, $from, $to, $filters, $sort, $limit);
+
+        if (in_array($dimension, ['month', 'day'], true)) {
+            return $result;
+        }
+
+        $before = collect($this->breakdown($dimension, $compare[0], $compare[1], $filters, 'net_total', self::COMPARISON_ROWS)['rows'])->keyBy('key');
+
+        $result['rows'] = array_map(function (array $row) use ($before) {
+            $previous = (float) ($before[$row['key']]['net_total'] ?? 0);
+            $now = (float) $row['net_total'];
+
+            return [...$row, 'previous_net_total' => $this->money($previous), 'net_change_pct' => $previous > 0 ? round(($now - $previous) / $previous * 100, 2) : null];
+        }, $result['rows']);
+
+        return $result;
     }
 
     /**
@@ -122,7 +180,9 @@ class SalesStatistics
         $query = SalesLine::query()->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id');
 
         if ($from && $to) {
-            $query->whereBetween('sales_lines.issued_on', [$from->toDateString(), $to->toDateString()]);
+            // Medio abierto (>= desde, < hasta + 1 día): incluye el último día aunque el motor guarde la fecha con hora.
+            $query->where('sales_lines.issued_on', '>=', $from->toDateString())
+                ->where('sales_lines.issued_on', '<', $to->addDay()->toDateString());
         }
 
         foreach (['company_id' => 'sales_lines.company_id', 'branch_id' => 'sales_lines.branch_id', 'seller_id' => 'sd.seller_id', 'operator_id' => 'sd.operator_id'] as $filter => $column) {

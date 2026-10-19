@@ -394,4 +394,89 @@ class SalesStatsApiTest extends TestCase
         $this->assertSame(['P3', 'P1', 'P2'], array_column($rows, 'key'));
         $this->assertNull($rows[2]['estimated_margin']);
     }
+
+    private function summaryFor(array $params): array
+    {
+        return $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/v1/sales/summary?'.http_build_query($this->range(['company_id' => $this->a->id, ...$params])))
+            ->assertOk()->json('data');
+    }
+
+    public function test_custom_comparison_period_replaces_the_automatic_one(): void
+    {
+        $data = $this->summaryFor(['compare_from' => '2026-10-03', 'compare_to' => '2026-10-09']);
+
+        $this->assertSame('custom', $data['comparison']);
+        $this->assertSame(['from' => '2026-10-03', 'to' => '2026-10-09', 'days' => 7], $data['previous_period']);
+        $this->assertSame([], $data['warnings']);                                  // misma duración, sin traslape, con historial
+
+        $other = $this->summaryFor(['compare_from' => '2026-09-01', 'compare_to' => '2026-09-01']);
+        $this->assertSame('10.00', $other['previous']['net_total']);               // solo la venta del 1 de septiembre
+        $this->assertEquals(6400.0, $other['change_pct']['net_total']);            // (650 − 10) / 10
+        $this->assertSame(1, $other['previous_period']['days']);
+
+        $this->assertSame('automatic', $this->summaryFor([])['comparison']);
+    }
+
+    public function test_comparison_warns_about_different_length_overlap_and_missing_history(): void
+    {
+        $this->assertSame(['different_length'], $this->summaryFor(['compare_from' => '2026-09-01', 'compare_to' => '2026-09-01'])['warnings']);
+        $this->assertSame(['overlapping_periods'], $this->summaryFor(['compare_from' => '2026-10-12', 'compare_to' => '2026-10-18'])['warnings']);
+
+        $early = $this->summaryFor(['compare_from' => '2026-08-01', 'compare_to' => '2026-08-07'])['warnings'];
+        $this->assertSame(['previous_period_incomplete'], $early);                  // el historial empieza el 1 de septiembre
+    }
+
+    public function test_breakdown_rows_carry_the_comparison_and_use_the_chosen_period(): void
+    {
+        $rows = $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range(['dimension' => 'branch', 'company_id' => $this->a->id])))
+            ->assertOk()->json('data');
+
+        $this->assertSame('200.00', $rows[0]['previous_net_total']);               // Centro: A-0 del periodo anterior automático
+        $this->assertEquals(75.0, $rows[0]['net_change_pct']);                      // 350 vs 200
+        $this->assertSame('0.00', $rows[1]['previous_net_total']);                  // Norte no vendió antes
+        $this->assertNull($rows[1]['net_change_pct']);
+
+        $custom = $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range(['dimension' => 'branch', 'company_id' => $this->a->id, 'compare_from' => '2026-09-01', 'compare_to' => '2026-09-30'])))
+            ->json('data');
+        $this->assertSame('10.00', $custom[0]['previous_net_total']);
+
+        $month = $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range(['dimension' => 'month'])))->json('data');
+        $this->assertArrayNotHasKey('previous_net_total', $month[0]);               // sin comparación por mes ni día
+    }
+
+    public function test_comparison_validation(): void
+    {
+        $this->actingAs($this->admin, 'sanctum');
+        $get = fn (array $p) => $this->getJson('/api/v1/sales/summary?'.http_build_query($this->range($p)));
+
+        $get(['compare_from' => '2026-09-01'])->assertUnprocessable()->assertJsonValidationErrors(['compare_to']);
+        $get(['compare_to' => '2026-09-01'])->assertUnprocessable()->assertJsonValidationErrors(['compare_from']);
+        $get(['compare_from' => '2026-09-10', 'compare_to' => '2026-09-01'])->assertUnprocessable()->assertJsonValidationErrors(['compare_to']);
+        $get(['compare_from' => '01/09/2026', 'compare_to' => '2026-09-30'])->assertUnprocessable()->assertJsonValidationErrors(['compare_from']);
+        $get(['compare_from' => '2020-01-01', 'compare_to' => '2026-09-30'])->assertUnprocessable()->assertJsonValidationErrors(['compare_to']);
+    }
+
+    public function test_exports_include_the_comparison(): void
+    {
+        $params = $this->range(['company_id' => $this->a->id, 'compare_from' => '2026-10-03', 'compare_to' => '2026-10-09']);
+
+        $csv = $this->actingAs($this->admin, 'sanctum')
+            ->get('/api/v1/sales/export?'.http_build_query([...$params, 'format' => 'csv', 'dimension' => 'branch']))->streamedContent();
+        $lines = array_map('str_getcsv', array_filter(explode("\n", ltrim($csv, "\xEF\xBB\xBF"))));
+        $this->assertSame(['Venta neta periodo comparado', 'Variación venta neta %'], array_slice($lines[0], -2));
+        $this->assertSame(['200.00', '75'], array_slice($lines[1], -2));            // Centro: 350 vs 200
+
+        $response = $this->get('/api/v1/sales/export?'.http_build_query([...$params, 'format' => 'xlsx']))->assertOk();
+        $sheets = $this->sheets($response->baseResponse->getFile()->getPathname());
+        $summary = array_column($sheets['Resumen'], 1, 0);
+        $this->assertSame('2026-10-03 a 2026-10-09', $summary['Periodo comparado']);
+        $this->assertEquals(200.0, $sheets['Resumen'][array_search('Venta neta', array_column($sheets['Resumen'], 0))][2]);
+
+        $log = AuditLog::where('event', 'sales.exported')->latest('id')->first();
+        $this->assertSame(['from' => '2026-10-03', 'to' => '2026-10-09'], $log->new_values['compare']);
+    }
 }
