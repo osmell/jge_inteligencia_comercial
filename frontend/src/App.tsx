@@ -6,7 +6,9 @@ import { RequireAuth, RequirePermission } from './components/RouteGuards'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import AuditPage from './pages/AuditPage'
-import OrganizationPage from './pages/OrganizationPage'
+import BranchesPage from './pages/BranchesPage'
+import CompaniesPage from './pages/CompaniesPage'
+import RolesPage from './pages/RolesPage'
 import UsersPage from './pages/UsersPage'
 
 export default function App() {
@@ -19,9 +21,16 @@ export default function App() {
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
-              <Route element={<RequirePermission permission="organization.manage" />}>
-                <Route path="admin/organizacion" element={<OrganizationPage />} />
+              <Route element={<RequirePermission permission="companies.manage" />}>
+                <Route path="admin/companias" element={<CompaniesPage />} />
               </Route>
+              <Route element={<RequirePermission permission="branches.manage" />}>
+                <Route path="admin/sucursales" element={<BranchesPage />} />
+              </Route>
+              <Route element={<RequirePermission permission="roles.manage" />}>
+                <Route path="admin/roles" element={<RolesPage />} />
+              </Route>
+              <Route path="admin/organizacion" element={<Navigate to="/admin/companias" replace />} />
               <Route element={<RequirePermission permission="users.manage" />}>
                 <Route path="admin/usuarios" element={<UsersPage />} />
               </Route>

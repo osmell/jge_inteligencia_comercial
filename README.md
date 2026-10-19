@@ -67,8 +67,12 @@ Al ejecutar `artisan` que cree archivos, usar `docker compose exec -u $(id -u) b
 |---|---|
 | `POST /auth/login`, `POST /auth/logout`, `GET /auth/me` | Login público; resto autenticado |
 | `GET /companies`, `GET /branches` | Autenticado, limitado a su ámbito |
-| `/admin/companies`, `/admin/branches` (listar, ver, crear, editar) | `organization.manage` |
+| `/admin/companies` (listar, ver, crear, editar) | `companies.manage` (solo el Administrador crea) |
+| `/admin/branches` (listar, ver, crear, editar) | `branches.manage` |
 | `/admin/users`, `GET /admin/roles` (listar, ver, crear, editar) | `users.manage` |
+| `GET/PUT /admin/role-permissions` | `roles.manage` (solo Administrador) |
 | `GET /admin/audit-logs` | `audit.view` |
+
+**Un permiso por opción del menú**, concedible por rol desde «Roles y permisos». El rol Administrador siempre tiene todos y no es editable; `roles.manage` no se puede conceder a otros roles. Quien tenga `users.manage` sin ser Administrador solo ve y administra usuarios de las compañías en las que tiene acceso completo, y no puede asignar el rol Administrador. `audit.view` limita los registros a sus compañías.
 
 No hay `DELETE`: las entidades se desactivan con `is_active`.

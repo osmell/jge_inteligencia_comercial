@@ -8,23 +8,32 @@ use App\Http\Resources\AdminUserResource;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\UserAccess;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 
 /** Los usuarios no se eliminan: se desactivan con is_active. */
 class UserController extends Controller
 {
-    public function index(): AnonymousResourceCollection
+    public function __construct(private readonly UserAccess $access) {}
+
+    public function index(Request $request): AnonymousResourceCollection
     {
-        return AdminUserResource::collection(
-            User::with('role', 'companies', 'branches')->orderBy('username')->get()
-        );
+        $users = $this->access->manageable($request->user(), User::query())
+            ->with('role', 'companies', 'branches')->orderBy('username')->get();
+
+        return AdminUserResource::collection($users);
     }
 
-    public function roles(): JsonResponse
+    /** Roles que el usuario autenticado puede asignar. */
+    public function roles(Request $request): JsonResponse
     {
-        return response()->json(['data' => Role::orderBy('id')->get(['id', 'slug', 'name'])]);
+        $roles = Role::orderBy('id')->get(['id', 'slug', 'name'])
+            ->filter(fn (Role $r) => $this->access->canAssignRole($request->user(), $r))->values();
+
+        return response()->json(['data' => $roles]);
     }
 
     public function store(UserRequest $request): JsonResponse
@@ -39,13 +48,17 @@ class UserController extends Controller
         return (new AdminUserResource($this->loaded($user)))->response()->setStatusCode(201);
     }
 
-    public function show(User $user): AdminUserResource
+    public function show(Request $request, User $user): AdminUserResource
     {
+        abort_unless($this->access->canManage($request->user(), $user), 404);
+
         return new AdminUserResource($this->loaded($user));
     }
 
     public function update(UserRequest $request, User $user): AdminUserResource
     {
+        abort_unless($this->access->canManage($request->user(), $user), 404);
+
         DB::transaction(function () use ($request, $user) {
             $data = $request->safe()->except(['company_ids', 'branch_ids']);
             if (empty($data['password'])) {

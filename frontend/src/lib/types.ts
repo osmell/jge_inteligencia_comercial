@@ -50,3 +50,22 @@ export interface Page<T> {
   last_page: number
   total: number
 }
+
+export interface PermissionInfo {
+  slug: string
+  name: string
+  admin_only: boolean
+}
+
+export interface RoleMatrixRow {
+  id: number
+  slug: string
+  name: string
+  locked: boolean
+  permissions: string[]
+}
+
+export interface RoleMatrix {
+  permissions: PermissionInfo[]
+  roles: RoleMatrixRow[]
+}

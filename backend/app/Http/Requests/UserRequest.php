@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\Branch;
+use App\Models\Role;
+use App\Services\UserAccess;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -49,6 +51,18 @@ class UserRequest extends FormRequest
 
             if ($orphans) {
                 $validator->errors()->add('branch_ids', 'Cada sucursal debe pertenecer a una compañía asignada al usuario.');
+            }
+
+            // Evita la escalada de privilegios de quien no es Administrador.
+            $access = app(UserAccess::class);
+            $actor = $this->user();
+            $role = Role::find($this->input('role_id'));
+            if ($role && ! $access->canAssignRole($actor, $role)) {
+                $validator->errors()->add('role_id', 'No puedes asignar el rol Administrador.');
+            }
+            $assignable = $access->assignableCompanyIds($actor);
+            if ($assignable !== null && collect($this->input('company_ids'))->diff($assignable)->isNotEmpty()) {
+                $validator->errors()->add('company_ids', 'Solo puedes asignar compañías sobre las que tienes acceso completo.');
             }
 
             // Evita que el administrador se bloquee a sí mismo.

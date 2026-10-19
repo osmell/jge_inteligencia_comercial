@@ -17,6 +17,9 @@ class CompanyController extends Controller
 
     public function store(CompanyRequest $request): JsonResponse
     {
+        // Una compañía nueva queda fuera del ámbito de cualquiera salvo el Administrador.
+        abort_unless($request->user()->seesAllOrganizations(), 403, 'Solo el Administrador puede crear compañías.');
+
         $company = Company::create($request->validated());
 
         return response()->json(['data' => $company], 201);

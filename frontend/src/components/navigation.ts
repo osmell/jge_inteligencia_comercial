@@ -1,4 +1,4 @@
-import { Building2, Home, ScrollText, Users, type LucideIcon } from 'lucide-react'
+import { Building2, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -16,10 +16,17 @@ export interface NavGroup {
 export const NAV_GROUPS: NavGroup[] = [
   { title: 'General', items: [{ to: '/', label: 'Inicio', icon: Home }] },
   {
+    title: 'Catálogos',
+    items: [
+      { to: '/admin/companias', label: 'Compañías', icon: Building2, permission: 'companies.manage' },
+      { to: '/admin/sucursales', label: 'Sucursales', icon: GitBranch, permission: 'branches.manage' },
+    ],
+  },
+  {
     title: 'Administración',
     items: [
-      { to: '/admin/organizacion', label: 'Compañías y sucursales', icon: Building2, permission: 'organization.manage' },
       { to: '/admin/usuarios', label: 'Usuarios', icon: Users, permission: 'users.manage' },
+      { to: '/admin/roles', label: 'Roles y permisos', icon: KeyRound, permission: 'roles.manage' },
       { to: '/admin/auditoria', label: 'Auditoría', icon: ScrollText, permission: 'audit.view' },
     ],
   },

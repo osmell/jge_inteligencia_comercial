@@ -26,6 +26,31 @@ class DataScope
         return $this->cache[$user->id] ??= $this->resolve($user);
     }
 
+    /** Compañías asignadas al usuario; null si no tiene restricción (Administrador). @return list<int>|null */
+    public function companyIds(User $user): ?array
+    {
+        $scope = $this->for($user);
+
+        return $scope['global'] ? null : $scope['companies'];
+    }
+
+    /**
+     * Compañías sobre las que el usuario tiene acceso completo (sin restricción de sucursales).
+     * Se usa para acciones de administración: quien está limitado a ciertas sucursales no administra la compañía.
+     *
+     * @return list<int>|null null si no tiene restricción
+     */
+    public function fullCompanyIds(User $user): ?array
+    {
+        $scope = $this->for($user);
+
+        if ($scope['global']) {
+            return null;
+        }
+
+        return array_values(array_diff($scope['companies'], array_keys($scope['restricted'])));
+    }
+
     public function forget(): void
     {
         $this->cache = [];

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\BranchController;
 use App\Http\Controllers\Api\V1\Admin\CompanyController;
+use App\Http\Controllers\Api\V1\Admin\RolePermissionController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -26,9 +27,12 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
 
-        Route::middleware('permission:organization.manage')->group(function () {
-            Route::apiResource('companies', CompanyController::class)->except('destroy');
-            Route::apiResource('branches', BranchController::class)->except('destroy');
+        Route::apiResource('companies', CompanyController::class)->except('destroy')->middleware('permission:companies.manage');
+        Route::apiResource('branches', BranchController::class)->except('destroy')->middleware('permission:branches.manage');
+
+        Route::middleware('permission:roles.manage')->group(function () {
+            Route::get('role-permissions', [RolePermissionController::class, 'index']);
+            Route::put('role-permissions/{role}', [RolePermissionController::class, 'update']);
         });
 
         Route::middleware('permission:users.manage')->group(function () {

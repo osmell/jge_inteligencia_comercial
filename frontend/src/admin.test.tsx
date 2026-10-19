@@ -5,12 +5,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import type { AuthUser } from './auth/types'
 import AuditPage from './pages/AuditPage'
-import OrganizationPage from './pages/OrganizationPage'
+import BranchesPage from './pages/BranchesPage'
+import CompaniesPage from './pages/CompaniesPage'
+import RolesPage from './pages/RolesPage'
 import UsersPage from './pages/UsersPage'
 
 const admin: AuthUser = {
   id: 1, username: 'admin', name: 'Ana Admin', role: { slug: 'administrador', name: 'Administrador' },
-  permissions: ['organization.manage', 'users.manage', 'audit.view'], companies: [], branches: [],
+  permissions: ['companies.manage', 'branches.manage', 'users.manage', 'roles.manage', 'audit.view'], companies: [], branches: [],
 }
 const companies = [{ id: 1, code: 'ALFA', name: 'Alfa', is_active: true }, { id: 2, code: 'BETA', name: 'Beta', is_active: false }]
 const branches = [
@@ -25,6 +27,18 @@ const users = [
   { id: 1, username: 'admin', name: 'Ana Admin', email: null, is_active: true, last_login_at: null, role: roles[0], company_ids: [], branch_ids: [] },
   { id: 7, username: 'vera', name: 'Vera', email: null, is_active: true, last_login_at: null, role: roles[1], company_ids: [1], branch_ids: [10] },
 ]
+
+const matrix = {
+  permissions: [
+    { slug: 'companies.manage', name: 'Compañías', admin_only: false },
+    { slug: 'users.manage', name: 'Usuarios', admin_only: false },
+    { slug: 'roles.manage', name: 'Roles y permisos', admin_only: true },
+  ],
+  roles: [
+    { id: 1, slug: 'administrador', name: 'Administrador', locked: true, permissions: ['companies.manage', 'users.manage', 'roles.manage'] },
+    { id: 2, slug: 'gerente_general', name: 'Gerente General', locked: false, permissions: ['companies.manage'] },
+  ],
+}
 
 type Call = { url: string; method: string; body: unknown }
 let calls: Call[]
@@ -42,6 +56,8 @@ function mockApi() {
     if (path === '/auth/me') return json({ data: admin })
     if (path === '/admin/companies' && method === 'GET') return json({ data: companies })
     if (path === '/admin/branches' && method === 'GET') return json({ data: branches })
+    if (path === '/companies') return json({ data: companies })
+    if (path === '/admin/role-permissions') return json({ data: matrix })
     if (path === '/admin/roles') return json({ data: roles })
     if (path === '/admin/users' && method === 'GET') return json({ data: users })
     if (path.startsWith('/admin/audit-logs')) {
@@ -63,17 +79,17 @@ describe('pantallas administrativas', () => {
   })
   afterEach(() => vi.unstubAllGlobals())
 
-  it('lista compañías y sucursales con su estado en texto', async () => {
-    renderPage(<OrganizationPage />)
+  it('lista compañías con su estado en texto', async () => {
+    renderPage(<CompaniesPage />)
 
     const table = await screen.findByRole('table', { name: 'Compañías' })
     expect(within(table).getByText('Inactivo')).toBeInTheDocument()
-    expect(await screen.findByText('Alfa Central')).toBeInTheDocument()
+    expect(screen.queryByText('Alfa Central')).not.toBeInTheDocument()
   })
 
   it('crea una compañía y muestra errores de validación por campo', async () => {
     overrides['POST /admin/companies'] = () => new Response(JSON.stringify({ message: 'x', errors: { code: ['El código ya existe.'] } }), { status: 422 })
-    renderPage(<OrganizationPage />)
+    renderPage(<CompaniesPage />)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Nueva compañía' }))
     await userEvent.type(screen.getByLabelText('Código'), 'ALFA')
@@ -84,8 +100,16 @@ describe('pantallas administrativas', () => {
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ code: 'ALFA', name: 'Otra', is_active: true })
   })
 
+  it('lista sucursales en su propia pantalla y usa el catálogo de compañías visibles', async () => {
+    renderPage(<BranchesPage />)
+
+    expect(await screen.findByText('Alfa Central')).toBeInTheDocument()
+    expect(calls.some((c) => c.url === '/companies')).toBe(true)
+    expect(calls.some((c) => c.url === '/admin/companies')).toBe(false)
+  })
+
   it('al editar una sucursal la compañía no se puede cambiar ni se envía', async () => {
-    renderPage(<OrganizationPage />)
+    renderPage(<BranchesPage />)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Editar sucursal Alfa Central' }))
     expect(screen.getByLabelText('Compañía')).toBeDisabled()
@@ -94,6 +118,28 @@ describe('pantallas administrativas', () => {
     const put = calls.find((c) => c.method === 'PUT')
     expect(put?.url).toBe('/admin/branches/10')
     expect(put?.body).not.toHaveProperty('company_id')
+  })
+
+  it('la matriz de permisos bloquea al Administrador y el permiso solo-administrador', async () => {
+    renderPage(<RolesPage />)
+
+    expect(await screen.findByLabelText('Administrador: Compañías')).toBeDisabled()
+    expect(screen.getByLabelText('Administrador: Compañías')).toBeChecked()
+    expect(screen.getByLabelText('Gerente General: Roles y permisos')).toBeDisabled()
+    expect(screen.getByLabelText('Gerente General: Compañías')).toBeChecked()
+    expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeDisabled()
+  })
+
+  it('otorga un permiso a un rol y guarda solo el rol modificado', async () => {
+    renderPage(<RolesPage />)
+
+    await userEvent.click(await screen.findByLabelText('Gerente General: Usuarios'))
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    const puts = calls.filter((c) => c.method === 'PUT')
+    expect(puts).toHaveLength(1)
+    expect(puts[0].url).toBe('/admin/role-permissions/2')
+    expect(puts[0].body).toEqual({ permissions: ['companies.manage', 'users.manage'] })
   })
 
   it('crea un usuario con ámbito y quita sus sucursales al desmarcar la compañía', async () => {

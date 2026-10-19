@@ -8,6 +8,16 @@ use Illuminate\Database\Seeder;
 
 class RolePermissionSeeder extends Seeder
 {
+    /** Un permiso por opción del menú, en el orden en que aparece el menú. */
+    public const PERMISSIONS = [
+        'companies.manage' => 'Compañías',
+        'branches.manage' => 'Sucursales',
+        'users.manage' => 'Usuarios',
+        'roles.manage' => 'Roles y permisos',
+        'audit.view' => 'Auditoría',
+        'imports.manage' => 'Importaciones',
+    ];
+
     public function run(): void
     {
         $roles = [
@@ -21,16 +31,20 @@ class RolePermissionSeeder extends Seeder
             Role::updateOrCreate(['slug' => $slug], ['name' => $name]);
         }
 
-        // Permisos de Fases 1 y 2. Los de supervisores están pendientes de definir (decisión #19).
-        $permissions = [
-            'organization.manage' => 'Gestionar compañías y sucursales',
-            'users.manage' => 'Gestionar usuarios y roles',
-            'audit.view' => 'Consultar auditoría',
-            'imports.manage' => 'Importar archivos (validar, confirmar, descartar)',
-        ];
-
-        foreach ($permissions as $slug => $name) {
+        // Un permiso por opción del menú. Los de supervisores están pendientes de definir (decisión #19):
+        // se otorgan desde la pantalla «Roles y permisos».
+        foreach (self::PERMISSIONS as $slug => $name) {
             Permission::updateOrCreate(['slug' => $slug], ['name' => $name]);
+        }
+
+        // Migración del permiso anterior organization.manage → companies.manage + branches.manage.
+        $legacy = Permission::where('slug', 'organization.manage')->first();
+        if ($legacy) {
+            $new = Permission::whereIn('slug', ['companies.manage', 'branches.manage'])->pluck('id');
+            foreach ($legacy->roles as $role) {
+                $role->permissions()->syncWithoutDetaching($new);
+            }
+            $legacy->delete();
         }
 
         Role::where('slug', Role::ADMINISTRADOR)->first()
