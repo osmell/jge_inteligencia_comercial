@@ -1,4 +1,4 @@
-import { Building2, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
+import { Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -15,6 +15,10 @@ export interface NavGroup {
 
 export const NAV_GROUPS: NavGroup[] = [
   { title: 'General', items: [{ to: '/', label: 'Inicio', icon: Home }] },
+  {
+    title: 'Datos',
+    items: [{ to: '/importaciones', label: 'Importaciones', icon: FileSpreadsheet, permission: 'imports.manage' }],
+  },
   {
     title: 'Catálogos',
     items: [

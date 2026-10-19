@@ -4,6 +4,8 @@ import Layout from './components/Layout'
 import { ToastProvider } from './components/toast'
 import { RequireAuth, RequirePermission } from './components/RouteGuards'
 import HomePage from './pages/HomePage'
+import ImportDetailPage from './pages/ImportDetailPage'
+import ImportsPage from './pages/ImportsPage'
 import LoginPage from './pages/LoginPage'
 import AuditPage from './pages/AuditPage'
 import BranchesPage from './pages/BranchesPage'
@@ -21,6 +23,10 @@ export default function App() {
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
+              <Route element={<RequirePermission permission="imports.manage" />}>
+                <Route path="importaciones" element={<ImportsPage />} />
+                <Route path="importaciones/:id" element={<ImportDetailPage />} />
+              </Route>
               <Route element={<RequirePermission permission="companies.manage" />}>
                 <Route path="admin/companias" element={<CompaniesPage />} />
               </Route>

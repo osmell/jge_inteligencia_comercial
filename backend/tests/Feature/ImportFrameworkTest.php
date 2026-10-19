@@ -83,6 +83,7 @@ class ImportFrameworkTest extends TestCase
         $this->assertSame(2, $batch->summary['preview'][0]['row']);
         $this->assertSame('Cliente A', $batch->summary['preview'][0]['values']['Cliente']);
         $this->assertSame('0001', $batch->summary['preview'][0]['values']['Documento']);
+        $this->assertSame(['Documento', 'Cliente', 'Código Producto', 'Importe', 'Fecha', 'Nota'], $batch->summary['preview_columns']);
     }
 
     public function test_preview_is_limited(): void

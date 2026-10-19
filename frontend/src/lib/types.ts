@@ -69,3 +69,56 @@ export interface RoleMatrix {
   permissions: PermissionInfo[]
   roles: RoleMatrixRow[]
 }
+
+export type ImportStatus = 'pending' | 'validating' | 'validated' | 'rejected' | 'importing' | 'imported' | 'discarded' | 'failed'
+
+export interface ImportBatch {
+  id: number
+  type: string
+  type_label: string
+  status: ImportStatus
+  status_label: string
+  original_name: string
+  file_size: number
+  rows_total: number
+  documents_total: number
+  documents_new: number
+  documents_duplicate: number
+  errors_total: number
+  warnings_total: number
+  failure_message: string | null
+  user?: { id: number; username: string; name: string }
+  created_at: string
+  validated_at: string | null
+  finished_at: string | null
+  can_confirm: boolean
+  can_discard: boolean
+  summary?: ImportSummary | null
+}
+
+export interface ImportSummary {
+  rows_invalid?: number
+  preview_columns?: string[]
+  preview?: { row: number; values: Record<string, string | null> }[]
+  date_from?: string | null
+  date_to?: string | null
+  totals?: { net_total: string; tax_total: string; grand_total: string; cost_total: string }
+  companies?: { id: number; name: string; documents: number; lines: number; net_total: string }[]
+  new_sellers?: string[]
+  new_operators?: string[]
+}
+
+export interface ImportErrorRow {
+  id: number
+  row_number: number | null
+  column: string | null
+  code: string
+  severity: 'error' | 'warning'
+  message: string
+  value: string | null
+}
+
+export interface ImportType {
+  key: string
+  label: string
+}

@@ -315,3 +315,35 @@ export function EmptyRow({ cols, children }: { cols: number; children: ReactNode
     </tr>
   )
 }
+
+/* ───────────── Confirmación ───────────── */
+
+export function ConfirmDialog({
+  title,
+  children,
+  confirmLabel,
+  danger = false,
+  busy = false,
+  onConfirm,
+  onCancel,
+}: {
+  title: string
+  children: ReactNode
+  confirmLabel: string
+  danger?: boolean
+  busy?: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <Modal title={title} onClose={onCancel}>
+      <div className="space-y-4">
+        <div className="text-sm text-ink-muted">{children}</div>
+        <div className="flex justify-end gap-2 border-t border-line pt-4">
+          <Button variant="secondary" onClick={onCancel} disabled={busy}>Cancelar</Button>
+          <Button variant={danger ? 'danger' : 'primary'} loading={busy} onClick={onConfirm}>{confirmLabel}</Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}

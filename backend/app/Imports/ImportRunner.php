@@ -112,7 +112,7 @@ final class ImportRunner
         }
     }
 
-    /** @param  array{rows_total: int, rows_invalid: int, preview: list<array<string, mixed>>, groups: array<string, ImportGroup>}  $result */
+    /** @param  array{rows_total: int, rows_invalid: int, preview: list<array<string, mixed>>, preview_columns: list<string>, groups: array<string, ImportGroup>}  $result */
     private function save(ImportBatch $batch, array $result, ImportContext $context, ErrorCollector $errors, ?ImportStatus $success = null): void
     {
         DB::transaction(function () use ($batch, $result, $context, $errors, $success) {
@@ -131,6 +131,7 @@ final class ImportRunner
                 'summary' => [
                     ...$context->summary,
                     'rows_invalid' => $result['rows_invalid'],
+                    'preview_columns' => $result['preview_columns'],
                     'preview' => $result['preview'],
                 ],
                 'validated_at' => $success ? $batch->validated_at : now(),

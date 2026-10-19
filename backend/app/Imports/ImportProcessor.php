@@ -11,7 +11,7 @@ use App\Imports\Exceptions\UnreadableFile;
  */
 final class ImportProcessor
 {
-    /** @return array{groups: array<string, ImportGroup>, rows_total: int, rows_invalid: int, preview: list<array<string, mixed>>, header_ok: bool} */
+    /** @return array{groups: array<string, ImportGroup>, rows_total: int, rows_invalid: int, preview: list<array<string, mixed>>, header_ok: bool, preview_columns: list<string>} */
     public function process(string $path, ImportType $type, ErrorCollector $errors, bool $keepRows = false): array
     {
         $columns = $type->columns();
@@ -87,6 +87,7 @@ final class ImportProcessor
             'rows_invalid' => $rowsInvalid,
             'preview' => $preview,
             'header_ok' => $map !== null,
+            'preview_columns' => array_values($labels), // jsonb no conserva el orden de las claves
         ];
     }
 

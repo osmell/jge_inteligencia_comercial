@@ -11,7 +11,7 @@ const vendedor: AuthUser = {
 const admin: AuthUser = {
   id: 1, username: 'admin', name: 'Ana Admin',
   role: { slug: 'administrador', name: 'Administrador' },
-  permissions: ['companies.manage', 'branches.manage', 'users.manage', 'roles.manage', 'audit.view'], companies: [], branches: [],
+  permissions: ['companies.manage', 'branches.manage', 'users.manage', 'roles.manage', 'audit.view', 'imports.manage'], companies: [], branches: [],
 }
 
 function mockApi(handler: (url: string, init?: RequestInit) => { status: number; body?: unknown }) {
@@ -76,7 +76,7 @@ describe('App', () => {
     render(<App />)
 
     const nav = (await screen.findAllByRole('navigation', { name: 'Principal' }))[0]
-    for (const label of ['Inicio', 'Compañías', 'Sucursales', 'Usuarios', 'Roles y permisos', 'Auditoría']) {
+    for (const label of ['Inicio', 'Importaciones', 'Compañías', 'Sucursales', 'Usuarios', 'Roles y permisos', 'Auditoría']) {
       expect(nav).toHaveTextContent(label)
     }
   })
