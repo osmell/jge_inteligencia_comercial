@@ -17,6 +17,7 @@ class RolePermissionSeeder extends Seeder
         'audit.view' => 'Auditoría',
         'imports.manage' => 'Importaciones',
         'sales.view' => 'Inteligencia de ventas',
+        'customers.view' => 'Clientes',
         'goals.manage' => 'Captura de metas de ventas',
     ];
 

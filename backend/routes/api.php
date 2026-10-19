@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Admin\RolePermissionController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
@@ -36,6 +37,14 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('goals/export', [SellerGoalsController::class, 'export']);
         Route::get('goals/suggestions', [SellerGoalsController::class, 'suggestions']);
         Route::put('goals', [SellerGoalsController::class, 'update'])->middleware('permission:goals.manage');
+    });
+
+    // Ficha de cliente (solo lectura): exige permiso y se limita al ámbito del usuario.
+    Route::middleware('permission:customers.view')->prefix('customers')->group(function () {
+        Route::get('/', [CustomerController::class, 'index']);
+        Route::get('profile', [CustomerController::class, 'profile']);
+        Route::get('purchases', [CustomerController::class, 'purchases']);
+        Route::get('document', [CustomerController::class, 'document']);
     });
 
     // Rutas administrativas: exigen permiso explícito en el backend.

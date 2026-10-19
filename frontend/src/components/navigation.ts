@@ -1,4 +1,4 @@
-import { BarChart3, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
+import { BarChart3, Contact, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -20,6 +20,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/ventas', label: 'Ventas', icon: BarChart3, permission: 'sales.view' },
       { to: '/metas', label: 'Metas', icon: Target, permission: 'sales.view' },
+      { to: '/clientes', label: 'Clientes', icon: Contact, permission: 'customers.view' },
     ],
   },
   {

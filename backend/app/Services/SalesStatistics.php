@@ -92,6 +92,24 @@ class SalesStatistics
     }
 
     /**
+     * KPI de todo el historial disponible (sin periodo) con la primera y la última fecha de venta.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array{kpis: array<string, mixed>, first: string|null, last: string|null}
+     */
+    public function overall(array $filters): array
+    {
+        $dates = $this->base(null, null, $filters)->toBase()->selectRaw('min(sales_lines.issued_on) as first, max(sales_lines.issued_on) as last')->first();
+
+        return [
+            'kpis' => $this->kpis($this->base(null, null, $filters)),
+            // SQLite devuelve la fecha con hora.
+            'first' => $dates->first ? CarbonImmutable::parse($dates->first)->toDateString() : null,
+            'last' => $dates->last ? CarbonImmutable::parse($dates->last)->toDateString() : null,
+        ];
+    }
+
+    /**
      * Desglose con la venta neta del periodo de comparación y su variación por fila (no aplica a mes ni día).
      *
      * @param  array<string, mixed>  $filters

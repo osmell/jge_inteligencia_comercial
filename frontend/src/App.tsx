@@ -10,6 +10,8 @@ import LoginPage from './pages/LoginPage'
 import AuditPage from './pages/AuditPage'
 import BranchesPage from './pages/BranchesPage'
 import CompaniesPage from './pages/CompaniesPage'
+import CustomerProfilePage from './pages/CustomerProfilePage'
+import CustomersPage from './pages/CustomersPage'
 import GoalsPage from './pages/GoalsPage'
 import SalesDashboardPage from './pages/SalesDashboardPage'
 import RolesPage from './pages/RolesPage'
@@ -28,6 +30,10 @@ export default function App() {
               <Route element={<RequirePermission permission="sales.view" />}>
                 <Route path="ventas" element={<SalesDashboardPage />} />
                 <Route path="metas" element={<GoalsPage />} />
+              </Route>
+              <Route element={<RequirePermission permission="customers.view" />}>
+                <Route path="clientes" element={<CustomersPage />} />
+                <Route path="clientes/ficha" element={<CustomerProfilePage />} />
               </Route>
               <Route element={<RequirePermission permission="imports.manage" />}>
                 <Route path="importaciones" element={<ImportsPage />} />
