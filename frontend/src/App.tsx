@@ -4,7 +4,9 @@ import Layout from './components/Layout'
 import { RequireAuth, RequirePermission } from './components/RouteGuards'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
-import PlaceholderPage from './pages/PlaceholderPage'
+import AuditPage from './pages/AuditPage'
+import OrganizationPage from './pages/OrganizationPage'
+import UsersPage from './pages/UsersPage'
 
 export default function App() {
   return (
@@ -16,13 +18,13 @@ export default function App() {
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
               <Route element={<RequirePermission permission="organization.manage" />}>
-                <Route path="admin/organizacion" element={<PlaceholderPage title="Compañías y sucursales" />} />
+                <Route path="admin/organizacion" element={<OrganizationPage />} />
               </Route>
               <Route element={<RequirePermission permission="users.manage" />}>
-                <Route path="admin/usuarios" element={<PlaceholderPage title="Usuarios" />} />
+                <Route path="admin/usuarios" element={<UsersPage />} />
               </Route>
               <Route element={<RequirePermission permission="audit.view" />}>
-                <Route path="admin/auditoria" element={<PlaceholderPage title="Auditoría" />} />
+                <Route path="admin/auditoria" element={<AuditPage />} />
               </Route>
             </Route>
           </Route>
