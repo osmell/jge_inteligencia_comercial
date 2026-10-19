@@ -15,7 +15,15 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
-        $middleware->alias(['permission' => \App\Http\Middleware\EnsurePermission::class]);
+        // El permiso se comprueba antes de resolver el modelo: sin permiso siempre 403, nunca 404.
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            prepend: \App\Http\Middleware\EnsurePermission::class,
+        );
+        $middleware->alias([
+            'permission' => \App\Http\Middleware\EnsurePermission::class,
+            'active' => \App\Http\Middleware\EnsureUserIsActive::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
