@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ScopedByOrganization;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['code', 'name', 'is_active'])]
 class Company extends Model
 {
-    use HasFactory;
+    use HasFactory, ScopedByOrganization;
+
+    public static function organizationCompanyColumn(): string
+    {
+        return 'id';
+    }
+
+    public static function organizationBranchColumn(): ?string
+    {
+        return null;
+    }
 
     protected function casts(): array
     {

@@ -53,6 +53,12 @@ class User extends Authenticatable
         return in_array($this->role->slug, $slugs, true);
     }
 
+    /** Administrador ve todas las compañías y sucursales; el resto, solo su ámbito asignado. */
+    public function seesAllOrganizations(): bool
+    {
+        return $this->hasRole(Role::ADMINISTRADOR);
+    }
+
     public function hasPermission(string $slug): bool
     {
         return $this->role->permissions->contains('slug', $slug);
