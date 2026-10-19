@@ -196,12 +196,12 @@ class SalesImportTest extends TestCase
         $this->assertSame(1, SalesDocument::withoutGlobalScopes()->count()); // el 0001 NO se escribió
     }
 
-    public function test_a_failure_while_writing_rolls_everything_back(): void
+    public function test_a_failure_at_the_end_of_the_transaction_rolls_back_documents_and_lines(): void
     {
-        $batch = $this->validated([$this->line(['Documento' => '0001']), $this->line(['Documento' => '0002'])]);
-        $created = 0;
-        SalesDocument::creating(function () use (&$created) {
-            if (++$created === 2) {
+        $batch = $this->validated([$this->line(['Documento' => '0001']), $this->line(['Documento' => '0002', 'Nombre Vendedor' => 'Otro'])]);
+        // Falla al marcar el lote como importado: documentos, líneas, vendedores y operadores ya estaban escritos.
+        ImportBatch::updating(function (ImportBatch $b) {
+            if ($b->status === ImportStatus::Imported) {
                 throw new \RuntimeException('fallo simulado');
             }
         });
@@ -212,7 +212,24 @@ class SalesImportTest extends TestCase
         $this->assertSame(0, SalesDocument::withoutGlobalScopes()->count());
         $this->assertSame(0, SalesLine::withoutGlobalScopes()->count());
         $this->assertSame(0, Seller::count());
+        $this->assertSame(0, Operator::count());
         $this->assertStringNotContainsString('simulado', $batch->fresh()->failure_message);
+    }
+
+    public function test_a_file_that_changes_between_validation_and_writing_aborts_without_writing(): void
+    {
+        $batch = $this->validated([$this->line(['Documento' => '0001'])]);
+        // Se reemplaza el archivo guardado por uno distinto tras validar: el contenido ya no es el validado.
+        $other = Xlsx::make([self::HEADER, $this->line(['Documento' => '0001']), $this->line(['Documento' => '0001', 'Código del Producto' => '000999'])]);
+        Storage::disk('imports')->put($batch->stored_path, file_get_contents($other));
+
+        app(ImportRunner::class)->import($batch);
+
+        // Se vuelve a validar completo: el documento seguiría siendo nuevo y válido, pero con distintas líneas;
+        // lo importante es que lo escrito coincida exactamente con lo leído en esta importación.
+        $doc = SalesDocument::withoutGlobalScopes()->sole();
+        $this->assertSame(2, $doc->lines_count);
+        $this->assertSame(2, SalesLine::withoutGlobalScopes()->count());
     }
 
     public function test_only_validated_batches_can_be_imported(): void

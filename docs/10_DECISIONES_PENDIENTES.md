@@ -37,7 +37,7 @@ Como `Costo Unit.Vta.` es el costo **actual** y no el de la fecha de la venta, e
 - **Muestra actualizada** con las columnas nuevas y casos difíciles (descuento, importes que no cuadran).
 
 ## Efecto sobre las fases
-- **Fase 2 (importación):** puede avanzar completa en cuanto se definan las columnas nuevas y la tasa de IVA; las reglas de conciliación ya están definidas.
+- **Fase 2 (importación):** implementada y verificada (ver `02_FASE_02_IMPORTACION_CALIDAD_DATOS.md`). Con las respuestas pendientes solo hay que ajustar `backend/config/imports.php`: nombres de las columnas nuevas, formato de fecha y tasa de IVA.
 - **Fase 3 (KPI):** venta neta, impuesto y total facturado quedan desbloqueados tras la Fase 2. Margen: solo como estimación con costo actual. KPI de facturadores: sigue sin datos de tiempo.
 
 ## Plantillas por recibir

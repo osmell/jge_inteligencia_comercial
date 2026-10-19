@@ -2,17 +2,11 @@
 
 namespace App\Imports;
 
-/** Un documento (factura) formado por una o más líneas del archivo. */
+/** Un documento (factura) formado por una o más líneas del archivo. Guarda solo huellas, no las líneas. */
 final class ImportGroup
 {
-    /** @var list<int> */
-    public array $rowNumbers = [];
-
-    /** @var list<string> */
+    /** @var list<string> huellas binarias (16 bytes) de cada línea, para detectar repeticiones y comparar contenido */
     public array $lineHashes = [];
-
-    /** @var list<ParsedRow> solo si se pidió conservar las líneas (importación) */
-    public array $rows = [];
 
     /** @param  array<string, string|null>  $fields */
     public function __construct(public readonly string $key, public readonly array $fields, public readonly int $firstRow) {}
@@ -22,12 +16,12 @@ final class ImportGroup
         return count($this->lineHashes);
     }
 
-    /** Huella del contenido, independiente del orden de las líneas. */
+    /** Huella del contenido del documento, independiente del orden de sus líneas. */
     public function contentHash(): string
     {
         $hashes = $this->lineHashes;
         sort($hashes);
 
-        return hash('sha256', json_encode([$this->fields, $hashes], JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode($this->fields, JSON_THROW_ON_ERROR).implode('', $hashes));
     }
 }

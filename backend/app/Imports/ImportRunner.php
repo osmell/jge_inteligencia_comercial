@@ -68,8 +68,9 @@ final class ImportRunner
 
             $this->checkAlreadyImported($batch, $errors);
 
-            $result = $this->processor->process($this->files->absolutePath($batch), $type, $errors, keepRows: true);
-            $context = new ImportContext($batch, $result['groups'], $errors);
+            $path = $this->files->absolutePath($batch);
+            $result = $this->processor->process($path, $type, $errors);
+            $context = new ImportContext($batch, $result['groups'], $errors, fn () => $this->processor->stream($path, $type));
 
             if ($result['header_ok'] && $result['rows_total'] > 0) {
                 $type->finalize($context);
