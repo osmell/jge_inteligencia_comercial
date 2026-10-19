@@ -50,5 +50,16 @@ Pendiente de los bloqueantes: las cifras asumen importes **por línea** (como lo
 
 Verificado con PostgreSQL sobre los datos de demostración: los totales coinciden con una consulta SQL directa (30 días: 597 documentos, 579 061,99 de venta neta).
 
+### Paso 3 — Dashboard de ventas (implementado)
+Pantalla `/ventas` (menú «Inteligencia → Ventas», ruta protegida por `sales.view`). Sin librerías nuevas: los gráficos son SVG propios (`components/charts.tsx`).
+
+- **Filtros:** periodo (este mes, mes anterior, últimos 30/90 días, año a la fecha o personalizado), compañía y sucursal (la sucursal depende de la compañía). Al elegir un nombre en la tabla de desglose se filtra todo el tablero (vendedor, operador, categoría, producto o cliente) y el filtro aparece como etiqueta que se puede quitar. Un rango inválido no consulta y explica el motivo junto al campo.
+- **Tarjetas:** venta neta, impuesto, total facturado, documentos, clientes compradores, ticket promedio, unidades y margen estimado, cada una con su variación contra el periodo anterior (icono + signo + texto, nunca solo color; «Sin base de comparación» si no hay dato).
+- **Tendencia:** venta neta por día (rangos de hasta 92 días) o por mes, con alternativa en tabla («Ver datos en tabla»).
+- **Desglose:** pestañas por compañía, sucursal, vendedor, operador, categoría, producto y cliente (15 filas con más venta neta).
+- **Avisos visibles:** historial incompleto del periodo anterior; margen con costo actual y cobertura de costo; recorte de filas; facturas repetidas entre categorías o productos.
+
+Verificado: typecheck, lint, 37 pruebas (9 nuevas) y build. **Pendiente:** revisión visual en navegador y de la vista móvil; no se pudo hacer en la sesión de desarrollo.
+
 ### Siguiente
-Paso 3: pantalla del dashboard ejecutivo (filtros, tarjetas de KPI, gráficos y tablas) y opción de menú condicionada a `sales.view`. Después: metas mensuales por vendedor, rankings de producto y exportación.
+Metas mensuales por vendedor (requiere definir la regla de metas, decisión #16), rankings de producto por frecuencia y margen, comparación libre de periodos y exportación de reportes.
