@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\ScopedByOrganization;
+use App\Models\Concerns\Auditable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 #[Fillable(['company_id', 'code', 'name', 'is_active'])]
 class Branch extends Model
 {
-    use HasFactory, ScopedByOrganization;
+    use HasFactory, ScopedByOrganization, Auditable;
+
+    public static function auditPrefix(): string
+    {
+        return 'branch';
+    }
+
+    public function auditCompanyId(): ?int
+    {
+        return $this->company_id;
+    }
 
     public static function organizationBranchColumn(): ?string
     {

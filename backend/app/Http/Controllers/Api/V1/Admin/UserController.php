@@ -7,6 +7,7 @@ use App\Http\Requests\UserRequest;
 use App\Http\Resources\AdminUserResource;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\AuditLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
@@ -60,8 +61,20 @@ class UserController extends Controller
     private function syncScope(User $user, UserRequest $request): void
     {
         // Se usan las tablas pivote sin pasar por los global scopes del usuario autenticado.
+        $old = [
+            'company_ids' => $user->companies()->withoutGlobalScopes()->pluck('companies.id')->sort()->values()->all(),
+            'branch_ids' => $user->branches()->withoutGlobalScopes()->pluck('branches.id')->sort()->values()->all(),
+        ];
         $user->companies()->withoutGlobalScopes()->sync($request->validated('company_ids'));
         $user->branches()->withoutGlobalScopes()->sync($request->validated('branch_ids'));
+        $new = [
+            'company_ids' => collect($request->validated('company_ids'))->sort()->values()->all(),
+            'branch_ids' => collect($request->validated('branch_ids'))->sort()->values()->all(),
+        ];
+
+        if ($old !== $new) {
+            app(AuditLogger::class)->record('user.scope_changed', $request->user(), auditable: $user, old: $old, new: $new);
+        }
     }
 
     private function loaded(User $user): User

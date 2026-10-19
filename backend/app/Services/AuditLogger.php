@@ -22,6 +22,7 @@ class AuditLogger
         ?Model $auditable = null,
         ?array $old = null,
         ?array $new = null,
+        ?int $companyId = null,
     ): AuditLog {
         return AuditLog::create([
             'user_id' => $user?->id,
@@ -29,6 +30,7 @@ class AuditLogger
             'event' => $event,
             'auditable_type' => $auditable?->getMorphClass(),
             'auditable_id' => $auditable?->getKey(),
+            'company_id' => $companyId,
             'ip_address' => $this->request->ip(),
             'user_agent' => $this->request->userAgent(),
             'old_values' => $old,

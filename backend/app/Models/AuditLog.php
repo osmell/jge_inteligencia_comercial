@@ -12,6 +12,13 @@ class AuditLog extends Model
 {
     public const UPDATED_AT = null;
 
+    /** El registro de auditoría es de solo escritura: no se modifica ni se elimina. */
+    protected static function booted(): void
+    {
+        static::updating(fn () => false);
+        static::deleting(fn () => false);
+    }
+
     protected function casts(): array
     {
         return ['old_values' => 'array', 'new_values' => 'array'];
