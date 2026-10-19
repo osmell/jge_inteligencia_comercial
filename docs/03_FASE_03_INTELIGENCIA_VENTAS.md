@@ -61,5 +61,17 @@ Pantalla `/ventas` (menú «Inteligencia → Ventas», ruta protegida por `sales
 
 Verificado: typecheck, lint, 37 pruebas (9 nuevas) y build. **Pendiente:** revisión visual en navegador y de la vista móvil; no se pudo hacer en la sesión de desarrollo.
 
+### Paso 4 — Exportación de reportes (implementado)
+`GET /api/v1/sales/export?format=csv|xlsx` con el mismo periodo y filtros del dashboard (permiso `sales.view`). En la pantalla: botones «Exportar a Excel» y «CSV por <pestaña activa>» (se desactivan con un rango inválido).
+
+- **Excel (`ventas-<desde>_<hasta>.xlsx`):** hoja «Resumen» (periodo, periodo anterior, filtros en texto, quién y cuándo lo generó, nota del margen, aviso de historial incompleto, y los KPI con variación) y una hoja por desglose: compañía, sucursal, vendedor, operador, categoría, producto, cliente, mes y día.
+- **CSV (`ventas-por-<dimensión>-<desde>_<hasta>.csv`):** un desglose, UTF-8 con BOM para que Excel lo abra bien.
+- Las cifras son las mismas consultas del dashboard (coinciden con la pantalla) y respetan el ámbito del usuario. Los importes salen como números, no como texto formateado, para poder sumarlos. Hasta 5 000 filas por desglose.
+- Los textos que empiezan con `= + - @` se neutralizan en el CSV (evita fórmulas inyectadas desde los archivos importados). En Excel se escriben como texto.
+- **Auditoría:** cada descarga queda registrada como `sales.exported` (usuario, formato, dimensión, periodo y filtros). Una petición inválida o sin permiso no se registra.
+- Medido en PostgreSQL con los datos demo: 12 meses completos en Excel, 64 KB en 0,4 s.
+
+Pendiente: PDF para impresión, si se necesita.
+
 ### Siguiente
-Metas mensuales por vendedor (requiere definir la regla de metas, decisión #16), rankings de producto por frecuencia y margen, comparación libre de periodos y exportación de reportes.
+Metas mensuales por vendedor (requiere definir la regla de metas, decisión #16), rankings de producto por frecuencia y margen, y comparación libre de periodos.

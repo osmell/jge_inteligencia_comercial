@@ -134,6 +134,54 @@ describe('dashboard de ventas', () => {
   })
 })
 
+describe('exportación', () => {
+  beforeEach(() => {
+    respond = (path) => {
+      if (path.startsWith('/companies') || path.startsWith('/branches')) return { data: [] }
+      if (path.startsWith('/sales/summary')) return summary()
+      return { data: [row('7', 'María López', '700.00')], meta: { dimension: 'seller', truncated: false } }
+    }
+    mockApi()
+    vi.stubGlobal('URL', { ...URL, createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() })
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('exporta a Excel con el periodo y los filtros del tablero', async () => {
+    render(<SalesDashboardPage />)
+    await userEvent.click(await screen.findByRole('button', { name: 'María López' }))
+    await waitFor(() => expect(last('/sales/summary')).toContain('seller_id=7'))
+    await userEvent.click(screen.getByRole('button', { name: 'Exportar a Excel' }))
+
+    await waitFor(() => expect(last('/sales/export')).toContain('format=xlsx'))
+    expect(last('/sales/export')).toContain('seller_id=7')
+    expect(last('/sales/export')).toMatch(/from=\d{4}-\d{2}-\d{2}&to=/)
+    expect(last('/sales/export')).not.toContain('dimension')
+  })
+
+  it('exporta en CSV el desglose de la pestaña activa', async () => {
+    render(<SalesDashboardPage />)
+    await userEvent.click(await screen.findByRole('tab', { name: 'Producto' }))
+    await userEvent.click(screen.getByRole('button', { name: 'CSV por producto' }))
+
+    await waitFor(() => expect(last('/sales/export')).toContain('format=csv&dimension=product'))
+  })
+
+  it('muestra el error si la exportación falla y no se puede exportar con un rango inválido', async () => {
+    render(<SalesDashboardPage />)
+    await screen.findByRole('table', { name: 'Ventas por vendedor' })
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ message: 'No tienes permiso para realizar esta acción.' }), { status: 403 })))
+    await userEvent.click(screen.getByRole('button', { name: 'Exportar a Excel' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No tienes permiso para realizar esta acción.')
+
+    await userEvent.selectOptions(screen.getByLabelText('Periodo'), 'custom')
+    await userEvent.clear(screen.getByLabelText('Hasta'))
+    await userEvent.type(screen.getByLabelText('Hasta'), '2020-01-01')
+    expect(screen.getByRole('button', { name: 'Exportar a Excel' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'CSV por vendedor' })).toBeDisabled()
+  })
+})
+
 describe('rangos de fechas', () => {
   const today = new Date(2026, 9, 19) // 19 oct 2026 (hora local)
 

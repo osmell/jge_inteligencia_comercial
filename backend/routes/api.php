@@ -29,6 +29,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::middleware('permission:sales.view')->prefix('sales')->group(function () {
         Route::get('summary', [SalesStatsController::class, 'summary']);
         Route::get('breakdown', [SalesStatsController::class, 'breakdown']);
+        Route::get('export', [SalesStatsController::class, 'export']);
     });
 
     // Rutas administrativas: exigen permiso explícito en el backend.

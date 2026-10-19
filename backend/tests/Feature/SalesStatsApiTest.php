@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Role;
@@ -11,6 +12,7 @@ use App\Models\Seller;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use OpenSpout\Reader\XLSX\Reader;
 use Tests\TestCase;
 
 class SalesStatsApiTest extends TestCase
@@ -221,5 +223,113 @@ class SalesStatsApiTest extends TestCase
         $this->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range()))->assertUnprocessable()->assertJsonValidationErrors(['dimension']);
         $this->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range(['dimension' => 'x'])))->assertUnprocessable();
         $this->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range(['dimension' => 'company', 'sort' => 'name'])))->assertUnprocessable();
+    }
+
+    /** @return array<string, list<list<mixed>>> hojas del archivo, por nombre */
+    private function sheets(string $path): array
+    {
+        $reader = new Reader;
+        $reader->open($path);
+        $out = [];
+        foreach ($reader->getSheetIterator() as $sheet) {
+            foreach ($sheet->getRowIterator() as $row) {
+                $out[$sheet->getName()][] = $row->toArray();
+            }
+        }
+        $reader->close();
+
+        return $out;
+    }
+
+    public function test_csv_export_matches_the_breakdown_and_respects_the_scope_filters(): void
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->get('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'csv', 'dimension' => 'branch', 'company_id' => $this->a->id])))
+            ->assertOk();
+
+        $this->assertStringContainsString('text/csv', $response->headers->get('content-type'));
+        $this->assertStringContainsString('ventas-por-branch-2026-10-10_2026-10-16.csv', $response->headers->get('content-disposition'));
+
+        $lines = array_map('str_getcsv', array_filter(explode("\n", ltrim($response->streamedContent(), "\xEF\xBB\xBF"))));
+        $this->assertSame(['Sucursal', 'Clave', 'Venta neta'], array_slice($lines[0], 0, 3));
+        $this->assertSame(['Centro', (string) $this->a1->id, '350.00'], array_slice($lines[1], 0, 3));
+        $this->assertSame(['Norte', (string) $this->a2->id, '300.00'], array_slice($lines[2], 0, 3));
+        $this->assertCount(3, $lines);                                          // sin la sucursal de la otra compañía
+    }
+
+    public function test_csv_neutralizes_text_that_would_be_read_as_a_formula(): void
+    {
+        $this->doc($this->a1, 'A-9', '2026-10-13', 'C7', [['10', '5', '=HYPERLINK("x")', 'P9']]);
+
+        $csv = $this->actingAs($this->admin, 'sanctum')
+            ->get('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'csv', 'dimension' => 'category', 'company_id' => $this->a->id])))
+            ->streamedContent();
+
+        $this->assertStringContainsString("'=HYPERLINK", $csv);
+        $this->assertStringNotContainsString("\n=HYPERLINK", $csv);
+    }
+
+    public function test_excel_export_has_summary_and_every_breakdown_with_numeric_amounts(): void
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->get('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'xlsx', 'company_id' => $this->a->id, 'category' => 'Filtros'])))
+            ->assertOk();
+
+        $this->assertStringContainsString('ventas-2026-10-10_2026-10-16.xlsx', $response->headers->get('content-disposition'));
+        $sheets = $this->sheets($response->baseResponse->getFile()->getPathname());
+
+        $this->assertSame(
+            ['Resumen', 'Por compañía', 'Por sucursal', 'Por vendedor', 'Por operador', 'Por categoría', 'Por producto', 'Por cliente', 'Por mes', 'Por día'],
+            array_keys($sheets),
+        );
+
+        $summary = array_column($sheets['Resumen'], 1, 0);
+        $this->assertSame('2026-10-10 a 2026-10-16', $summary['Periodo']);
+        $this->assertStringContainsString('Compañía: '.$this->a->name, $summary['Filtros']);
+        $this->assertStringContainsString('Categoría: Filtros', $summary['Filtros']);
+        $this->assertEquals(300.0, $summary['Venta neta']);                      // 100 + 200: solo la categoría filtrada
+        $this->assertIsNumeric($summary['Venta neta']);
+        $this->assertSame(2, $summary['Documentos']);
+
+        $this->assertSame('Centro', $sheets['Por sucursal'][1][0]);
+        $this->assertEquals(300.0, $sheets['Por sucursal'][1][2]);
+        $this->assertSame(['2026-10-10', '2026-10-12'], array_column(array_slice($sheets['Por día'], 1), 0));
+    }
+
+    public function test_excel_export_only_contains_data_in_the_users_scope(): void
+    {
+        $user = User::factory()->role(Role::GERENTE_GENERAL)->create();
+        $user->companies()->attach($this->a);
+        $user->branches()->attach($this->a2);
+        $this->actingAs($this->admin, 'sanctum')
+            ->putJson('/api/v1/admin/role-permissions/'.$user->role_id, ['permissions' => ['sales.view']])->assertOk();
+
+        $response = $this->actingAs($user, 'sanctum')->get('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'xlsx'])))->assertOk();
+        $sheets = $this->sheets($response->baseResponse->getFile()->getPathname());
+
+        $this->assertEquals(300.0, array_column($sheets['Resumen'], 1, 0)['Venta neta']);
+        $this->assertSame(['Norte'], array_column(array_slice($sheets['Por sucursal'], 1), 0));
+    }
+
+    public function test_exports_are_audited_and_require_the_permission_and_valid_input(): void
+    {
+        $this->actingAs($this->admin, 'sanctum')
+            ->get('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'csv', 'dimension' => 'seller'])))->assertOk()->streamedContent();
+
+        $log = AuditLog::where('event', 'sales.exported')->sole();
+        $this->assertSame($this->admin->id, $log->user_id);
+        $this->assertSame('csv', $log->new_values['format']);
+        $this->assertSame('seller', $log->new_values['dimension']);
+        $this->assertSame('2026-10-10', $log->new_values['from']);
+
+        $this->getJson('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'csv'])))->assertUnprocessable()->assertJsonValidationErrors(['dimension']);
+        $this->getJson('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'pdf'])))->assertUnprocessable()->assertJsonValidationErrors(['format']);
+        $this->getJson('/api/v1/sales/export?'.http_build_query($this->range()))->assertUnprocessable()->assertJsonValidationErrors(['format']);
+        $this->assertSame(1, AuditLog::where('event', 'sales.exported')->count());      // lo inválido no se audita
+
+        $seller = User::factory()->role(Role::VENDEDOR)->create();
+        $seller->companies()->attach($this->a);
+        $this->actingAs($seller, 'sanctum')->getJson('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'xlsx'])))->assertForbidden();
+        $this->assertSame(1, AuditLog::where('event', 'sales.exported')->count());
     }
 }

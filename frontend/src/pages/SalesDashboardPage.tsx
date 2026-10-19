@@ -1,7 +1,8 @@
-import { ArrowDown, ArrowUp, Minus, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Download, Minus, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { BarChart, InlineBar } from '../components/charts'
-import { Alert, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { download } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import {
   DIMENSION_FILTER,
@@ -60,6 +61,8 @@ export default function SalesDashboardPage() {
   const [branchId, setBranchId] = useState('')
   const [chips, setChips] = useState<Chip[]>([])
   const [dimension, setDimension] = useState<Dimension>('seller')
+  const [exporting, setExporting] = useState<'xlsx' | 'csv' | null>(null)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   const range = preset === 'custom' ? custom : presetRange(preset)
   const days = daysBetween(range.from, range.to)
@@ -98,6 +101,19 @@ export default function SalesDashboardPage() {
     setChips((prev) => [...prev.filter((c) => c.param !== param), { param, value: row.key, label: `${DIMENSION_LABEL[dimension]}: ${row.label}` }])
   }
 
+  async function exportReport(format: 'xlsx' | 'csv') {
+    setExporting(format)
+    setExportError(null)
+    try {
+      const extra = format === 'csv' ? `&dimension=${dimension}` : ''
+      await download(`/sales/export?${filterQuery}&format=${format}${extra}`, `ventas.${format}`)
+    } catch (e) {
+      setExportError(e instanceof Error ? e.message : 'No se pudo exportar el reporte.')
+    } finally {
+      setExporting(null)
+    }
+  }
+
   function selectCompany(id: string) {
     setCompanyId(id)
     setBranchId('')
@@ -107,7 +123,20 @@ export default function SalesDashboardPage() {
 
   return (
     <section className="space-y-6">
-      <PageHeader title="Ventas" description="Venta neta, impuestos y total por periodo, comparados con el periodo equivalente anterior." />
+      <PageHeader
+        title="Ventas"
+        description="Venta neta, impuestos y total por periodo, comparados con el periodo equivalente anterior."
+        action={
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'xlsx'} disabled={!enabled || exporting !== null} onClick={() => void exportReport('xlsx')}>
+              Exportar a Excel
+            </Button>
+            <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'csv'} disabled={!enabled || exporting !== null} onClick={() => void exportReport('csv')}>
+              {`CSV por ${DIMENSION_LABEL[dimension].toLowerCase()}`}
+            </Button>
+          </div>
+        }
+      />
 
       <Card className="space-y-4 p-4">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -159,7 +188,7 @@ export default function SalesDashboardPage() {
         <FormError message={rangeError} />
       </Card>
 
-      {error && <Alert tone="danger">{error}</Alert>}
+      {(error ?? exportError) && <Alert tone="danger">{error ?? exportError}</Alert>}
       {s?.warnings.includes('previous_period_incomplete') && (
         <Alert tone="warning">
           El historial cargado empieza el {s.first_sale_date}, después del inicio del periodo anterior ({s.previous_period.from}). La comparación es parcial.
