@@ -29,4 +29,6 @@ No cerrar estas preguntas mediante suposiciones.
 20. Paleta corporativa final y modo oscuro opcional.
 
 ## Recomendación
+Las preguntas para el responsable del Excel están redactadas en `11_PREGUNTAS_RESPONSABLE_EXCEL.md` (puntos 1–8).
+
 Resolver primero los puntos 1–6 con la persona responsable del sistema que genera el Excel. Sin fecha y dimensiones empresariales no se pueden calcular correctamente tendencias temporales ni separar ventas por compañía/sucursal.
