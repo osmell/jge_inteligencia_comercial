@@ -54,5 +54,7 @@ Implementado en `backend/app/Imports` (marco y adaptador de ventas), `backend/ap
 
 ### Límites y operación
 - Máximo 20 MB y 200 000 filas de datos por archivo (`IMPORT_MAX_FILE_KB`, `IMPORT_MAX_ROWS`).
+- **Rendimiento medido** (PostgreSQL real, worker de Redis, peor caso: 200 000 líneas, un documento por línea, archivo de 15 MB): validar 92 s con 305 MB de pico; importar 247 s con 367 MB de pico. Con 20 000 líneas: validar 9 s e importar 25 s con 77 MB, que cabe incluso en el límite por defecto de PHP (128 MB). Un archivo diario típico tarda segundos.
+- La importación relee el archivo en streaming y escribe documentos y líneas por bloques; no guarda las líneas en memoria.
 - El worker corre con 1 GB de memoria (`docker-compose.yml`); el programador (`schedule:work` o cron) debe ejecutarse para `imports:fail-stale`.
 - Los archivos subidos se conservan hasta que el lote se descarte; la política de retención y respaldo es la decisión #11 pendiente.
