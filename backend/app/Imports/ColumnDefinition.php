@@ -12,6 +12,7 @@ final class ColumnDefinition
         public readonly string $key,
         public readonly array $aliases,
         public readonly bool $required = true,
+        public readonly ?string $hint = null,
     ) {}
 
     public function label(): string

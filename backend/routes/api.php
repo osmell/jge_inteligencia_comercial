@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\BranchController;
 use App\Http\Controllers\Api\V1\Admin\CompanyController;
+use App\Http\Controllers\Api\V1\Admin\ImportController;
 use App\Http\Controllers\Api\V1\Admin\RolePermissionController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
@@ -29,6 +30,18 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
         Route::apiResource('companies', CompanyController::class)->except('destroy')->middleware('permission:companies.manage');
         Route::apiResource('branches', BranchController::class)->except('destroy')->middleware('permission:branches.manage');
+
+        Route::middleware('permission:imports.manage')->prefix('imports')->group(function () {
+            Route::get('types', [ImportController::class, 'types']);
+            Route::get('templates/{type}', [ImportController::class, 'template']);
+            Route::get('/', [ImportController::class, 'index']);
+            Route::post('/', [ImportController::class, 'store']);
+            Route::get('{batch}', [ImportController::class, 'show'])->whereNumber('batch');
+            Route::get('{batch}/errors', [ImportController::class, 'errors'])->whereNumber('batch');
+            Route::get('{batch}/errors.csv', [ImportController::class, 'errorsCsv'])->whereNumber('batch');
+            Route::post('{batch}/confirm', [ImportController::class, 'confirm'])->whereNumber('batch');
+            Route::post('{batch}/discard', [ImportController::class, 'discard'])->whereNumber('batch');
+        });
 
         Route::middleware('permission:roles.manage')->group(function () {
             Route::get('role-permissions', [RolePermissionController::class, 'index']);

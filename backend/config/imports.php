@@ -28,6 +28,9 @@ return [
         'sales' => SalesImportType::class,
     ],
 
+    // Nombre visible de cada tipo.
+    'labels' => ['sales' => 'Ventas'],
+
     // Filas mostradas en la vista previa.
     'preview_rows' => 20,
 

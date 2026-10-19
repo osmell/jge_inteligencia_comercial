@@ -31,6 +31,31 @@ final class SalesImportType implements ImportType
 {
     private const AMOUNTS = ['unit_cost', 'line_cost_total', 'unit_price', 'normal_price', 'net_total', 'tax_total', 'sale_plus_tax', 'grand_total'];
 
+    /** Ayudas que se muestran en la hoja «Instrucciones» de la plantilla. */
+    private const HINTS = [
+        'document' => 'Número del documento. Formatee la columna como Texto para conservar los ceros iniciales.',
+        'series' => 'Serie del documento. Compañía + Serie + Documento identifican la factura de forma única.',
+        'issued_on' => 'Fecha de la factura: celda con formato de fecha de Excel, o texto AAAA-MM-DD / DD/MM/AAAA. Columna provisional.',
+        'company' => 'Código o nombre de la compañía, tal como está registrada en el sistema. Columna provisional.',
+        'branch' => 'Código o nombre de la sucursal de esa compañía. Columna provisional.',
+        'customer_code' => 'Código del cliente (texto).',
+        'customer_name' => 'Nombre del cliente.',
+        'product_code' => 'Código del producto (texto; conserve ceros iniciales).',
+        'units' => 'Unidades vendidas. Debe ser mayor que cero.',
+        'product_name' => 'Nombre del producto.',
+        'line_cost_total' => 'Costo total de la línea.',
+        'unit_cost' => 'Costo unitario ACTUAL del producto (no el histórico de la venta).',
+        'unit_price' => 'Precio unitario de venta.',
+        'normal_price' => 'Precio unitario normal (opcional).',
+        'net_total' => 'Subtotal menos descuento.',
+        'tax_total' => 'Total Neto × IVA.',
+        'sale_plus_tax' => 'Total Neto + Total Impuesto.',
+        'grand_total' => 'Total Neto + Total Impuesto.',
+        'seller_name' => 'Nombre del vendedor.',
+        'category_name' => 'Categoría del producto (Nivel 2).',
+        'operator_name' => 'Operador que emitió la factura.',
+    ];
+
     private ?User $user = null;
 
     /** @var array<string, Company>|null */
@@ -60,7 +85,7 @@ final class SalesImportType implements ImportType
         $optional = config('imports.sales.optional', []);
 
         return collect(config('imports.sales.columns'))
-            ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, $aliases, required: ! in_array($key, $optional, true)))
+            ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, $aliases, required: ! in_array($key, $optional, true), hint: self::HINTS[$key] ?? null))
             ->values()->all();
     }
 

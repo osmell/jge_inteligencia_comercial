@@ -72,7 +72,10 @@ Al ejecutar `artisan` que cree archivos, usar `docker compose exec -u $(id -u) b
 | `/admin/users`, `GET /admin/roles` (listar, ver, crear, editar) | `users.manage` |
 | `GET/PUT /admin/role-permissions` | `roles.manage` (solo Administrador) |
 | `GET /admin/audit-logs` | `audit.view` |
+| `/admin/imports` (subir, listar, ver, errores, errores.csv, confirmar, descartar), `/admin/imports/types`, `/admin/imports/templates/{tipo}` | `imports.manage` (quien no es Administrador ve solo sus lotes) |
 
 **Un permiso por opción del menú**, concedible por rol desde «Roles y permisos». El rol Administrador siempre tiene todos y no es editable; `roles.manage` no se puede conceder a otros roles. Quien tenga `users.manage` sin ser Administrador solo ve y administra usuarios de las compañías en las que tiene acceso completo, y no puede asignar el rol Administrador. `audit.view` limita los registros a sus compañías.
+
+**Importaciones:** `POST /admin/imports` (multipart: `type`, `file` .xlsx) guarda el archivo en el disco privado y lo valida en cola **sin escribir ventas**; se consulta el lote hasta que quede `validated` o `rejected`; `POST …/confirm` (202) importa en cola solo si está validado (una segunda confirmación responde 409) y `POST …/discard` lo descarta. El CSV de errores neutraliza fórmulas. Los nombres provisionales de columnas, formatos de fecha y la tasa de IVA se ajustan en `backend/config/imports.php`.
 
 No hay `DELETE`: las entidades se desactivan con `is_active`.
