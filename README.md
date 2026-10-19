@@ -8,7 +8,7 @@ Contexto y fases del proyecto: carpeta [`docs/`](docs/README.md). **Estado: Fase
 ```
 backend/     Laravel 13 (PHP 8.5) — API REST /api/v1
 frontend/    React 19 + TypeScript + Vite + Tailwind 4
-docker-compose.yml       backend, frontend y Redis (sin PostgreSQL)
+docker-compose.yml       backend, queue (worker), frontend y Redis (sin PostgreSQL)
 docker-compose.dev.yml   PostgreSQL local SOLO para desarrollo
 ```
 
@@ -24,6 +24,7 @@ docker compose exec backend php artisan migrate --seed
 ```
 
 - Frontend: http://localhost:5173 — API: http://localhost:8000/api/v1
+- El servicio `queue` ejecuta `php artisan queue:work`; es necesario para validar e importar archivos. Tras cambiar código de trabajos, reinícialo: `docker compose restart queue`.
 - `backend/.env` se lee desde el volumen montado; **no** añadir `env_file` al Compose (las variables del contenedor tendrían prioridad sobre `phpunit.xml`).
 - Para usar la VM de PostgreSQL: levantar solo `docker-compose.yml` y poner `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` de la VM en `backend/.env`.
 

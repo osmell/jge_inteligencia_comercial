@@ -21,11 +21,12 @@ class RolePermissionSeeder extends Seeder
             Role::updateOrCreate(['slug' => $slug], ['name' => $name]);
         }
 
-        // Permisos de Fase 1. Los de supervisores están pendientes de definir (decisión #19).
+        // Permisos de Fases 1 y 2. Los de supervisores están pendientes de definir (decisión #19).
         $permissions = [
             'organization.manage' => 'Gestionar compañías y sucursales',
             'users.manage' => 'Gestionar usuarios y roles',
             'audit.view' => 'Consultar auditoría',
+            'imports.manage' => 'Importar archivos (validar, confirmar, descartar)',
         ];
 
         foreach ($permissions as $slug => $name) {

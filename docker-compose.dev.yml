@@ -17,5 +17,9 @@ services:
     depends_on:
       - postgres
 
+  queue:
+    depends_on:
+      - postgres
+
 volumes:
   postgres_dev_data:
