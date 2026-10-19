@@ -10,6 +10,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @property int $id
+ * @property int $company_id
+ * @property string $code
+ * @property string $name
+ * @property bool $is_active
+ * @property Company $company
+ */
 #[Fillable(['company_id', 'code', 'name', 'is_active'])]
 class Branch extends Model
 {
@@ -35,11 +43,13 @@ class Branch extends Model
         return ['is_active' => 'boolean'];
     }
 
+    /** @return BelongsTo<Company, $this> */
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
+    /** @return BelongsToMany<User, $this> */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class);

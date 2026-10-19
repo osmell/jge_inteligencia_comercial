@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Branch;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,7 +11,7 @@ class BranchRequest extends FormRequest
     public function rules(): array
     {
         $branch = $this->route('branch');
-        $companyId = $branch?->company_id ?? $this->input('company_id');
+        $companyId = $branch instanceof Branch ? $branch->company_id : $this->input('company_id');
 
         return [
             // La compañía no se puede cambiar una vez creada la sucursal.

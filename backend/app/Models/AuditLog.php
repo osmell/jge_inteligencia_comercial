@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * @property int $id
+ * @property int|null $user_id
+ * @property string|null $username
+ * @property string $event
+ */
 #[Fillable(['user_id', 'username', 'event', 'auditable_type', 'auditable_id', 'company_id', 'ip_address', 'user_agent', 'old_values', 'new_values'])]
 class AuditLog extends Model
 {
@@ -24,6 +30,7 @@ class AuditLog extends Model
         return ['old_values' => 'array', 'new_values' => 'array'];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
