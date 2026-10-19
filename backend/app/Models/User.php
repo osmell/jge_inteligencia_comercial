@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -24,6 +25,12 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /** Los nombres de usuario se guardan en minúsculas para que sean únicos sin distinguir mayúsculas. */
+    protected function username(): Attribute
+    {
+        return Attribute::set(fn (string $value) => mb_strtolower(trim($value)));
     }
 
     public function role(): BelongsTo

@@ -1,8 +1,9 @@
 # PostgreSQL NO se despliega aquí: vive en una VM dedicada (ver DB_HOST en backend/.env).
+# La configuración de Laravel se lee de backend/.env (montado en el volumen); no usar env_file,
+# porque las variables del contenedor tendrían prioridad sobre phpunit.xml y .env.
 services:
   backend:
     build: ./backend
-    env_file: ./backend/.env
     ports:
       - "8000:8000"
     volumes:
