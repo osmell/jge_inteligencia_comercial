@@ -2,30 +2,43 @@
 
 No cerrar estas preguntas mediante suposiciones.
 
-## Respuestas recibidas del responsable del Excel (2026-10-18)
-Fuente: respuesta al cuestionario `11_PREGUNTAS_RESPONSABLE_EXCEL.md`. El responsable indicó que los datos de la plantilla son **ficticios**.
+## Respuestas del responsable del Excel (2026-10-18, versión corregida)
+Fuente: respuesta al cuestionario `11_PREGUNTAS_RESPONSABLE_EXCEL.md`; esta versión sustituye a la respuesta anterior. Los datos de la plantilla son **ficticios**. La numeración corresponde a la lista original de bloqueantes.
 
 | # | Tema | Respuesta | Estado |
 |---|---|---|---|
-| 1 | Fecha de venta | Se agregará un campo de fecha al archivo | Resuelto en parte: falta nombre exacto de la columna, formato, si incluye hora y qué rango cubre cada archivo diario |
-| 2 | Compañía y sucursal | Se agregarán columnas de compañía y sucursal | Resuelto en parte: faltan nombres de las columnas y si son código o nombre (y su equivalencia con los catálogos del sistema) |
-| 6 | Clave de documento | `Documento` + `Serie` es el número único | Resuelto. Pendiente solo confirmar que es único dentro de la compañía (por defecto se usará compañía + serie + documento) |
-| 4 | Costo | `Costo Unit.Vta.` es el costo unitario | Parcial: no se confirmó si es costo histórico de la venta o actual, ni la semántica de `Costo Tot.Vta.` |
-| 5 | Nombre Nivel 2 Inv | Nivel 2 = **categoría** de productos; existe Nivel 1 = **línea** | Resuelto. Pendiente: si la línea (Nivel 1) llegará como columna y la lista de valores |
-| 7 | Anulaciones | No vienen facturas anuladas | Parcial: falta aclarar devoluciones y notas de crédito (¿vienen? ¿en negativo? ¿cómo se enlazan?) |
-| 8 | Facturadores | La columna se llama `Nombre Operador` (antes `Nombre Facturador`) | Parcial: solo cambio de nombre. Sin fecha/hora de emisión no se calculan KPI de velocidad ni errores |
+| 1 | Fecha de venta | Se agregará un campo de fecha al archivo | Resuelto en parte: falta nombre de la columna, formato, si incluye hora y qué rango cubre cada archivo diario |
+| 2 | Compañía y sucursal | Se agregarán columnas de compañía y sucursal | Resuelto en parte: faltan nombres de columnas y si son código o nombre (y su equivalencia con los catálogos del sistema) |
+| 3 | Importes | `Total Neto` = Subtotal − descuento · `Total Impuesto` = Total Neto × IVA · `Venta + Imp` = Total Neto + Total Impuesto · `Gran Total` = Total Neto + Total Impuesto | Resuelto en lo esencial (ver «Reglas de conciliación»). Detalles abiertos abajo |
+| 4 | Costo | `Costo Unit.Vta.` es el costo unitario **actual** (no el histórico de la venta) | Resuelto. Consecuencia: el margen no es histórico (ver abajo). `Costo Tot.Vta.` sin confirmar explícitamente |
+| 5 | Nombre Nivel 2 Inv | Nivel 2 = **categoría**; existe Nivel 1 = **línea** | Resuelto. Pendiente: si la línea llegará como columna y la lista de valores |
+| 6 | Clave de documento | `Documento` + `Serie` es el número único | Resuelto. Se usará compañía + serie + documento salvo que se confirme que la serie es única en todo el grupo |
+| 7 | Anulaciones/devoluciones | No vienen anuladas, ni devoluciones, ni notas de crédito: esos documentos se emiten **aparte** | Resuelto para esta plantilla (no habrá importes negativos). Pendiente: cómo se recibirán esos documentos aparte |
+| 8 | Facturadores | La columna se llama `Nombre Operador` (antes `Nombre Facturador`) | Parcial: solo cambio de nombre. Sin fecha/hora de emisión no hay KPI de velocidad ni errores |
 
-## Bloqueantes aún abiertos
-3. **Importes (el más importante):** ¿cuál es el importe oficial y qué representan `Total Neto`, `Total Impuesto`, `Venta + Imp` y `Gran Total`? ¿Por qué difieren en algunas filas? ¿Dónde se ven los descuentos? Sin esto no se calculan ventas netas ni totales facturados.
-- **Costo:** histórico de la venta o actual (punto 4 parcial).
-- **Devoluciones y notas de crédito:** si aparecen y cómo (punto 7 parcial).
-- **Columnas nuevas:** nombres y formatos exactos de fecha, compañía y sucursal (puntos 1 y 2).
-- **Operador:** si habrá fecha/hora de emisión (punto 8 parcial).
-- **Muestra revisada:** recibir el archivo actualizado con las columnas nuevas y casos difíciles (devolución, descuento, importes que no cuadran).
+### Reglas de conciliación derivadas (Fase 2)
+Por definición `Venta + Imp` y `Gran Total` deben ser **iguales** a `Total Neto + Total Impuesto`. Las diferencias observadas en la muestra son, por tanto, **anomalías de datos**, no dos conceptos distintos:
+- Marcar como inconsistencia toda fila donde `Venta + Imp` ≠ `Gran Total` o ≠ `Total Neto + Total Impuesto` (con tolerancia de redondeo configurable).
+- No corregir silenciosamente: reportar por fila y columna, según las reglas de importación del contexto maestro.
+- Verificar también `Total Impuesto` = `Total Neto` × tasa de IVA (la tasa aún no está definida: ver abajo).
+
+### Consecuencia del costo actual
+Como `Costo Unit.Vta.` es el costo **actual** y no el de la fecha de la venta, el margen de ventas pasadas se calcula con un costo que pudo cambiar. Propuesta (a aprobar): conservar el costo tal como vino en cada importación diaria y rotular el margen como «margen estimado con costo actual» hasta contar con costo histórico.
+
+## Detalles aún abiertos
+- **IVA:** tasa(s) aplicables, productos exentos y si la tasa puede variar por línea.
+- **Alcance de los importes:** si `Total Neto`, `Total Impuesto`, `Venta + Imp` y `Gran Total` son por línea o por documento (y si se repiten en cada línea).
+- **Descuento:** dónde se ve (no hay columna de descuento; ¿diferencia entre `Precio Unit.Normal` y `Precio Unit.Vta.`?) y qué es el «Subtotal» de la fórmula.
+- **Costo Tot.Vta.:** confirmar que es cantidad × `Costo Unit.Vta.`
+- **Columnas nuevas:** nombres y formatos exactos de fecha, compañía y sucursal; si la fecha trae hora; rango de cada archivo diario.
+- **Operador:** si habrá fecha/hora de emisión.
+- **Línea (Nivel 1):** si llegará como columna.
+- **Documentos aparte** (anulaciones, devoluciones, notas de crédito): plantilla y forma de enlazarlos con la factura original (relacionado con 13 y 14).
+- **Muestra actualizada** con las columnas nuevas y casos difíciles (descuento, importes que no cuadran).
 
 ## Efecto sobre las fases
-- **Fase 2 (importación):** se puede diseñar el marco de importación, la clave idempotente (compañía + serie + documento) y los controles de conciliación. **No** cerrar las reglas de importes hasta resolver el punto 3.
-- **Fase 3 (KPI):** bloqueada para venta neta, impuesto y margen hasta resolver importes y costo.
+- **Fase 2 (importación):** puede avanzar completa en cuanto se definan las columnas nuevas y la tasa de IVA; las reglas de conciliación ya están definidas.
+- **Fase 3 (KPI):** venta neta, impuesto y total facturado quedan desbloqueados tras la Fase 2. Margen: solo como estimación con costo actual. KPI de facturadores: sigue sin datos de tiempo.
 
 ## Plantillas por recibir
 9. Clientes.
@@ -44,6 +57,4 @@ Fuente: respuesta al cuestionario `11_PREGUNTAS_RESPONSABLE_EXCEL.md`. El respon
 20. Paleta corporativa final y modo oscuro opcional.
 
 ## Recomendación
-Las preguntas para el responsable del Excel están redactadas en `11_PREGUNTAS_RESPONSABLE_EXCEL.md` (puntos 1–8).
-
-El punto 3 (importes) es el principal bloqueante restante. Reenviar al responsable del Excel solo lo que sigue abierto (ver «Bloqueantes aún abiertos»).
+Las preguntas están en `11_PREGUNTAS_RESPONSABLE_EXCEL.md`. Reenviar al responsable solo lo que sigue abierto en «Detalles aún abiertos».

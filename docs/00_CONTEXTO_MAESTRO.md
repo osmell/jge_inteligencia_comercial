@@ -75,9 +75,9 @@ Archivo recibido: `Plantilla Ventas.xlsx`, hoja `Hoja1`. Se observan 18 columnas
 - Nombre Facturador
 
 La muestra contiene filas de detalle por producto y repite el documento en múltiples líneas. La importación debe agrupar lógicamente por documento/serie y preservar cada línea. No asumir que la muestra contiene fecha, compañía, sucursal, moneda, tipo de venta o estado del documento: no aparecen entre las 18 columnas observadas. Confirmar cómo se obtienen esos datos antes de producir KPI temporal, multiempresa, sucursal o crédito.
-**Actualización (2026-10-18):** el responsable del Excel confirmó que se agregarán columnas de fecha, compañía y sucursal; que `Documento` + `Serie` es el identificador único; que `Costo Unit.Vta.` es costo unitario; que Nivel 2 es la categoría (existe Nivel 1 = línea); que no vienen facturas anuladas; y que la columna del facturador se llama `Nombre Operador`. Los datos de la plantilla son ficticios. Detalle y pendientes en `10_DECISIONES_PENDIENTES.md`.
+**Actualización (2026-10-18, respuestas corregidas del responsable del Excel):** se agregarán columnas de fecha, compañía y sucursal; `Documento` + `Serie` es el identificador único; `Total Neto` = subtotal − descuento, `Total Impuesto` = `Total Neto` × IVA, y tanto `Venta + Imp` como `Gran Total` = `Total Neto` + `Total Impuesto`; `Costo Unit.Vta.` es el costo unitario **actual** (no histórico); Nivel 2 es la categoría y existe Nivel 1 = línea; no vienen anuladas, devoluciones ni notas de crédito (se emiten aparte); la columna del facturador se llama `Nombre Operador`. Los datos de la plantilla son ficticios. Detalle y pendientes en `10_DECISIONES_PENDIENTES.md`.
 
-**Observación de calidad:** en la muestra hay valores en que `Venta + Imp` y `Gran Total` no coinciden, y también diferencias aparentes entre `Total Neto`, impuesto y total. No corregir silenciosamente: definir la semántica con el propietario del dato y crear controles de conciliación.
+**Observación de calidad:** (por definición `Venta + Imp` y `Gran Total` deben coincidir; las diferencias son anomalías a reportar) en la muestra hay valores en que `Venta + Imp` y `Gran Total` no coinciden, y también diferencias aparentes entre `Total Neto`, impuesto y total. No corregir silenciosamente: definir la semántica con el propietario del dato y crear controles de conciliación.
 Los nombres “Nombre Nivel 2 Inv” y “Nombre Facturador” requieren definición funcional. El primero parece una clasificación de inventario, pero no debe darse por hecho que sea línea/categoría hasta confirmación.
 
 ## 7. Paleta corporativa inicial
@@ -95,7 +95,7 @@ Usar rojo corporativo con moderación para evitar que toda la interfaz parezca u
 
 ## 8. KPI y definiciones que requieren consistencia
 - Venta neta, impuesto, total facturado y costo son métricas separadas.
-- Margen bruto = venta neta menos costo de venta validado; confirmar si el costo importado incluye impuestos/otros componentes.
+- Margen bruto = venta neta menos costo de venta validado; confirmar si el costo importado incluye impuestos/otros componentes. Como `Costo Unit.Vta.` es el costo **actual** y no el histórico de la venta, mostrar el margen como «estimado con costo actual» hasta disponer de costo histórico.
 - Cliente nuevo: primera compra registrada en el universo histórico disponible; advertir si el historial es incompleto.
 - Cliente recuperado: cliente que vuelve a comprar después de un periodo configurable de inactividad, basado en su frecuencia histórica o regla aprobada.
 - Cliente en riesgo: señal preventiva, no etiqueta definitiva de pérdida.
@@ -131,7 +131,7 @@ Aplicar autorización en backend, no solo ocultar controles en frontend. Todos l
 - Nunca usar datos reales sensibles en fixtures o pruebas.
 - No introducir integración WhatsApp, IA predictiva o automatizaciones externas hasta la fase autorizada.
 
-## 12. Decisiones pendientes críticas (ver estado actualizado en `10_DECISIONES_PENDIENTES.md`; siguen abiertos principalmente el punto 3, importes, y el detalle de costo, devoluciones y operador)
+## 12. Decisiones pendientes críticas (ver estado actualizado en `10_DECISIONES_PENDIENTES.md`)
 1. Cómo se identifican compañía y sucursal en la plantilla de ventas, dado que no aparecen en las columnas observadas.
 2. Qué columna representa fecha de factura/venta; no se observa en la plantilla.
 3. Semántica de `Venta + Imp` frente a `Gran Total` y reglas de impuestos/descuentos.
