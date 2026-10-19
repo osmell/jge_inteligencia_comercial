@@ -1,5 +1,7 @@
 <?php
 
+use App\Imports\Sales\SalesImportType;
+
 /*
 |--------------------------------------------------------------------------
 | Importación de archivos Excel
@@ -22,7 +24,9 @@ return [
     'max_rows' => (int) env('IMPORT_MAX_ROWS', 200000),
 
     // Tipos de importación registrados: clave => clase que implementa App\Imports\Contracts\ImportType.
-    'types' => [],
+    'types' => [
+        'sales' => SalesImportType::class,
+    ],
 
     // Filas mostradas en la vista previa.
     'preview_rows' => 20,
@@ -60,5 +64,14 @@ return [
 
         // Columnas que pueden venir vacías en una fila. El resto es obligatoria.
         'optional' => ['normal_price'],
+
+        // Formatos de fecha aceptados en texto, en orden de prueba. PROVISIONAL: el formato real de la columna
+        // «Fecha» aún no está confirmado. Si es ambiguo (dd/mm vs mm/dd) conviene confirmarlo antes de producción.
+        'date_formats' => ['Y-m-d', 'd/m/Y', 'Y-m-d H:i:s', 'd/m/Y H:i:s', 'd/m/Y H:i'],
+
+        // Tasas de IVA válidas, como fracción (0.15 = 15 %). Vacío = no se valida la tasa.
+        // PENDIENTE: la tasa aún no está definida (docs/10_DECISIONES_PENDIENTES.md). Con valores, Total Impuesto
+        // debe ser Total Neto × alguna de estas tasas (dentro de la tolerancia).
+        'tax_rates' => [],
     ],
 ];

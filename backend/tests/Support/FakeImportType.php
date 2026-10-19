@@ -7,6 +7,7 @@ use App\Imports\Contracts\ImportType;
 use App\Imports\ImportContext;
 use App\Imports\ImportRow;
 use App\Imports\ParsedRow;
+use App\Models\ImportBatch;
 
 /** Tipo de importación mínimo para probar el marco, independiente de ventas. */
 class FakeImportType implements ImportType
@@ -17,6 +18,10 @@ class FakeImportType implements ImportType
     {
         return 'fake';
     }
+
+    public function prepare(ImportBatch $batch): void {}
+
+    public function persist(ImportContext $context): void {}
 
     public function columns(): array
     {
