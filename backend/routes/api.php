@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('rankings', [SalesStatsController::class, 'rankings']);
         Route::get('export', [SalesStatsController::class, 'export']);
         Route::get('goals', [SellerGoalsController::class, 'index']);
+        Route::get('goals/export', [SellerGoalsController::class, 'export']);
         Route::get('goals/suggestions', [SellerGoalsController::class, 'suggestions']);
         Route::put('goals', [SellerGoalsController::class, 'update'])->middleware('permission:goals.manage');
     });

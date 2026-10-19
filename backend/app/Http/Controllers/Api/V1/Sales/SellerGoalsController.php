@@ -5,13 +5,15 @@ namespace App\Http\Controllers\Api\V1\Sales;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SellerGoalsRequest;
 use App\Services\AuditLogger;
+use App\Services\SalesReportExporter;
 use App\Services\SellerGoals;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /** Metas mensuales por vendedor: avance (sales.view), sugerencias y captura (goals.manage). */
 class SellerGoalsController extends Controller
 {
-    public function __construct(private readonly SellerGoals $goals, private readonly AuditLogger $audit) {}
+    public function __construct(private readonly SellerGoals $goals, private readonly SalesReportExporter $exporter, private readonly AuditLogger $audit) {}
 
     public function index(SellerGoalsRequest $request): JsonResponse
     {
@@ -45,5 +47,21 @@ class SellerGoalsController extends Controller
         $changed = $this->goals->save($request->user(), $request->validated('month'), $request->validated('goals'), $this->audit);
 
         return response()->json(['data' => ['changed' => $changed]]);
+    }
+
+    /** Descarga las metas del mes en CSV. Queda registrado en la auditoría. */
+    public function export(SellerGoalsRequest $request): Response
+    {
+        $month = $request->validated('month');
+        $companyId = $request->integer('company_id') ?: null;
+        $rows = $this->goals->progress($request->user(), $month, $companyId)['rows'];
+
+        $this->audit->record('goals.exported', $request->user(), new: ['month' => $month, 'company_id' => $companyId, 'rows' => count($rows)]);
+
+        return response()->streamDownload(function () use ($rows) {
+            $out = fopen('php://output', 'w');
+            $this->exporter->writeGoalsCsv($out, $rows);
+            fclose($out);
+        }, "metas-{$month}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 }

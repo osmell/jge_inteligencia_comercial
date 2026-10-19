@@ -95,6 +95,16 @@ describe('metas de ventas', () => {
     expect(await screen.findByRole('button', { name: 'Editar metas' })).toBeInTheDocument()
   })
 
+  it('exporta el mes y filtros consultados', async () => {
+    const u = userEvent.setup()
+    URL.createObjectURL = vi.fn(() => 'blob:x')
+    URL.revokeObjectURL = vi.fn()
+    renderPage()
+
+    await u.click(await screen.findByRole('button', { name: 'Exportar a CSV' }))
+    await waitFor(() => expect(calls.some((c) => c.path.startsWith('/sales/goals/export?month='))).toBe(true))
+  })
+
   it('un mes inválido no consulta', async () => {
     const u = userEvent.setup()
     renderPage()

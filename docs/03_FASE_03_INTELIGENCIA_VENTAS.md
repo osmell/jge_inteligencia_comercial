@@ -107,9 +107,10 @@ Decisiones del responsable: la meta es de **venta neta (sin IVA)**; la fija el s
 - **Proyección** (mes en curso): vendido ÷ avance del mes dentro de la ventana del vendedor. **Alerta de ritmo:** vendido ÷ esperado a la fecha < 80 %, solo cuando ya transcurrió al menos el 20 % del mes (antes sería ruido). Las ausencias se asumen repartidas de forma uniforme.
 - **Sugerencia:** promedio de venta neta de los últimos N meses completos *con ventas* de ese vendedor, más el % de crecimiento, redondeado a unidades. No corrige meses parciales de vendedores nuevos.
 - **Auditoría:** cada cambio de meta, ausencias, alta o baja registra el evento `goals.updated` con valores anteriores y nuevos; guardar sin cambios no deja registro.
+- **Exportación:** `GET /sales/goals/export?month[&company_id]` (CSV con BOM, `sales.view`, evento `goals.exported`); botón «Exportar a CSV» en la pantalla. Nombres con fórmulas se neutralizan.
 - **Pantalla:** `/metas` (Inteligencia → Metas). Tarjetas de totales, tabla con cumplimiento, estado, proyección y ritmo; modo «Editar metas» con sugerencias, ausencias y alta/baja.
-- **Pendiente de confirmar con el responsable:** devoluciones y notas de crédito (decisión #13) restarán a la venta de la meta solo cuando se importen; hoy se mide con las líneas de venta cargadas. No se incluyó exportación de metas.
+- **Pendiente de confirmar con el responsable:** devoluciones y notas de crédito (decisión #13) restarán a la venta de la meta solo cuando se importen; hoy se mide con las líneas de venta cargadas. 
 - **Verificación:** pruebas de cálculo, alcance, permisos, auditoría y validaciones (backend 180, frontend 55); en PostgreSQL la suma de vendedores del mes coincide con SQL directo.
 
 ### Siguiente
-Revisión visual en navegador (incluida la vista móvil) de `/ventas` y `/metas`, y los criterios de aceptación contra un reporte validado (necesita datos reales). Opcional: PDF y exportación de metas.
+Revisión visual en navegador (incluida la vista móvil) de `/ventas` y `/metas`, y los criterios de aceptación contra un reporte validado (necesita datos reales). Opcional: PDF.

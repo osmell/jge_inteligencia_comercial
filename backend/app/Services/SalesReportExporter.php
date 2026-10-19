@@ -59,6 +59,28 @@ class SalesReportExporter
     }
 
     /**
+     * Metas de un mes como CSV (UTF-8 con BOM).
+     *
+     * @param  resource  $out
+     * @param  list<array<string, mixed>>  $rows  filas de SellerGoals::progress()
+     */
+    public function writeGoalsCsv($out, array $rows): void
+    {
+        $status = ['met' => 'Meta cumplida', 'warning' => 'Cerca de la meta', 'danger' => 'Por debajo', 'no_goal' => 'Sin meta', 'exempt' => 'Exento'];
+
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['Vendedor', 'Meta del mes', 'Días de ausencia', 'Alta', 'Baja', 'Días elegibles', 'Meta efectiva', 'Venta neta', 'Cumplimiento %', 'Estado', 'Esperado a la fecha', 'Ritmo %', 'Proyección', 'Proyección %', 'Origen de la meta']);
+
+        foreach ($rows as $r) {
+            fputcsv($out, [
+                self::csvSafe($r['seller']), $r['goal_amount'], $r['days_off'], $r['starts_on'], $r['ends_on'], $r['eligible_days'],
+                $r['effective_goal'], $r['actual'], $r['compliance_pct'], $status[$r['status']], $r['expected_to_date'], $r['pace_pct'],
+                $r['projected'], $r['projected_pct'], $r['source'] === null ? null : ($r['source'] === 'suggested' ? 'Sugerida' : 'Manual'),
+            ]);
+        }
+    }
+
+    /**
      * @param  array<string, mixed>  $filters
      * @param  array{0: CarbonImmutable, 1: CarbonImmutable}|null  $compare
      * @return string ruta de un archivo temporal (el llamador lo elimina)
@@ -156,7 +178,7 @@ class SalesReportExporter
     }
 
     /** Evita que Excel interprete como fórmula un texto que viene de los archivos importados. */
-    private static function csvSafe(?string $value): ?string
+    public static function csvSafe(?string $value): ?string
     {
         return $value !== null && preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
     }

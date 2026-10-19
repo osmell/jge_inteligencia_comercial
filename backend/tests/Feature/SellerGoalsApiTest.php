@@ -258,4 +258,25 @@ class SellerGoalsApiTest extends TestCase
         $this->save([['seller_id' => $this->ana->id, 'amount' => 5, 'starts_on' => '2026-10-20', 'ends_on' => '2026-10-01']])->assertUnprocessable();
         $this->save([])->assertUnprocessable();
     }
+
+    public function test_export_writes_a_csv_neutralizes_formulas_and_is_audited(): void
+    {
+        CarbonImmutable::setTestNow('2026-11-05');
+        $this->ana->update(['name' => '=Ana']);
+        $this->save([['seller_id' => $this->ana->id, 'amount' => 800]]);
+
+        $csv = $this->actingAs($this->admin, 'sanctum')->get('/api/v1/sales/goals/export?month=2026-10')->assertOk()->streamedContent();
+
+        $this->assertStringStartsWith("\xEF\xBB\xBFVendedor,", $csv);
+        $this->assertStringContainsString("'=Ana,800,0,,,31,800,1000,125,\"Meta cumplida\"", $csv);
+        $this->assertStringContainsString('Sin meta', $csv);
+
+        $log = AuditLog::where('event', 'goals.exported')->sole();
+        $this->assertSame('2026-10', $log->new_values['month']);
+
+        $this->actingAs($this->admin, 'sanctum')->getJson('/api/v1/sales/goals/export')->assertUnprocessable();
+        $sin = User::factory()->role(Role::VENDEDOR)->create();
+        $this->actingAs($sin, 'sanctum')->getJson('/api/v1/sales/goals/export?month=2026-10')->assertForbidden();
+        $this->assertSame(1, AuditLog::where('event', 'goals.exported')->count());
+    }
 }

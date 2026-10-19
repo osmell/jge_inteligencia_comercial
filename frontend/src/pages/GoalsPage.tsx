@@ -1,9 +1,9 @@
-import { Pencil, Sparkles } from 'lucide-react'
+import { Download, Pencil, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
-import { api } from '../lib/api'
+import { api, download } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { STATUS_LABEL, STATUS_TONE, currentMonth, type GoalRow, type GoalsResponse, type Suggestion } from '../lib/goals'
 import { formatPct } from '../lib/sales'
@@ -61,6 +61,8 @@ export default function GoalsPage() {
   const [saving, setSaving] = useState(false)
   const [suggesting, setSuggesting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   const validMonth = /^\d{4}-(0[1-9]|1[0-2])$/.test(month)
   const query = new URLSearchParams({ month, ...(companyId ? { company_id: companyId } : {}) }).toString()
@@ -72,6 +74,18 @@ export default function GoalsPage() {
   const totals = meta?.totals
   const editing = drafts !== null
   const behind = rows.filter((r) => r.behind_pace)
+
+  async function exportCsv() {
+    setExporting(true)
+    setExportError(null)
+    try {
+      await download(`/sales/goals/export?${query}`, `metas-${month}.csv`)
+    } catch (e) {
+      setExportError(e instanceof Error ? e.message : 'No se pudo exportar las metas.')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   function startEditing() {
     setFormError(null)
@@ -139,10 +153,17 @@ export default function GoalsPage() {
         title="Metas de ventas"
         description="Meta mensual de venta neta (sin IVA) por vendedor. Se prorratea por alta, baja y ausencias."
         action={
-          canEdit && !editing && (
-            <Button variant="secondary" icon={<Pencil className="h-4 w-4" aria-hidden="true" />} disabled={!validMonth || rows.length === 0} onClick={startEditing}>
-              Editar metas
-            </Button>
+          !editing && (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting} disabled={!validMonth || rows.length === 0} onClick={() => void exportCsv()}>
+                Exportar a CSV
+              </Button>
+              {canEdit && (
+                <Button variant="secondary" icon={<Pencil className="h-4 w-4" aria-hidden="true" />} disabled={!validMonth || rows.length === 0} onClick={startEditing}>
+                  Editar metas
+                </Button>
+              )}
+            </div>
           )
         }
       />
@@ -157,6 +178,7 @@ export default function GoalsPage() {
 
       {!validMonth && <Alert tone="warning">Indica un mes válido.</Alert>}
       <FormError message={validMonth ? goals.error : null} />
+      <FormError message={exportError} />
 
       {totals && !editing && (
         <>
