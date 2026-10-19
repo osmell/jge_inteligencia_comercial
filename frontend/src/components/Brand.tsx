@@ -1,10 +1,21 @@
-/** Marca provisional JGE (sustituir por el logo original cuando esté disponible). */
-export function BrandMark({ className = 'h-9 w-9' }: { className?: string }) {
+import emblem from '../assets/brand/logo-emblem.png'
+import full from '../assets/brand/logo-full.png'
+
+/** Logo completo de JGE Soluciones Integrales (azul y rojo: usar sobre fondo claro). */
+export function BrandLogo({ className = 'h-16 w-auto' }: { className?: string }) {
+  return <img src={full} alt="JGE Soluciones Integrales" width={793} height={357} className={className} />
+}
+
+/** Emblema circular de JGE (edificio y vehículo), para espacios compactos. */
+export function BrandEmblem({ className = 'h-9 w-9' }: { className?: string }) {
+  return <img src={emblem} alt="JGE" width={302} height={302} className={className} />
+}
+
+/** Logo completo sobre placa blanca, para fondos oscuros como la barra lateral. */
+export function BrandPlate({ className = '' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 40 40" className={className} role="img" aria-label="JGE">
-      <rect width="40" height="40" rx="8" fill="#ffffff" />
-      <text x="20" y="25" fontFamily="Fira Sans, Arial, sans-serif" fontSize="15" fontWeight="700" textAnchor="middle" fill="#07579B">JGE</text>
-      <rect x="9" y="29" width="22" height="2.5" rx="1.25" fill="#E50918" />
-    </svg>
+    <div className={`rounded-xl bg-white p-3 shadow-sm ${className}`}>
+      <BrandLogo className="h-auto w-full" />
+    </div>
   )
 }

@@ -8,18 +8,18 @@
 
 /*
  * Sistema de diseño JGE — estilo corporativo sobrio (Minimalism / Swiss) para panel empresarial.
- * Colores de marca del contexto maestro (pendientes de validar contra el logo original);
+ * Rojo y azul de marca muestreados del archivo logo_large.png (rojo #B01C14, azul #00508C);
  * los neutros siguen una escala slate de alto contraste. Todos los pares de texto cumplen WCAG AA.
  */
 @theme {
   /* Marca */
-  --color-jge-blue: #07579b;
-  --color-jge-blue-dark: #054270;
-  --color-jge-blue-50: #eaf2f9;
-  --color-jge-blue-100: #cfe2f2;
-  --color-jge-navy: #0a2f52;
-  --color-jge-navy-soft: #123f69;
-  --color-jge-red: #e50918;
+  --color-jge-blue: #00508c;
+  --color-jge-blue-dark: #003d6b;
+  --color-jge-blue-50: #e6eff6;
+  --color-jge-blue-100: #c7dcec;
+  --color-jge-navy: #072c4d;
+  --color-jge-navy-soft: #0f3d68;
+  --color-jge-red: #b01c14;
   --color-jge-charcoal: #353535;
 
   /* Superficies y texto */
@@ -39,8 +39,8 @@
   --color-warning-50: #fff8e6;
   --color-danger: #c62828;
   --color-danger-50: #fef2f2;
-  --color-info: #07579b;
-  --color-info-50: #eaf2f9;
+  --color-info: #00508c;
+  --color-info-50: #e6eff6;
 
   --font-sans: "Fira Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;

@@ -2,7 +2,7 @@ import { LogOut, Menu, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { BrandMark } from './Brand'
+import { BrandEmblem, BrandPlate } from './Brand'
 import { NAV_GROUPS, NAV_ITEMS } from './navigation'
 
 function initials(name: string) {
@@ -67,12 +67,9 @@ export default function Layout() {
   )
 
   const brand = (
-    <div className="flex items-center gap-3 px-5 py-5">
-      <BrandMark />
-      <div className="leading-tight">
-        <p className="text-sm font-semibold text-white">JGE</p>
-        <p className="text-xs text-white/70">Inteligencia Comercial</p>
-      </div>
+    <div className="px-4 pb-2 pt-5">
+      <BrandPlate />
+      <p className="mt-3 px-1 text-xs font-medium uppercase tracking-wider text-white/70">Inteligencia Comercial</p>
     </div>
   )
 
@@ -81,7 +78,6 @@ export default function Layout() {
       <aside className="on-dark hidden w-64 shrink-0 flex-col bg-jge-navy md:flex">
         {brand}
         {nav}
-        <p className="px-5 py-3 text-[11px] text-white/50">JGE Soluciones Integrales</p>
       </aside>
 
       {open && (
@@ -112,6 +108,7 @@ export default function Layout() {
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
+          <BrandEmblem className="h-8 w-8 md:hidden" />
           <p className="truncate text-sm font-medium text-ink-muted">{current?.label ?? ''}</p>
 
           <div className="ml-auto flex items-center gap-3">

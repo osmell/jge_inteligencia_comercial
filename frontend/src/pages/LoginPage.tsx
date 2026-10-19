@@ -2,7 +2,7 @@ import { Eye, EyeOff, LineChart, ShieldCheck, Boxes } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { BrandMark } from '../components/Brand'
+import { BrandLogo, BrandPlate } from '../components/Brand'
 import { Button, FormError } from '../components/ui'
 import { ApiError } from '../lib/api'
 
@@ -43,12 +43,9 @@ export default function LoginPage() {
       <aside className="on-dark relative hidden w-[46%] max-w-xl flex-col justify-between overflow-hidden bg-jge-navy p-10 text-white lg:flex">
         <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-jge-navy-soft" aria-hidden="true" />
         <div className="pointer-events-none absolute -bottom-32 -left-16 h-80 w-80 rounded-full bg-jge-navy-soft/60" aria-hidden="true" />
-        <div className="relative flex items-center gap-3">
-          <BrandMark className="h-11 w-11" />
-          <div className="leading-tight">
-            <p className="font-semibold">JGE Soluciones Integrales</p>
-            <p className="text-sm text-white/70">Inteligencia Comercial</p>
-          </div>
+        <div className="relative">
+          <BrandPlate className="w-72" />
+          <p className="mt-3 text-sm font-medium uppercase tracking-wider text-white/70">Inteligencia Comercial</p>
         </div>
         <div className="relative">
           <div className="mb-5 h-1 w-14 rounded bg-jge-red" aria-hidden="true" />
@@ -67,9 +64,9 @@ export default function LoginPage() {
 
       <main className="flex flex-1 items-center justify-center px-4 py-10">
         <div className="w-full max-w-sm">
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <span className="rounded-lg bg-jge-navy p-0.5"><BrandMark className="h-9 w-9" /></span>
-            <p className="font-semibold">JGE Inteligencia Comercial</p>
+          <div className="mb-8 lg:hidden">
+            <BrandLogo className="h-20 w-auto" />
+            <p className="mt-1 text-xs font-medium uppercase tracking-wider text-ink-muted">Inteligencia Comercial</p>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Iniciar sesión</h1>
           <p className="mt-1 text-sm text-ink-muted">Ingresa con tu nombre de usuario y contraseña.</p>

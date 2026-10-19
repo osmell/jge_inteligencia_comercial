@@ -54,7 +54,7 @@ Como `Costo Unit.Vta.` es el costo **actual** y no el de la fecha de la venta, e
 17. Periodos de inactividad según frecuencia de compra.
 18. Definiciones de cliente nuevo, recuperado y perdido.
 19. Permisos de supervisores y política de asignación múltiple.
-20. Paleta corporativa final y modo oscuro opcional.
+20. Paleta corporativa final y modo oscuro opcional. *(Logos recibidos: colores muestreados y aplicados; falta confirmar el tono oficial —2023 vs 2024— y decidir el modo oscuro. Ver `12_SISTEMA_DE_DISENO.md`.)*
 
 ## Recomendación
 Las preguntas están en `11_PREGUNTAS_RESPONSABLE_EXCEL.md`. Reenviar al responsable solo lo que sigue abierto en «Detalles aún abiertos».

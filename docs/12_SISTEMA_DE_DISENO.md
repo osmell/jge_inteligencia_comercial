@@ -12,15 +12,19 @@ Estilo corporativo sobrio para panel empresarial (Minimalism / Swiss): mucho esp
 ## Tokens (`frontend/src/index.css`, bloque `@theme`)
 | Grupo | Tokens |
 |---|---|
-| Marca | `jge-blue #07579B`, `jge-blue-dark #054270`, `jge-blue-50/100`, `jge-navy #0A2F52` (barra lateral), `jge-red #E50918`, `jge-charcoal #353535` |
+| Marca | `jge-blue #00508C`, `jge-blue-dark #003D6B`, `jge-blue-50/100`, `jge-navy #072C4D` (barra lateral), `jge-red #B01C14`, `jge-charcoal #353535` (colores muestreados de `logo_large.png`) |
 | Superficies | `canvas #F4F6F9`, `surface #FFFFFF`, `surface-muted #F8FAFC`, `line #E2E8F0`, `line-strong #CBD5E1` |
 | Texto | `ink #0F172A`, `ink-muted #475569`, `ink-subtle #64748B` |
 | Estado | `success #16803C`, `warning #B7791F`, `danger #C62828` (+ tonos `-50`), `info` |
 | Tipografía | Fira Sans (interfaz) y Fira Code (códigos), autoalojadas con `@fontsource` (sin depender de Google Fonts) |
 
 ## Componentes (`frontend/src/components/`)
-`ui.tsx`: `Button` (primary / secondary / ghost / danger, con estado de carga), `Card`, `PageHeader`, `Alert`, `FormError`, `Modal`, `TextField`, `SelectField`, `CheckField`, `SearchInput`, `StatusBadge`, `Badge`, `DataTable`, `TableSkeleton`, `EmptyRow`. `toast.tsx`: avisos de éxito. `Layout.tsx`: barra lateral por grupos con iconos (Lucide), barra superior y menú móvil. `Brand.tsx`: marca provisional.
+`ui.tsx`: `Button` (primary / secondary / ghost / danger, con estado de carga), `Card`, `PageHeader`, `Alert`, `FormError`, `Modal`, `TextField`, `SelectField`, `CheckField`, `SearchInput`, `StatusBadge`, `Badge`, `DataTable`, `TableSkeleton`, `EmptyRow`. `toast.tsx`: avisos de éxito. `Layout.tsx`: barra lateral por grupos con iconos (Lucide), barra superior y menú móvil. `Brand.tsx`: `BrandLogo` (logo completo, sobre fondo claro), `BrandEmblem` (círculo rojo, espacios compactos) y `BrandPlate` (logo sobre placa blanca para fondos oscuros).
+
+## Logos
+Originales en `branding/originals/`. Derivados en `frontend/src/assets/brand/` (`logo-full.png` recortado y `logo-emblem.png` cuadrado) e iconos de pestaña en `frontend/public/` y `backend/public/favicon.ico`. El logo azul y rojo no se lee sobre azul oscuro: en la barra lateral y el login se coloca sobre una placa blanca.
 
 ## Pendientes de diseño
-- Logo definitivo y validación de los colores exactos contra el archivo original (decisión #20).
+- Confirmar con JGE qué tono es oficial: el de `logo_large.png` (rojo `#B01C14`, azul `#00508C`, usado hoy) o el de las versiones 2024 (`#E00410`, `#00549C`). Cambiarlo son los tokens de `index.css`.
+- Versión del logo en blanco o monocromática para fondos oscuros, si JGE la tiene (evitaría la placa blanca).
 - Modo oscuro: opcional según la decisión #20; los tokens están centralizados para añadirlo después.

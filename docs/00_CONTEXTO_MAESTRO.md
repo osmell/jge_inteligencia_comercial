@@ -81,9 +81,9 @@ La muestra contiene filas de detalle por producto y repite el documento en múlt
 Los nombres “Nombre Nivel 2 Inv” y “Nombre Facturador” requieren definición funcional. El primero parece una clasificación de inventario, pero no debe darse por hecho que sea línea/categoría hasta confirmación.
 
 ## 7. Paleta corporativa inicial
-Basada visualmente en el logo, pendiente de validar contra los colores exactos del archivo original:
-- JGE Rojo: `#E50918` — acentos, alertas de atención y elementos de marca.
-- JGE Azul: `#07579B` — color primario, navegación y acciones principales.
+Validada contra los archivos de logo recibidos (`branding/originals/`). `logo_large.png` (2023) usa rojo `#B01C14` y azul `#00508C`; las versiones `Logos-04/05.png` (2024) usan tonos más brillantes (`#E00410` y `#00549C`). La interfaz usa los tonos de `logo_large.png`, que es el archivo mostrado; confirmar con JGE cuál es el oficial.
+- JGE Rojo: `#B01C14` — acentos y elementos de marca.
+- JGE Azul: `#00508C` — color primario, navegación y acciones principales.
 - Gris carbón: `#353535` — texto secundario/elementos neutros.
 - Blanco: `#FFFFFF` — superficies.
 - Fondo claro: `#F5F7FA`.
