@@ -16,6 +16,7 @@ class RolePermissionSeeder extends Seeder
         'roles.manage' => 'Roles y permisos',
         'audit.view' => 'Auditoría',
         'imports.manage' => 'Importaciones',
+        'sales.view' => 'Inteligencia de ventas',
     ];
 
     public function run(): void

@@ -1,0 +1,221 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\SalesLine;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
+
+/**
+ * Agregaciones de ventas para el dashboard. Parte siempre de SalesLine, así el ámbito de compañía/sucursal
+ * del usuario autenticado se aplica por el global scope. Los documentos se cuentan por `count(distinct)`:
+ * una factura de varias líneas cuenta una sola vez dentro de cada grupo.
+ */
+class SalesStatistics
+{
+    /** Dimensiones de desglose: clave => [expresión de grupo, expresión de etiqueta, join necesario]. */
+    private const DIMENSIONS = ['company', 'branch', 'seller', 'operator', 'category', 'product', 'customer', 'month', 'day'];
+
+    /** Métricas por las que se puede ordenar un desglose. */
+    public const SORTS = ['net_total', 'tax_total', 'grand_total', 'units', 'documents', 'customers', 'margin'];
+
+    /** @return list<string> */
+    public static function dimensions(): array
+    {
+        return self::DIMENSIONS;
+    }
+
+    /**
+     * KPI del periodo y del periodo equivalente anterior (misma duración, inmediatamente antes).
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array<string, mixed>
+     */
+    public function summary(CarbonImmutable $from, CarbonImmutable $to, array $filters): array
+    {
+        $days = (int) $from->diffInDays($to) + 1;
+        $previousTo = $from->subDay();
+        $previousFrom = $previousTo->subDays($days - 1);
+
+        $current = $this->kpis($this->base($from, $to, $filters));
+        $previous = $this->kpis($this->base($previousFrom, $previousTo, $filters));
+
+        $firstDate = $this->base(null, null, $filters)->min('sales_lines.issued_on');
+        $warnings = [];
+        if ($firstDate === null || $firstDate > $previousFrom->toDateString()) {
+            $warnings[] = 'previous_period_incomplete';
+        }
+
+        return [
+            'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString(), 'days' => $days],
+            'previous_period' => ['from' => $previousFrom->toDateString(), 'to' => $previousTo->toDateString(), 'days' => $days],
+            'current' => $current,
+            'previous' => $previous,
+            'change_pct' => $this->changes($current, $previous),
+            'first_sale_date' => $firstDate ? CarbonImmutable::parse($firstDate)->toDateString() : null,
+            'warnings' => $warnings,
+            'notes' => ['margin' => 'estimated_with_current_cost'],
+        ];
+    }
+
+    /**
+     * Desglose por una dimensión.
+     *
+     * @param  array<string, mixed>  $filters
+     * @return array{rows: list<array<string, mixed>>, truncated: bool}
+     */
+    public function breakdown(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $sort, int $limit): array
+    {
+        [$key, $label] = $this->dimensionColumns($dimension);
+
+        $query = $this->base($from, $to, $filters);
+        $this->joinForDimension($query, $dimension);
+
+        $rows = $query
+            ->selectRaw("{$key} as group_key, {$label} as group_label")
+            ->selectRaw($this->aggregates())
+            ->groupByRaw($key);
+
+        $chronological = in_array($dimension, ['month', 'day'], true);
+        $rows->orderByRaw($chronological ? "{$key} asc" : $this->sortExpression($sort).' desc, group_key asc');
+
+        // Se pide una fila de más para saber si hubo recorte.
+        $result = $chronological ? $rows->toBase()->get() : $rows->limit($limit + 1)->toBase()->get();
+        $truncated = ! $chronological && $result->count() > $limit;
+
+        return [
+            'rows' => $result->take($chronological ? PHP_INT_MAX : $limit)->map(fn ($r) => ['key' => (string) $r->group_key, 'label' => (string) $r->group_label, ...$this->format($r)])->values()->all(),
+            'truncated' => $truncated,
+        ];
+    }
+
+    /** @param  array<string, mixed>  $filters  */
+    private function base(?CarbonImmutable $from, ?CarbonImmutable $to, array $filters): Builder
+    {
+        $query = SalesLine::query()->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id');
+
+        if ($from && $to) {
+            $query->whereBetween('sales_lines.issued_on', [$from->toDateString(), $to->toDateString()]);
+        }
+
+        foreach (['company_id' => 'sales_lines.company_id', 'branch_id' => 'sales_lines.branch_id', 'seller_id' => 'sd.seller_id', 'operator_id' => 'sd.operator_id'] as $filter => $column) {
+            if (! empty($filters[$filter])) {
+                $query->where($column, (int) $filters[$filter]);
+            }
+        }
+
+        foreach (['category' => 'sales_lines.category_name', 'product_code' => 'sales_lines.product_code', 'customer_code' => 'sd.customer_code'] as $filter => $column) {
+            if (isset($filters[$filter]) && $filters[$filter] !== '') {
+                $query->where($column, $filters[$filter]);
+            }
+        }
+
+        return $query;
+    }
+
+    /** @return array{0: string, 1: string} */
+    private function dimensionColumns(string $dimension): array
+    {
+        $sqlite = DB::connection()->getDriverName() === 'sqlite';
+        $month = $sqlite ? "strftime('%Y-%m', sales_lines.issued_on)" : "to_char(sales_lines.issued_on, 'YYYY-MM')";
+        $day = $sqlite ? 'date(sales_lines.issued_on)' : "to_char(sales_lines.issued_on, 'YYYY-MM-DD')";
+
+        return match ($dimension) {
+            'company' => ['sales_lines.company_id', 'max(dim.name)'],
+            'branch' => ['sales_lines.branch_id', 'max(dim.name)'],
+            'seller' => ['sd.seller_id', 'max(dim.name)'],
+            'operator' => ['sd.operator_id', 'max(dim.name)'],
+            'category' => ['sales_lines.category_name', 'max(sales_lines.category_name)'],
+            'product' => ['sales_lines.product_code', 'max(sales_lines.product_name)'],
+            'customer' => ['sd.customer_code', 'max(sd.customer_name)'],
+            'month' => [$month, $month],
+            'day' => [$day, $day],
+            default => throw new InvalidArgumentException("Dimensión no soportada: {$dimension}"),
+        };
+    }
+
+    private function joinForDimension(Builder $query, string $dimension): void
+    {
+        $table = ['company' => ['companies', 'sales_lines.company_id'], 'branch' => ['branches', 'sales_lines.branch_id'],
+            'seller' => ['sellers', 'sd.seller_id'], 'operator' => ['operators', 'sd.operator_id']][$dimension] ?? null;
+
+        if ($table) {
+            $query->join("{$table[0]} as dim", 'dim.id', '=', $table[1]);
+        }
+    }
+
+    /** @param  Builder<SalesLine>  $query  @return array<string, mixed> */
+    private function kpis(Builder $query): array
+    {
+        return $this->format($query->selectRaw($this->aggregates())->toBase()->first());
+    }
+
+    private function aggregates(): string
+    {
+        return implode(', ', [
+            'coalesce(sum(sales_lines.net_total), 0) as net_total',
+            'coalesce(sum(sales_lines.tax_total), 0) as tax_total',
+            'coalesce(sum(sales_lines.grand_total), 0) as grand_total',
+            'coalesce(sum(sales_lines.units), 0) as units',
+            'count(distinct sales_lines.sales_document_id) as documents',
+            'count(distinct sd.customer_code) as customers',
+            // Margen solo sobre líneas con costo válido (> 0); el costo es el ACTUAL, no el de la fecha de venta.
+            'coalesce(sum(case when sales_lines.line_cost_total > 0 then sales_lines.net_total end), 0) as costed_net',
+            'coalesce(sum(case when sales_lines.line_cost_total > 0 then sales_lines.line_cost_total end), 0) as costed_cost',
+        ]);
+    }
+
+    private function sortExpression(string $sort): string
+    {
+        return $sort === 'margin' ? '(sum(case when sales_lines.line_cost_total > 0 then sales_lines.net_total - sales_lines.line_cost_total end))'
+            : ['net_total' => 'sum(sales_lines.net_total)', 'tax_total' => 'sum(sales_lines.tax_total)', 'grand_total' => 'sum(sales_lines.grand_total)',
+                'units' => 'sum(sales_lines.units)', 'documents' => 'count(distinct sales_lines.sales_document_id)',
+                'customers' => 'count(distinct sd.customer_code)'][$sort];
+    }
+
+    /** @return array<string, mixed> */
+    private function format(object $r): array
+    {
+        $net = (float) $r->net_total;
+        $documents = (int) $r->documents;
+        $costedNet = (float) $r->costed_net;
+        $margin = $costedNet - (float) $r->costed_cost;
+
+        return [
+            'net_total' => $this->money($net),
+            'tax_total' => $this->money((float) $r->tax_total),
+            'grand_total' => $this->money((float) $r->grand_total),
+            'units' => $this->money((float) $r->units),
+            'documents' => $documents,
+            'customers' => (int) $r->customers,
+            'average_ticket' => $documents > 0 ? $this->money($net / $documents) : null,
+            'estimated_margin' => $costedNet > 0 ? $this->money($margin) : null,
+            'estimated_margin_pct' => $costedNet > 0 ? round($margin / $costedNet * 100, 2) : null,
+            'cost_coverage_pct' => $net > 0 ? round($costedNet / $net * 100, 2) : null,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $current
+     * @param  array<string, mixed>  $previous
+     * @return array<string, float|null>
+     */
+    private function changes(array $current, array $previous): array
+    {
+        $out = [];
+        foreach (['net_total', 'tax_total', 'grand_total', 'units', 'documents', 'customers', 'average_ticket', 'estimated_margin'] as $metric) {
+            $before = $previous[$metric] === null ? 0.0 : (float) $previous[$metric];
+            $now = $current[$metric] === null ? 0.0 : (float) $current[$metric];
+            $out[$metric] = $before > 0 ? round(($now - $before) / $before * 100, 2) : null;
+        }
+
+        return $out;
+    }
+
+    private function money(float $value): string
+    {
+        return number_format($value, 2, '.', '');
+    }
+}

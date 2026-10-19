@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\OrganizationController;
+use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -23,6 +24,12 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     // Cualquier usuario autenticado: el contenido se limita a su ámbito.
     Route::get('companies', [OrganizationController::class, 'companies']);
     Route::get('branches', [OrganizationController::class, 'branches']);
+
+    // Inteligencia de ventas: exige permiso y se limita al ámbito del usuario.
+    Route::middleware('permission:sales.view')->prefix('sales')->group(function () {
+        Route::get('summary', [SalesStatsController::class, 'summary']);
+        Route::get('breakdown', [SalesStatsController::class, 'breakdown']);
+    });
 
     // Rutas administrativas: exigen permiso explícito en el backend.
     Route::prefix('admin')->group(function () {
