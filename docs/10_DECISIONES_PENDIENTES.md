@@ -50,7 +50,7 @@ Como `Costo Unit.Vta.` es el costo **actual** y no el de la fecha de la venta, e
 15. Catálogo de líneas, categorías, unidades y equivalencias.
 
 ## Reglas comerciales
-16. Metas mensuales y tratamiento de vendedores nuevos/ausencias.
+16. ~~Metas mensuales y tratamiento de vendedores nuevos/ausencias~~ **Resuelta:** meta sobre venta neta; sugerida por el sistema y ajustable; la captura la hace Gerencia general; reglas de prorrateo propuestas aceptadas (ver `03_FASE_03_INTELIGENCIA_VENTAS.md`, paso 7).
 17. Periodos de inactividad según frecuencia de compra.
 18. Definiciones de cliente nuevo, recuperado y perdido.
 19. Permisos de supervisores y política de asignación múltiple.

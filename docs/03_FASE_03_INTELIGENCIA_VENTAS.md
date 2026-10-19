@@ -96,5 +96,20 @@ Pendiente: PDF para impresión, si se necesita.
 - Correcciones al filtrar por fecha: el rango es ahora «>= desde y < hasta + 1 día» (antes `BETWEEN`) y la primera fecha de venta se normaliza; ambos fallaban en SQLite —solo pruebas— cuando el periodo era de un solo día o empezaba justo en la primera venta. PostgreSQL no estaba afectado, y el filtro actual conserva el uso de índices.
 - Verificado en PostgreSQL con los datos demo: totales y variaciones coinciden con SQL directo (p. ej., 30 días contra agosto: +14,51 %); el mismo periodo del año anterior avisa de historial incompleto porque los datos demo empiezan el 2025-11-01.
 
+### Paso 7 — Metas mensuales por vendedor (decisión #16)
+Decisiones del responsable: la meta es de **venta neta (sin IVA)**; la fija el sistema como sugerencia y se **ajusta a mano**; la captura es de **Gerencia general**; se muestran semáforo, proyección y alertas de ritmo.
+
+- **Permisos:** ver el avance exige `sales.view`; capturar exige `goals.manage` («Captura de metas de ventas», se otorga desde Roles y permisos). Solo se ven y editan vendedores de compañías con acceso completo (un usuario limitado a algunas sucursales no ve metas, porque su venta estaría incompleta).
+- **API:** `GET /sales/goals?month=YYYY-MM[&company_id]`, `GET /sales/goals/suggestions?month&months=1..12&growth_pct`, `PUT /sales/goals` (lote de metas; monto vacío elimina la meta).
+- **Datos:** `seller_goals` (vendedor, mes, monto, días de ausencia, origen manual/sugerida, quién la cambió) y `sellers.starts_on/ends_on` (alta y baja).
+- **Meta efectiva** = meta del mes × días elegibles / días del mes. Días elegibles = días del mes dentro del alta y la baja, menos los días de ausencia. Con esto: vendedor nuevo → proporcional desde su alta; vendedor que se va → proporcional hasta su baja; ausencia → se descuentan los días; ausencia de todo el mes → «Exento». Las altas y bajas se capturan a mano: no se infieren de las ventas.
+- **Semáforo:** verde ≥ 100 %, ámbar 70–99 %, rojo < 70 % de la meta efectiva (la etiqueta va siempre en texto, no solo color).
+- **Proyección** (mes en curso): vendido ÷ avance del mes dentro de la ventana del vendedor. **Alerta de ritmo:** vendido ÷ esperado a la fecha < 80 %, solo cuando ya transcurrió al menos el 20 % del mes (antes sería ruido). Las ausencias se asumen repartidas de forma uniforme.
+- **Sugerencia:** promedio de venta neta de los últimos N meses completos *con ventas* de ese vendedor, más el % de crecimiento, redondeado a unidades. No corrige meses parciales de vendedores nuevos.
+- **Auditoría:** cada cambio de meta, ausencias, alta o baja registra el evento `goals.updated` con valores anteriores y nuevos; guardar sin cambios no deja registro.
+- **Pantalla:** `/metas` (Inteligencia → Metas). Tarjetas de totales, tabla con cumplimiento, estado, proyección y ritmo; modo «Editar metas» con sugerencias, ausencias y alta/baja.
+- **Pendiente de confirmar con el responsable:** devoluciones y notas de crédito (decisión #13) restarán a la venta de la meta solo cuando se importen; hoy se mide con las líneas de venta cargadas. No se incluyó exportación de metas.
+- **Verificación:** pruebas de cálculo, alcance, permisos, auditoría y validaciones (backend 180, frontend 55); en PostgreSQL la suma de vendedores del mes coincide con SQL directo.
+
 ### Siguiente
-Metas mensuales por vendedor (requiere definir la regla de metas, decisión #16). Es lo único que falta del alcance de la Fase 3, junto con la revisión visual en navegador y los criterios de aceptación contra un reporte validado (necesita datos reales).
+Revisión visual en navegador (incluida la vista móvil) de `/ventas` y `/metas`, y los criterios de aceptación contra un reporte validado (necesita datos reales). Opcional: PDF y exportación de metas.

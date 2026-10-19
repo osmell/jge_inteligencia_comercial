@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
+use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -31,6 +32,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('breakdown', [SalesStatsController::class, 'breakdown']);
         Route::get('rankings', [SalesStatsController::class, 'rankings']);
         Route::get('export', [SalesStatsController::class, 'export']);
+        Route::get('goals', [SellerGoalsController::class, 'index']);
+        Route::get('goals/suggestions', [SellerGoalsController::class, 'suggestions']);
+        Route::put('goals', [SellerGoalsController::class, 'update'])->middleware('permission:goals.manage');
     });
 
     // Rutas administrativas: exigen permiso explícito en el backend.
