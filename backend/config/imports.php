@@ -72,7 +72,10 @@ return [
         ],
 
         // Columnas que pueden venir vacías en una fila. El resto es obligatoria.
-        'optional' => ['normal_price', 'subtotal', 'discount_total'],
+        'optional' => ['normal_price', 'subtotal', 'discount_total', 'grand_total'],
+
+        // Unidades vendidas: hasta este número de decimales (la cantidad puede ser fraccionaria, p. ej. 0.00097656).
+        'units_scale' => 16,
 
         // Códigos que son números enteros (documento, cliente, producto): llegar como número de Excel es normal y no se avisa de ceros perdidos.
         'integer_codes' => ['document', 'customer_code', 'product_code'],

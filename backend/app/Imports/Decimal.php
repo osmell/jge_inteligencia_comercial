@@ -17,6 +17,17 @@ final class Decimal
         return $negative ? -$value : $value;
     }
 
+    /** Texto decimal (de cualquier número de decimales) mayor que cero: sin signo menos y con algún dígito distinto de cero. */
+    public static function isPositive(?string $decimal): bool
+    {
+        return $decimal !== null && ! str_starts_with($decimal, '-') && trim(str_replace('.', '', $decimal), '0+') !== '';
+    }
+
+    public static function isNegative(?string $decimal): bool
+    {
+        return $decimal !== null && str_starts_with($decimal, '-');
+    }
+
     /** 123456 → '12.3456' */
     public static function format(int $units): string
     {

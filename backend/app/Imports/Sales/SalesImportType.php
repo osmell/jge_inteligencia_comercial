@@ -33,7 +33,8 @@ final class SalesImportType implements ImportType
     /** Importes opcionales que, si la columna viene en el archivo, se guardan y se concilian con Total Neto. */
     private const DISCOUNT_COLUMNS = ['subtotal', 'discount_total'];
 
-    private const AMOUNTS = ['unit_cost', 'line_cost_total', 'unit_price', 'normal_price', 'net_total', 'tax_total', 'sale_plus_tax', 'grand_total'];
+    /** «Gran Total» del archivo se omite: el total facturado se calcula como Total Neto + Total Impuesto. */
+    private const AMOUNTS = ['unit_cost', 'line_cost_total', 'unit_price', 'normal_price', 'net_total', 'tax_total', 'sale_plus_tax'];
 
     /** Ayudas que se muestran en la hoja «Instrucciones» de la plantilla. */
     private const HINTS = [
@@ -45,7 +46,7 @@ final class SalesImportType implements ImportType
         'customer_code' => 'Código del cliente (texto).',
         'customer_name' => 'Nombre del cliente.',
         'product_code' => 'Código del producto (texto; conserve ceros iniciales).',
-        'units' => 'Unidades vendidas. Debe ser mayor que cero.',
+        'units' => 'Unidades vendidas: mayor que cero, con hasta 16 decimales.',
         'product_name' => 'Nombre del producto.',
         'line_cost_total' => 'Costo total de la línea.',
         'unit_cost' => 'Costo unitario ACTUAL del producto (no el histórico de la venta).',
@@ -56,7 +57,7 @@ final class SalesImportType implements ImportType
         'net_total' => 'Subtotal menos descuento.',
         'tax_total' => 'Total Neto × IVA.',
         'sale_plus_tax' => 'Total Neto + Total Impuesto.',
-        'grand_total' => 'Total Neto + Total Impuesto.',
+        'grand_total' => 'Se omite: no se lee ni se valida. El total facturado se calcula como Total Neto + Total Impuesto.',
         'seller_name' => 'Nombre del vendedor.',
         'category_name' => 'Categoría del producto (Nivel 2).',
         'operator_name' => 'Operador que emitió la factura.',
@@ -105,7 +106,7 @@ final class SalesImportType implements ImportType
         $category = $this->limit($row, 'category_name', $row->text('category_name'));
         $seller = $this->limit($row, 'seller_name', $row->text('seller_name'));
         $operator = $this->limit($row, 'operator_name', $row->text('operator_name'));
-        $units = $row->decimal('units');
+        $units = $row->decimal('units', scale: (int) config('imports.sales.units_scale', 16));
 
         $amounts = [];
         foreach (self::AMOUNTS as $key) {
@@ -119,6 +120,9 @@ final class SalesImportType implements ImportType
                 $discounts[$key] = $row->decimal($key, required: false) ?? Decimal::format(0);
             }
         }
+
+        // «Gran Total» del archivo no se usa: el total facturado es Total Neto + Total Impuesto (= Venta + Imp, ya conciliado).
+        $amounts['grand_total'] = $amounts['sale_plus_tax'];
 
         [$company, $branch] = $this->resolveLocation($row);
 
@@ -204,8 +208,8 @@ final class SalesImportType implements ImportType
     {
         $negativeHint = 'No se esperan valores negativos: las devoluciones, anulaciones y notas de crédito se emiten aparte.';
 
-        if (Decimal::units($units) <= 0) {
-            $row->fail('units', 'non_positive_units', 'Las unidades vendidas deben ser mayores que cero. '.($units !== null && Decimal::units($units) < 0 ? $negativeHint : ''));
+        if (! Decimal::isPositive($units)) {
+            $row->fail('units', 'non_positive_units', 'Las unidades vendidas deben ser mayores que cero. '.(Decimal::isNegative($units) ? $negativeHint : ''));
         }
         foreach ([...$amounts, ...$discounts] as $key => $value) {
             if ($value !== null && Decimal::units($value) < 0) {
@@ -220,11 +224,9 @@ final class SalesImportType implements ImportType
         $show = fn (int $u) => number_format($u / 10 ** Decimal::SCALE, 2, '.', '');
         $detail = "«{$row->label('net_total')}» + «{$row->label('tax_total')}» ({$show($net)} + {$show($tax)} = {$show($sum)})";
 
-        foreach (['sale_plus_tax', 'grand_total'] as $key) {
-            $value = Decimal::units($amounts[$key]);
-            if (abs($value - $sum) > $tolerance) {
-                $row->fail($key, 'amount_mismatch', "«{$row->label($key)}» ({$show($value)}) no coincide con {$detail}.");
-            }
+        $value = Decimal::units($amounts['sale_plus_tax']);
+        if (abs($value - $sum) > $tolerance) {
+            $row->fail('sale_plus_tax', 'amount_mismatch', "«{$row->label('sale_plus_tax')}» ({$show($value)}) no coincide con {$detail}.");
         }
 
         // Total Neto = Sub Total − Descuento (el descuento ya viene restado; no se vuelve a restar al sumar totales).
@@ -246,7 +248,7 @@ final class SalesImportType implements ImportType
         }
 
         // Regla pendiente de confirmar con el responsable del Excel: solo advertencia.
-        $unitsF = Decimal::units($units) / 10 ** Decimal::SCALE;
+        $unitsF = (float) $units;
         $expected = $unitsF * Decimal::units($amounts['unit_cost']) / 10 ** Decimal::SCALE;
         $actual = Decimal::units($amounts['line_cost_total']) / 10 ** Decimal::SCALE;
         if (abs($actual - $expected) > max(0.01, $unitsF * 0.0001)) {

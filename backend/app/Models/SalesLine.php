@@ -31,7 +31,7 @@ class SalesLine extends Model
     {
         return [
             'issued_on' => 'date',
-            'units' => 'decimal:4', 'unit_cost' => 'decimal:4', 'line_cost_total' => 'decimal:4', 'unit_price' => 'decimal:4',
+            'units' => 'decimal:16', 'unit_cost' => 'decimal:4', 'line_cost_total' => 'decimal:4', 'unit_price' => 'decimal:4',
             'normal_price' => 'decimal:4', 'subtotal' => 'decimal:4', 'discount_total' => 'decimal:4', 'net_total' => 'decimal:4', 'tax_total' => 'decimal:4',
             'sale_plus_tax' => 'decimal:4', 'grand_total' => 'decimal:4',
         ];

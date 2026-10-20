@@ -89,7 +89,8 @@ class Phase2AcceptanceTest extends TestCase
         $missing = $this->getJson("/api/v1/admin/imports/{$id}/errors?code=missing_column")->json('data');
         $this->assertGreaterThanOrEqual(10, count($missing));
         $this->assertContains('Documento', array_column($missing, 'column'));
-        $this->assertContains('Gran Total', array_column($missing, 'column'));
+        $this->assertContains('Total Neto', array_column($missing, 'column'));
+        $this->assertNotContains('Gran Total', array_column($missing, 'column'));   // opcional: se omite
         $this->confirm($id)->assertStatus(409);
         $this->assertSame(0, $this->sales());
     }

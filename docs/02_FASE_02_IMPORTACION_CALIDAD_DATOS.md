@@ -66,6 +66,8 @@ El archivo real de ventas trae dos columnas más: `Sub Total` (venta de la líne
 
 También se dejó de avisar «el código llegó como número» para `Documento`, `Código Cliente` y `Código del Producto`, que son números enteros en el sistema de origen (`imports.sales.integer_codes`); en la muestra real eso eran 971 avisos sin valor.
 
-**Pendiente con el responsable (bloquea la importación real):**
-1. `Gran Total` difiere de `Venta + Imp` en 219 líneas; la diferencia (30, 60, 15, 90, 25, 7 o 1) es **igual en todas las líneas de un mismo documento**, así que parece un importe del documento repetido en cada línea (no es el `Descuento` de la línea). Hay que definir qué es y cómo tratarlo.
-2. Hay 33 líneas con 0 unidades (11 documentos completos en cero): ¿facturas anuladas?
+**Decisiones del responsable (2026-10-20):**
+1. **`Gran Total` se omite:** la columna pasa a ser opcional y no se lee ni se valida; el total facturado se calcula como `Total Neto` + `Total Impuesto` (que ya se concilia con `Venta + Imp`). En la muestra real, la diferencia de `Gran Total` era un importe del documento repetido en cada línea (216 documentos).
+2. **Unidades con hasta 16 decimales:** `Und.Vendidas` acepta hasta 16 decimales (`imports.sales.units_scale`; la columna `sales_lines.units` es `decimal(34,16)`); debe seguir siendo mayor que cero. Los números de Excel son dobles (≈ 15–17 cifras significativas): una cantidad como 0,00000001 se conserva, pero una con muchas cifras significativas y decimales largos puede perder las últimas. Los reportes muestran unidades con 2 decimales.
+
+**Abierto:** la muestra real tiene 33 líneas con unidades **exactamente 0** (y precio, costo e importes también en 0) en 11 documentos; siguen rechazadas por «unidades mayores que cero». Se está revisando el origen.

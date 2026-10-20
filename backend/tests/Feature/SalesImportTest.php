@@ -256,21 +256,60 @@ class SalesImportTest extends TestCase
         $batch = $this->validated([
             $this->line(),
             $this->line(['Documento' => '0002', 'Venta + Imp' => 34.0]),
-            $this->line(['Documento' => '0003', 'Gran Total' => 35.0]),
+            $this->line(['Documento' => '0003', 'Gran Total' => 35.0]),    // «Gran Total» se omite: no genera error
             $this->line(['Documento' => '0004', 'Total Impuesto' => 3.605, 'Venta + Imp' => 33.6, 'Gran Total' => 33.6]), // dentro de la tolerancia
         ]);
 
         $this->assertSame(ImportStatus::Rejected, $batch->status);
         $errors = $batch->errors()->where('code', 'amount_mismatch')->get();
-        $this->assertSame([[3, 'Venta + Imp'], [4, 'Gran Total']], $errors->map(fn ($e) => [$e->row_number, $e->column])->all());
+        $this->assertSame([[3, 'Venta + Imp']], $errors->map(fn ($e) => [$e->row_number, $e->column])->all());
         $this->assertStringContainsString('30.00 + 3.60 = 33.60', $errors[0]->message);
     }
 
-    public function test_both_totals_equal_but_not_matching_net_plus_tax_are_flagged(): void
+    public function test_sale_plus_tax_not_matching_net_plus_tax_is_flagged_and_grand_total_is_ignored(): void
     {
         $batch = $this->validated([$this->line(['Venta + Imp' => 40, 'Gran Total' => 40])]);
 
-        $this->assertSame(2, $batch->errors()->where('code', 'amount_mismatch')->count());
+        $this->assertSame(1, $batch->errors()->where('code', 'amount_mismatch')->count());
+        $this->assertSame('Venta + Imp', $batch->errors()->where('code', 'amount_mismatch')->value('column'));
+    }
+
+    public function test_grand_total_is_omitted_and_billed_total_is_net_plus_tax(): void
+    {
+        // Gran Total distinto (p. ej. un ajuste del documento repetido en la línea) o negativo: ni valida ni se guarda.
+        $batch = $this->imported([$this->line(['Gran Total' => -30]), $this->line(['Documento' => '0002', 'Gran Total' => 'texto'])]);
+
+        $this->assertNull($batch->errors()->where('column', 'Gran Total')->first());
+        $this->assertSame(['33.6000', '33.6000'], SalesLine::orderBy('id')->pluck('grand_total')->all());
+    }
+
+    public function test_grand_total_column_may_be_absent(): void
+    {
+        $header = array_values(array_diff(self::HEADER, ['Gran Total']));
+        $path = Xlsx::make([$header, array_values(array_diff_key($this->line(), [17 => 1]))]);
+        $stored = 'sales/'.uniqid().'.xlsx';
+        Storage::disk('imports')->put($stored, file_get_contents($path));
+        $batch = ImportBatch::factory()->create(['type' => 'sales', 'status' => ImportStatus::Pending, 'stored_path' => $stored, 'file_hash' => hash_file('sha256', $path), 'user_id' => $this->admin->id]);
+        app(ImportRunner::class)->validate($batch);
+
+        $this->assertSame(ImportStatus::Validated, $batch->fresh()->status, json_encode($batch->errors()->pluck('message')));
+    }
+
+    public function test_units_accept_up_to_sixteen_decimals_and_must_be_positive(): void
+    {
+        $batch = $this->imported([
+            $this->line(['Und.Vendidas' => 0.00000001, 'Costo Tot.Vta.' => 0, 'Total Neto' => 0.01, 'Total Impuesto' => 0, 'Venta + Imp' => 0.01]),
+            $this->line(['Documento' => '0002', 'Und.Vendidas' => '0.0000123456789012', 'Costo Tot.Vta.' => 1.2346]),
+        ]);
+
+        $this->assertNull($batch->errors()->where('code', 'non_positive_units')->first());
+        $units = SalesLine::orderBy('id')->pluck('units')->all();
+        $this->assertSame(['0.0000000100000000', '0.0000123456789012'], $units);
+
+        $zero = $this->validated([$this->line(['Documento' => '0003', 'Und.Vendidas' => 0])]);
+        $this->assertSame('non_positive_units', $zero->errors()->where('severity', 'error')->value('code'));
+        $text = $this->validated([$this->line(['Documento' => '0004', 'Und.Vendidas' => '0.00001234567890123'])]);
+        $this->assertSame('too_many_decimals', $text->errors()->value('code'));
     }
 
     public function test_tolerance_is_configurable(): void

@@ -78,7 +78,7 @@ class ImportSchemaTest extends TestCase
                 $this->addToAssertionCount(1);
             }
         }
-        $this->assertSame('2.0000', $line->fresh()->units);
+        $this->assertSame('2.0000000000000000', $line->fresh()->units);
     }
 
     public function test_same_file_can_only_be_imported_once_per_type(): void
