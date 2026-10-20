@@ -95,6 +95,17 @@ describe('dashboard de ventas', () => {
     await waitFor(() => expect(last('/sales/summary')).not.toContain('seller_id'))
   })
 
+  it('ofrece grupo y línea del catálogo de productos como desgloses y los filtra', async () => {
+    render(<SalesDashboardPage />)
+    await userEvent.click(await screen.findByRole('tab', { name: 'Grupo (Nivel 1)' }))
+    await screen.findByRole('table', { name: 'Ventas por grupo (nivel 1)' })
+    expect(last('/sales/breakdown?')).toContain('dimension=group')
+    expect(screen.getByText(/salen del catálogo de productos/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('tab', { name: 'Línea (Nivel 2)' }))
+    await waitFor(() => expect(last('/sales/breakdown?')).toContain('dimension=line'))
+  })
+
   it('cambia de dimensión y avisa del recorte y de las facturas repetidas entre grupos', async () => {
     render(<SalesDashboardPage />)
     await userEvent.click(await screen.findByRole('tab', { name: 'Producto' }))

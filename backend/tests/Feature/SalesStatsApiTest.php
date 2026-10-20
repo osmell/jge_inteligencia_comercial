@@ -281,7 +281,7 @@ class SalesStatsApiTest extends TestCase
         $sheets = $this->sheets($response->baseResponse->getFile()->getPathname());
 
         $this->assertSame(
-            ['Resumen', 'Por compañía', 'Por sucursal', 'Por vendedor', 'Por operador', 'Por categoría', 'Por producto', 'Por cliente', 'Por mes', 'Por día'],
+            ['Resumen', 'Por compañía', 'Por sucursal', 'Por vendedor', 'Por operador', 'Por grupo (nivel 1)', 'Por línea (nivel 2)', 'Por categoría', 'Por producto', 'Por cliente', 'Por mes', 'Por día'],
             array_keys($sheets),
         );
 
@@ -520,5 +520,28 @@ class SalesStatsApiTest extends TestCase
         $this->assertSame('300.00', $filtered['net_total']);
         $none = $this->getJson('/api/v1/sales/summary?'.http_build_query($this->range(['company_id' => $this->a->id, 'category' => 'Filtros'])))->json('data.current');
         $this->assertSame('0.00', $none['net_total']);
+    }
+
+    public function test_breakdown_and_filter_by_product_group_and_line(): void
+    {
+        Product::create(['company_id' => $this->a->id, 'code' => 'P1', 'name' => 'Producto P1', 'level1' => 'Repuestos', 'level2' => 'Motor', 'level3' => 'Filtros']);
+        Product::create(['company_id' => $this->a->id, 'code' => 'P3', 'name' => 'Producto P3', 'level1' => 'Repuestos', 'level2' => 'Seguridad', 'level3' => 'Frenos']);
+        // P2 (Aceites) no está en el catálogo → «Sin clasificar».
+
+        $this->actingAs($this->admin, 'sanctum');
+        $get = fn (string $dimension) => array_column($this->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range(['dimension' => $dimension, 'company_id' => $this->a->id])))->assertOk()->json('data'), 'net_total', 'key');
+
+        $this->assertSame(['Repuestos' => '600.00', 'Sin clasificar' => '50.00'], $get('group'));
+        $this->assertSame(['Motor' => '300.00', 'Seguridad' => '300.00', 'Sin clasificar' => '50.00'], $get('line'));
+
+        $net = fn (array $f) => $this->getJson('/api/v1/sales/summary?'.http_build_query($this->range(['company_id' => $this->a->id] + $f)))->json('data.current.net_total');
+        $this->assertSame('300.00', $net(['line' => 'Motor']));
+        $this->assertSame('600.00', $net(['group' => 'Repuestos']));
+        $this->assertSame('50.00', $net(['group' => 'Sin clasificar']));
+        $this->assertSame('300.00', $net(['group' => 'Repuestos', 'line' => 'Seguridad']));
+
+        $csv = $this->get('/api/v1/sales/export?'.http_build_query($this->range(['format' => 'csv', 'dimension' => 'line', 'company_id' => $this->a->id])))->assertOk()->streamedContent();
+        $this->assertStringContainsString('Línea (Nivel 2)', $csv);
+        $this->assertStringContainsString('Seguridad', $csv);
     }
 }

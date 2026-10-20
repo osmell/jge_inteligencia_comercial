@@ -342,7 +342,8 @@ export default function SalesDashboardPage() {
           </DataTable>
           <p className="mt-2 text-xs text-ink-muted">
             {table.data?.meta.truncated ? 'Se muestran las 15 filas con más venta neta. ' : ''}
-            {dimension === 'category' || dimension === 'product' ? 'Una factura con productos de varias categorías cuenta en cada una; no sumes los documentos entre filas. ' : ''}
+            {['group', 'line', 'category', 'product'].includes(dimension) ? 'Una factura con productos de varios grupos, líneas o categorías cuenta en cada uno; no sumes los documentos entre filas. ' : ''}
+            {['group', 'line', 'category'].includes(dimension) ? 'Grupo, línea y categoría salen del catálogo de productos (Niveles 1, 2 y 3); lo que no está en el catálogo aparece como «Sin clasificar» (la categoría conserva la del archivo de ventas). ' : ''}
             Selecciona un nombre para filtrar todo el tablero.
           </p>
         </div>

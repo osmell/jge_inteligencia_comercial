@@ -101,8 +101,13 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **Regla:** la categoría de una línea de venta es el **Nivel 3** del producto en el catálogo (compañía + código). Si el producto no está en el catálogo o no tiene Nivel 3, se usa la categoría que trae el archivo de ventas (así no se pierde ninguna venta ni cambia el total).
 - **Dónde aplica:** desglose y rankings por categoría, filtro por categoría, exportaciones (CSV, Excel y PDF) y categorías principales de la ficha del cliente; el detalle de cada factura también muestra el Nivel 3.
 - **Efecto:** mientras el catálogo no esté cargado todo sigue igual. Al cargar el catálogo, las ventas de esos productos pasan al nombre del Nivel 3; un producto sin Nivel 3 o fuera del catálogo conserva el nombre del archivo, de modo que si ambos nombres difieren verás dos filas distintas. Conviene cargar el catálogo completo.
-- **Pendiente:** Nivel 1 (grupo) y Nivel 2 (línea) todavía no se usan como dimensiones de reporte.
 - **Verificación:** pruebas del reemplazo, del respaldo por categoría de ventas, del filtro y de que el mismo código en otra compañía no se mezcla; en PostgreSQL con datos demo el desglose por categoría tarda 55 ms.
+
+### Paso 11 — Grupo (Nivel 1) y línea (Nivel 2) como desgloses
+- Nuevas dimensiones de ventas: **Grupo** (Nivel 1) y **Línea** (Nivel 2) del catálogo de productos, con pestañas en el tablero de ventas, filtros `group` y `line` (combinables con los demás y con elegir una fila del ranking), CSV por dimensión y hojas en el Excel.
+- Productos que no están en el catálogo, o sin ese nivel, aparecen como **«Sin clasificar»** (sin respaldo en el archivo de ventas: ese archivo solo trae categoría).
+- El PDF resume las mismas dimensiones de antes (compañía, sucursal, vendedor, categoría, producto, cliente).
+- Verificación: prueba de desglose, filtro simple y combinado, CSV; sin catálogo todo cae en «Sin clasificar».
 
 ### Respuestas recibidas (ronda 2)
 - Productos: el archivo usa los encabezados **Nivel 1, Nivel 2, Nivel 3**; la sucursal es donde se generó la factura y un código puede venderse en varias sucursales de la misma compañía.
@@ -111,4 +116,4 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - Las devoluciones restan a la venta del cliente.
 
 ### Siguiente
-Lo pedido en las respuestas ya está implementado. Quedan: descontar devoluciones cuando exista su formato, usar los Niveles 1 y 2 como dimensiones de reporte y, sobre todo, contrastar los totales con un reporte de ventas validado y revisar las pantallas en un navegador (incluido móvil).
+Lo pedido en las respuestas ya está implementado. Quedan: descontar devoluciones cuando exista su formato, y, sobre todo, contrastar los totales con un reporte de ventas validado y revisar las pantallas en un navegador (incluido móvil).

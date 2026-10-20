@@ -25,7 +25,7 @@ class SalesReportExporter
 
     public const LABELS = [
         'company' => 'Compañía', 'branch' => 'Sucursal', 'seller' => 'Vendedor', 'operator' => 'Operador',
-        'category' => 'Categoría', 'product' => 'Producto', 'customer' => 'Cliente', 'month' => 'Mes', 'day' => 'Día',
+        'group' => 'Grupo (Nivel 1)', 'line' => 'Línea (Nivel 2)', 'category' => 'Categoría', 'product' => 'Producto', 'customer' => 'Cliente', 'month' => 'Mes', 'day' => 'Día',
     ];
 
     private const METRICS = [
@@ -307,7 +307,7 @@ class SalesReportExporter
             'branch_id' => ['Sucursal', fn ($id) => Branch::find($id)?->name],
             'seller_id' => ['Vendedor', fn ($id) => Seller::find($id)?->name],
             'operator_id' => ['Operador', fn ($id) => Operator::find($id)?->name],
-            'category' => ['Categoría', null], 'product_code' => ['Producto', null], 'customer_code' => ['Cliente', null],
+            'group' => ['Grupo', null], 'line' => ['Línea', null], 'category' => ['Categoría', null], 'product_code' => ['Producto', null], 'customer_code' => ['Cliente', null],
         ];
 
         $parts = [];

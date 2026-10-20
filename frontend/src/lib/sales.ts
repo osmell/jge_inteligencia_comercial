@@ -37,7 +37,7 @@ export interface Breakdown {
   meta: { dimension: string; truncated: boolean }
 }
 
-export type Dimension = 'company' | 'branch' | 'seller' | 'operator' | 'category' | 'product' | 'customer'
+export type Dimension = 'company' | 'branch' | 'seller' | 'operator' | 'group' | 'line' | 'category' | 'product' | 'customer'
 
 /** Filtro de API que se aplica al elegir una fila de cada dimensión. */
 export const DIMENSION_FILTER: Record<Dimension, string> = {
@@ -45,6 +45,8 @@ export const DIMENSION_FILTER: Record<Dimension, string> = {
   branch: 'branch_id',
   seller: 'seller_id',
   operator: 'operator_id',
+  group: 'group',
+  line: 'line',
   category: 'category',
   product: 'product_code',
   customer: 'customer_code',
@@ -55,6 +57,8 @@ export const DIMENSION_LABEL: Record<Dimension, string> = {
   branch: 'Sucursal',
   seller: 'Vendedor',
   operator: 'Operador',
+  group: 'Grupo (Nivel 1)',
+  line: 'Línea (Nivel 2)',
   category: 'Categoría',
   product: 'Producto',
   customer: 'Cliente',

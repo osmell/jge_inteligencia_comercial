@@ -24,6 +24,8 @@ class SalesStatsRequest extends FormRequest
             'branch_id' => ['nullable', 'integer', 'min:1'],
             'seller_id' => ['nullable', 'integer', 'min:1'],
             'operator_id' => ['nullable', 'integer', 'min:1'],
+            'group' => ['nullable', 'string', 'max:255'],
+            'line' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:255'],
             'product_code' => ['nullable', 'string', 'max:255'],
             'customer_code' => ['nullable', 'string', 'max:255'],
@@ -81,6 +83,6 @@ class SalesStatsRequest extends FormRequest
     /** @return array<string, mixed> */
     public function filters(): array
     {
-        return $this->safe()->only(['company_id', 'branch_id', 'seller_id', 'operator_id', 'category', 'product_code', 'customer_code']);
+        return $this->safe()->only(['company_id', 'branch_id', 'seller_id', 'operator_id', 'group', 'line', 'category', 'product_code', 'customer_code']);
     }
 }
