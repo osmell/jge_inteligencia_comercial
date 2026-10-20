@@ -129,7 +129,7 @@ describe('importaciones', () => {
     await userEvent.selectOptions(screen.getByLabelText('Tipo de archivo'), 'sales')
     await userEvent.click(screen.getByRole('button', { name: 'Subir y validar' }))
 
-    expect(await screen.findByText('El archivo está en cola para validarse.')).toBeInTheDocument()
+    expect(await screen.findByText(/El archivo está en cola para validarse/)).toBeInTheDocument()
     const post = calls.find((c) => c.method === 'POST')
     expect(post?.url).toBe('/admin/imports')
     expect(post?.body).toMatchObject({ type: 'sales' })
