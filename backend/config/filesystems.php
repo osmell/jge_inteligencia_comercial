@@ -39,6 +39,15 @@ return [
             'report' => false,
         ],
 
+        // Adjuntos de cotizaciones: privados, solo se descargan con autorización.
+        'quotations' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/quotations'),
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

@@ -46,5 +46,16 @@ El vendedor registra actividad, resultado y siguiente acción; adjunta cotizaci�
 - Filtros: compañía, vendedor, plazo de las acciones (hoy, 7, 15, 30 días), días sin contacto y «solo lo que yo registré».
 - No hay notificaciones ni correos: la agenda se consulta en pantalla.
 
+### Paso 3 — Cotizaciones (hecho)
+- Pantallas **Cotizaciones** (`/cotizaciones`) y detalle (`/cotizaciones/:id`); sección «Cotizaciones» en la ficha del cliente. Consulta con `customers.view`; alta y cambios con `interactions.manage` (el mismo permiso del seguimiento). Un vendedor solo llega a las de sus clientes.
+- **Numeración:** `COT-000001`, consecutiva por compañía, más una **referencia externa** opcional.
+- **Estados guardados:** Borrador, Emitida, Enviada, En seguimiento, Aceptada, Convertida en venta, Rechazada y Cancelada. **Vencida** no se guarda: se muestra cuando una cotización emitida, enviada o en seguimiento pasa de su fecha de vencimiento (una aceptada espera su factura y no vence); ampliar el vencimiento la deja vigente.
+- **Transiciones:** Borrador → Emitida/Cancelada; Emitida → Enviada/En seguimiento/Aceptada/Rechazada/Cancelada; Enviada → En seguimiento/Aceptada/Rechazada/Cancelada; En seguimiento → Aceptada/Rechazada/Cancelada; Aceptada → Rechazada/Cancelada. Rechazada, Cancelada y Convertida son finales. Cada cambio queda en el historial de la cotización y en Auditoría.
+- **Emitir** exige importe mayor que cero y fecha de vencimiento no pasada. **Rechazar** exige motivo (precio, competencia, sin presupuesto, no respondió, sin disponibilidad u otro). No se puede **enviar** a un cliente marcado «no contactar».
+- **Venta:** una cotización aceptada **no es una venta**. Solo pasa a «Convertida en venta» al **vincular una factura** del mismo cliente y compañía, emitida desde la cotización y no vinculada a otra. Quitar el vínculo (por si fue un error) exige `customers.manage` y devuelve la cotización a «Aceptada». No se atribuye automáticamente ninguna venta a una cotización o contacto.
+- **Adjunto:** un archivo por cotización (PDF, JPG, PNG o WebP) de hasta **15 MB**, guardado en el servidor en un disco privado (`storage/app/private/quotations`) y descargable solo con sesión y permiso. Se reemplaza o se quita mientras la cotización siga abierta.
+- **Infraestructura:** PHP del contenedor admitía solo 2 MB por archivo; se agregó `backend/docker/uploads.ini` (20 MB por archivo, 24 MB por petición, cubre también las importaciones de 20 MB). **Hay que reconstruir la imagen:** `docker compose build backend queue` y volver a levantar.
+- Auditoría: `quotations.created|updated|status_changed|linked|unlinked|attachment_added|attachment_removed`.
+
 ### Pendiente
-3. Cotizaciones. 4. KPI.
+4. KPI: contactos, cumplimiento, clientes nuevos y recuperados, y conversión por cohorte (usa el historial de estados de las cotizaciones).

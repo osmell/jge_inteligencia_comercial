@@ -15,6 +15,8 @@ import CustomerProfilePage from './pages/CustomerProfilePage'
 import CustomerSalesReportPage from './pages/CustomerSalesReportPage'
 import CustomerTypesPage from './pages/CustomerTypesPage'
 import OperatorsPage from './pages/OperatorsPage'
+import QuotationDetailPage from './pages/QuotationDetailPage'
+import QuotationsPage from './pages/QuotationsPage'
 import ProductsPage from './pages/ProductsPage'
 import SellersPage from './pages/SellersPage'
 import CustomersPage from './pages/CustomersPage'
@@ -42,6 +44,8 @@ export default function App() {
                 <Route path="clientes" element={<CustomersPage />} />
                 <Route path="clientes/ficha" element={<CustomerProfilePage />} />
                 <Route path="clientes/reporte" element={<CustomerSalesReportPage />} />
+                <Route path="cotizaciones" element={<QuotationsPage />} />
+                <Route path="cotizaciones/:id" element={<QuotationDetailPage />} />
                 <Route element={<RequirePermission permission="interactions.manage" />}>
                   <Route path="agenda" element={<AgendaPage />} />
                 </Route>

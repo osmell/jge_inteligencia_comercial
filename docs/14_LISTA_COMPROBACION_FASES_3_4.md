@@ -89,6 +89,16 @@ Para **cada** pantalla de las secciones 2 a 6, comprueba:
 - [ ] Un vendedor ve solo lo de sus clientes. Un supervisor ve los clientes de los vendedores donde él figura como supervisor (revisa el catálogo de Vendedores) y lo que registró.
 - [ ] «Clientes por reactivar»: solo inactivos y perdidos, sin contacto en el plazo elegido, y sin los marcados «no contactar».
 
+### Cotizaciones (`/cotizaciones`, Fase 5 paso 3)
+- [ ] Antes de probar adjuntos: reconstruir la imagen (`docker compose build backend queue`) para que PHP admita archivos grandes.
+- [ ] Crear una cotización desde la ficha del cliente («Nueva cotización») y desde el listado (buscando al cliente); el número es consecutivo (`COT-000001`…) por compañía.
+- [ ] Emitir exige importe > 0 y fecha de vencimiento; rechazar exige motivo; el historial de estados muestra cada cambio con usuario y fecha.
+- [ ] Una cotización emitida/enviada/en seguimiento con fecha pasada se ve como «Vencida»; ampliando la fecha vuelve a estar vigente.
+- [ ] «Aceptada» no se cuenta como venta; vincular una factura del cliente la pasa a «Convertida en venta». Solo se ofrecen facturas del cliente, posteriores a la emisión y no vinculadas a otra.
+- [ ] Adjunto: subir un PDF y una foto (se reemplaza), descargar, quitar; uno de más de 15 MB o de otro tipo se rechaza con un mensaje claro.
+- [ ] Un vendedor solo ve las cotizaciones de sus clientes; sin `interactions.manage` solo consulta.
+- [ ] Un cliente «no contactar» no permite marcar la cotización como enviada.
+
 ## 4b. Productos (`/productos`)
 
 - [ ] Tarjetas de cobertura: productos en catálogo, vendidos en 12 meses, vendidos sin catálogo y % de venta con catálogo; aviso si faltan productos.

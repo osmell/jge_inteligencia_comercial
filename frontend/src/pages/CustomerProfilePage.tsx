@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
 import { BarChart } from '../components/charts'
 import CustomerInteractions from '../components/CustomerInteractions'
+import CustomerQuotations from '../components/CustomerQuotations'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import { formatMoney } from '../lib/format'
@@ -245,6 +246,7 @@ export default function CustomerProfilePage() {
           </Card>
 
           <CustomerInteractions companyId={companyId} code={code} />
+          <CustomerQuotations companyId={companyId} code={code} name={p.customer.name} />
 
           <div className="mb-4 space-y-2">
             {p.history_starts_on && (

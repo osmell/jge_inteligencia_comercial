@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
 use App\Http\Controllers\Api\V1\OrganizationController;
+use App\Http\Controllers\Api\V1\QuotationController;
 use App\Http\Controllers\Api\V1\Sales\ProductController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
@@ -63,6 +64,23 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('supervisors', [CustomerAssignmentController::class, 'supervisors']);
         Route::get('activity-rules', [CustomerController::class, 'activityRules']);
         Route::get('interactions', [CustomerInteractionController::class, 'index']);
+    });
+
+    // Cotizaciones: consulta con permiso de clientes; alta y cambios con el permiso de seguimiento.
+    Route::middleware('permission:customers.view')->prefix('quotations')->group(function () {
+        Route::get('/', [QuotationController::class, 'index']);
+        Route::get('{quotation}', [QuotationController::class, 'show'])->whereNumber('quotation');
+        Route::get('{quotation}/attachment', [QuotationController::class, 'download'])->whereNumber('quotation');
+        Route::get('{quotation}/documents', [QuotationController::class, 'documents'])->whereNumber('quotation')->middleware('permission:interactions.manage');
+        Route::middleware('permission:interactions.manage')->group(function () {
+            Route::post('/', [QuotationController::class, 'store']);
+            Route::put('{quotation}', [QuotationController::class, 'update'])->whereNumber('quotation');
+            Route::put('{quotation}/status', [QuotationController::class, 'status'])->whereNumber('quotation');
+            Route::put('{quotation}/link', [QuotationController::class, 'link'])->whereNumber('quotation');
+            Route::post('{quotation}/attachment', [QuotationController::class, 'attach'])->whereNumber('quotation');
+            Route::delete('{quotation}/attachment', [QuotationController::class, 'detach'])->whereNumber('quotation');
+        });
+        Route::delete('{quotation}/link', [QuotationController::class, 'unlink'])->whereNumber('quotation')->middleware('permission:customers.manage');
     });
 
     // Seguimiento comercial: el vendedor y el supervisor registran contactos con sus clientes.
