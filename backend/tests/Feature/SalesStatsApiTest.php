@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AuditLog;
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\Product;
 use App\Models\Role;
 use App\Models\SalesDocument;
 use App\Models\SalesLine;
@@ -493,5 +494,31 @@ class SalesStatsApiTest extends TestCase
 
         $log = AuditLog::where('event', 'sales.exported')->latest('id')->first();
         $this->assertSame(['from' => '2026-10-03', 'to' => '2026-10-09'], $log->new_values['compare']);
+    }
+
+    public function test_category_comes_from_product_level_3_and_falls_back_to_the_sales_file(): void
+    {
+        // P1 (Filtros) → «Filtros de motor»; P2 sin catálogo conserva «Aceites»; P3 está en el catálogo pero sin Nivel 3.
+        Product::create(['company_id' => $this->a->id, 'code' => 'P1', 'name' => 'Producto P1', 'level1' => 'Repuestos', 'level2' => 'Motor', 'level3' => 'Filtros de motor']);
+        Product::create(['company_id' => $this->a->id, 'code' => 'P3', 'name' => 'Producto P3', 'level3' => null]);
+        // El mismo código en otra compañía no se mezcla.
+        Product::create(['company_id' => $this->b->id, 'code' => 'P3', 'name' => 'Producto P3 de B', 'level3' => 'Frenos B']);
+
+        $rows = $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range(['dimension' => 'category', 'company_id' => $this->a->id])))->assertOk()->json('data');
+        $net = array_column($rows, 'net_total', 'key');
+        $this->assertEqualsCanonicalizing(['Filtros de motor', 'Frenos', 'Aceites'], array_keys($net));
+        $this->assertSame('300.00', $net['Filtros de motor']);
+        $this->assertSame('300.00', $net['Frenos']);
+        $this->assertSame('50.00', $net['Aceites']);
+
+        $all = $this->getJson('/api/v1/sales/breakdown?'.http_build_query($this->range(['dimension' => 'category'])))->json('data');
+        $this->assertContains('Frenos B', array_column($all, 'key'));
+
+        // El filtro por categoría usa el mismo criterio y no cuenta la línea con otra categoría de archivo.
+        $filtered = $this->getJson('/api/v1/sales/summary?'.http_build_query($this->range(['company_id' => $this->a->id, 'category' => 'Filtros de motor'])))->json('data.current');
+        $this->assertSame('300.00', $filtered['net_total']);
+        $none = $this->getJson('/api/v1/sales/summary?'.http_build_query($this->range(['company_id' => $this->a->id, 'category' => 'Filtros'])))->json('data.current');
+        $this->assertSame('0.00', $none['net_total']);
     }
 }

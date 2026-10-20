@@ -16,6 +16,12 @@ use InvalidArgumentException;
 class SalesStatistics
 {
     /** Dimensiones de desglose: clave => [expresión de grupo, expresión de etiqueta, join necesario]. */
+    /**
+     * Categoría de una línea: Nivel 3 del catálogo de productos (compañía + código) y, si el producto no está en el
+     * catálogo o no tiene Nivel 3, la categoría que trae el archivo de ventas.
+     */
+    public const CATEGORY_SQL = "coalesce(nullif(pr.level3, ''), sales_lines.category_name)";
+
     private const DIMENSIONS = ['company', 'branch', 'seller', 'operator', 'category', 'product', 'customer', 'month', 'day'];
 
     /** Filas máximas del periodo de comparación al emparejar grupos. */
@@ -195,7 +201,9 @@ class SalesStatistics
     /** @param  array<string, mixed>  $filters  */
     private function base(?CarbonImmutable $from, ?CarbonImmutable $to, array $filters): Builder
     {
-        $query = SalesLine::query()->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id');
+        $query = SalesLine::query()
+            ->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id')
+            ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'sales_lines.company_id')->on('pr.code', '=', 'sales_lines.product_code'));
 
         if ($from && $to) {
             // Medio abierto (>= desde, < hasta + 1 día): incluye el último día aunque el motor guarde la fecha con hora.
@@ -209,9 +217,9 @@ class SalesStatistics
             }
         }
 
-        foreach (['category' => 'sales_lines.category_name', 'product_code' => 'sales_lines.product_code', 'customer_code' => 'sd.customer_code'] as $filter => $column) {
+        foreach (['category' => self::CATEGORY_SQL, 'product_code' => 'sales_lines.product_code', 'customer_code' => 'sd.customer_code'] as $filter => $column) {
             if (isset($filters[$filter]) && $filters[$filter] !== '') {
-                $query->where($column, $filters[$filter]);
+                $filter === 'category' ? $query->whereRaw($column.' = ?', [$filters[$filter]]) : $query->where($column, $filters[$filter]);
             }
         }
 
@@ -230,7 +238,7 @@ class SalesStatistics
             'branch' => ['sales_lines.branch_id', 'max(dim.name)'],
             'seller' => ['sd.seller_id', 'max(dim.name)'],
             'operator' => ['sd.operator_id', 'max(dim.name)'],
-            'category' => ['sales_lines.category_name', 'max(sales_lines.category_name)'],
+            'category' => [self::CATEGORY_SQL, 'max('.self::CATEGORY_SQL.')'],
             'product' => ['sales_lines.product_code', 'max(sales_lines.product_name)'],
             'customer' => ['sd.customer_code', 'max(sd.customer_name)'],
             'month' => [$month, $month],

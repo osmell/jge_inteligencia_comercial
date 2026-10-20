@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\Product;
 use App\Models\SalesDocument;
 use App\Models\SalesLine;
 use App\Models\Seller;
@@ -235,8 +236,16 @@ class CustomerInsights
     {
         $document = SalesDocument::query()->where('company_id', $companyId)->where('customer_code', $code)->find($documentId);
 
-        return $document?->lines()->toBase()->get()->map(fn ($l) => [
-            'line' => (int) $l->line_number, 'product_code' => $l->product_code, 'product_name' => $l->product_name, 'category' => $l->category_name,
+        if ($document === null) {
+            return null;
+        }
+
+        $lines = $document->lines()->toBase()->get();
+        // Categoría = Nivel 3 del catálogo de productos; sin catálogo, la del archivo de ventas.
+        $levels = Product::withoutGlobalScopes()->where('company_id', $companyId)->whereIn('code', $lines->pluck('product_code')->all())->pluck('level3', 'code');
+
+        return $lines->map(fn ($l) => [
+            'line' => (int) $l->line_number, 'product_code' => $l->product_code, 'product_name' => $l->product_name, 'category' => ($levels[$l->product_code] ?? null) ?: $l->category_name,
             'units' => number_format((float) $l->units, 2, '.', ''), 'net_total' => number_format((float) $l->net_total, 2, '.', ''),
             'grand_total' => number_format((float) $l->grand_total, 2, '.', ''),
         ])->all();

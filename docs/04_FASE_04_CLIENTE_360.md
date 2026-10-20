@@ -82,7 +82,7 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **Tabla `products`** (compañía + código único; nombre, Nivel 1 = grupo general, Nivel 2 = línea, Nivel 3 = categoría). El código es un entero único por compañía.
 - **Importación «Productos»** (Importaciones → tipo Productos, con plantilla): columnas Compañía, Sucursal, Código, Descripción o Nombre, Nivel 1, Nivel 2, Nivel 3 (los niveles son opcionales; una celda vacía borra ese dato). Inserta los nuevos y actualiza los existentes, con vista previa, errores por fila y columna, confirmación y auditoría, igual que clientes.
 - **Sucursal:** indica dónde se generó la factura y solo se valida (debe existir y ser de la compañía). Un mismo producto en varias sucursales de la compañía no es conflicto si el resto de los datos coincide; con datos distintos, el lote se rechaza.
-- **Pendiente:** el catálogo aún no alimenta los reportes (la categoría de las ventas sigue viniendo del archivo de ventas) ni tiene pantalla de consulta. Falta decidir si el desglose por categoría pasa a usar el Nivel 3.
+- **Nota:** el Nivel 3 alimenta la categoría de los reportes (paso 10); el catálogo aún no tiene pantalla de consulta.
 
 ### Paso 8 — Mantenimiento de clientes, vendedores y facturadores
 - **Datos generales del cliente:** el botón «Editar datos» de la ficha (permiso `customers.manage`) cambia nombre, nombre comercial, contacto, teléfono, WhatsApp, correo, dirección y sucursal, con las mismas validaciones que la importación. El código no se cambia. Un cliente creado desde ventas pasa a origen «manual»; cada cambio se audita (`customers.updated`). Una importación de clientes posterior vuelve a escribir esos datos con lo que traiga el archivo.
@@ -97,6 +97,13 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **Los nombres deben existir y estar activos** (tipo en el catálogo de tipos; vendedor y facturador en los de esa compañía); se comparan sin distinguir mayúsculas ni espacios de más. Si no existen, la fila se rechaza con el error en su columna: el catálogo no se crea desde este archivo.
 - Un cambio solo de tipo, vendedor o facturador cuenta como «se actualizará».
 
+### Paso 10 — El Nivel 3 del catálogo es la categoría
+- **Regla:** la categoría de una línea de venta es el **Nivel 3** del producto en el catálogo (compañía + código). Si el producto no está en el catálogo o no tiene Nivel 3, se usa la categoría que trae el archivo de ventas (así no se pierde ninguna venta ni cambia el total).
+- **Dónde aplica:** desglose y rankings por categoría, filtro por categoría, exportaciones (CSV, Excel y PDF) y categorías principales de la ficha del cliente; el detalle de cada factura también muestra el Nivel 3.
+- **Efecto:** mientras el catálogo no esté cargado todo sigue igual. Al cargar el catálogo, las ventas de esos productos pasan al nombre del Nivel 3; un producto sin Nivel 3 o fuera del catálogo conserva el nombre del archivo, de modo que si ambos nombres difieren verás dos filas distintas. Conviene cargar el catálogo completo.
+- **Pendiente:** Nivel 1 (grupo) y Nivel 2 (línea) todavía no se usan como dimensiones de reporte.
+- **Verificación:** pruebas del reemplazo, del respaldo por categoría de ventas, del filtro y de que el mismo código en otra compañía no se mezcla; en PostgreSQL con datos demo el desglose por categoría tarda 55 ms.
+
 ### Respuestas recibidas (ronda 2)
 - Productos: el archivo usa los encabezados **Nivel 1, Nivel 2, Nivel 3**; la sucursal es donde se generó la factura y un código puede venderse en varias sucursales de la misma compañía.
 - Atribución: la venta es del vendedor aunque el facturador emita la factura; si el facturador vende directamente, es del facturador y cuenta en sus estadísticas.
@@ -104,4 +111,4 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - Las devoluciones restan a la venta del cliente.
 
 ### Siguiente
-Lo pedido en las respuestas ya está implementado. Quedan: descontar devoluciones cuando exista su formato, que el catálogo de productos alimente los reportes (Nivel 3 como categoría) y, sobre todo, contrastar los totales con un reporte de ventas validado y revisar las pantallas en un navegador (incluido móvil).
+Lo pedido en las respuestas ya está implementado. Quedan: descontar devoluciones cuando exista su formato, usar los Niveles 1 y 2 como dimensiones de reporte y, sobre todo, contrastar los totales con un reporte de ventas validado y revisar las pantallas en un navegador (incluido móvil).

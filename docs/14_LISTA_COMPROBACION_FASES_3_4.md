@@ -111,6 +111,7 @@ Puntos a tener presentes al comparar:
 
 - [ ] **Devoluciones / notas de crédito:** hoy **no se descuentan** (no hay formato definido). Si el reporte de referencia las resta, la diferencia debe coincidir con ellas.
 - [ ] **Margen:** es estimado con el **costo actual**, no el histórico; no esperes igualdad con el margen contable.
+- [ ] **Categoría:** es el Nivel 3 del catálogo de productos; si cargaste el catálogo, compara con ese nombre. Productos fuera del catálogo o sin Nivel 3 conservan la categoría del archivo de ventas.
 - [ ] **Documentos por categoría o producto:** una factura con varias líneas cuenta en cada grupo; no se suman entre filas.
 - [ ] **Redondeo:** el Excel y la pantalla pueden diferir en centavos al sumar fila a fila (se redondea por fila).
 - [ ] **Fechas:** se usa la fecha de emisión de la factura; el periodo incluye el día inicial y el final.
@@ -120,6 +121,5 @@ Puntos a tener presentes al comparar:
 ## 8. Cierre
 
 - [ ] Lista de fallos entregada (pantalla, usuario, pasos, esperado/obtenido).
-- [ ] Decidido el uso del **Nivel 3 de productos** como categoría en los reportes (hoy la categoría sigue viniendo del archivo de ventas).
 - [ ] Definido el formato de **devoluciones / notas de crédito** para poder descontarlas.
 - [ ] Fases 3 y 4 aceptadas, o lista de cambios pendientes acordada.
