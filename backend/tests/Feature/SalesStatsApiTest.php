@@ -386,6 +386,17 @@ class SalesStatsApiTest extends TestCase
         $this->assertSame(['150.00', '140.00'], array_column($data['by_margin'], 'estimated_margin'));
     }
 
+    public function test_discount_ranking_lists_only_groups_with_discount(): void
+    {
+        DB::table('sales_lines')->where('product_code', 'P2')->update(['subtotal' => DB::raw('net_total + 5'), 'discount_total' => 5]);
+        DB::table('sales_lines')->where('product_code', 'P3')->update(['subtotal' => DB::raw('net_total + 20'), 'discount_total' => 20]);
+
+        $data = $this->rankings()->assertOk()->json('data');
+
+        $this->assertSame(['P3', 'P2'], array_column($data['by_discount'], 'key'));   // P1 sin descuento: fuera
+        $this->assertSame(['20.00', '5.00'], array_column($data['by_discount'], 'discount_total'));
+    }
+
     public function test_rankings_respect_limit_dimension_and_filters(): void
     {
         $this->assertCount(2, $this->rankings(['limit' => 2])->json('data.by_net_total'));

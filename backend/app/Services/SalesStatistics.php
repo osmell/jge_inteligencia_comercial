@@ -151,10 +151,11 @@ class SalesStatistics
      * Desglose por una dimensión.
      *
      * @param  bool  $costedOnly  deja fuera los grupos sin ninguna línea con costo válido (para rankings de margen)
+     * @param  bool  $discountedOnly  deja fuera los grupos sin descuento (para el ranking de descuento)
      * @param  array<string, mixed>  $filters
      * @return array{rows: list<array<string, mixed>>, truncated: bool}
      */
-    public function breakdown(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $sort, int $limit, bool $costedOnly = false): array
+    public function breakdown(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $sort, int $limit, bool $costedOnly = false, bool $discountedOnly = false): array
     {
         [$key, $label] = $this->dimensionColumns($dimension);
 
@@ -168,6 +169,10 @@ class SalesStatistics
 
         if ($costedOnly) {
             $rows->havingRaw('sum(case when sales_lines.line_cost_total > 0 then 1 else 0 end) > 0');
+        }
+
+        if ($discountedOnly) {
+            $rows->havingRaw('coalesce(sum(sales_lines.discount_total), 0) > 0');
         }
 
         $chronological = in_array($dimension, ['month', 'day'], true);
@@ -185,7 +190,7 @@ class SalesStatistics
     }
 
     /**
-     * Rankings de producto o categoría por venta neta, unidades, frecuencia (facturas distintas que lo incluyen) y margen.
+     * Rankings de producto o categoría por venta neta, unidades, frecuencia (facturas distintas que lo incluyen), margen y descuento.
      * El de margen solo incluye grupos con costo válido y usa el costo actual.
      *
      * @param  array<string, mixed>  $filters
@@ -193,13 +198,14 @@ class SalesStatistics
      */
     public function rankings(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, int $limit): array
     {
-        $top = fn (string $sort, bool $costed = false) => $this->breakdown($dimension, $from, $to, $filters, $sort, $limit, $costed)['rows'];
+        $top = fn (string $sort, bool $costed = false, bool $discounted = false) => $this->breakdown($dimension, $from, $to, $filters, $sort, $limit, $costed, $discounted)['rows'];
 
         return [
             'by_net_total' => $top('net_total'),
             'by_units' => $top('units'),
             'by_documents' => $top('documents'),
             'by_margin' => $top('margin', true),
+            'by_discount' => $top('discount_total', discounted: true),
         ];
     }
 

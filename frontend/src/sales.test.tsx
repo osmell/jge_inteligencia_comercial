@@ -27,6 +27,7 @@ const rankingsBody = {
     by_units: [row('P2', 'Pastillas de freno', '300.00')],
     by_documents: [{ ...row('P1', 'Filtro de aceite', '500.00'), documents: 1 }],
     by_margin: [{ ...row('P2', 'Pastillas de freno', '300.00'), estimated_margin: '120.00', estimated_margin_pct: 40 }],
+    by_discount: [{ ...row('P2', 'Pastillas de freno', '300.00'), discount_total: '35.00', discount_pct: 10.45 }],
   },
   meta: { dimension: 'product', limit: 10 },
 }
@@ -277,6 +278,7 @@ describe('rankings', () => {
     expect(within(byAmount).getByText('500,00')).toBeInTheDocument()
     expect(within(screen.getByRole('list', { name: 'Por frecuencia' })).getByText('1 factura')).toBeInTheDocument()
     expect(within(screen.getByRole('list', { name: 'Por margen estimado' })).getByText('120,00 (40,0 %)')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Por descuento' })).getByText('35,00 (10,5 %)')).toBeInTheDocument()
     expect(screen.getByText(/Solo artículos con costo válido/)).toBeInTheDocument()
     expect(last('/sales/rankings')).toContain('dimension=product&limit=10')
   })

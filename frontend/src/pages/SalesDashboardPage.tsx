@@ -322,13 +322,14 @@ export default function SalesDashboardPage() {
                 <th className={`${th} text-right`}>vs. comparado</th>
                 <th className={`${th} text-right`}>Docs.</th>
                 <th className={`${th} text-right`}>Clientes</th>
+                <th className={`${th} text-right`}>Descuento</th>
                 <th className={`${th} text-right`}>Ticket prom.</th>
                 <th className={`${th} text-right`}>Margen est.</th>
               </tr>
             </thead>
             <tbody>
-              {table.loading ? <TableSkeleton cols={8} /> : rows.length === 0 ? (
-                <EmptyRow cols={8}>No hay ventas para estos filtros.</EmptyRow>
+              {table.loading ? <TableSkeleton cols={9} /> : rows.length === 0 ? (
+                <EmptyRow cols={9}>No hay ventas para estos filtros.</EmptyRow>
               ) : rows.map((r) => (
                 <tr key={r.key} className={tr}>
                   <td className={td}>
@@ -341,6 +342,7 @@ export default function SalesDashboardPage() {
                   <td className={`${td} tabular text-right`}><RowChange row={r} /></td>
                   <td className={`${td} tabular text-right`}>{r.documents.toLocaleString('es')}</td>
                   <td className={`${td} tabular text-right`}>{r.customers.toLocaleString('es')}</td>
+                  <td className={`${td} tabular text-right`}>{formatMoney(r.discount_total)}</td>
                   <td className={`${td} tabular text-right`}>{formatMoney(r.average_ticket)}</td>
                   <td className={`${td} tabular text-right`}>{r.estimated_margin_pct === null ? '—' : formatPct(r.estimated_margin_pct)}</td>
                 </tr>

@@ -31,6 +31,7 @@ Para **cada** pantalla de las secciones 2 a 6, comprueba:
 - [ ] Con el rango anterior sin historial, aparece el aviso de comparación parcial.
 - [ ] Filtros: compañía → solo ofrece sus sucursales; sucursal, vendedor, operador, categoría, producto, cliente.
 - [ ] Clic en una fila de un ranking filtra todo el tablero; hay forma de quitar el filtro.
+- [ ] Rankings (productos y categorías): además de importe, unidades, frecuencia y margen, hay «Por descuento» (solo artículos con descuento); el desglose trae la columna Descuento.
 - [ ] Gráfica de tendencia: coincide con la tabla; el tooltip y la lectura por teclado funcionan.
 - [ ] Exportar a **Excel**, **CSV** (por cada desglose) y **PDF**: se descargan, abren bien en Excel/lector y el PDF cabe en la página.
 - [ ] En el CSV/Excel los textos que empiezan por `=`, `+`, `-` o `@` salen precedidos de `'`.

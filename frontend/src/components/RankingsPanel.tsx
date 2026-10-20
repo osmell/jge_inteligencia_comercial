@@ -34,6 +34,13 @@ const LISTS: List[] = [
     show: (r) => `${formatMoney(r.estimated_margin)} (${formatPct(r.estimated_margin_pct)})`,
     note: 'Costo actual, no histórico. Solo artículos con costo válido.',
   },
+  {
+    key: 'by_discount',
+    title: 'Por descuento',
+    value: (r) => Number(r.discount_total),
+    show: (r) => `${formatMoney(r.discount_total)} (${formatPct(r.discount_pct)})`,
+    note: 'Descuento ya restado de la venta neta; el porcentaje es sobre el Sub Total. Solo artículos con descuento.',
+  },
 ]
 
 /** Rankings de productos o categorías con los filtros del tablero. Elegir un nombre filtra el tablero. */
