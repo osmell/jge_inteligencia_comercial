@@ -60,6 +60,8 @@ return [
             'unit_cost' => ['Costo Unit.Vta.'],
             'unit_price' => ['Precio Unit.Vta.'],
             'normal_price' => ['Precio Unit.Normal'],
+            'subtotal' => ['Sub Total', 'Subtotal'],
+            'discount_total' => ['Descuento'],
             'net_total' => ['Total Neto'],
             'tax_total' => ['Total Impuesto'],
             'sale_plus_tax' => ['Venta + Imp'],
@@ -70,7 +72,10 @@ return [
         ],
 
         // Columnas que pueden venir vacías en una fila. El resto es obligatoria.
-        'optional' => ['normal_price'],
+        'optional' => ['normal_price', 'subtotal', 'discount_total'],
+
+        // Códigos que son números enteros (documento, cliente, producto): llegar como número de Excel es normal y no se avisa de ceros perdidos.
+        'integer_codes' => ['document', 'customer_code', 'product_code'],
 
         // Formatos de fecha aceptados en texto, en orden de prueba. PROVISIONAL: el formato real de la columna
         // «Fecha» aún no está confirmado. Si es ambiguo (dd/mm vs mm/dd) conviene confirmarlo antes de producción.

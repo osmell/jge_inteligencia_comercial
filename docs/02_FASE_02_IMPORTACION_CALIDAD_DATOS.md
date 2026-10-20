@@ -58,3 +58,14 @@ Implementado en `backend/app/Imports` (marco y adaptador de ventas), `backend/ap
 - La importación relee el archivo en streaming y escribe documentos y líneas por bloques; no guarda las líneas en memoria.
 - El worker corre con 1 GB de memoria (`docker-compose.yml`); el programador (`schedule:work` o cron) debe ejecutarse para `imports:fail-stale`.
 - Los archivos subidos se conservan hasta que el lote se descarte; la política de retención y respaldo es la decisión #11 pendiente.
+
+
+## Actualización (2026-10-20): columnas «Sub Total» y «Descuento»
+
+El archivo real de ventas trae dos columnas más: `Sub Total` (venta de la línea antes del descuento) y `Descuento` (descuento de la línea). Ahora se reconocen como columnas **opcionales**, se guardan por línea (`sales_lines.subtotal` y `discount_total`) y se concilian: **`Total Neto` = `Sub Total` − `Descuento`** (error `subtotal_mismatch` si no cuadra; un descuento negativo es error). El descuento ya viene restado en `Total Neto`, por lo que no se vuelve a restar al sumar totales. El resumen del lote muestra el descuento total. En la muestra real (712 líneas) la relación se cumple en todas.
+
+También se dejó de avisar «el código llegó como número» para `Documento`, `Código Cliente` y `Código del Producto`, que son números enteros en el sistema de origen (`imports.sales.integer_codes`); en la muestra real eso eran 971 avisos sin valor.
+
+**Pendiente con el responsable (bloquea la importación real):**
+1. `Gran Total` difiere de `Venta + Imp` en 219 líneas; la diferencia (30, 60, 15, 90, 25, 7 o 1) es **igual en todas las líneas de un mismo documento**, así que parece un importe del documento repetido en cada línea (no es el `Descuento` de la línea). Hay que definir qué es y cómo tratarlo.
+2. Hay 33 líneas con 0 unidades (11 documentos completos en cero): ¿facturas anuladas?

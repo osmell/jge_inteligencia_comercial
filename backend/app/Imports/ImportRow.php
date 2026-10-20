@@ -77,7 +77,7 @@ final class ImportRow
      * Código (cliente, producto…): siempre texto. Si Excel lo entregó como número se avisa,
      * porque los ceros iniciales ya se perdieron; la columna debe formatearse como texto.
      */
-    public function code(string $key, bool $required = true): ?string
+    public function code(string $key, bool $required = true, bool $warnNumeric = true): ?string
     {
         $value = $this->raw($key);
 
@@ -94,7 +94,7 @@ final class ImportRow
 
             return null;
         }
-        if (is_int($value) || is_float($value)) {
+        if ($warnNumeric && (is_int($value) || is_float($value))) {
             $this->warn($key, 'numeric_code', 'El código llegó como número; si tenía ceros iniciales se perdieron. Formatee la columna como texto en Excel.');
         }
 

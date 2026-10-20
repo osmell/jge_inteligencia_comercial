@@ -272,7 +272,10 @@ class ImportApiTest extends TestCase
         }
         $reader->close();
 
-        $this->assertSame(self::HEADER, $sheets['Ventas'][0]);
+        // La plantilla incluye además las columnas opcionales «Sub Total» y «Descuento» (después de «Precio Unit.Normal»).
+        $expected = self::HEADER;
+        array_splice($expected, array_search('Precio Unit.Normal', $expected, true) + 1, 0, ['Sub Total', 'Descuento']);
+        $this->assertSame($expected, $sheets['Ventas'][0]);
         $this->assertCount(1, $sheets['Ventas']); // en blanco: solo encabezados
         $this->assertSame('Instrucciones', array_keys($sheets)[1]);
         $this->assertSame(['Columna', 'Obligatoria', 'Descripción'], $sheets['Instrucciones'][0]);
