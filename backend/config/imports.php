@@ -97,9 +97,12 @@ return [
             'address' => ['Dirección', 'Direccion'],
             'trade_name' => ['Nombre Comercial'],
             'contact_name' => ['Nombre Contacto'],
+            'type' => ['Tipo', 'Tipo de Cliente'],
+            'seller' => ['Vendedor'],
+            'operator' => ['Facturador', 'Operador'],
         ],
 
-        'optional' => ['phone', 'email', 'whatsapp', 'address', 'trade_name', 'contact_name'],
+        'optional' => ['phone', 'email', 'whatsapp', 'address', 'trade_name', 'contact_name', 'type', 'seller', 'operator'],
     ],
 
     // Catálogo de productos: una fila por producto; inserta los nuevos y actualiza los existentes (compañía + código).

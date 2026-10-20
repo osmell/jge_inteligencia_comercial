@@ -91,6 +91,12 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **Aviso de enlace por nombre:** las ventas se enlazan a vendedores y facturadores por su nombre al importar; renombrar a alguien exige que el archivo de ventas traiga el nombre nuevo o se creará otro registro. La pantalla lo advierte.
 - **API:** `PUT /customers/data`, `POST /customers/sellers`, `PUT /customers/sellers/{id}` (ahora con nombre, estado y usuario), `GET /customers/seller-users`, `POST /customers/operators`, `PUT /customers/operators/{id}`. Alta y cambios exigen acceso completo a la compañía.
 
+### Paso 9 — Tipo, vendedor y facturador en el Excel de clientes
+- **Columnas opcionales** en la importación de clientes: `Tipo` (o «Tipo de Cliente»), `Vendedor` y `Facturador` (o «Operador»), por nombre. Aparecen en la plantilla.
+- **Si la columna no viene en el archivo, no se toca** la asignación actual; **si viene y la celda está vacía, se quita** (sin tipo; sin vendedor = «Tienda» de la sucursal; sin facturador). Es la misma regla de «el archivo es la fuente» que el resto de columnas.
+- **Los nombres deben existir y estar activos** (tipo en el catálogo de tipos; vendedor y facturador en los de esa compañía); se comparan sin distinguir mayúsculas ni espacios de más. Si no existen, la fila se rechaza con el error en su columna: el catálogo no se crea desde este archivo.
+- Un cambio solo de tipo, vendedor o facturador cuenta como «se actualizará».
+
 ### Respuestas recibidas (ronda 2)
 - Productos: el archivo usa los encabezados **Nivel 1, Nivel 2, Nivel 3**; la sucursal es donde se generó la factura y un código puede venderse en varias sucursales de la misma compañía.
 - Atribución: la venta es del vendedor aunque el facturador emita la factura; si el facturador vende directamente, es del facturador y cuenta en sus estadísticas.
@@ -98,4 +104,4 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - Las devoluciones restan a la venta del cliente.
 
 ### Siguiente
-Lo pedido en las respuestas ya está implementado. Quedan: asignar tipo y vendedor desde el Excel de clientes, descontar devoluciones cuando exista su formato, que el catálogo de productos alimente los reportes (Nivel 3 como categoría) y, sobre todo, contrastar los totales con un reporte de ventas validado y revisar las pantallas en un navegador (incluido móvil).
+Lo pedido en las respuestas ya está implementado. Quedan: descontar devoluciones cuando exista su formato, que el catálogo de productos alimente los reportes (Nivel 3 como categoría) y, sobre todo, contrastar los totales con un reporte de ventas validado y revisar las pantallas en un navegador (incluido móvil).

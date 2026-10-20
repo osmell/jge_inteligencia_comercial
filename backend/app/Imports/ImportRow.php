@@ -29,6 +29,12 @@ final class ImportRow
         return $this->failed;
     }
 
+    /** Si la columna viene en el archivo (una columna opcional ausente no se toca; una presente y vacía borra el dato). */
+    public function has(string $key): bool
+    {
+        return array_key_exists($key, $this->cells);
+    }
+
     public function raw(string $key): mixed
     {
         return $this->cells[$key] ?? null;

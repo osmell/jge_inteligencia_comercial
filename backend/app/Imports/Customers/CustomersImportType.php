@@ -9,11 +9,14 @@ use App\Imports\ImportRow;
 use App\Imports\LocationResolver;
 use App\Imports\ParsedRow;
 use App\Models\Customer;
+use App\Models\CustomerType;
 use App\Models\ImportBatch;
+use App\Models\Operator;
+use App\Models\Seller;
 use App\Models\User;
 
 /**
- * Archivo maestro de clientes: una fila por cliente (compañía + código). Los nuevos se insertan y los existentes se
+ * Archivo maestro de clientes (con tipo, vendedor y facturador opcionales por nombre): una fila por cliente (compañía + código). Los nuevos se insertan y los existentes se
  * actualizan con lo que trae el archivo; una celda vacía en una columna opcional borra ese dato. El código es único
  * por compañía y es un número entero: se conserva tal cual (con sus ceros iniciales si venía como texto) porque es
  * lo que enlaza al cliente con sus ventas.
@@ -34,11 +37,23 @@ final class CustomersImportType implements ImportType
         'address' => 'Dirección.',
         'trade_name' => 'Nombre comercial.',
         'contact_name' => 'Nombre de la persona de contacto.',
+        'type' => 'Tipo de cliente, tal como está en el catálogo de tipos (activo). Si la columna viene en el archivo, vacío quita el tipo.',
+        'seller' => 'Vendedor asignado, tal como está en el catálogo de la compañía (activo). Si la columna viene, vacío deja al cliente en la tienda por defecto.',
+        'operator' => 'Facturador asignado, tal como está en el catálogo de la compañía (activo). Si la columna viene, vacío quita el facturador.',
     ];
+
+    /** Columnas de asignación opcionales: columna → campo del cliente. Solo se tocan si la columna viene en el archivo. */
+    private const LINKS = ['type' => 'customer_type_id', 'seller' => 'seller_id', 'operator' => 'operator_id'];
 
     private ?User $user = null;
 
     private ?LocationResolver $resolver = null;
+
+    /** @var array<string, int>|null nombre normalizado => id de tipo activo */
+    private ?array $types = null;
+
+    /** @var array<string, array<string, int>> «seller|operator» + compañía => nombre normalizado => id */
+    private array $people = [];
 
     public function key(): string
     {
@@ -49,6 +64,8 @@ final class CustomersImportType implements ImportType
     {
         $this->user = $batch->user;
         $this->resolver = null;
+        $this->types = null;
+        $this->people = [];
     }
 
     public function columns(): array
@@ -75,6 +92,8 @@ final class CustomersImportType implements ImportType
 
         [$company, $branch] = $this->resolver()->resolve($row);
 
+        $links = $company ? $this->links($row, $company->id) : [];
+
         if ($row->failed() || $code === null || ! $company || ! $branch) {
             return null;
         }
@@ -82,7 +101,7 @@ final class CustomersImportType implements ImportType
         return new ParsedRow(
             $row->number,
             "{$company->id}|{$code}",
-            ['company' => (string) $company->id, 'branch' => (string) $branch->id, 'code' => $code, 'name' => $name, ...$fields],
+            ['company' => (string) $company->id, 'branch' => (string) $branch->id, 'code' => $code, 'name' => $name, ...$fields, ...$links],
             [],
         );
     }
@@ -118,13 +137,19 @@ final class CustomersImportType implements ImportType
                 continue;
             }
             $f = $group->fields;
-            $values = ['branch_id' => (int) $f['branch'], 'source' => 'import', ...array_intersect_key($f, array_flip(self::DATA)), 'updated_at' => $now];
+            $links = [];
+            foreach (self::LINKS as $field) {
+                if (array_key_exists($field, $f)) {
+                    $links[$field] = $f[$field] === null ? null : (int) $f[$field];
+                }
+            }
+            $values = ['branch_id' => (int) $f['branch'], 'source' => 'import', ...array_intersect_key($f, array_flip(self::DATA)), ...$links, 'updated_at' => $now];
             $where = ['company_id' => (int) $f['company'], 'code' => $f['code']];
 
             if (Customer::withoutGlobalScopes()->where($where)->exists()) {
                 Customer::withoutGlobalScopes()->where($where)->update($values);
             } else {
-                $new[] = [...$where, ...$values, 'created_at' => $now];
+                $new[] = [...$where, 'customer_type_id' => null, 'seller_id' => null, 'operator_id' => null, ...$values, 'created_at' => $now];
             }
         }
 
@@ -165,8 +190,59 @@ final class CustomersImportType implements ImportType
                 return false;
             }
         }
+        foreach (self::LINKS as $field) {
+            if (array_key_exists($field, $fields) && ($fields[$field] === null ? null : (int) $fields[$field]) !== $customer->{$field}) {
+                return false;
+            }
+        }
 
         return true;
+    }
+
+    /**
+     * Tipo, vendedor y facturador por nombre. Solo para las columnas que vienen en el archivo; el nombre debe existir
+     * y estar activo (el catálogo no se crea desde este archivo). Vacío quita la asignación.
+     *
+     * @return array<string, string|null> campo del cliente => id (o null para quitar)
+     */
+    private function links(ImportRow $row, int $companyId): array
+    {
+        $out = [];
+        foreach (self::LINKS as $column => $field) {
+            if (! $row->has($column)) {
+                continue;
+            }
+            $name = $row->text($column, required: false);
+            if ($name === null) {
+                $out[$field] = null;
+
+                continue;
+            }
+            $id = $this->lookup($column, $companyId)[Seller::normalize($name)] ?? null;
+            if ($id === null) {
+                $row->fail($column, 'unknown_'.$column, match ($column) {
+                    'type' => 'El tipo de cliente no existe o está inactivo. Créalo antes en Clientes → Tipos de cliente.',
+                    'seller' => 'El vendedor no existe o está inactivo en esa compañía. Créalo antes en Clientes → Vendedores.',
+                    default => 'El facturador no existe o está inactivo en esa compañía. Créalo antes en Clientes → Facturadores.',
+                });
+
+                continue;
+            }
+            $out[$field] = (string) $id;
+        }
+
+        return $out;
+    }
+
+    /** @return array<string, int> nombre normalizado => id */
+    private function lookup(string $column, int $companyId): array
+    {
+        if ($column === 'type') {
+            return $this->types ??= CustomerType::query()->where('active', true)->get()->mapWithKeys(fn (CustomerType $t) => [Seller::normalize($t->name) => $t->id])->all();
+        }
+
+        return $this->people[$column.$companyId] ??= ($column === 'seller' ? Seller::query() : Operator::query())
+            ->where('company_id', $companyId)->where('is_active', true)->pluck('id', 'normalized_name')->map(fn ($id) => (int) $id)->all();
     }
 
     private function integerCode(ImportRow $row): ?string
