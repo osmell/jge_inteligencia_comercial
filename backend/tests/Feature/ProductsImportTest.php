@@ -121,4 +121,24 @@ class ProductsImportTest extends TestCase
         $this->actingAs($this->admin, 'sanctum')->get('/api/v1/admin/imports/templates/products')->assertOk();
         $this->getJson('/api/v1/admin/imports/types')->assertJsonFragment(['key' => 'products', 'label' => 'Productos']);
     }
+
+    public function test_invisible_control_characters_are_removed_from_names(): void
+    {
+        $this->import([$this->row(['Descripción o Nombre' => "EQUI \x1FKLASS 505"])]);
+        $this->assertSame('EQUI KLASS 505', Product::where('code', '500')->value('name'));
+    }
+
+    public function test_conflicts_and_repeats_are_explained_in_terms_of_the_product_code(): void
+    {
+        $batch = $this->validate([
+            $this->row(['Código' => 700]),
+            $this->row(['Código' => 700, 'Sucursal' => 'NOR']),                         // idéntica en otra sucursal: solo aviso
+            $this->row(['Código' => 700, 'Nivel 3' => 'Otra categoría']),               // niveles distintos: error
+        ]);
+
+        $messages = $batch->errors()->pluck('message')->all();
+        $this->assertContains('El código 700 aparece en varias filas con «Nivel 3» distinto (la primera está en la fila 2).', $messages);
+        $this->assertContains('Fila repetida con los mismos datos para el código 700.', $messages);
+        $this->assertSame(ImportStatus::Rejected, $batch->status);
+    }
 }

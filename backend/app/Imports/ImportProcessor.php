@@ -144,6 +144,10 @@ final class ImportProcessor
     {
         $group = $groups[$parsed->groupKey] ??= new ImportGroup($parsed->groupKey, $this->pooled($parsed->groupFields), $parsed->rowNumber);
 
+        // Archivos maestros (clientes, productos): una fila por registro, sin líneas; el mensaje habla del código, no de «documentos».
+        $master = $parsed->line === [];
+        $code = $parsed->groupFields['code'] ?? $parsed->groupKey;
+
         // Todas las líneas de un documento deben coincidir en los datos del documento.
         foreach ($group->fields as $field => $expected) {
             $actual = $parsed->groupFields[$field] ?? null;
@@ -151,7 +155,9 @@ final class ImportProcessor
                 $label = $labels[$field] ?? $field;
                 $errors->error(
                     'inconsistent_group',
-                    "El documento {$parsed->groupKey} tiene «{$label}» distinto al de su primera línea (fila {$group->firstRow}).",
+                    $master
+                        ? "El código {$code} aparece en varias filas con «{$label}» distinto (la primera está en la fila {$group->firstRow})."
+                        : "El documento {$parsed->groupKey} tiene «{$label}» distinto al de su primera línea (fila {$group->firstRow}).",
                     $parsed->rowNumber,
                     $label,
                     $actual,
@@ -161,7 +167,7 @@ final class ImportProcessor
 
         $hash = hash('xxh128', json_encode($parsed->line, JSON_THROW_ON_ERROR), true);
         if (in_array($hash, $group->lineHashes, true)) {
-            $errors->warning('duplicate_row', "Línea idéntica repetida dentro del documento {$parsed->groupKey}.", $parsed->rowNumber);
+            $errors->warning('duplicate_row', $master ? "Fila repetida con los mismos datos para el código {$code}." : "Línea idéntica repetida dentro del documento {$parsed->groupKey}.", $parsed->rowNumber);
         }
 
         $group->lineHashes[] = $hash;

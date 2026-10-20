@@ -70,7 +70,7 @@ final class ImportRow
             return null;
         }
 
-        return trim($this->numberAsString($value));
+        return $this->clean($this->numberAsString($value));
     }
 
     /**
@@ -98,7 +98,7 @@ final class ImportRow
             $this->warn($key, 'numeric_code', 'El código llegó como número; si tenía ceros iniciales se perdieron. Formatee la columna como texto en Excel.');
         }
 
-        return trim($this->numberAsString($value));
+        return $this->clean($this->numberAsString($value));
     }
 
     /**
@@ -186,6 +186,12 @@ final class ImportRow
     private function blank(mixed $value): bool
     {
         return $value === null || (is_string($value) && trim($value) === '');
+    }
+
+    /** Quita espacios de los extremos y caracteres de control invisibles, salvo saltos de línea y tabuladores (p. ej., un separador de unidad pegado al copiar del sistema de origen). */
+    private function clean(string $value): string
+    {
+        return trim((string) preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $value));
     }
 
     private function numberAsString(mixed $value): string
