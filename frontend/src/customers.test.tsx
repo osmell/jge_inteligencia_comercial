@@ -9,7 +9,7 @@ import OperatorsPage from './pages/OperatorsPage'
 import SellersPage from './pages/SellersPage'
 import CustomerTypesPage from './pages/CustomerTypesPage'
 import CustomersPage from './pages/CustomersPage'
-import type { CustomerProfile } from './lib/customers'
+import type { ContactPreference, CustomerInteraction, CustomerProfile } from './lib/customers'
 
 const kpis = {
   net_total: '650.00', tax_total: '78.00', grand_total: '728.00', discount_total: '0.00', discount_pct: null, units: '8.00', documents: 3, customers: 1,
@@ -21,7 +21,7 @@ const profile = (o: Partial<CustomerProfile> = {}): CustomerProfile => ({
   customer: {
     id: 1, company_id: 1, company: 'Compañía Alfa', branch: 'Central', code: 'C1', name: 'Taller Pérez S.A.', trade_name: 'Pérez Motors',
     contact_name: 'Pedro', phone: '5555-1234', whatsapp: null, email: 'taller@example.com', address: 'Zona 1', source: 'import', branch_id: 3,
-    type: { id: 1, name: 'Taller' }, abc: 'A',
+    do_not_contact: false, do_not_contact_reason: null, type: { id: 1, name: 'Taller' }, abc: 'A',
   },
   activity: { status: 'inactive', inactive_days: 30, lost_days: 90 },
   assignment: { seller: { id: 8, name: 'Tienda Centro', assigned: false }, operator: { id: 4, name: 'Caja 1' }, supervisor: { id: 9, name: 'Sara' } },
@@ -36,11 +36,18 @@ let urls: string[]
 let calls: { path: string; method: string; body?: string }[]
 let permissions: string[]
 let respond: (path: string) => unknown
+let interactions: CustomerInteraction[]
+let preference: ContactPreference
 
 beforeEach(() => {
   urls = []
   calls = []
   permissions = ['customers.view']
+  preference = { do_not_contact: false, reason: null, since: null }
+  interactions = [{
+    id: 1, channel: 'call', direction: 'outbound', outcome: 'interested', occurred_at: '2026-10-10T15:30:00-06:00', response: 'Pidió precios de llantas',
+    next_action: 'Enviar lista de precios', next_action_at: '2026-10-12T09:00:00-06:00', user: { id: 3, name: 'Vera' }, can_edit: true,
+  }]
   document.cookie = 'XSRF-TOKEN=x'
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     const path = url.replace('http://localhost:8000/api/v1', '')
@@ -73,6 +80,8 @@ beforeEach(() => {
     if (path === '/customers/types') return { data: [{ id: 1, name: 'Taller', active: true }, { id: 2, name: 'Mayorista', active: false }] }
     if (path.startsWith('/customers/types/') || path === '/customers/type') return { data: {} }
     if (path.startsWith('/companies')) return { data: [{ id: 1, code: 'A', name: 'Compañía Alfa', is_active: true }] }
+    if (path.startsWith('/customers/interactions')) return { data: interactions, meta: { page: 1, has_more: false, contact_preference: preference } }
+    if (path === '/customers/contact-preference') return { data: preference }
     if (path.startsWith('/customers/profile')) return { data: profile() }
     if (path.startsWith('/customers/purchases')) {
       return { data: [{ id: 5, document: 'S-N1', issued_on: '2026-08-01', branch: 'Centro', seller: 'Ana', operator: 'Caja 1', lines: 2, net_total: '150.00', grand_total: '168.00' }], meta: { page: 1, has_more: false } }
@@ -147,6 +156,88 @@ describe('ficha de cliente', () => {
     renderProfile('?codigo=C1')
     expect(await screen.findByText(/Indica un cliente/)).toBeInTheDocument()
     expect(urls.filter((x) => x.startsWith('/customers'))).toEqual([])
+  })
+})
+
+describe('seguimiento comercial', () => {
+  it('muestra el historial de contactos y solo ofrece registrar con permiso', async () => {
+    renderProfile()
+
+    const list = await screen.findByRole('list', { name: 'Contactos con el cliente' })
+    expect(list).toHaveTextContent('Llamada')
+    expect(list).toHaveTextContent('Interesado')
+    expect(list).toHaveTextContent('Pidió precios de llantas')
+    expect(list).toHaveTextContent('Próxima acción: Enviar lista de precios')
+    expect(list).toHaveTextContent('Vera')
+    expect(screen.queryByRole('button', { name: 'Registrar contacto' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Corregir contacto/ })).not.toBeInTheDocument()
+  })
+
+  it('registra un contacto con su próxima acción', async () => {
+    permissions = ['customers.view', 'interactions.manage']
+    const u = userEvent.setup()
+    renderProfile()
+
+    await u.click(await screen.findByRole('button', { name: 'Registrar contacto' }))
+    await u.selectOptions(screen.getByLabelText('Canal'), 'visit')
+    await u.selectOptions(screen.getByLabelText('Resultado'), 'quote_requested')
+    await u.type(screen.getByLabelText('Respuesta del cliente / notas'), 'Quiere cotizar 4 llantas')
+    await u.type(screen.getByLabelText('Próxima acción'), 'Preparar cotización')
+    fireEvent.change(screen.getByLabelText('Fecha de la próxima acción'), { target: { value: '2026-10-20T09:00' } })
+    await u.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(calls.some((c) => c.path === '/customers/interactions' && c.method === 'POST')).toBe(true))
+    const body = JSON.parse(calls.find((c) => c.path === '/customers/interactions' && c.method === 'POST')?.body ?? '{}')
+    expect(body).toMatchObject({ company_id: 1, code: 'C1', channel: 'visit', direction: 'outbound', outcome: 'quote_requested', response: 'Quiere cotizar 4 llantas', next_action: 'Preparar cotización', next_action_at: '2026-10-20T09:00' })
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument())
+  })
+
+  it('corrige un contacto propio', async () => {
+    permissions = ['customers.view', 'interactions.manage']
+    const u = userEvent.setup()
+    renderProfile()
+
+    await u.click(await screen.findByRole('button', { name: /Corregir contacto del/ }))
+    const notes = screen.getByLabelText('Respuesta del cliente / notas')
+    expect(notes).toHaveValue('Pidió precios de llantas')
+    await u.clear(notes)
+    await u.type(notes, 'Corregido')
+    await u.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(calls.some((c) => c.path === '/customers/interactions/1' && c.method === 'PUT')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.method === 'PUT' && c.path === '/customers/interactions/1')?.body ?? '{}')).toMatchObject({ response: 'Corregido' })
+  })
+
+  it('con «no contactar» avisa, solo permite contactos del cliente y se puede retirar', async () => {
+    permissions = ['customers.view', 'interactions.manage']
+    preference = { do_not_contact: true, reason: 'Lo pidió por correo', since: '2026-10-01T10:00:00-06:00' }
+    const u = userEvent.setup()
+    renderProfile()
+
+    expect(await screen.findByText(/pidió no recibir comunicaciones: Lo pidió por correo/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Registrar contacto' })).not.toBeInTheDocument()
+    await u.click(screen.getByRole('button', { name: 'Registrar contacto del cliente' }))
+    expect(screen.getByLabelText('Quién inició')).toHaveValue('inbound')
+    expect(screen.queryByLabelText('Próxima acción')).not.toBeInTheDocument()
+    await u.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+    await u.click(screen.getByRole('button', { name: 'El cliente volvió a aceptar comunicaciones' }))
+    await waitFor(() => expect(calls.some((c) => c.path === '/customers/contact-preference' && c.method === 'PUT')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/contact-preference')?.body ?? '{}')).toMatchObject({ do_not_contact: false })
+  })
+
+  it('registra que el cliente pidió no ser contactado, con motivo obligatorio', async () => {
+    permissions = ['customers.view', 'interactions.manage']
+    const u = userEvent.setup()
+    renderProfile()
+
+    await u.click(await screen.findByRole('button', { name: 'El cliente pidió no ser contactado' }))
+    expect(screen.getByRole('button', { name: 'Registrar' })).toBeDisabled()
+    await u.type(screen.getByLabelText('Motivo o cómo lo pidió el cliente'), 'Llamó a pedirlo')
+    await u.click(screen.getByRole('button', { name: 'Registrar' }))
+
+    await waitFor(() => expect(calls.some((c) => c.path === '/customers/contact-preference')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/contact-preference')?.body ?? '{}')).toMatchObject({ do_not_contact: true, reason: 'Llamó a pedirlo' })
   })
 })
 

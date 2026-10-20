@@ -87,6 +87,8 @@ export interface CustomerMaster {
   email: string | null
   address: string | null
   source: 'import' | 'sales' | 'manual'
+  do_not_contact: boolean
+  do_not_contact_reason: string | null
   type: { id: number; name: string } | null
   abc: Abc | null
 }
@@ -217,4 +219,47 @@ export interface ProductLevels {
   level1: string[]
   level2: string[]
   level3: string[]
+}
+
+export type InteractionChannel = 'call' | 'email' | 'whatsapp' | 'visit' | 'meeting' | 'other'
+export type InteractionDirection = 'outbound' | 'inbound'
+export type InteractionOutcome = 'spoke' | 'no_answer' | 'interested' | 'quote_requested' | 'callback_requested' | 'not_interested' | 'wrong_contact'
+
+export const CHANNEL_LABEL: Record<InteractionChannel, string> = {
+  call: 'Llamada', email: 'Correo', whatsapp: 'WhatsApp (manual)', visit: 'Visita', meeting: 'Reunión', other: 'Otro',
+}
+export const DIRECTION_LABEL: Record<InteractionDirection, string> = { outbound: 'Contacté yo al cliente', inbound: 'El cliente me contactó' }
+export const OUTCOME_LABEL: Record<InteractionOutcome, string> = {
+  spoke: 'Se habló con el cliente', no_answer: 'Sin respuesta', interested: 'Interesado', quote_requested: 'Pidió cotización',
+  callback_requested: 'Pidió que se le vuelva a contactar', not_interested: 'No interesado', wrong_contact: 'Contacto incorrecto',
+}
+
+export interface ContactPreference {
+  do_not_contact: boolean
+  reason: string | null
+  since: string | null
+}
+
+export interface CustomerInteraction {
+  id: number
+  channel: InteractionChannel
+  direction: InteractionDirection
+  outcome: InteractionOutcome
+  occurred_at: string
+  response: string | null
+  next_action: string | null
+  next_action_at: string | null
+  user: { id: number; name: string } | null
+  can_edit: boolean
+}
+
+/** '2026-10-05T14:30:00-06:00' → '5 oct 2026, 14:30'. */
+export function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString('es', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+/** Valor para <input type="datetime-local"> en hora local. */
+export function toLocalInput(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
 }

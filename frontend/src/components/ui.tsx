@@ -6,6 +6,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
+  type TextareaHTMLAttributes,
 } from 'react'
 
 export type FieldErrors = Record<string, string[]>
@@ -224,6 +225,16 @@ export function SelectField({ label, errors, hint, id, children, ...rest }: Fiel
     <div>
       <label htmlFor={id} className="mb-1 block text-sm font-medium text-ink">{label}</label>
       <select id={id} className={inputClass} aria-invalid={!!errors?.length} aria-describedby={describedBy(id, errors, hint)} {...rest}>{children}</select>
+      <FieldMessages id={id} errors={errors} hint={hint} />
+    </div>
+  )
+}
+
+export function TextAreaField({ label, errors, hint, id, ...rest }: FieldProps & TextareaHTMLAttributes<HTMLTextAreaElement> & { id: string }) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-ink">{label}</label>
+      <textarea id={id} rows={3} className={inputClass} aria-invalid={!!errors?.length} aria-describedby={describedBy(id, errors, hint)} {...rest} />
       <FieldMessages id={id} errors={errors} hint={hint} />
     </div>
   )

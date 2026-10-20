@@ -74,6 +74,14 @@ Para **cada** pantalla de las secciones 2 a 6, comprueba:
 - [ ] Cada cliente muestra venta neta, documentos, última compra, vendedor asignado y supervisor, **quién vendió**, **quién facturó** y **venta directa del facturador**.
 - [ ] Exportar a **Excel** y **CSV**: traen todas las personas (la pantalla muestra las 3 principales) y la hoja de notas.
 
+### Seguimiento comercial (ficha del cliente, Fase 5 paso 1)
+- [ ] En **Roles y permisos**, otorga `customers.view` y `interactions.manage` a Vendedor y Supervisor de Ventas (no se otorgan solos).
+- [ ] Registrar un contacto (canal, quién inició, resultado, fecha, notas, próxima acción con fecha); aparece arriba en el historial con su autor.
+- [ ] La fecha del contacto no puede ser futura; una próxima acción exige descripción y no puede ser anterior al contacto.
+- [ ] Corregir: solo su autor (o quien gestiona clientes); queda en Auditoría.
+- [ ] Un vendedor solo ve y registra contactos de sus clientes; un usuario sin `interactions.manage` consulta pero no registra.
+- [ ] «El cliente pidió no ser contactado»: pide motivo, muestra el aviso, bloquea contactos salientes y próximas acciones, permite registrar los que inicia el cliente y se puede retirar.
+
 ## 4b. Productos (`/productos`)
 
 - [ ] Tarjetas de cobertura: productos en catálogo, vendidos en 12 meses, vendidos sin catálogo y % de venta con catálogo; aviso si faltan productos.

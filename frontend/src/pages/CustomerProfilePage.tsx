@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
 import { BarChart } from '../components/charts'
+import CustomerInteractions from '../components/CustomerInteractions'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import { formatMoney } from '../lib/format'
@@ -242,6 +243,8 @@ export default function CustomerProfilePage() {
               <p className="mt-3 text-xs text-ink-muted">Este cliente se creó al aparecer en las ventas; aún no tiene datos del archivo maestro.</p>
             )}
           </Card>
+
+          <CustomerInteractions companyId={companyId} code={code} />
 
           <div className="mb-4 space-y-2">
             {p.history_starts_on && (

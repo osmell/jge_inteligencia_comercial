@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerAssignmentController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
 use App\Http\Controllers\Api\V1\OrganizationController;
@@ -61,6 +62,14 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('seller-users', [CustomerAssignmentController::class, 'sellerUsers'])->middleware('permission:customers.manage');
         Route::get('supervisors', [CustomerAssignmentController::class, 'supervisors']);
         Route::get('activity-rules', [CustomerController::class, 'activityRules']);
+        Route::get('interactions', [CustomerInteractionController::class, 'index']);
+    });
+
+    // Seguimiento comercial: el vendedor y el supervisor registran contactos con sus clientes.
+    Route::middleware(['permission:customers.view', 'permission:interactions.manage'])->prefix('customers')->group(function () {
+        Route::post('interactions', [CustomerInteractionController::class, 'store']);
+        Route::put('interactions/{interaction}', [CustomerInteractionController::class, 'update'])->whereNumber('interaction');
+        Route::put('contact-preference', [CustomerInteractionController::class, 'updatePreference']);
     });
 
     // Tipos de cliente y su asignación: permiso de gestión de clientes.

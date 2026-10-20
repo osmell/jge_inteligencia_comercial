@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -21,11 +22,19 @@ use Illuminate\Support\Facades\DB;
  * @property int|null $customer_type_id
  * @property int|null $seller_id
  * @property int|null $operator_id
+ * @property bool $do_not_contact
+ * @property string|null $do_not_contact_reason
+ * @property Carbon|null $do_not_contact_at
  */
 #[Fillable(['company_id', 'branch_id', 'code', 'name', 'trade_name', 'contact_name', 'phone', 'whatsapp', 'email', 'address', 'source', 'customer_type_id', 'seller_id', 'operator_id'])]
 class Customer extends Model
 {
     use ScopedByOrganization;
+
+    protected function casts(): array
+    {
+        return ['do_not_contact' => 'boolean', 'do_not_contact_at' => 'datetime'];
+    }
 
     /**
      * Los datos maestros se limitan por compañía, no por sucursal: un cliente puede comprar en varias. Las cifras de venta

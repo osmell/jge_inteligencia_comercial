@@ -167,6 +167,7 @@ class CustomerInsights
                 'code' => $customer->code, 'name' => $customer->name, 'trade_name' => $customer->trade_name, 'contact_name' => $customer->contact_name,
                 'phone' => $customer->phone, 'whatsapp' => $customer->whatsapp, 'email' => $customer->email, 'address' => $customer->address,
                 'source' => $customer->source,
+                'do_not_contact' => $customer->do_not_contact, 'do_not_contact_reason' => $customer->do_not_contact_reason,
                 'type' => $customer->type ? ['id' => $customer->type->id, 'name' => $customer->type->name] : null,
                 'abc' => $this->abcClasses($companyId, $today)[$code] ?? null,
             ],
