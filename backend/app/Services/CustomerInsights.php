@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\SalesDocument;
 use App\Models\SalesLine;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -25,7 +26,7 @@ class CustomerInsights
 
     public const ABC_B_PCT = 95;
 
-    public function __construct(private readonly SalesStatistics $stats) {}
+    public function __construct(private readonly SalesStatistics $stats, private readonly CustomerActivity $activity) {}
 
     /**
      * Clase ABC de cada cliente de la compañía (código → A|B|C). Se calcula sobre toda la compañía, sin importar las
@@ -66,7 +67,7 @@ class CustomerInsights
      *
      * @return array{rows: list<array<string, mixed>>, has_more: bool}
      */
-    public function search(?string $term, ?int $companyId, string $sort, int $page, ?int $typeId = null): array
+    public function search(?string $term, ?int $companyId, string $sort, int $page, ?int $typeId = null, ?string $status = null): array
     {
         $sales = SalesDocument::query()
             ->join('sales_lines as sl', 'sl.sales_document_id', '=', 'sales_documents.id')
@@ -82,6 +83,10 @@ class CustomerInsights
             ->leftJoin('customer_types', 'customer_types.id', '=', 'customers.customer_type_id')
             ->when($companyId, fn ($q) => $q->where('customers.company_id', $companyId))
             ->when($typeId, fn ($q) => $q->where('customers.customer_type_id', $typeId));
+
+        if ($status !== null) {
+            $this->filterByStatus($query, $status, $companyId);
+        }
 
         $term = trim((string) $term);
         if ($term !== '') {
@@ -108,12 +113,16 @@ class CustomerInsights
             ->get();
 
         $page_rows = $rows->take(self::PER_PAGE);
+        $statuses = [];
+        foreach ($page_rows->groupBy('company_id') as $cid => $group) {
+            $statuses += $this->activity->statusesFor((int) $cid, $group->pluck('code')->map(fn ($c) => (string) $c)->all());
+        }
         $abc = $page_rows->pluck('company_id')->unique()->mapWithKeys(fn ($id) => [(int) $id => $this->abcClasses((int) $id)]);
 
         return [
             'rows' => $page_rows->map(fn ($r) => [
                 'company_id' => (int) $r->company_id, 'company' => (string) $r->company, 'code' => (string) $r->code, 'name' => (string) $r->name,
-                'trade_name' => $r->trade_name, 'type' => $r->type, 'abc' => $abc[(int) $r->company_id][(string) $r->code] ?? null, 'documents' => (int) $r->documents,
+                'trade_name' => $r->trade_name, 'type' => $r->type, 'abc' => $abc[(int) $r->company_id][(string) $r->code] ?? null, 'activity' => $statuses[(int) $r->company_id][(string) $r->code] ?? 'no_sales', 'documents' => (int) $r->documents,
                 'net_total' => number_format((float) $r->net_total, 2, '.', ''),
                 'first_purchase' => $r->first_purchase ? $this->date($r->first_purchase) : null,
                 'last_purchase' => $r->last_purchase ? $this->date($r->last_purchase) : null,
@@ -157,6 +166,7 @@ class CustomerInsights
                 'type' => $customer->type ? ['id' => $customer->type->id, 'name' => $customer->type->name] : null,
                 'abc' => $this->abcClasses($companyId, $today)[$code] ?? null,
             ],
+            'activity' => ['status' => $this->activity->statusesFor($companyId, [$code], $today)[$companyId][$code]] + $this->activity->rules(),
             'first_purchase' => $overall['first'],
             'last_purchase' => $overall['last'],
             'days_since_last_purchase' => $last ? (int) $last->diffInDays($today, false) : null,
@@ -196,6 +206,10 @@ class CustomerInsights
             ->get();
 
         $page_rows = $rows->take(self::PER_PAGE);
+        $statuses = [];
+        foreach ($page_rows->groupBy('company_id') as $cid => $group) {
+            $statuses += $this->activity->statusesFor((int) $cid, $group->pluck('code')->map(fn ($c) => (string) $c)->all());
+        }
         $abc = $page_rows->pluck('company_id')->unique()->mapWithKeys(fn ($id) => [(int) $id => $this->abcClasses((int) $id)]);
 
         return [
@@ -258,6 +272,29 @@ class CustomerInsights
         }
 
         return $out;
+    }
+
+    /** Limita el listado a los clientes en un estado de actividad (o, para «sin compras», a los que no tienen ninguna). */
+    private function filterByStatus(Builder $query, string $status, ?int $companyId): void
+    {
+        $byCompany = $this->activity->codesWithStatus($status, $companyId);
+        $negate = $status === 'no_sales';
+        if ($byCompany === []) {
+            if (! $negate) {
+                $query->whereRaw('1 = 0');
+            }
+
+            return;
+        }
+
+        $pairs = function ($q) use ($byCompany) {
+            foreach ($byCompany as $company => $codes) {
+                foreach (array_chunk($codes, 500) as $chunk) {
+                    $q->orWhere(fn ($w) => $w->where('customers.company_id', $company)->whereIn('customers.code', $chunk));
+                }
+            }
+        };
+        $negate ? $query->whereNot($pairs) : $query->where($pairs);
     }
 
     private function date(mixed $value): string

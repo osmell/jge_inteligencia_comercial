@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\CustomerActivity;
 use App\Services\CustomerInsights;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -22,6 +23,7 @@ class CustomersRequest extends FormRequest
             'q' => ['nullable', 'string', 'max:100'],
             'code' => [$isSearch ? 'nullable' : 'required', 'string', 'max:255'],
             'company_id' => [$isSearch ? 'nullable' : 'required', 'integer', 'min:1'],
+            'status' => ['nullable', Rule::in(CustomerActivity::STATUSES)],
             'type_id' => ['nullable', 'integer', 'min:1'],
             'sort' => ['nullable', Rule::in(CustomerInsights::SORTS)],
             'page' => ['nullable', 'integer', 'min:1', 'max:10000'],

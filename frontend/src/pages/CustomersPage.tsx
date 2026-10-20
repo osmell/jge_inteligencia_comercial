@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { Button, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
 import { formatMoney } from '../lib/format'
-import { ABC_HINT, SORT_LABEL, formatDate, profileUrl, type CustomerListRow, type CustomerSort, type CustomerType } from '../lib/customers'
+import { ABC_HINT, ACTIVITY_LABEL, SORT_LABEL, formatDate, profileUrl, type CustomerListRow, type CustomerSort, type ActivityStatus, type CustomerType } from '../lib/customers'
 import type { Company } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
@@ -13,6 +13,7 @@ export default function CustomersPage() {
   const [term, setTerm] = useState('')
   const [companyId, setCompanyId] = useState('')
   const [typeId, setTypeId] = useState('')
+  const [status, setStatus] = useState('')
   const [sort, setSort] = useState<CustomerSort>('last_purchase')
   const [page, setPage] = useState(1)
 
@@ -27,7 +28,7 @@ export default function CustomersPage() {
 
   const companies = useLoad<{ data: Company[] }>('/companies')
   const types = useLoad<{ data: CustomerType[] }>('/customers/types')
-  const query = new URLSearchParams({ sort, page: String(page), ...(term ? { q: term } : {}), ...(companyId ? { company_id: companyId } : {}), ...(typeId ? { type_id: typeId } : {}) })
+  const query = new URLSearchParams({ sort, page: String(page), ...(term ? { q: term } : {}), ...(companyId ? { company_id: companyId } : {}), ...(typeId ? { type_id: typeId } : {}), ...(status ? { status } : {}) })
   const list = useLoad<{ data: CustomerListRow[]; meta: { has_more: boolean } }>(`/customers?${query}`)
   const rows = list.data?.data ?? []
 
@@ -49,6 +50,10 @@ export default function CustomersPage() {
           <option value="">Todos</option>
           {(types.data?.data ?? []).map((t) => <option key={t.id} value={t.id}>{t.name}{t.active ? '' : ' (inactivo)'}</option>)}
         </SelectField>
+        <SelectField id="customer-status" label="Estado" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1) }}>
+          <option value="">Todos</option>
+          {(Object.keys(ACTIVITY_LABEL) as ActivityStatus[]).map((k) => <option key={k} value={k}>{ACTIVITY_LABEL[k]}</option>)}
+        </SelectField>
         <SelectField id="customer-sort" label="Ordenar por" value={sort} onChange={(e) => { setSort(e.target.value as CustomerSort); setPage(1) }}>
           {(Object.keys(SORT_LABEL) as CustomerSort[]).map((k) => <option key={k} value={k}>{SORT_LABEL[k]}</option>)}
         </SelectField>
@@ -62,6 +67,7 @@ export default function CustomersPage() {
             <th className={th}>Código</th>
             <th className={th}>Nombre</th>
             <th className={th}>Tipo</th>
+            <th className={th}>Estado</th>
             <th className={th}><abbr title="Clasificación ABC por venta de los últimos 12 meses">ABC</abbr></th>
             <th className={`${th} text-right`}>Documentos</th>
             <th className={`${th} text-right`}>Venta neta</th>
@@ -70,8 +76,8 @@ export default function CustomersPage() {
           </tr>
         </thead>
         <tbody>
-          {list.loading && !list.data && <TableSkeleton cols={9} />}
-          {!list.loading && rows.length === 0 && <EmptyRow cols={9}>{term ? 'Ningún cliente coincide con la búsqueda.' : 'Aún no hay clientes. Cárgalos desde Importaciones.'}</EmptyRow>}
+          {list.loading && !list.data && <TableSkeleton cols={10} />}
+          {!list.loading && rows.length === 0 && <EmptyRow cols={10}>{term ? 'Ningún cliente coincide con la búsqueda.' : 'Aún no hay clientes. Cárgalos desde Importaciones.'}</EmptyRow>}
           {rows.map((r) => (
             <tr key={`${r.company_id}|${r.code}`} className={tr}>
               <td className={td}>{r.company}</td>
@@ -81,6 +87,7 @@ export default function CustomersPage() {
                 {r.trade_name && <span className="block text-xs font-normal text-ink-muted">{r.trade_name}</span>}
               </td>
               <td className={td}>{r.type ?? '—'}</td>
+              <td className={td}>{ACTIVITY_LABEL[r.activity]}</td>
               <td className={td}>{r.abc ? <abbr title={ABC_HINT[r.abc]} className="no-underline">{r.abc}</abbr> : '—'}</td>
               <td className={`${td} tabular text-right`}>{r.documents}</td>
               <td className={`${td} tabular text-right`}>{formatMoney(r.net_total)}</td>

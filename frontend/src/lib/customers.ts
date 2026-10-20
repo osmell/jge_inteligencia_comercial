@@ -2,6 +2,22 @@ import type { BreakdownRow, Kpis } from './sales'
 
 export type Abc = 'A' | 'B' | 'C'
 
+export const ACTIVITY_LABEL = {
+  new: 'Nuevo',
+  recovered: 'Recuperado',
+  active: 'Activo',
+  inactive: 'Inactivo',
+  lost: 'Perdido',
+  no_sales: 'Sin compras',
+} as const
+
+export type ActivityStatus = keyof typeof ACTIVITY_LABEL
+
+export interface ActivityRules {
+  inactive_days: number
+  lost_days: number
+}
+
 export interface CustomerType {
   id: number
   name: string
@@ -22,6 +38,7 @@ export interface CustomerListRow {
   trade_name: string | null
   type: string | null
   abc: Abc | null
+  activity: ActivityStatus
   documents: number
   net_total: string
   first_purchase: string | null
@@ -47,6 +64,7 @@ export interface CustomerMaster {
 }
 
 export interface CustomerProfile {
+  activity: ActivityRules & { status: ActivityStatus }
   customer: CustomerMaster
   first_purchase: string | null
   last_purchase: string | null

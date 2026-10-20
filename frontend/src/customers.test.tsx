@@ -20,6 +20,7 @@ const profile = (o: Partial<CustomerProfile> = {}): CustomerProfile => ({
     contact_name: 'Pedro', phone: '5555-1234', whatsapp: null, email: 'taller@example.com', address: 'Zona 1', source: 'import',
     type: { id: 1, name: 'Taller' }, abc: 'A',
   },
+  activity: { status: 'inactive', inactive_days: 30, lost_days: 90 },
   first_purchase: '2026-08-01', last_purchase: '2026-08-31', days_since_last_purchase: 50, history_starts_on: '2025-11-01', totals: kpis,
   frequency: { purchase_days: 3, average_days_between: 15 },
   monthly: [{ key: '2026-09', net_total: '0.00' }, { key: '2026-10', net_total: '650.00' }],
@@ -47,6 +48,7 @@ beforeEach(() => {
     if (path === '/auth/me') {
       return { data: { id: 1, username: 'gg', name: 'Gerencia', role: { slug: 'gerente_general', name: 'Gerente General' }, permissions, companies: [], branches: [] } }
     }
+    if (path === '/customers/activity-rules') return { data: { inactive_days: 30, lost_days: 90 } }
     if (path === '/customers/types') return { data: [{ id: 1, name: 'Taller', active: true }, { id: 2, name: 'Mayorista', active: false }] }
     if (path.startsWith('/customers/types/') || path === '/customers/type') return { data: {} }
     if (path.startsWith('/companies')) return { data: [{ id: 1, code: 'A', name: 'Compañía Alfa', is_active: true }] }
@@ -58,7 +60,7 @@ beforeEach(() => {
       return { data: [{ line: 1, product_code: 'P1', product_name: 'Filtro de aceite', category: 'Filtros', units: '2.00', net_total: '100.00', grand_total: '112.00' }] }
     }
     if (path.startsWith('/customers')) {
-      return { data: [{ company_id: 1, company: 'Compañía Alfa', code: 'C1', name: 'Taller Pérez', trade_name: 'Pérez Motors', type: 'Taller', abc: 'A', documents: 3, net_total: '650.00', first_purchase: '2026-08-01', last_purchase: '2026-08-31' }], meta: { page: 1, has_more: true } }
+      return { data: [{ company_id: 1, company: 'Compañía Alfa', code: 'C1', name: 'Taller Pérez', trade_name: 'Pérez Motors', type: 'Taller', abc: 'A', activity: 'active', documents: 3, net_total: '650.00', first_purchase: '2026-08-01', last_purchase: '2026-08-31' }], meta: { page: 1, has_more: true } }
     }
     return { data: [] }
   }
@@ -135,10 +137,13 @@ describe('tipos de cliente', () => {
     const table = await screen.findByRole('table', { name: 'Clientes' })
     expect(within(table).getByText('Taller')).toBeInTheDocument()
     expect(within(table).getByText('A')).toBeInTheDocument()
+    expect(within(table).getByText('Activo')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Tipos de cliente' })).not.toBeInTheDocument()
 
     await u.selectOptions(await screen.findByLabelText('Tipo'), '1')
     await waitFor(() => expect(urls.at(-1)).toContain('type_id=1'))
+    await u.selectOptions(screen.getByLabelText('Estado'), 'lost')
+    await waitFor(() => expect(urls.at(-1)).toContain('status=lost'))
   })
 
   it('con permiso de gestión, la ficha cambia el tipo y lo guarda', async () => {
@@ -184,5 +189,19 @@ describe('tipos de cliente', () => {
     await u.click(screen.getByRole('button', { name: 'Guardar' }))
     await waitFor(() => expect(calls.filter((c) => c.path === '/customers/types/1').length).toBe(2))
     expect(JSON.parse(calls.filter((c) => c.path === '/customers/types/1')[1].body!)).toEqual({ name: 'Taller mecánico' })
+  })
+
+  it('las reglas de actividad se editan y se envían', async () => {
+    permissions = ['customers.view', 'customers.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><CustomerTypesPage /></MemoryRouter></AuthProvider>)
+
+    const inactive = await screen.findByLabelText('Días para inactivo')
+    await waitFor(() => expect(inactive).toHaveValue(30))
+    await u.clear(inactive)
+    await u.type(inactive, '45')
+    await u.click(screen.getByRole('button', { name: 'Guardar reglas' }))
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/customers/activity-rules')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/activity-rules' && c.method === 'PUT')!.body!)).toEqual({ inactive_days: 45, lost_days: 90 })
   })
 })

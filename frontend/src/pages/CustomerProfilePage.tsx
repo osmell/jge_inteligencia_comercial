@@ -7,7 +7,7 @@ import { BarChart } from '../components/charts'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/format'
-import { ABC_HINT, formatDate, sinceLabel, type CustomerProfile, type CustomerType, type CustomerPurchase, type DocumentLine } from '../lib/customers'
+import { ABC_HINT, ACTIVITY_LABEL, formatDate, sinceLabel, type CustomerProfile, type CustomerType, type CustomerPurchase, type DocumentLine } from '../lib/customers'
 import type { BreakdownRow } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
 
@@ -103,6 +103,13 @@ export default function CustomerProfilePage() {
           <Card className="mb-4 p-4">
             <h2 className="mb-2 text-sm font-semibold text-ink">Datos del cliente</h2>
             <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <dt className="text-ink-muted">Estado</dt>
+                <dd className="font-medium">
+                  {ACTIVITY_LABEL[p.activity.status]}{' '}
+                  <span className="text-xs font-normal text-ink-muted">(inactivo tras {p.activity.inactive_days} días sin comprar; perdido tras {p.activity.lost_days})</span>
+                </dd>
+              </div>
               <div>
                 <dt className="text-ink-muted">Clasificación ABC</dt>
                 <dd className="font-medium">

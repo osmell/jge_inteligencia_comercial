@@ -53,5 +53,19 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **Pantallas:** `/clientes/tipos` (catálogo), columnas y filtro de tipo en el listado, y cambio de tipo en la ficha.
 - **Pendiente:** asignar el tipo desde el Excel de clientes.
 
+### Paso 4 — Estado de actividad del cliente
+- **Estados:** activo, inactivo, nuevo, recuperado, perdido y sin compras. Plazos configurables (por defecto **30** días para inactivo y **90** para perdido; el segundo debe ser mayor que el primero).
+- **Reglas:** activo = última compra hace ≤ plazo de inactividad; inactivo = más de ese plazo y hasta el plazo de perdido; perdido = más allá; nuevo = primera compra dentro del plazo (solo si el historial de la compañía empieza antes de esa compra: si no, no se sabe si es la primera); recuperado = compró dentro del plazo tras pasar más de ese plazo sin comprar.
+- **Alcance:** se calcula sobre toda la compañía (sin importar las sucursales del usuario), igual que el ABC, para que el estado sea el mismo para todos.
+- **Configuración:** tabla `app_settings` (clave → valor); `GET /customers/activity-rules` (`customers.view`) y `PUT` (`customers.manage`, auditado como `customers.activity_rules_updated`); pantalla en `/clientes/tipos`.
+- **API/pantallas:** `GET /customers?status=` filtra; el listado y la ficha muestran el estado.
+- **Verificación:** pruebas de cada estado y de los plazos; en PostgreSQL con datos demo se clasifican los 150 clientes en 62 ms. La memoria de pruebas de PHP se subió a 512 M (la suite ya agotaba 128 M).
+
+### Respuestas recibidas (ronda 2)
+- Productos: el archivo usa los encabezados **Nivel 1, Nivel 2, Nivel 3**; la sucursal es donde se generó la factura y un código puede venderse en varias sucursales de la misma compañía.
+- Atribución: la venta es del vendedor aunque el facturador emita la factura; si el facturador vende directamente, es del facturador y cuenta en sus estadísticas.
+- El supervisor del cliente es el supervisor de su vendedor. Operadores = facturadores. Quien carga la información es el supervisor de ventas.
+- Las devoluciones restan a la venta del cliente.
+
 ### Siguiente
 Pendiente con las demás respuestas: asignación de un vendedor y un facturador por cliente con supervisor (vendedor por defecto «Tienda» por sucursal), visibilidad por rol, estado de actividad (activo, inactivo, nuevo, recuperado, perdido; 30/90 días configurables), reporte de ventas por cliente con quién vendió y quién facturó, y carga de productos. Dudas abiertas: ver el resumen del paso en la conversación y `13_PREGUNTAS_FASE_04_CLIENTES.md`. Falta además contrastar los totales con ventas validadas.

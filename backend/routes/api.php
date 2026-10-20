@@ -47,6 +47,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('purchases', [CustomerController::class, 'purchases']);
         Route::get('document', [CustomerController::class, 'document']);
         Route::get('types', [CustomerTypeController::class, 'index']);
+        Route::get('activity-rules', [CustomerController::class, 'activityRules']);
     });
 
     // Tipos de cliente y su asignación: permiso de gestión de clientes.
@@ -54,6 +55,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('customers/types', [CustomerTypeController::class, 'store']);
         Route::put('customers/types/{customerType}', [CustomerTypeController::class, 'update'])->whereNumber('customerType');
         Route::put('customers/type', [CustomerTypeController::class, 'assign']);
+        Route::put('customers/activity-rules', [CustomerController::class, 'updateActivityRules']);
     });
 
     // Rutas administrativas: exigen permiso explícito en el backend.

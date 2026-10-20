@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useToast } from '../components/toast'
 import { Button, DataTable, EmptyRow, FormError, PageHeader, TableSkeleton, TextField, td, th, tr } from '../components/ui'
 import { ApiError, api } from '../lib/api'
-import type { CustomerType } from '../lib/customers'
+import type { ActivityRules, CustomerType } from '../lib/customers'
 import { useLoad } from '../lib/useLoad'
 
 export default function CustomerTypesPage() {
@@ -14,6 +14,27 @@ export default function CustomerTypesPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const types = list.data?.data ?? []
+  const rules = useLoad<{ data: ActivityRules }>('/customers/activity-rules')
+  const [days, setDays] = useState<{ inactive: string; lost: string } | null>(null)
+  const [rulesErrors, setRulesErrors] = useState<string | null>(null)
+  const [savingRules, setSavingRules] = useState(false)
+  const shown = days ?? (rules.data ? { inactive: String(rules.data.data.inactive_days), lost: String(rules.data.data.lost_days) } : { inactive: '', lost: '' })
+
+  async function saveRules(e: FormEvent) {
+    e.preventDefault()
+    setSavingRules(true)
+    setRulesErrors(null)
+    try {
+      await api('/customers/activity-rules', { method: 'PUT', body: { inactive_days: Number(shown.inactive), lost_days: Number(shown.lost) } })
+      toast.success('Reglas de actividad guardadas.')
+      setDays(null)
+      rules.reload()
+    } catch (err) {
+      setRulesErrors(err instanceof ApiError ? (Object.values(err.errors)[0]?.[0] ?? err.message) : 'No se pudieron guardar las reglas.')
+    } finally {
+      setSavingRules(false)
+    }
+  }
 
   async function send(path: string, method: 'POST' | 'PUT', body: unknown, done: string) {
     setBusy(true)
@@ -86,6 +107,22 @@ export default function CustomerTypesPage() {
           ))}
         </tbody>
       </DataTable>
+    
+      <h2 className="mb-1 mt-8 text-base font-semibold text-ink">Estado de actividad</h2>
+      <p className="mb-3 text-sm text-ink-muted">
+        Un cliente está <strong>activo</strong> si compró dentro del plazo de inactividad; <strong>nuevo</strong> si su primera compra cae en ese plazo;
+        <strong> recuperado</strong> si volvió a comprar tras pasar más de ese plazo sin hacerlo; <strong>inactivo</strong> al superarlo y <strong>perdido</strong> al superar el segundo plazo.
+      </p>
+      <form onSubmit={saveRules} className="flex flex-wrap items-end gap-3">
+        <div className="w-44">
+          <TextField id="inactive-days" label="Días para inactivo" type="number" min={1} max={365} value={shown.inactive} onChange={(e) => setDays({ ...shown, inactive: e.target.value })} />
+        </div>
+        <div className="w-44">
+          <TextField id="lost-days" label="Días para perdido" type="number" min={2} max={1095} value={shown.lost} onChange={(e) => setDays({ ...shown, lost: e.target.value })} />
+        </div>
+        <Button type="submit" loading={savingRules} disabled={days === null}>Guardar reglas</Button>
+      </form>
+      <FormError message={rulesErrors ?? rules.error} />
     </section>
   )
 }
