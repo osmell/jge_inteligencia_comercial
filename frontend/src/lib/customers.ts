@@ -142,3 +142,35 @@ export function sinceLabel(days: number): string {
 
 export const profileUrl = (code: string, companyId: number | string) =>
   `/clientes/ficha?${new URLSearchParams({ codigo: code, compania: String(companyId) })}`
+
+export interface ReportPerson {
+  name: string
+  net_total: string
+}
+
+export interface CustomerSalesRow {
+  company_id: number
+  company: string
+  code: string
+  name: string
+  type: string | null
+  assigned_seller: string | null
+  assigned_seller_is_default: boolean
+  supervisor: string | null
+  net_total: string
+  documents: number
+  last_purchase: string
+  direct_net_total: string
+  sellers: ReportPerson[]
+  sellers_more: number
+  operators: ReportPerson[]
+  operators_more: number
+}
+
+/** Primer y último día del mes en curso, como 'YYYY-MM-DD'. */
+export function currentMonthRange(now = new Date()): { from: string; to: string } {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const last = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const prefix = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
+  return { from: `${prefix}-01`, to: `${prefix}-${pad(last)}` }
+}

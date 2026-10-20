@@ -35,12 +35,13 @@ export default function CustomersPage() {
   return (
     <section>
       <PageHeader title="Clientes" description="Datos maestros de los clientes y su actividad de compra. El código es único por compañía."
-        action={can('customers.manage') ? (
+        action={(
           <span className="flex gap-4 text-sm">
-            <Link className="text-jge-blue hover:underline" to="/clientes/vendedores">Vendedores</Link>
-            <Link className="text-jge-blue hover:underline" to="/clientes/tipos">Tipos de cliente</Link>
+            <Link className="text-jge-blue hover:underline" to="/clientes/reporte">Ventas por cliente</Link>
+            {can('customers.manage') && <Link className="text-jge-blue hover:underline" to="/clientes/vendedores">Vendedores</Link>}
+            {can('customers.manage') && <Link className="text-jge-blue hover:underline" to="/clientes/tipos">Tipos de cliente</Link>}
           </span>
-        ) : undefined}
+        )}
       />
 
       <div className="mb-4 flex flex-wrap items-end gap-3">

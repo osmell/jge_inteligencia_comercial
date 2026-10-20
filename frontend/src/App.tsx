@@ -11,6 +11,7 @@ import AuditPage from './pages/AuditPage'
 import BranchesPage from './pages/BranchesPage'
 import CompaniesPage from './pages/CompaniesPage'
 import CustomerProfilePage from './pages/CustomerProfilePage'
+import CustomerSalesReportPage from './pages/CustomerSalesReportPage'
 import CustomerTypesPage from './pages/CustomerTypesPage'
 import SellersPage from './pages/SellersPage'
 import CustomersPage from './pages/CustomersPage'
@@ -36,6 +37,7 @@ export default function App() {
               <Route element={<RequirePermission permission="customers.view" />}>
                 <Route path="clientes" element={<CustomersPage />} />
                 <Route path="clientes/ficha" element={<CustomerProfilePage />} />
+                <Route path="clientes/reporte" element={<CustomerSalesReportPage />} />
               </Route>
               <Route element={<RequirePermission permission="customers.manage" />}>
                 <Route path="clientes/tipos" element={<CustomerTypesPage />} />

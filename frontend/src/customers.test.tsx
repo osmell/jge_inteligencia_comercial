@@ -1,9 +1,10 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import CustomerProfilePage from './pages/CustomerProfilePage'
+import CustomerSalesReportPage from './pages/CustomerSalesReportPage'
 import SellersPage from './pages/SellersPage'
 import CustomerTypesPage from './pages/CustomerTypesPage'
 import CustomersPage from './pages/CustomersPage'
@@ -49,6 +50,13 @@ beforeEach(() => {
   respond = (path) => {
     if (path === '/auth/me') {
       return { data: { id: 1, username: 'gg', name: 'Gerencia', role: { slug: 'gerente_general', name: 'Gerente General' }, permissions, companies: [], branches: [] } }
+    }
+    if (path.startsWith('/customers/sales-report')) {
+      return {
+        data: [{ company_id: 1, company: 'Compañía Alfa', code: 'C1', name: 'Taller Pérez', type: 'Taller', assigned_seller: 'Ana', assigned_seller_is_default: false, supervisor: 'Sara', net_total: '150.00', documents: 2, last_purchase: '2026-10-03', direct_net_total: '50.00',
+          sellers: [{ name: 'Ana', net_total: '100.00' }, { name: 'Luis', net_total: '50.00' }], sellers_more: 2, operators: [{ name: 'Caja 1', net_total: '100.00' }], operators_more: 0 }],
+        meta: { page: 1, has_more: false },
+      }
     }
     if (path.startsWith('/customers/sellers/')) return { data: {} }
     if (path.startsWith('/customers/sellers')) {
@@ -249,5 +257,31 @@ describe('asignaciones', () => {
     await u.selectOptions(within(table).getByLabelText('Supervisor de Ana'), '9')
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/customers/sellers/7')).toBe(true))
     expect(JSON.parse(calls.find((c) => c.path === '/customers/sellers/7')!.body!)).toEqual({ supervisor_id: 9 })
+  })
+})
+
+describe('reporte de ventas por cliente', () => {
+  it('muestra quién vendió y quién facturó, y consulta con el periodo y filtros', async () => {
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><CustomerSalesReportPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Ventas por cliente' })
+    expect(within(table).getByRole('link', { name: 'Taller Pérez' })).toBeInTheDocument()
+    expect(within(table).getByText('Luis')).toBeInTheDocument()
+    expect(within(table).getByText('Caja 1')).toBeInTheDocument()
+    expect(within(table).getByText(/y 2 más/)).toBeInTheDocument()
+    expect(urls.some((x) => /^\/customers\/sales-report\?from=\d{4}-\d{2}-01&to=\d{4}-\d{2}-\d{2}&page=1$/.test(x))).toBe(true)
+
+    await u.selectOptions(screen.getByLabelText('Compañía'), '1')
+    await waitFor(() => expect(urls.at(-1)).toContain('company_id=1'))
+  })
+
+  it('con un periodo inválido no consulta y lo explica', async () => {
+    render(<AuthProvider><MemoryRouter><CustomerSalesReportPage /></MemoryRouter></AuthProvider>)
+    await screen.findByRole('table', { name: 'Ventas por cliente' })
+    const before = urls.filter((x) => x.startsWith('/customers/sales-report')).length
+    fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2999-01-01' } })
+    expect(await screen.findByText(/periodo válido/)).toBeInTheDocument()
+    expect(urls.filter((x) => x.startsWith('/customers/sales-report')).length).toBe(before)
   })
 })

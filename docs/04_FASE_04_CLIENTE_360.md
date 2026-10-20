@@ -70,6 +70,14 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **Pantallas:** `/clientes/vendedores` (sucursal, tienda por defecto y supervisor por vendedor), ficha con vendedor/facturador/supervisor y selectores de asignación, y columna Vendedor en el listado.
 - **Pendiente:** el vínculo de un usuario con su vendedor aún no tiene pantalla (`sellers.user_id`); también la importación de clientes no asigna vendedor.
 
+### Paso 6 — Reporte de ventas por cliente
+- **Qué muestra:** por cliente con ventas en el periodo: venta neta, documentos, última compra, vendedor asignado (o la «Tienda» por defecto) y su supervisor, **quién vendió** y **quién facturó** (con el monto de cada uno) y la **venta directa del facturador** (vendedor y facturador con el mismo nombre). En pantalla se ven las 3 personas principales; el archivo las incluye todas.
+- **Filtros:** periodo (máximo 1096 días), compañía y sucursal; respeta el ámbito del usuario y, para el rol Vendedor, solo sus clientes. Pantalla `/clientes/reporte` (enlace «Ventas por cliente» en Clientes).
+- **Exportación:** CSV y Excel (hoja de datos + hoja de notas con periodo, filtros y reglas), hasta 5 000 clientes, auditada como `customers.sales_report_exported`; textos que parecen fórmulas se neutralizan.
+- **API:** `GET /customers/sales-report` y `GET /customers/sales-report/export?format=csv|xlsx` (permiso `customers.view`).
+- **Devoluciones:** el responsable confirmó que restan a la venta del cliente, pero sin formato de notas de crédito aún no se descuentan; la pantalla y el Excel lo avisan.
+- **Verificación:** en PostgreSQL con datos demo, 150 clientes en 128 ms; la suma del año coincide con SQL directo (diferencia de 0,09 por redondear fila a fila).
+
 ### Respuestas recibidas (ronda 2)
 - Productos: el archivo usa los encabezados **Nivel 1, Nivel 2, Nivel 3**; la sucursal es donde se generó la factura y un código puede venderse en varias sucursales de la misma compañía.
 - Atribución: la venta es del vendedor aunque el facturador emita la factura; si el facturador vende directamente, es del facturador y cuenta en sus estadísticas.

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerAssignmentController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
@@ -48,6 +49,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('purchases', [CustomerController::class, 'purchases']);
         Route::get('document', [CustomerController::class, 'document']);
         Route::get('types', [CustomerTypeController::class, 'index']);
+        Route::get('sales-report', [CustomerSalesReportController::class, 'index']);
+        Route::get('sales-report/export', [CustomerSalesReportController::class, 'export']);
         Route::get('sellers', [CustomerAssignmentController::class, 'sellers']);
         Route::get('operators', [CustomerAssignmentController::class, 'operators']);
         Route::get('supervisors', [CustomerAssignmentController::class, 'supervisors']);

@@ -284,7 +284,7 @@ class CustomerInsights
      *
      * @return array<string, mixed>
      */
-    private function assignment(Customer $customer): array
+    public function assignment(Customer $customer): array
     {
         $seller = $customer->seller;
         $assigned = $seller !== null;

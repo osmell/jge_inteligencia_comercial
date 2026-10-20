@@ -82,6 +82,75 @@ class SalesReportExporter
         }
     }
 
+    private const CUSTOMER_REPORT_HEADERS = [
+        'Compañía', 'Código', 'Cliente', 'Tipo', 'Vendedor asignado', 'Supervisor', 'Venta neta', 'Documentos', 'Última compra',
+        'Venta directa del facturador', 'Quién vendió', 'Quién facturó',
+    ];
+
+    /**
+     * Ventas por cliente como CSV (UTF-8 con BOM).
+     *
+     * @param  resource  $out
+     * @param  list<array<string, mixed>>  $rows  filas de CustomerSalesReport
+     */
+    public function writeCustomerSalesCsv($out, array $rows): void
+    {
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, self::CUSTOMER_REPORT_HEADERS);
+        foreach ($rows as $r) {
+            fputcsv($out, array_map(fn ($v) => is_string($v) ? self::csvSafe($v) : $v, $this->customerSalesValues($r)));
+        }
+    }
+
+    /**
+     * Ventas por cliente como Excel (hoja de datos y hoja de notas).
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return string ruta de un archivo temporal (el llamador lo elimina)
+     */
+    public function buildCustomerSalesWorkbook(array $rows, CarbonImmutable $from, CarbonImmutable $to, string $filters, string $generatedBy): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'rpt').'.xlsx';
+        $bold = (new Style)->withFontBold(true);
+        $writer = new Writer;
+        $writer->openToFile($path);
+        $writer->getCurrentSheet()->setName('Ventas por cliente');
+        $writer->addRow(Row::fromValuesWithStyle(self::CUSTOMER_REPORT_HEADERS, $bold));
+        foreach ($rows as $r) {
+            $values = $this->customerSalesValues($r);
+            foreach ([6, 9] as $i) {
+                $values[$i] = $this->number($values[$i]);
+            }
+            $writer->addRow(Row::fromValues($values));
+        }
+        $writer->addNewSheetAndMakeItCurrent()->setName('Notas');
+        $writer->addRows([
+            Row::fromValues(['Periodo', "{$from->toDateString()} a {$to->toDateString()}"]),
+            Row::fromValues(['Filtros', $filters]),
+            Row::fromValues(['Generado por', $generatedBy]),
+            Row::fromValues(['Generado el', now()->format('Y-m-d H:i')]),
+            Row::fromValues(['Atribución', 'La venta es del vendedor; si vendedor y facturador tienen el mismo nombre es una venta directa del facturador.']),
+            Row::fromValues(['Devoluciones', 'Aún no se descuentan: falta el formato de notas de crédito.']),
+        ]);
+        $writer->close();
+
+        return $path;
+    }
+
+    /**
+     * @param  array<string, mixed>  $r
+     * @return list<mixed>
+     */
+    private function customerSalesValues(array $r): array
+    {
+        $people = fn (array $list) => implode('; ', array_map(fn ($p) => "{$p['name']} ({$p['net_total']})", $list));
+
+        return [
+            $r['company'], $r['code'], $r['name'], $r['type'], $r['assigned_seller'], $r['supervisor'], $r['net_total'], $r['documents'],
+            $r['last_purchase'], $r['direct_net_total'], $people($r['sellers']), $people($r['operators']),
+        ];
+    }
+
     /** Dimensiones que resume el PDF (mes y día quedan para Excel/CSV). */
     public const PDF_DIMENSIONS = ['company', 'branch', 'seller', 'category', 'product', 'customer'];
 
@@ -231,7 +300,7 @@ class SalesReportExporter
     }
 
     /** @param  array<string, mixed>  $filters */
-    private function describeFilters(array $filters): string
+    public function describeFilters(array $filters): string
     {
         $names = [
             'company_id' => ['Compañía', fn ($id) => Company::find($id)?->name],
