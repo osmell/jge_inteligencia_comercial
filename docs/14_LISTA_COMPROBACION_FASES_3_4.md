@@ -107,6 +107,13 @@ Para **cada** pantalla de las secciones 2 a 6, comprueba:
 - [ ] Un vendedor solo ve cifras de sus clientes; un supervisor, las de su equipo (vendedores donde figura como supervisor) y lo que él registró.
 - [ ] La pantalla se ve completa en móvil y un periodo invertido avisa sin consultar.
 
+### Crédito: facturas y saldos (`/credito`, Fase 6 pasos 1 y 2)
+- [ ] En Importaciones, el tipo «Facturas de crédito» ofrece su plantilla; un archivo con Subtotal − Descuento + Impuesto distinto del Total se rechaza señalando fila y columna.
+- [ ] Cargar el mismo archivo otra vez avisa que ya fue importado; una factura ya cargada con datos distintos se rechaza (no se sobrescribe).
+- [ ] Una factura de crédito cuyo documento ya existe en ventas queda enlazada; si los importes o el cliente difieren, avisa sin bloquear.
+- [ ] En `/credito`, el saldo de cada factura es su total (aún sin abonos) y la antigüedad cae en el tramo correcto según su fecha (1-30, 31-60, 61-90, 91-120, más de 120 días).
+- [ ] El detalle muestra los movimientos y el saldo; un vendedor solo ve las facturas donde es el vendedor.
+
 ## 4b. Productos (`/productos`)
 
 - [ ] Tarjetas de cobertura: productos en catálogo, vendidos en 12 meses, vendidos sin catálogo y % de venta con catálogo; aviso si faltan productos.

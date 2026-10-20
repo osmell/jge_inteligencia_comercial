@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Admin\RolePermissionController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CreditInvoiceController;
 use App\Http\Controllers\Api\V1\CustomerAssignmentController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerInteractionController;
@@ -64,6 +65,12 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('supervisors', [CustomerAssignmentController::class, 'supervisors']);
         Route::get('activity-rules', [CustomerController::class, 'activityRules']);
         Route::get('interactions', [CustomerInteractionController::class, 'index']);
+    });
+
+    // Crédito y cobranzas: facturas de crédito con su saldo (calculado desde el libro de movimientos).
+    Route::middleware('permission:credit.view')->prefix('credit')->group(function () {
+        Route::get('invoices', [CreditInvoiceController::class, 'index']);
+        Route::get('invoices/{invoice}', [CreditInvoiceController::class, 'show'])->whereNumber('invoice');
     });
 
     // Cotizaciones: consulta con permiso de clientes; alta y cambios con el permiso de seguimiento.

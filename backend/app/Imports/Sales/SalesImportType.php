@@ -4,6 +4,7 @@ namespace App\Imports\Sales;
 
 use App\Imports\ColumnDefinition;
 use App\Imports\Contracts\ImportType;
+use App\Imports\Credit\CreditInvoicesImportType;
 use App\Imports\Decimal;
 use App\Imports\ImportContext;
 use App\Imports\ImportRow;
@@ -200,6 +201,9 @@ final class SalesImportType implements ImportType
     public function persist(ImportContext $context): void
     {
         (new SalesPersister)->persist($context);
+
+        // Facturas de crédito que se cargaron antes que su venta quedan enlazadas ahora.
+        CreditInvoicesImportType::linkPendingToSales(collect($context->groups)->map(fn ($g) => (int) $g->fields['company'])->unique()->values()->all());
     }
 
     /** @return array{0: Company|null, 1: Branch|null} */

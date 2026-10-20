@@ -1,5 +1,6 @@
 <?php
 
+use App\Imports\Credit\CreditInvoicesImportType;
 use App\Imports\Customers\CustomersImportType;
 use App\Imports\Products\ProductsImportType;
 use App\Imports\Sales\SalesImportType;
@@ -30,10 +31,11 @@ return [
         'sales' => SalesImportType::class,
         'customers' => CustomersImportType::class,
         'products' => ProductsImportType::class,
+        'credit_invoices' => CreditInvoicesImportType::class,
     ],
 
     // Nombre visible de cada tipo.
-    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes', 'products' => 'Productos'],
+    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes', 'products' => 'Productos', 'credit_invoices' => 'Facturas de crédito'],
 
     // Filas mostradas en la vista previa.
     'preview_rows' => 20,
@@ -128,5 +130,30 @@ return [
         ],
 
         'optional' => ['level1', 'level2', 'level3'],
+    ],
+
+    // Facturas de crédito: una fila por factura (la misma factura de venta: compañía + serie + documento) con sus importes de
+    // documento. Moneda única (NIO). La antigüedad se cuenta desde la fecha de la factura.
+    'credit_invoices' => [
+        'sheet' => null,
+
+        'columns' => [
+            'issued_on' => ['Fecha'],
+            'discount_total' => ['Descuento'],
+            'subtotal' => ['Subtotal', 'Sub Total'],
+            'tax_total' => ['Impuesto', 'Total Impuesto'],
+            'total' => ['Total'],
+            'document' => ['Documento'],
+            'series' => ['Serie'],
+            'customer_code' => ['Código Cliente', 'Codigo Cliente'],
+            'customer_name' => ['Nombre Cliente'],
+            'seller_name' => ['Nombre Vendedor'],
+            'operator_name' => ['Nombre Operador', 'Nombre Facturador'],
+            'branch' => ['Sucursal', 'Código Sucursal'],
+            'company' => ['Compañía', 'Compania', 'Código Compañía'],
+        ],
+
+        // Descuento vacío = 0.
+        'optional' => ['discount_total'],
     ],
 ];

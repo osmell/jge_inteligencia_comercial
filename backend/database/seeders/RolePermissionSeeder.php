@@ -21,6 +21,7 @@ class RolePermissionSeeder extends Seeder
         'customers.manage' => 'Gestión de clientes (tipos y asignaciones)',
         'goals.manage' => 'Captura de metas de ventas',
         'interactions.manage' => 'Seguimiento de clientes (registrar contactos)',
+        'credit.view' => 'Crédito y cobranzas (consulta de facturas y saldos)',
     ];
 
     public function run(): void

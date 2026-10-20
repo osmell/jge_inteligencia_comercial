@@ -106,6 +106,12 @@ export interface ImportSummary {
   companies?: { id: number; name: string; documents: number; lines: number; net_total: string }[]
   customers?: { new: number; updated: number; unchanged: number }
   products?: { new: number; updated: number; unchanged: number }
+  credit?: {
+    new: number; unchanged: number; linked_to_sales: number; without_sales: number; mismatches: number
+    totals: { subtotal: string; discount_total: string; tax_total: string; total: string }
+    companies: { id: number; name: string; documents: number }[]
+    new_sellers: string[]; new_operators: string[]
+  }
   new_sellers?: string[]
   new_operators?: string[]
 }

@@ -241,6 +241,32 @@ describe('importaciones', () => {
     expect(await screen.findByRole('dialog', { name: 'Confirmar importación' })).toHaveTextContent('Se crearán 4 productos')
   })
 
+  it('un lote de facturas de crédito muestra totales, enlaces con la venta y su confirmación lo explica', async () => {
+    route('GET /admin/imports/7', json({ data: batch({
+      type: 'credit_invoices', type_label: 'Facturas de crédito',
+      summary: {
+        rows_invalid: 0, date_from: '2026-10-01', date_to: '2026-10-15', preview_columns: ['Documento'], preview: [],
+        credit: {
+          new: 2, unchanged: 0, linked_to_sales: 1, without_sales: 1, mismatches: 1,
+          totals: { subtotal: '1200.0000', discount_total: '100.0000', tax_total: '165.0000', total: '1265.0000' },
+          companies: [{ id: 1, name: 'Compañía Alfa', documents: 2 }], new_sellers: ['IRIS'], new_operators: [],
+        },
+      },
+    }) }))
+    renderAt('/importaciones/7')
+
+    expect(await screen.findByText('Facturas de crédito del 2026-10-01 al 2026-10-15')).toBeInTheDocument()
+    expect(screen.getByText('Total a crédito').closest('div')).toHaveTextContent('1265,00')
+    expect(screen.getByText('Enlazadas con su venta').closest('div')).toHaveTextContent('1')
+    expect(screen.getByText('Diferencias con la venta').closest('div')).toHaveTextContent('Avisos')
+    expect(screen.getByText('IRIS')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar importación' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Confirmar importación' })
+    expect(dialog).toHaveTextContent('2 facturas de crédito nuevas')
+    expect(dialog).toHaveTextContent('abre su saldo en el libro de movimientos')
+  })
+
   it('actualiza solo mientras el lote se procesa', async () => {
     route('GET /admin/imports/7', json({ data: batch({ status: 'validating', status_label: 'Validando', can_confirm: false }) }), json({ data: batch() }))
     renderAt('/importaciones/7')

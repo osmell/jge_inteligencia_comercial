@@ -125,8 +125,50 @@ function MasterSummary({ batch }: { batch: ImportBatch }) {
   )
 }
 
+function CreditSummary({ batch }: { batch: ImportBatch }) {
+  const s = batch.summary
+  const c = s?.credit
+  if (!c) return null
+
+  return (
+    <section>
+      <PageHeader level={2} title="Resumen" description={s?.date_from ? `Facturas de crédito del ${s.date_from} al ${s.date_to}` : undefined} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Subtotal" value={formatMoney(c.totals.subtotal)} />
+        <Stat label="Descuento" value={formatMoney(c.totals.discount_total)} />
+        <Stat label="Impuesto" value={formatMoney(c.totals.tax_total)} />
+        <Stat label="Total a crédito" value={formatMoney(c.totals.total)} hint="Moneda única (NIO); abre el saldo de cada factura" />
+      </div>
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <Stat label="Enlazadas con su venta" value={c.linked_to_sales} hint="La factura de venta ya está cargada" />
+        <Stat label="Sin venta cargada" value={c.without_sales} hint="Se enlazan cuando se importen las ventas" />
+        <Stat label="Diferencias con la venta" value={c.mismatches} hint="Avisos: importes o cliente distintos" />
+      </div>
+      {c.companies.length > 0 && (
+        <div className="mt-4">
+          <DataTable label="Resumen por compañía">
+            <thead><tr><th className={th}>Compañía</th><th className={th}>Facturas</th></tr></thead>
+            <tbody>{c.companies.map((x) => <tr key={x.id} className={tr}><td className={`${td} font-medium`}>{x.name}</td><td className={`${td} tabular`}>{x.documents}</td></tr>)}</tbody>
+          </DataTable>
+        </div>
+      )}
+      {(c.new_sellers.length > 0 || c.new_operators.length > 0) && (
+        <div className="mt-4">
+          <Alert tone="info">
+            Se darán de alta automáticamente
+            {c.new_sellers.length > 0 && <> los vendedores: <strong>{c.new_sellers.join(', ')}</strong></>}
+            {c.new_sellers.length > 0 && c.new_operators.length > 0 && ' y'}
+            {c.new_operators.length > 0 && <> los operadores: <strong>{c.new_operators.join(', ')}</strong></>}.
+          </Alert>
+        </div>
+      )}
+    </section>
+  )
+}
+
 function SummarySection({ batch }: { batch: ImportBatch }) {
   const s = batch.summary
+  if (s?.credit) return <CreditSummary batch={batch} />
   if (s?.customers || s?.products) return <MasterSummary batch={batch} />
   if (!s?.totals) return null
 
@@ -283,8 +325,13 @@ export default function ImportDetailPage() {
             </>
           ) : (
             <>
-              <p>Se importarán <strong>{batch.documents_new}</strong> documentos nuevos{batch.documents_duplicate > 0 && <> (los {batch.documents_duplicate} ya importados se omitirán)</>}.</p>
-              <p className="mt-2">Si algo falla durante la importación no se escribe nada. Las ventas importadas no se pueden modificar ni borrar desde la aplicación.</p>
+              <p>Se importarán <strong>{batch.documents_new}</strong> {batch.type === 'credit_invoices' ? 'facturas de crédito nuevas' : 'documentos nuevos'}{batch.documents_duplicate > 0 && <> (los {batch.documents_duplicate} ya importados se omitirán)</>}.</p>
+              <p className="mt-2">
+                Si algo falla durante la importación no se escribe nada.{' '}
+                {batch.type === 'credit_invoices'
+                  ? 'Cada factura abre su saldo en el libro de movimientos; las facturas importadas no se modifican, y los abonos y notas de crédito se registran como movimientos.'
+                  : 'Las ventas importadas no se pueden modificar ni borrar desde la aplicación.'}
+              </p>
             </>
           )}
         </ConfirmDialog>

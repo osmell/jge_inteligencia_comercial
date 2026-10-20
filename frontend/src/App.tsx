@@ -11,6 +11,8 @@ import AgendaPage from './pages/AgendaPage'
 import AuditPage from './pages/AuditPage'
 import BranchesPage from './pages/BranchesPage'
 import CompaniesPage from './pages/CompaniesPage'
+import CreditDetailPage from './pages/CreditDetailPage'
+import CreditPage from './pages/CreditPage'
 import CustomerProfilePage from './pages/CustomerProfilePage'
 import CustomerSalesReportPage from './pages/CustomerSalesReportPage'
 import CustomerTypesPage from './pages/CustomerTypesPage'
@@ -51,6 +53,10 @@ export default function App() {
                   <Route path="agenda" element={<AgendaPage />} />
                   <Route path="seguimiento" element={<FollowUpKpisPage />} />
                 </Route>
+              </Route>
+              <Route element={<RequirePermission permission="credit.view" />}>
+                <Route path="credito" element={<CreditPage />} />
+                <Route path="credito/:id" element={<CreditDetailPage />} />
               </Route>
               <Route element={<RequirePermission permission="customers.manage" />}>
                 <Route path="clientes/tipos" element={<CustomerTypesPage />} />

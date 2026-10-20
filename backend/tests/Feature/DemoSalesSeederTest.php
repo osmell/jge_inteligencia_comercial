@@ -39,6 +39,9 @@ class DemoSalesSeederTest extends TestCase
     /** @return list<array<string, mixed>> */
     private function all(float $scale = 1.0): array
     {
+        // Un destructor pendiente de pruebas anteriores podría consumir números aleatorios en mitad de la generación.
+        gc_collect_cycles();
+
         return iterator_to_array((new DemoSalesGenerator($scale))->documents($this->today), false);
     }
 
