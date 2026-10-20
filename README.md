@@ -24,7 +24,7 @@ docker compose exec backend php artisan migrate --seed
 ```
 
 - Frontend: http://localhost:5173 — API: http://localhost:8000/api/v1
-- El servicio `queue` ejecuta `php artisan queue:work` con 1 GB de memoria; es necesario para validar e importar archivos (hasta 200 000 filas). Tras cambiar código de trabajos, reinícialo: `docker compose restart queue`.
+- El servicio `queue` ejecuta `php artisan queue:work` con 1 GB de memoria; es necesario para validar e importar archivos (hasta 200 000 filas). Tras cambiar código de trabajos, reinícialo: `docker compose restart queue`. Si un archivo se queda en «En cola», revisa que esté corriendo: `docker compose ps queue` (si salió, `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d queue`).
 - `backend/.env` se lee desde el volumen montado; **no** añadir `env_file` al Compose (las variables del contenedor tendrían prioridad sobre `phpunit.xml`).
 - Para usar la VM de PostgreSQL: levantar solo `docker-compose.yml` y poner `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` de la VM en `backend/.env`.
 

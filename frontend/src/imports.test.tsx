@@ -125,6 +125,8 @@ describe('importaciones', () => {
     renderAt('/importaciones')
 
     await userEvent.upload(await screen.findByLabelText('Archivo de Excel'), xlsx('ventas.xlsx'))
+    expect(screen.getByRole('button', { name: 'Subir y validar' })).toBeDisabled()   // sin tipo elegido no se puede subir
+    await userEvent.selectOptions(screen.getByLabelText('Tipo de archivo'), 'sales')
     await userEvent.click(screen.getByRole('button', { name: 'Subir y validar' }))
 
     expect(await screen.findByText('El archivo está en cola para validarse.')).toBeInTheDocument()
@@ -141,6 +143,7 @@ describe('importaciones', () => {
     renderAt('/importaciones')
 
     await userEvent.upload(await screen.findByLabelText('Archivo de Excel'), xlsx())
+    await userEvent.selectOptions(screen.getByLabelText('Tipo de archivo'), 'sales')
     await userEvent.click(screen.getByRole('button', { name: 'Subir y validar' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('El archivo no debe superar 20480 kilobytes.')

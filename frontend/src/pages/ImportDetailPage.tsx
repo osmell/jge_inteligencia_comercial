@@ -12,7 +12,7 @@ import { useToast } from '../components/toast'
 import { Alert, Button, Card, ConfirmDialog, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
 
 const STATUS_MESSAGE: Record<string, { tone: 'info' | 'success' | 'danger' | 'warning'; text: string }> = {
-  pending: { tone: 'info', text: 'El archivo está en cola para validarse.' },
+  pending: { tone: 'info', text: 'El archivo está en cola para validarse. Si lleva más de un minuto así, el procesador de importaciones podría estar detenido (en desarrollo: docker compose up -d queue).' },
   validating: { tone: 'info', text: 'Validando el archivo…' },
   validated: { tone: 'success', text: 'El archivo es válido. Revisa el resumen y, si todo está bien, confirma para importarlo.' },
   rejected: { tone: 'danger', text: 'El archivo tiene errores y no se puede importar. Corrígelos en el Excel y súbelo de nuevo.' },

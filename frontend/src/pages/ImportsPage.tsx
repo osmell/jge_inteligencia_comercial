@@ -32,7 +32,8 @@ export default function ImportsPage() {
   const input = useRef<HTMLInputElement>(null)
 
   const typeList = types.data?.data ?? []
-  const selectedType = type || typeList[0]?.key || ''
+  // Sin tipo preseleccionado: subir un catálogo como «Ventas» (o al revés) es un error fácil de cometer.
+  const selectedType = type
 
   function pick(f: File | undefined | null) {
     setError(null)
@@ -93,6 +94,7 @@ export default function ImportsPage() {
           <FormError message={error} />
           <div className="grid gap-4 sm:grid-cols-[14rem_1fr]">
             <SelectField id="import-type" label="Tipo de archivo" value={selectedType} onChange={(e) => setType(e.target.value)}>
+              <option value="">Elige el tipo…</option>
               {typeList.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
             </SelectField>
 
