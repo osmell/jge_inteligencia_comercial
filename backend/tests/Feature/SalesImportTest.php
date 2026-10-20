@@ -312,6 +312,25 @@ class SalesImportTest extends TestCase
         $this->assertSame('too_many_decimals', $text->errors()->value('code'));
     }
 
+    public function test_lines_with_everything_at_zero_are_skipped_with_a_warning(): void
+    {
+        $zero = ['Und.Vendidas' => 0, 'Costo Tot.Vta.' => 0, 'Costo Unit.Vta.' => 0, 'Precio Unit.Vta.' => 0, 'Total Neto' => 0, 'Total Impuesto' => 0, 'Venta + Imp' => 0];
+        $batch = $this->validated([
+            $this->line(),
+            $this->line(['Documento' => '0002', ...$zero]),
+            $this->line(['Documento' => '0003', ...$zero, 'Total Neto' => 5]),
+        ]);
+
+        $this->assertSame(ImportStatus::Rejected, $batch->status);
+        $this->assertSame(1, $batch->errors()->where('code', 'zero_line_skipped')->count());
+        $this->assertSame(1, $batch->errors()->where('code', 'non_positive_units')->count());
+
+        $ok = $this->imported([$this->line(), $this->line(['Documento' => '0002', ...$zero])]);
+        $this->assertSame(1, $ok->errors()->where('code', 'zero_line_skipped')->count());
+        $this->assertSame(1, SalesLine::count());
+        $this->assertSame(1, $ok->summary['zero_lines_skipped']);
+    }
+
     public function test_tolerance_is_configurable(): void
     {
         config(['imports.amount_tolerance' => 1.0]);

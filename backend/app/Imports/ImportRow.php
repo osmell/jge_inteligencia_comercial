@@ -13,6 +13,8 @@ final class ImportRow
 {
     private bool $failed = false;
 
+    private bool $skipped = false;
+
     /**
      * @param  array<string, mixed>  $cells  clave de columna => valor de la celda
      * @param  array<string, string>  $labels  clave de columna => encabezado canónico
@@ -27,6 +29,18 @@ final class ImportRow
     public function failed(): bool
     {
         return $this->failed;
+    }
+
+    /** La fila se descarta a propósito (no es un error): no se agrupa ni se importa. */
+    public function skipped(): bool
+    {
+        return $this->skipped;
+    }
+
+    public function skip(string $key, string $code, string $message): void
+    {
+        $this->skipped = true;
+        $this->warn($key, $code, $message);
     }
 
     /** Si la columna viene en el archivo (una columna opcional ausente no se toca; una presente y vacía borra el dato). */

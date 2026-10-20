@@ -25,6 +25,7 @@ use DateTimeImmutable;
  *  - Total Neto + Total Impuesto = Venta + Imp = Gran Total (tolerancia de redondeo configurable); las diferencias son errores.
  *  - No se esperan importes negativos: devoluciones, anulaciones y notas de crédito se emiten aparte.
  *  - Total Neto = Sub Total − Descuento (si el archivo trae esas columnas): el descuento ya está restado en Total Neto.
+ *  - Las líneas con unidades e importes en cero (p. ej. facturas anuladas) se omiten con un aviso.
  *  - El costo unitario es el costo ACTUAL (no histórico).
  *  - Costo Tot.Vta. = Und.Vendidas × Costo Unit.Vta. está por confirmar: solo genera advertencia.
  */
@@ -71,7 +72,7 @@ final class SalesImportType implements ImportType
     private array $people = ['seller' => [], 'operator' => []];
 
     /** @var array<string, mixed> */
-    private array $stats = ['lines' => [], 'min' => null, 'max' => null, 'net' => 0, 'tax' => 0, 'grand' => 0, 'cost' => 0];
+    private array $stats = ['lines' => [], 'min' => null, 'max' => null, 'net' => 0, 'tax' => 0, 'grand' => 0, 'cost' => 0, 'skipped' => 0];
 
     public function key(): string
     {
@@ -127,6 +128,13 @@ final class SalesImportType implements ImportType
         [$company, $branch] = $this->resolveLocation($row);
 
         if ($row->failed() || ! $issued || ! $company || ! $branch) {
+            return null;
+        }
+
+        if ($this->isEmptyLine($units, $amounts, $discounts)) {
+            $this->stats['skipped']++;
+            $row->skip('units', 'zero_line_skipped', 'Línea omitida: unidades y todos los importes están en cero (por ejemplo, una factura anulada). No se importa.');
+
             return null;
         }
 
@@ -259,6 +267,33 @@ final class SalesImportType implements ImportType
         }
     }
 
+    /**
+     * Línea sin movimiento: unidades e importes de venta en cero. Se omite con aviso; si algún importe no es cero, se valida normal.
+     *
+     * @param  array<string, string|null>  $amounts
+     * @param  array<string, string>  $discounts
+     */
+    private function isEmptyLine(?string $units, array $amounts, array $discounts): bool
+    {
+        if ($units === null || Decimal::isPositive($units) || Decimal::isNegative($units)) {
+            return false;
+        }
+
+        foreach (['net_total', 'tax_total', 'sale_plus_tax'] as $key) {
+            if (Decimal::units($amounts[$key]) !== 0) {
+                return false;
+            }
+        }
+
+        foreach ($discounts as $value) {
+            if (Decimal::units($value) !== 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private function checkDate(ImportRow $row, DateTimeImmutable $issued): void
     {
         if ($issued > new DateTimeImmutable('+1 day')) {
@@ -337,6 +372,7 @@ final class SalesImportType implements ImportType
         return [
             'date_from' => $this->stats['min'],
             'date_to' => $this->stats['max'],
+            'zero_lines_skipped' => $this->stats['skipped'],
             'totals' => [
                 'net_total' => Decimal::format($this->stats['net']),
                 'tax_total' => Decimal::format($this->stats['tax']),

@@ -65,6 +65,10 @@ final class ImportProcessor
                 $row = new ImportRow($number, $values, $errors, $labels);
                 $parsed = $type->parseRow($row);
 
+                if ($row->skipped()) {
+                    continue;
+                }
+
                 if ($parsed === null || $row->failed()) {
                     $rowsInvalid++;
 
@@ -128,6 +132,9 @@ final class ImportProcessor
 
             $row = new ImportRow($number, $values, $errors, $labels);
             $parsed = $type->parseRow($row);
+            if ($row->skipped()) {
+                continue;
+            }
             if ($parsed === null || $row->failed()) {
                 throw new RuntimeException("La fila {$number} dejó de ser válida durante la importación.");
             }
