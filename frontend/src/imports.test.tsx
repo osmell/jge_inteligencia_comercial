@@ -226,6 +226,18 @@ describe('importaciones', () => {
     expect(dialog).toHaveTextContent('Se crearán 3 clientes y se actualizarán 2')
   })
 
+  it('un lote de productos usa el mismo resumen de archivo maestro', async () => {
+    route('GET /admin/imports/7', json({ data: batch({
+      type: 'products', type_label: 'Productos', documents_total: 4, documents_new: 4, documents_duplicate: 0,
+      summary: { rows_invalid: 0, products: { new: 4, updated: 0, unchanged: 0 }, preview_columns: [], preview: [] },
+    }) }))
+    renderAt('/importaciones/7')
+
+    expect(await screen.findByText(/inserta los productos nuevos/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar importación' }))
+    expect(await screen.findByRole('dialog', { name: 'Confirmar importación' })).toHaveTextContent('Se crearán 4 productos')
+  })
+
   it('actualiza solo mientras el lote se procesa', async () => {
     route('GET /admin/imports/7', json({ data: batch({ status: 'validating', status_label: 'Validando', can_confirm: false }) }), json({ data: batch() }))
     renderAt('/importaciones/7')

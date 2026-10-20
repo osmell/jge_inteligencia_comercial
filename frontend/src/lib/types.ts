@@ -105,6 +105,7 @@ export interface ImportSummary {
   totals?: { net_total: string; tax_total: string; grand_total: string; cost_total: string }
   companies?: { id: number; name: string; documents: number; lines: number; net_total: string }[]
   customers?: { new: number; updated: number; unchanged: number }
+  products?: { new: number; updated: number; unchanged: number }
   new_sellers?: string[]
   new_operators?: string[]
 }

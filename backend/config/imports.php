@@ -1,6 +1,7 @@
 <?php
 
 use App\Imports\Customers\CustomersImportType;
+use App\Imports\Products\ProductsImportType;
 use App\Imports\Sales\SalesImportType;
 
 /*
@@ -28,10 +29,11 @@ return [
     'types' => [
         'sales' => SalesImportType::class,
         'customers' => CustomersImportType::class,
+        'products' => ProductsImportType::class,
     ],
 
     // Nombre visible de cada tipo.
-    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes'],
+    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes', 'products' => 'Productos'],
 
     // Filas mostradas en la vista previa.
     'preview_rows' => 20,
@@ -98,5 +100,22 @@ return [
         ],
 
         'optional' => ['phone', 'email', 'whatsapp', 'address', 'trade_name', 'contact_name'],
+    ],
+
+    // Catálogo de productos: una fila por producto; inserta los nuevos y actualiza los existentes (compañía + código).
+    'products' => [
+        'sheet' => null,
+
+        'columns' => [
+            'company' => ['Compañía', 'Compania', 'Código Compañía'],
+            'branch' => ['Sucursal', 'Código Sucursal'],
+            'code' => ['Código', 'Codigo'],
+            'name' => ['Descripción o Nombre', 'Descripcion o Nombre', 'Decripción o Nombre', 'Nombre', 'Descripción', 'Descripcion'],
+            'level1' => ['Nivel 1'],
+            'level2' => ['Nivel 2'],
+            'level3' => ['Nivel 3'],
+        ],
+
+        'optional' => ['level1', 'level2', 'level3'],
     ],
 ];

@@ -78,6 +78,12 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **Devoluciones:** el responsable confirmó que restan a la venta del cliente, pero sin formato de notas de crédito aún no se descuentan; la pantalla y el Excel lo avisan.
 - **Verificación:** en PostgreSQL con datos demo, 150 clientes en 128 ms; la suma del año coincide con SQL directo (diferencia de 0,09 por redondear fila a fila).
 
+### Paso 7 — Importación de productos
+- **Tabla `products`** (compañía + código único; nombre, Nivel 1 = grupo general, Nivel 2 = línea, Nivel 3 = categoría). El código es un entero único por compañía.
+- **Importación «Productos»** (Importaciones → tipo Productos, con plantilla): columnas Compañía, Sucursal, Código, Descripción o Nombre, Nivel 1, Nivel 2, Nivel 3 (los niveles son opcionales; una celda vacía borra ese dato). Inserta los nuevos y actualiza los existentes, con vista previa, errores por fila y columna, confirmación y auditoría, igual que clientes.
+- **Sucursal:** indica dónde se generó la factura y solo se valida (debe existir y ser de la compañía). Un mismo producto en varias sucursales de la compañía no es conflicto si el resto de los datos coincide; con datos distintos, el lote se rechaza.
+- **Pendiente:** el catálogo aún no alimenta los reportes (la categoría de las ventas sigue viniendo del archivo de ventas) ni tiene pantalla de consulta. Falta decidir si el desglose por categoría pasa a usar el Nivel 3.
+
 ### Respuestas recibidas (ronda 2)
 - Productos: el archivo usa los encabezados **Nivel 1, Nivel 2, Nivel 3**; la sucursal es donde se generó la factura y un código puede venderse en varias sucursales de la misma compañía.
 - Atribución: la venta es del vendedor aunque el facturador emita la factura; si el facturador vende directamente, es del facturador y cuenta en sus estadísticas.
@@ -85,4 +91,4 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - Las devoluciones restan a la venta del cliente.
 
 ### Siguiente
-Pendiente con las demás respuestas: asignación de un vendedor y un facturador por cliente con supervisor (vendedor por defecto «Tienda» por sucursal), visibilidad por rol, estado de actividad (activo, inactivo, nuevo, recuperado, perdido; 30/90 días configurables), reporte de ventas por cliente con quién vendió y quién facturó, y carga de productos. Dudas abiertas: ver el resumen del paso en la conversación y `13_PREGUNTAS_FASE_04_CLIENTES.md`. Falta además contrastar los totales con ventas validadas.
+Lo pedido en las respuestas ya está implementado. Quedan: vincular un usuario con su vendedor desde una pantalla (`sellers.user_id`), asignar tipo y vendedor desde el Excel de clientes, descontar devoluciones cuando exista su formato, que el catálogo de productos alimente los reportes (Nivel 3 como categoría) y, sobre todo, contrastar los totales con un reporte de ventas validado y revisar las pantallas en un navegador (incluido móvil).
