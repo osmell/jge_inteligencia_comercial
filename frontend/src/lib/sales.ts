@@ -2,6 +2,8 @@ export interface Kpis {
   net_total: string
   tax_total: string
   grand_total: string
+  discount_total: string
+  discount_pct: number | null
   units: string
   documents: number
   customers: number
@@ -11,7 +13,7 @@ export interface Kpis {
   cost_coverage_pct: number | null
 }
 
-export type KpiKey = 'net_total' | 'tax_total' | 'grand_total' | 'units' | 'documents' | 'customers' | 'average_ticket' | 'estimated_margin'
+export type KpiKey = 'net_total' | 'tax_total' | 'grand_total' | 'discount_total' | 'units' | 'documents' | 'customers' | 'average_ticket' | 'estimated_margin'
 
 export interface SalesSummary {
   period: { from: string; to: string; days: number }

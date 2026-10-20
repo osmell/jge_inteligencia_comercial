@@ -13,6 +13,7 @@ use App\Models\Seller;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use OpenSpout\Reader\XLSX\Reader;
 use Tests\TestCase;
@@ -92,6 +93,23 @@ class SalesStatsApiTest extends TestCase
         $this->assertSame(3, $data['documents']);         // 4 líneas, 3 facturas
         $this->assertSame(2, $data['customers']);
         $this->assertSame('216.67', $data['average_ticket']);
+    }
+
+    public function test_discount_is_reported_with_its_percentage_over_lines_with_subtotal(): void
+    {
+        $lines = SalesLine::query()->whereHas('document', fn ($q) => $q->where('company_id', $this->a->id))->orderBy('id')->limit(2)->get();
+        foreach ($lines as $line) {
+            DB::table('sales_lines')->where('id', $line->id)->update(['subtotal' => $line->net_total + 10, 'discount_total' => 10]);
+        }
+        $gross = $lines->sum(fn ($l) => (float) $l->net_total + 10);
+
+        $data = $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/v1/sales/summary?'.http_build_query($this->range(['company_id' => $this->a->id])))
+            ->assertOk()->json('data');
+
+        $this->assertSame('20.00', $data['current']['discount_total']);
+        $this->assertSame(round(20 / $gross * 100, 2), $data['current']['discount_pct']);
+        $this->assertSame('650.00', $data['current']['net_total']);
     }
 
     public function test_margin_only_uses_lines_with_valid_cost_and_reports_coverage(): void

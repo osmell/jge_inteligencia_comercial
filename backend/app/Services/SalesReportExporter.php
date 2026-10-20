@@ -29,7 +29,7 @@ class SalesReportExporter
     ];
 
     private const METRICS = [
-        'net_total' => 'Venta neta', 'tax_total' => 'Impuesto', 'grand_total' => 'Total facturado', 'units' => 'Unidades',
+        'net_total' => 'Venta neta', 'tax_total' => 'Impuesto', 'grand_total' => 'Total facturado', 'discount_total' => 'Descuento', 'discount_pct' => 'Descuento %', 'units' => 'Unidades',
         'documents' => 'Documentos', 'customers' => 'Clientes', 'average_ticket' => 'Ticket promedio',
         'estimated_margin' => 'Margen estimado', 'estimated_margin_pct' => 'Margen estimado %', 'cost_coverage_pct' => 'Cobertura de costo %',
     ];
@@ -190,7 +190,7 @@ class SalesReportExporter
 
         return $this->renderPdf('pdf.sales', [
             'summary' => $summary, 'warnings' => $warnings, 'sections' => $sections, 'filters' => $this->describeFilters($filters),
-            'metrics' => array_intersect_key(self::METRICS, array_flip(['net_total', 'tax_total', 'grand_total', 'units', 'documents', 'customers', 'average_ticket', 'estimated_margin'])),
+            'metrics' => array_intersect_key(self::METRICS, array_flip(['net_total', 'tax_total', 'grand_total', 'discount_total', 'units', 'documents', 'customers', 'average_ticket', 'estimated_margin'])),
         ], $generatedBy, 'landscape');
     }
 
@@ -258,7 +258,7 @@ class SalesReportExporter
         }
         $writer->addRow(Row::fromValues([]));
         $writer->addRow($header(['Indicador', 'Periodo', 'Periodo comparado', 'Variación %']));
-        foreach (['net_total', 'tax_total', 'grand_total', 'units', 'documents', 'customers', 'average_ticket', 'estimated_margin'] as $metric) {
+        foreach (['net_total', 'tax_total', 'grand_total', 'discount_total', 'units', 'documents', 'customers', 'average_ticket', 'estimated_margin'] as $metric) {
             $writer->addRow(Row::fromValues([
                 self::METRICS[$metric],
                 $this->number($summary['current'][$metric]), $this->number($summary['previous'][$metric]), $summary['change_pct'][$metric],

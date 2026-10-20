@@ -33,7 +33,7 @@ class SalesStatistics
     private const COMPARISON_ROWS = 5000;
 
     /** Métricas por las que se puede ordenar un desglose. */
-    public const SORTS = ['net_total', 'tax_total', 'grand_total', 'units', 'documents', 'customers', 'margin'];
+    public const SORTS = ['net_total', 'tax_total', 'grand_total', 'discount_total', 'units', 'documents', 'customers', 'margin'];
 
     /** @return list<string> */
     public static function dimensions(): array
@@ -276,6 +276,10 @@ class SalesStatistics
             'coalesce(sum(sales_lines.net_total), 0) as net_total',
             'coalesce(sum(sales_lines.tax_total), 0) as tax_total',
             'coalesce(sum(sales_lines.grand_total), 0) as grand_total',
+            // Descuento (ya restado de net_total). El % se calcula solo sobre líneas que traen Sub Total.
+            'coalesce(sum(sales_lines.discount_total), 0) as discount_total',
+            'coalesce(sum(case when sales_lines.subtotal is not null then sales_lines.subtotal end), 0) as discounted_gross',
+            'coalesce(sum(case when sales_lines.subtotal is not null then coalesce(sales_lines.discount_total, 0) end), 0) as discounted_amount',
             'coalesce(sum(sales_lines.units), 0) as units',
             'count(distinct sales_lines.sales_document_id) as documents',
             'count(distinct sd.customer_code) as customers',
@@ -288,7 +292,7 @@ class SalesStatistics
     private function sortExpression(string $sort): string
     {
         return $sort === 'margin' ? '(sum(case when sales_lines.line_cost_total > 0 then sales_lines.net_total - sales_lines.line_cost_total end))'
-            : ['net_total' => 'sum(sales_lines.net_total)', 'tax_total' => 'sum(sales_lines.tax_total)', 'grand_total' => 'sum(sales_lines.grand_total)',
+            : ['net_total' => 'sum(sales_lines.net_total)', 'tax_total' => 'sum(sales_lines.tax_total)', 'grand_total' => 'sum(sales_lines.grand_total)', 'discount_total' => 'sum(sales_lines.discount_total)',
                 'units' => 'sum(sales_lines.units)', 'documents' => 'count(distinct sales_lines.sales_document_id)',
                 'customers' => 'count(distinct sd.customer_code)'][$sort];
     }
@@ -305,6 +309,8 @@ class SalesStatistics
             'net_total' => $this->money($net),
             'tax_total' => $this->money((float) $r->tax_total),
             'grand_total' => $this->money((float) $r->grand_total),
+            'discount_total' => $this->money((float) $r->discount_total),
+            'discount_pct' => (float) $r->discounted_gross > 0 ? round((float) $r->discounted_amount / (float) $r->discounted_gross * 100, 2) : null,
             'units' => $this->money((float) $r->units),
             'documents' => $documents,
             'customers' => (int) $r->customers,
@@ -323,7 +329,7 @@ class SalesStatistics
     private function changes(array $current, array $previous): array
     {
         $out = [];
-        foreach (['net_total', 'tax_total', 'grand_total', 'units', 'documents', 'customers', 'average_ticket', 'estimated_margin'] as $metric) {
+        foreach (['net_total', 'tax_total', 'grand_total', 'discount_total', 'units', 'documents', 'customers', 'average_ticket', 'estimated_margin'] as $metric) {
             $before = $previous[$metric] === null ? 0.0 : (float) $previous[$metric];
             $now = $current[$metric] === null ? 0.0 : (float) $current[$metric];
             $out[$metric] = $before > 0 ? round(($now - $before) / $before * 100, 2) : null;

@@ -25,7 +25,7 @@ Para **cada** pantalla de las secciones 2 a 6, comprueba:
 ## 2. Ventas (`/ventas`)
 
 - [ ] El periodo por defecto y los atajos (30 días, mes, año…) cambian las cifras.
-- [ ] Indicadores: venta neta, impuesto, total facturado, unidades, documentos, clientes, ticket promedio, margen estimado, cobertura de costo.
+- [ ] Indicadores: venta neta, impuesto, total facturado, descuento (ya restado de la venta neta; el % es sobre el Sub Total), unidades, documentos, clientes, ticket promedio, margen estimado, cobertura de costo.
 - [ ] Cada indicador muestra su variación contra el periodo anterior **en texto** (con flecha y porcentaje).
 - [ ] Comparar con «otro periodo» valida las fechas y avisa si los periodos tienen distinta duración o se traslapan.
 - [ ] Con el rango anterior sin historial, aparece el aviso de comparación parcial.

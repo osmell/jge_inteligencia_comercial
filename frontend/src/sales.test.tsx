@@ -5,7 +5,7 @@ import SalesDashboardPage from './pages/SalesDashboardPage'
 import { daysBetween, presetRange, yearAgoRange } from './lib/sales'
 
 const kpis = (o: Record<string, unknown> = {}) => ({
-  net_total: '1000.00', tax_total: '120.00', grand_total: '1120.00', units: '40.00', documents: 10, customers: 6,
+  net_total: '1000.00', tax_total: '120.00', grand_total: '1120.00', discount_total: '50.00', discount_pct: 4.76, units: '40.00', documents: 10, customers: 6,
   average_ticket: '100.00', estimated_margin: '300.00', estimated_margin_pct: 30, cost_coverage_pct: 100, ...o,
 })
 
@@ -14,7 +14,7 @@ const summary = (o: Record<string, unknown> = {}) => ({
     period: { from: '2026-10-01', to: '2026-10-19', days: 19 },
     previous_period: { from: '2026-09-12', to: '2026-09-30', days: 19 },
     current: kpis(), previous: kpis({ net_total: '800.00' }),
-    change_pct: { net_total: 25, tax_total: 25, grand_total: 25, units: 0, documents: -10, customers: null, average_ticket: 5, estimated_margin: 12.5 },
+    change_pct: { net_total: 25, tax_total: 25, grand_total: 25, discount_total: null, units: 0, documents: -10, customers: null, average_ticket: 5, estimated_margin: 12.5 },
     first_sale_date: '2025-11-01', warnings: [], ...o,
   },
 })
@@ -68,6 +68,8 @@ describe('dashboard de ventas', () => {
     expect(await screen.findByText('1000,00', { selector: 'p' })).toBeInTheDocument()
     expect(card('Venta neta')).toHaveTextContent('+25,0 %')
     expect(card('Documentos')).toHaveTextContent('-10,0 %')
+    expect(card('Descuento')).toHaveTextContent('50,00')
+    expect(card('Descuento')).toHaveTextContent('Ya está restado de la venta neta')
     expect(card('Clientes compradores')).toHaveTextContent('Sin base de comparación')
     expect(screen.getByText(/Usa el costo actual, no el histórico/)).toBeInTheDocument()
 

@@ -252,6 +252,13 @@ export default function SalesDashboardPage() {
         <Kpi versus={versus} label="Venta neta" value={s ? formatMoney(s.current.net_total) : '—'} change={s?.change_pct.net_total} />
         <Kpi versus={versus} label="Impuesto" value={s ? formatMoney(s.current.tax_total) : '—'} change={s?.change_pct.tax_total} />
         <Kpi versus={versus} label="Total facturado" value={s ? formatMoney(s.current.grand_total) : '—'} change={s?.change_pct.grand_total} />
+        <Kpi
+          versus={versus}
+          label="Descuento"
+          value={s ? formatMoney(s.current.discount_total) : '—'}
+          change={s?.change_pct.discount_total}
+          hint={s ? (s.current.discount_pct === null ? 'Sin líneas con Sub Total en el periodo.' : `${formatPct(s.current.discount_pct)} sobre el Sub Total. Ya está restado de la venta neta.`) : undefined}
+        />
         <Kpi versus={versus} label="Documentos" value={s ? s.current.documents.toLocaleString('es') : '—'} change={s?.change_pct.documents} />
         <Kpi versus={versus} label="Clientes compradores" value={s ? s.current.customers.toLocaleString('es') : '—'} change={s?.change_pct.customers} />
         <Kpi versus={versus} label="Ticket promedio" value={s ? formatMoney(s.current.average_ticket) : '—'} change={s?.change_pct.average_ticket} />

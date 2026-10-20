@@ -22,7 +22,7 @@
     <thead><tr><th>Indicador</th><th class="n">Periodo</th><th class="n">Comparado</th><th class="n">Variación</th></tr></thead>
     <tbody>
     @foreach ($metrics as $key => $label)
-        @php $money = in_array($key, ['net_total', 'tax_total', 'grand_total', 'average_ticket', 'estimated_margin']); @endphp
+        @php $money = in_array($key, ['net_total', 'tax_total', 'grand_total', 'discount_total', 'average_ticket', 'estimated_margin']); @endphp
         <tr>
             <td>{{ $label }}</td>
             <td class="n">{{ $money ? $m($summary['current'][$key]) : $i($summary['current'][$key]) }}</td>

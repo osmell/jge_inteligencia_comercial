@@ -12,7 +12,7 @@ import CustomersPage from './pages/CustomersPage'
 import type { CustomerProfile } from './lib/customers'
 
 const kpis = {
-  net_total: '650.00', tax_total: '78.00', grand_total: '728.00', units: '8.00', documents: 3, customers: 1,
+  net_total: '650.00', tax_total: '78.00', grand_total: '728.00', discount_total: '0.00', discount_pct: null, units: '8.00', documents: 3, customers: 1,
   average_ticket: '216.67', estimated_margin: '325.00', estimated_margin_pct: 50, cost_coverage_pct: 100,
 }
 const brow = (key: string, label: string, net: string) => ({ key, label, ...kpis, net_total: net })
