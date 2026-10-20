@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
 use App\Http\Controllers\Api\V1\OrganizationController;
+use App\Http\Controllers\Api\V1\Sales\ProductController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('breakdown', [SalesStatsController::class, 'breakdown']);
         Route::get('rankings', [SalesStatsController::class, 'rankings']);
         Route::get('export', [SalesStatsController::class, 'export']);
+        Route::get('products', [ProductController::class, 'index']);
+        Route::get('products/levels', [ProductController::class, 'levels']);
+        Route::get('products/missing', [ProductController::class, 'missing']);
+        Route::get('products/coverage', [ProductController::class, 'coverage']);
         Route::get('goals', [SellerGoalsController::class, 'index']);
         Route::get('goals/export', [SellerGoalsController::class, 'export']);
         Route::get('goals/suggestions', [SellerGoalsController::class, 'suggestions']);

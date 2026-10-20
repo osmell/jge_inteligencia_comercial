@@ -14,6 +14,7 @@ import CustomerProfilePage from './pages/CustomerProfilePage'
 import CustomerSalesReportPage from './pages/CustomerSalesReportPage'
 import CustomerTypesPage from './pages/CustomerTypesPage'
 import OperatorsPage from './pages/OperatorsPage'
+import ProductsPage from './pages/ProductsPage'
 import SellersPage from './pages/SellersPage'
 import CustomersPage from './pages/CustomersPage'
 import GoalsPage from './pages/GoalsPage'
@@ -34,6 +35,7 @@ export default function App() {
               <Route element={<RequirePermission permission="sales.view" />}>
                 <Route path="ventas" element={<SalesDashboardPage />} />
                 <Route path="metas" element={<GoalsPage />} />
+                <Route path="productos" element={<ProductsPage />} />
               </Route>
               <Route element={<RequirePermission permission="customers.view" />}>
                 <Route path="clientes" element={<CustomersPage />} />

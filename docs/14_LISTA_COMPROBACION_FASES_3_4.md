@@ -73,6 +73,14 @@ Para **cada** pantalla de las secciones 2 a 6, comprueba:
 - [ ] Cada cliente muestra venta neta, documentos, última compra, vendedor asignado y supervisor, **quién vendió**, **quién facturó** y **venta directa del facturador**.
 - [ ] Exportar a **Excel** y **CSV**: traen todas las personas (la pantalla muestra las 3 principales) y la hoja de notas.
 
+## 4b. Productos (`/productos`)
+
+- [ ] Tarjetas de cobertura: productos en catálogo, vendidos en 12 meses, vendidos sin catálogo y % de venta con catálogo; aviso si faltan productos.
+- [ ] Búsqueda por código o nombre; filtros de compañía y de grupo/línea/categoría (cada nivel solo ofrece lo que existe bajo el superior; «Sin nivel» encuentra los vacíos).
+- [ ] La venta de 12 meses de 2 o 3 productos coincide con Ventas filtrando por ese producto.
+- [ ] Pestaña «Vendidos sin catálogo»: lista los productos que faltan, de mayor a menor venta; al cargarlos desde Importaciones, desaparecen de la lista.
+- [ ] En Ventas, las pestañas Grupo, Línea y Categoría reflejan el catálogo cargado; lo que falta sale como «Sin clasificar».
+
 ## 5. Importaciones (`/importaciones`)
 
 - [ ] **Clientes**: descargar la plantilla; cargar un archivo válido → vista previa, resumen (nuevos / se actualizarán / sin cambios) y confirmación.

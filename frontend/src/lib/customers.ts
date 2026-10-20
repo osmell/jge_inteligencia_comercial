@@ -183,3 +183,38 @@ export function currentMonthRange(now = new Date()): { from: string; to: string 
   const prefix = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
   return { from: `${prefix}-01`, to: `${prefix}-${pad(last)}` }
 }
+
+export interface ProductRow {
+  company_id: number
+  company: string
+  code: string
+  name: string
+  level1: string | null
+  level2: string | null
+  level3: string | null
+  net_total: string
+}
+
+export interface MissingProductRow {
+  company_id: number
+  company: string
+  code: string
+  name: string
+  category: string | null
+  net_total: string
+}
+
+export interface ProductCoverage {
+  catalog_products: number
+  sold_products: number
+  missing_products: number
+  net_total: string
+  missing_net_total: string
+  covered_pct: number | null
+}
+
+export interface ProductLevels {
+  level1: string[]
+  level2: string[]
+  level3: string[]
+}

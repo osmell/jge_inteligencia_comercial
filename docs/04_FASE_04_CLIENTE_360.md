@@ -82,7 +82,7 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **Tabla `products`** (compañía + código único; nombre, Nivel 1 = grupo general, Nivel 2 = línea, Nivel 3 = categoría). El código es un entero único por compañía.
 - **Importación «Productos»** (Importaciones → tipo Productos, con plantilla): columnas Compañía, Sucursal, Código, Descripción o Nombre, Nivel 1, Nivel 2, Nivel 3 (los niveles son opcionales; una celda vacía borra ese dato). Inserta los nuevos y actualiza los existentes, con vista previa, errores por fila y columna, confirmación y auditoría, igual que clientes.
 - **Sucursal:** indica dónde se generó la factura y solo se valida (debe existir y ser de la compañía). Un mismo producto en varias sucursales de la compañía no es conflicto si el resto de los datos coincide; con datos distintos, el lote se rechaza.
-- **Nota:** el Nivel 3 alimenta la categoría de los reportes (paso 10); el catálogo aún no tiene pantalla de consulta.
+- **Nota:** el Nivel 3 alimenta la categoría de los reportes (paso 10) y el catálogo se consulta en `/productos` (paso 12).
 
 ### Paso 8 — Mantenimiento de clientes, vendedores y facturadores
 - **Datos generales del cliente:** el botón «Editar datos» de la ficha (permiso `customers.manage`) cambia nombre, nombre comercial, contacto, teléfono, WhatsApp, correo, dirección y sucursal, con las mismas validaciones que la importación. El código no se cambia. Un cliente creado desde ventas pasa a origen «manual»; cada cambio se audita (`customers.updated`). Una importación de clientes posterior vuelve a escribir esos datos con lo que traiga el archivo.
@@ -108,6 +108,14 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - Productos que no están en el catálogo, o sin ese nivel, aparecen como **«Sin clasificar»** (sin respaldo en el archivo de ventas: ese archivo solo trae categoría).
 - El PDF resume las mismas dimensiones de antes (compañía, sucursal, vendedor, categoría, producto, cliente).
 - Verificación: prueba de desglose, filtro simple y combinado, CSV; sin catálogo todo cae en «Sin clasificar».
+
+### Paso 12 — Consulta del catálogo de productos
+- **Pantalla `/productos`** (Inteligencia → Productos, permiso `sales.view`): catálogo con compañía, código, nombre, grupo, línea, categoría y **venta de los últimos 12 meses**; búsqueda por código o nombre, filtros por compañía y por los tres niveles (cada nivel solo ofrece los valores que existen bajo el nivel superior elegido, y «Sin nivel» para los que no lo tienen), orden por nombre, código o venta, 25 por página. Solo lectura: el catálogo se carga desde Importaciones (enlace «Cargar catálogo» para quien puede).
+- **Cobertura:** productos en el catálogo, productos vendidos en 12 meses, cuántos **no están en el catálogo** y qué porcentaje de la venta neta sí tiene catálogo; aviso cuando faltan productos.
+- **Pestaña «Vendidos sin catálogo»:** productos vendidos (por compañía + código) que no están en el catálogo, con el nombre y la categoría que traen las ventas y su venta de 12 meses, de mayor a menor: es la lista a completar para que grupo y línea dejen de salir como «Sin clasificar».
+- **Alcance:** el catálogo es por compañía; la venta y la cobertura respetan las sucursales del usuario.
+- **API:** `GET /sales/products`, `/sales/products/levels`, `/sales/products/missing`, `/sales/products/coverage`.
+- **Verificación:** pruebas de búsqueda, niveles, faltantes, cobertura y alcance; en PostgreSQL con datos demo la cobertura tarda 45 ms y los faltantes 20 ms.
 
 ### Respuestas recibidas (ronda 2)
 - Productos: el archivo usa los encabezados **Nivel 1, Nivel 2, Nivel 3**; la sucursal es donde se generó la factura y un código puede venderse en varias sucursales de la misma compañía.
