@@ -7,7 +7,7 @@ import { BarChart } from '../components/charts'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/format'
-import { ABC_HINT, ACTIVITY_LABEL, formatDate, sinceLabel, type CustomerProfile, type CustomerType, type CustomerPurchase, type DocumentLine } from '../lib/customers'
+import { ABC_HINT, ACTIVITY_LABEL, formatDate, sinceLabel, type CustomerProfile, type CustomerType, type SellerRow, type CustomerPurchase, type DocumentLine } from '../lib/customers'
 import type { BreakdownRow } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
 
@@ -58,6 +58,24 @@ export default function CustomerProfilePage() {
   const purchases = useLoad<{ data: CustomerPurchase[]; meta: { has_more: boolean } }>(`/customers/purchases?${base}&page=${page}`, { enabled: ready })
 
   const types = useLoad<{ data: CustomerType[] }>('/customers/types', { enabled: can('customers.manage') })
+  const sellers = useLoad<{ data: SellerRow[] }>(`/customers/sellers?company_id=${companyId}`, { enabled: can('customers.manage') && companyId !== '' })
+  const operators = useLoad<{ data: { id: number; name: string }[] }>(`/customers/operators?company_id=${companyId}`, { enabled: can('customers.manage') && companyId !== '' })
+
+  async function assign(patch: { seller_id?: number | null; operator_id?: number | null }) {
+    if (!profile.data) return
+    setTypeError(null)
+    const a = profile.data.data.assignment
+    try {
+      await api('/customers/assignment', {
+        method: 'PUT',
+        body: { company_id: Number(companyId), code, seller_id: a.seller?.assigned ? a.seller.id : null, operator_id: a.operator?.id ?? null, ...patch },
+      })
+      toast.success('Asignación actualizada.')
+      profile.reload()
+    } catch (e) {
+      setTypeError(e instanceof Error ? e.message : 'No se pudo actualizar la asignación.')
+    }
+  }
 
   async function changeType(value: string) {
     setTypeError(null)
@@ -116,7 +134,16 @@ export default function CustomerProfilePage() {
                   {p.customer.abc ? <>{p.customer.abc} <span className="text-xs font-normal text-ink-muted">{ABC_HINT[p.customer.abc]}</span></> : '—'}
                 </dd>
               </div>
+              <div>
+                <dt className="text-ink-muted">Vendedor</dt>
+                <dd className="font-medium">
+                  {p.assignment.seller?.name ?? '—'}
+                  {p.assignment.seller && !p.assignment.seller.assigned && <span className="text-xs font-normal text-ink-muted"> (tienda por defecto)</span>}
+                </dd>
+              </div>
               {([
+                ['Facturador', p.assignment.operator?.name],
+                ['Supervisor', p.assignment.supervisor?.name],
                 ['Tipo de cliente', p.customer.type?.name],
                 ['Nombre comercial', p.customer.trade_name],
                 ['Contacto', p.customer.contact_name],
@@ -138,9 +165,21 @@ export default function CustomerProfilePage() {
                   <option value="">Sin tipo</option>
                   {(types.data?.data ?? []).filter((t) => t.active || t.id === p.customer.type?.id).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </SelectField>
-                <FormError message={typeError} />
               </div>
             )}
+            {can('customers.manage') && (
+              <div className="mt-3 grid max-w-xl gap-3 sm:grid-cols-2">
+                <SelectField id="customer-seller-edit" label="Asignar vendedor" value={p.assignment.seller?.assigned ? p.assignment.seller.id : ''} onChange={(e) => void assign({ seller_id: e.target.value === '' ? null : Number(e.target.value) })}>
+                  <option value="">Tienda por defecto de la sucursal</option>
+                  {(sellers.data?.data ?? []).filter((s) => s.is_active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </SelectField>
+                <SelectField id="customer-operator-edit" label="Asignar facturador" value={p.assignment.operator?.id ?? ''} onChange={(e) => void assign({ operator_id: e.target.value === '' ? null : Number(e.target.value) })}>
+                  <option value="">Sin facturador</option>
+                  {(operators.data?.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                </SelectField>
+              </div>
+            )}
+            <FormError message={typeError} />
             {p.customer.source === 'sales' && (
               <p className="mt-3 text-xs text-ink-muted">Este cliente se creó al aparecer en las ventas; aún no tiene datos del archivo maestro.</p>
             )}

@@ -61,6 +61,15 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **API/pantallas:** `GET /customers?status=` filtra; el listado y la ficha muestran el estado.
 - **Verificación:** pruebas de cada estado y de los plazos; en PostgreSQL con datos demo se clasifican los 150 clientes en 62 ms. La memoria de pruebas de PHP se subió a 512 M (la suite ya agotaba 128 M).
 
+### Paso 5 — Vendedores por defecto, asignaciones y supervisor
+- **Regla de venta directa del facturador (confirmada):** cuando en una venta el vendedor y el facturador (operador) tienen **el mismo nombre**, la venta es del facturador y cuenta en sus estadísticas; en cualquier otro caso es del vendedor. Los operadores son los facturadores. Quien carga la información es el supervisor de ventas.
+- **Catálogo de vendedores:** nuevos campos `branch_id`, `is_default` («Tienda por defecto», un solo vendedor así por sucursal) y `supervisor_id`. Cada sucursal tiene su vendedor «Tienda <sucursal>»: se creó para las existentes (migración) y se crea al dar de alta una sucursal; si ya existía un vendedor con ese nombre se reutiliza.
+- **Asignación por cliente:** `customers.seller_id` y `customers.operator_id`. Sin vendedor asignado, el cliente se atribuye a la «Tienda» de su sucursal (se calcula al consultar, no se guarda). El **supervisor** del cliente es el del vendedor.
+- **Permisos y auditoría:** consultar usa `customers.view`; asignar y editar el catálogo exige `customers.manage` (eventos `customers.assignment_updated` y `sellers.updated`). El vendedor y el facturador deben ser de la misma compañía y estar activos; un supervisor debe tener rol Supervisor de Ventas.
+- **Visibilidad por rol:** un usuario con rol Vendedor, vinculado a un vendedor (`sellers.user_id`), solo ve los clientes asignados a él.
+- **Pantallas:** `/clientes/vendedores` (sucursal, tienda por defecto y supervisor por vendedor), ficha con vendedor/facturador/supervisor y selectores de asignación, y columna Vendedor en el listado.
+- **Pendiente:** el vínculo de un usuario con su vendedor aún no tiene pantalla (`sellers.user_id`); también la importación de clientes no asigna vendedor.
+
 ### Respuestas recibidas (ronda 2)
 - Productos: el archivo usa los encabezados **Nivel 1, Nivel 2, Nivel 3**; la sucursal es donde se generó la factura y un código puede venderse en varias sucursales de la misma compañía.
 - Atribución: la venta es del vendedor aunque el facturador emita la factura; si el facturador vende directamente, es del facturador y cuenta en sus estadísticas.

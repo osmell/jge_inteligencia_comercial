@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\SalesDocument;
 use App\Models\SalesLine;
+use App\Models\Seller;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -80,6 +81,8 @@ class CustomerInsights
         $query = Customer::query()
             ->join('companies', 'companies.id', '=', 'customers.company_id')
             ->leftJoinSub($sales, 's', fn ($j) => $j->on('s.company_id', '=', 'customers.company_id')->on('s.code', '=', 'customers.code'))
+            ->leftJoin('sellers as asg', 'asg.id', '=', 'customers.seller_id')
+            ->leftJoin('sellers as def', fn ($j) => $j->on('def.branch_id', '=', 'customers.branch_id')->where('def.is_default', true))
             ->leftJoin('customer_types', 'customer_types.id', '=', 'customers.customer_type_id')
             ->when($companyId, fn ($q) => $q->where('customers.company_id', $companyId))
             ->when($typeId, fn ($q) => $q->where('customers.customer_type_id', $typeId));
@@ -105,7 +108,7 @@ class CustomerInsights
         };
 
         $rows = $query->toBase()
-            ->selectRaw('customers.company_id as company_id, companies.name as company, customers.code as code, customers.name as name, customers.trade_name as trade_name, customer_types.name as type')
+            ->selectRaw('customers.company_id as company_id, companies.name as company, customers.code as code, customers.name as name, customers.trade_name as trade_name, customer_types.name as type, coalesce(asg.name, def.name) as seller, (asg.id is null) as seller_is_default')
             ->selectRaw('coalesce(s.documents, 0) as documents, coalesce(s.net_total, 0) as net_total, s.first_purchase as first_purchase, s.last_purchase as last_purchase')
             ->orderByRaw($order.', customers.name asc, customers.code asc')
             ->offset(($page - 1) * self::PER_PAGE)
@@ -122,7 +125,7 @@ class CustomerInsights
         return [
             'rows' => $page_rows->map(fn ($r) => [
                 'company_id' => (int) $r->company_id, 'company' => (string) $r->company, 'code' => (string) $r->code, 'name' => (string) $r->name,
-                'trade_name' => $r->trade_name, 'type' => $r->type, 'abc' => $abc[(int) $r->company_id][(string) $r->code] ?? null, 'activity' => $statuses[(int) $r->company_id][(string) $r->code] ?? 'no_sales', 'documents' => (int) $r->documents,
+                'trade_name' => $r->trade_name, 'type' => $r->type, 'seller' => $r->seller, 'seller_is_default' => $r->seller !== null && (bool) $r->seller_is_default, 'abc' => $abc[(int) $r->company_id][(string) $r->code] ?? null, 'activity' => $statuses[(int) $r->company_id][(string) $r->code] ?? 'no_sales', 'documents' => (int) $r->documents,
                 'net_total' => number_format((float) $r->net_total, 2, '.', ''),
                 'first_purchase' => $r->first_purchase ? $this->date($r->first_purchase) : null,
                 'last_purchase' => $r->last_purchase ? $this->date($r->last_purchase) : null,
@@ -139,7 +142,7 @@ class CustomerInsights
     public function profile(int $companyId, string $code, ?CarbonImmutable $today = null): ?array
     {
         $today ??= CarbonImmutable::today();
-        $customer = Customer::query()->with(['company', 'branch', 'type'])->where('company_id', $companyId)->where('code', $code)->first();
+        $customer = Customer::query()->with(['company', 'branch', 'type', 'seller.supervisor', 'operator'])->where('company_id', $companyId)->where('code', $code)->first();
         if (! $customer) {
             return null;
         }
@@ -166,6 +169,7 @@ class CustomerInsights
                 'type' => $customer->type ? ['id' => $customer->type->id, 'name' => $customer->type->name] : null,
                 'abc' => $this->abcClasses($companyId, $today)[$code] ?? null,
             ],
+            'assignment' => $this->assignment($customer),
             'activity' => ['status' => $this->activity->statusesFor($companyId, [$code], $today)[$companyId][$code]] + $this->activity->rules(),
             'first_purchase' => $overall['first'],
             'last_purchase' => $overall['last'],
@@ -272,6 +276,27 @@ class CustomerInsights
         }
 
         return $out;
+    }
+
+    /**
+     * Vendedor, facturador y supervisor del cliente. Sin vendedor asignado se usa la «Tienda» por defecto de su sucursal;
+     * el supervisor es el del vendedor.
+     *
+     * @return array<string, mixed>
+     */
+    private function assignment(Customer $customer): array
+    {
+        $seller = $customer->seller;
+        $assigned = $seller !== null;
+        if ($seller === null && $customer->branch_id !== null) {
+            $seller = Seller::query()->with('supervisor')->where('branch_id', $customer->branch_id)->where('is_default', true)->first();
+        }
+
+        return [
+            'seller' => $seller ? ['id' => $seller->id, 'name' => $seller->name, 'assigned' => $assigned] : null,
+            'operator' => $customer->operator ? ['id' => $customer->operator->id, 'name' => $customer->operator->name] : null,
+            'supervisor' => $seller?->supervisor ? ['id' => $seller->supervisor->id, 'name' => $seller->supervisor->name] : null,
+        ];
     }
 
     /** Limita el listado a los clientes en un estado de actividad (o, para «sin compras», a los que no tienen ninguna). */

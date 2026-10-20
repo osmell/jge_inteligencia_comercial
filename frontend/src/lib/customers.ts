@@ -13,6 +13,23 @@ export const ACTIVITY_LABEL = {
 
 export type ActivityStatus = keyof typeof ACTIVITY_LABEL
 
+export interface SellerRow {
+  id: number
+  name: string
+  company_id: number
+  is_active: boolean
+  branch_id: number | null
+  branch: string | null
+  is_default: boolean
+  supervisor: { id: number; name: string } | null
+}
+
+export interface Assignment {
+  seller: { id: number; name: string; assigned: boolean } | null
+  operator: { id: number; name: string } | null
+  supervisor: { id: number; name: string } | null
+}
+
 export interface ActivityRules {
   inactive_days: number
   lost_days: number
@@ -37,6 +54,8 @@ export interface CustomerListRow {
   name: string
   trade_name: string | null
   type: string | null
+  seller: string | null
+  seller_is_default: boolean
   abc: Abc | null
   activity: ActivityStatus
   documents: number
@@ -65,6 +84,7 @@ export interface CustomerMaster {
 
 export interface CustomerProfile {
   activity: ActivityRules & { status: ActivityStatus }
+  assignment: Assignment
   customer: CustomerMaster
   first_purchase: string | null
   last_purchase: string | null

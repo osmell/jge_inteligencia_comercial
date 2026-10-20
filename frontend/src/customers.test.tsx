@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import CustomerProfilePage from './pages/CustomerProfilePage'
+import SellersPage from './pages/SellersPage'
 import CustomerTypesPage from './pages/CustomerTypesPage'
 import CustomersPage from './pages/CustomersPage'
 import type { CustomerProfile } from './lib/customers'
@@ -21,6 +22,7 @@ const profile = (o: Partial<CustomerProfile> = {}): CustomerProfile => ({
     type: { id: 1, name: 'Taller' }, abc: 'A',
   },
   activity: { status: 'inactive', inactive_days: 30, lost_days: 90 },
+  assignment: { seller: { id: 8, name: 'Tienda Centro', assigned: false }, operator: { id: 4, name: 'Caja 1' }, supervisor: { id: 9, name: 'Sara' } },
   first_purchase: '2026-08-01', last_purchase: '2026-08-31', days_since_last_purchase: 50, history_starts_on: '2025-11-01', totals: kpis,
   frequency: { purchase_days: 3, average_days_between: 15 },
   monthly: [{ key: '2026-09', net_total: '0.00' }, { key: '2026-10', net_total: '650.00' }],
@@ -48,6 +50,14 @@ beforeEach(() => {
     if (path === '/auth/me') {
       return { data: { id: 1, username: 'gg', name: 'Gerencia', role: { slug: 'gerente_general', name: 'Gerente General' }, permissions, companies: [], branches: [] } }
     }
+    if (path.startsWith('/customers/sellers/')) return { data: {} }
+    if (path.startsWith('/customers/sellers')) {
+      return { data: [{ id: 7, name: 'Ana', company_id: 1, is_active: true, branch_id: null, branch: null, is_default: false, supervisor: null }, { id: 8, name: 'Tienda Centro', company_id: 1, is_active: true, branch_id: 3, branch: 'Centro', is_default: true, supervisor: { id: 9, name: 'Sara' } }] }
+    }
+    if (path.startsWith('/customers/operators')) return { data: [{ id: 4, name: 'Caja 1', company_id: 1 }] }
+    if (path === '/customers/supervisors') return { data: [{ id: 9, name: 'Sara' }] }
+    if (path === '/branches') return { data: [{ id: 3, company_id: 1, code: 'C', name: 'Centro', is_active: true }] }
+    if (path === '/customers/assignment') return { data: {} }
     if (path === '/customers/activity-rules') return { data: { inactive_days: 30, lost_days: 90 } }
     if (path === '/customers/types') return { data: [{ id: 1, name: 'Taller', active: true }, { id: 2, name: 'Mayorista', active: false }] }
     if (path.startsWith('/customers/types/') || path === '/customers/type') return { data: {} }
@@ -60,7 +70,7 @@ beforeEach(() => {
       return { data: [{ line: 1, product_code: 'P1', product_name: 'Filtro de aceite', category: 'Filtros', units: '2.00', net_total: '100.00', grand_total: '112.00' }] }
     }
     if (path.startsWith('/customers')) {
-      return { data: [{ company_id: 1, company: 'Compañía Alfa', code: 'C1', name: 'Taller Pérez', trade_name: 'Pérez Motors', type: 'Taller', abc: 'A', activity: 'active', documents: 3, net_total: '650.00', first_purchase: '2026-08-01', last_purchase: '2026-08-31' }], meta: { page: 1, has_more: true } }
+      return { data: [{ company_id: 1, company: 'Compañía Alfa', code: 'C1', name: 'Taller Pérez', trade_name: 'Pérez Motors', type: 'Taller', abc: 'A', seller: 'Tienda Centro', seller_is_default: true, activity: 'active', documents: 3, net_total: '650.00', first_purchase: '2026-08-01', last_purchase: '2026-08-31' }], meta: { page: 1, has_more: true } }
     }
     return { data: [] }
   }
@@ -203,5 +213,41 @@ describe('tipos de cliente', () => {
     await u.click(screen.getByRole('button', { name: 'Guardar reglas' }))
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/customers/activity-rules')).toBe(true))
     expect(JSON.parse(calls.find((c) => c.path === '/customers/activity-rules' && c.method === 'PUT')!.body!)).toEqual({ inactive_days: 45, lost_days: 90 })
+  })
+})
+
+describe('asignaciones', () => {
+  it('la ficha muestra vendedor (tienda por defecto), facturador y supervisor', async () => {
+    renderProfile()
+    await screen.findByRole('heading', { name: 'Taller Pérez S.A.' })
+    expect(screen.getByText('Vendedor', { selector: 'dt' }).closest('div')).toHaveTextContent('Tienda Centro (tienda por defecto)')
+    expect(screen.getByText('Facturador', { selector: 'dt' }).closest('div')).toHaveTextContent('Caja 1')
+    expect(screen.getByText('Supervisor', { selector: 'dt' }).closest('div')).toHaveTextContent('Sara')
+  })
+
+  it('con permiso de gestión asigna el vendedor conservando el facturador', async () => {
+    permissions = ['customers.view', 'customers.manage']
+    const u = userEvent.setup()
+    renderProfile()
+
+    const select = await screen.findByLabelText('Asignar vendedor')
+    await screen.findByRole('option', { name: 'Ana' })
+    await u.selectOptions(select, '7')
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/customers/assignment')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/assignment' && c.method === 'PUT')!.body!)).toEqual({ company_id: 1, code: 'C1', seller_id: 7, operator_id: 4 })
+  })
+
+  it('el catálogo de vendedores marca la tienda por defecto y asigna supervisor', async () => {
+    permissions = ['customers.view', 'customers.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><SellersPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Vendedores' })
+    expect(within(table).getByLabelText('Ana es tienda por defecto')).toBeDisabled() // sin sucursal no puede serlo
+    expect(within(table).getByLabelText('Tienda Centro es tienda por defecto')).toBeChecked()
+
+    await u.selectOptions(within(table).getByLabelText('Supervisor de Ana'), '9')
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/customers/sellers/7')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/sellers/7')!.body!)).toEqual({ supervisor_id: 9 })
   })
 })

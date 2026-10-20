@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Admin\RolePermissionController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\CustomerAssignmentController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
 use App\Http\Controllers\Api\V1\OrganizationController;
@@ -47,6 +48,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('purchases', [CustomerController::class, 'purchases']);
         Route::get('document', [CustomerController::class, 'document']);
         Route::get('types', [CustomerTypeController::class, 'index']);
+        Route::get('sellers', [CustomerAssignmentController::class, 'sellers']);
+        Route::get('operators', [CustomerAssignmentController::class, 'operators']);
+        Route::get('supervisors', [CustomerAssignmentController::class, 'supervisors']);
         Route::get('activity-rules', [CustomerController::class, 'activityRules']);
     });
 
@@ -55,6 +59,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('customers/types', [CustomerTypeController::class, 'store']);
         Route::put('customers/types/{customerType}', [CustomerTypeController::class, 'update'])->whereNumber('customerType');
         Route::put('customers/type', [CustomerTypeController::class, 'assign']);
+        Route::put('customers/assignment', [CustomerAssignmentController::class, 'assign']);
+        Route::put('customers/sellers/{seller}', [CustomerAssignmentController::class, 'updateSeller'])->whereNumber('seller');
         Route::put('customers/activity-rules', [CustomerController::class, 'updateActivityRules']);
     });
 

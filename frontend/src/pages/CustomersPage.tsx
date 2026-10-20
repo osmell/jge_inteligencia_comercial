@@ -35,7 +35,12 @@ export default function CustomersPage() {
   return (
     <section>
       <PageHeader title="Clientes" description="Datos maestros de los clientes y su actividad de compra. El código es único por compañía."
-        action={can('customers.manage') ? <Link className="text-sm text-jge-blue hover:underline" to="/clientes/tipos">Tipos de cliente</Link> : undefined}
+        action={can('customers.manage') ? (
+          <span className="flex gap-4 text-sm">
+            <Link className="text-jge-blue hover:underline" to="/clientes/vendedores">Vendedores</Link>
+            <Link className="text-jge-blue hover:underline" to="/clientes/tipos">Tipos de cliente</Link>
+          </span>
+        ) : undefined}
       />
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
@@ -67,6 +72,7 @@ export default function CustomersPage() {
             <th className={th}>Código</th>
             <th className={th}>Nombre</th>
             <th className={th}>Tipo</th>
+            <th className={th}>Vendedor</th>
             <th className={th}>Estado</th>
             <th className={th}><abbr title="Clasificación ABC por venta de los últimos 12 meses">ABC</abbr></th>
             <th className={`${th} text-right`}>Documentos</th>
@@ -76,8 +82,8 @@ export default function CustomersPage() {
           </tr>
         </thead>
         <tbody>
-          {list.loading && !list.data && <TableSkeleton cols={10} />}
-          {!list.loading && rows.length === 0 && <EmptyRow cols={10}>{term ? 'Ningún cliente coincide con la búsqueda.' : 'Aún no hay clientes. Cárgalos desde Importaciones.'}</EmptyRow>}
+          {list.loading && !list.data && <TableSkeleton cols={11} />}
+          {!list.loading && rows.length === 0 && <EmptyRow cols={11}>{term ? 'Ningún cliente coincide con la búsqueda.' : 'Aún no hay clientes. Cárgalos desde Importaciones.'}</EmptyRow>}
           {rows.map((r) => (
             <tr key={`${r.company_id}|${r.code}`} className={tr}>
               <td className={td}>{r.company}</td>
@@ -87,6 +93,7 @@ export default function CustomersPage() {
                 {r.trade_name && <span className="block text-xs font-normal text-ink-muted">{r.trade_name}</span>}
               </td>
               <td className={td}>{r.type ?? '—'}</td>
+              <td className={td}>{r.seller ? <>{r.seller}{r.seller_is_default && <span className="block text-xs text-ink-muted">por defecto</span>}</> : '—'}</td>
               <td className={td}>{ACTIVITY_LABEL[r.activity]}</td>
               <td className={td}>{r.abc ? <abbr title={ABC_HINT[r.abc]} className="no-underline">{r.abc}</abbr> : '—'}</td>
               <td className={`${td} tabular text-right`}>{r.documents}</td>

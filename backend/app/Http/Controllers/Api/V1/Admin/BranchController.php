@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BranchRequest;
 use App\Models\Branch;
+use App\Models\Seller;
 use Illuminate\Http\JsonResponse;
 
 /** Las sucursales no se eliminan: se desactivan con is_active. */
@@ -18,6 +19,7 @@ class BranchController extends Controller
     public function store(BranchRequest $request): JsonResponse
     {
         $branch = Branch::create($request->validated());
+        Seller::ensureStoreSeller($branch);
 
         return response()->json(['data' => $branch], 201);
     }

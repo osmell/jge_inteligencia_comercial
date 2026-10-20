@@ -12,6 +12,7 @@ import BranchesPage from './pages/BranchesPage'
 import CompaniesPage from './pages/CompaniesPage'
 import CustomerProfilePage from './pages/CustomerProfilePage'
 import CustomerTypesPage from './pages/CustomerTypesPage'
+import SellersPage from './pages/SellersPage'
 import CustomersPage from './pages/CustomersPage'
 import GoalsPage from './pages/GoalsPage'
 import SalesDashboardPage from './pages/SalesDashboardPage'
@@ -38,6 +39,7 @@ export default function App() {
               </Route>
               <Route element={<RequirePermission permission="customers.manage" />}>
                 <Route path="clientes/tipos" element={<CustomerTypesPage />} />
+                <Route path="clientes/vendedores" element={<SellersPage />} />
               </Route>
               <Route element={<RequirePermission permission="imports.manage" />}>
                 <Route path="importaciones" element={<ImportsPage />} />
