@@ -15,8 +15,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $branch_id
  * @property string $code
  * @property string $name
+ * @property int|null $customer_type_id
  */
-#[Fillable(['company_id', 'branch_id', 'code', 'name', 'trade_name', 'contact_name', 'phone', 'whatsapp', 'email', 'address', 'source'])]
+#[Fillable(['company_id', 'branch_id', 'code', 'name', 'trade_name', 'contact_name', 'phone', 'whatsapp', 'email', 'address', 'source', 'customer_type_id'])]
 class Customer extends Model
 {
     use ScopedByOrganization;
@@ -35,6 +36,12 @@ class Customer extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /** @return BelongsTo<CustomerType, $this> */
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(CustomerType::class, 'customer_type_id');
     }
 
     /** @return BelongsTo<Branch, $this> */

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CustomerController;
+use App\Http\Controllers\Api\V1\CustomerTypeController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
@@ -45,6 +46,14 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('profile', [CustomerController::class, 'profile']);
         Route::get('purchases', [CustomerController::class, 'purchases']);
         Route::get('document', [CustomerController::class, 'document']);
+        Route::get('types', [CustomerTypeController::class, 'index']);
+    });
+
+    // Tipos de cliente y su asignación: permiso de gestión de clientes.
+    Route::middleware('permission:customers.manage')->group(function () {
+        Route::post('customers/types', [CustomerTypeController::class, 'store']);
+        Route::put('customers/types/{customerType}', [CustomerTypeController::class, 'update'])->whereNumber('customerType');
+        Route::put('customers/type', [CustomerTypeController::class, 'assign']);
     });
 
     // Rutas administrativas: exigen permiso explícito en el backend.

@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\SalesDocument;
 use App\Models\SalesLine;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Ficha de cliente de solo lectura: datos maestros (tabla `customers`) y su actividad en las ventas importadas.
@@ -19,14 +20,53 @@ class CustomerInsights
 
     public const SORTS = ['last_purchase', 'net_total', 'documents', 'name'];
 
+    /** Clasificación ABC (Pareto) por venta neta de los últimos 12 meses: A hasta el 80 % acumulado, B hasta el 95 %, C el resto. */
+    public const ABC_A_PCT = 80;
+
+    public const ABC_B_PCT = 95;
+
     public function __construct(private readonly SalesStatistics $stats) {}
+
+    /**
+     * Clase ABC de cada cliente de la compañía (código → A|B|C). Se calcula sobre toda la compañía, sin importar las
+     * sucursales del usuario, para que la letra no cambie según quién consulte; solo se expone la letra. Sin compras
+     * (o venta neta ≤ 0) en los últimos 12 meses no tiene clase.
+     *
+     * @return array<string, string>
+     */
+    public function abcClasses(int $companyId, ?CarbonImmutable $today = null): array
+    {
+        $today ??= CarbonImmutable::today();
+        $totals = DB::table('sales_documents as d')
+            ->join('sales_lines as sl', 'sl.sales_document_id', '=', 'd.id')
+            ->where('d.company_id', $companyId)
+            ->where('d.issued_on', '>=', $today->subYear()->addDay()->toDateString())
+            ->where('d.issued_on', '<', $today->addDay()->toDateString())
+            ->groupBy('d.customer_code')
+            ->selectRaw('d.customer_code as code, sum(sl.net_total) as net_total')
+            ->havingRaw('sum(sl.net_total) > 0')
+            ->orderByRaw('sum(sl.net_total) desc, d.customer_code asc')
+            ->pluck('net_total', 'code');
+
+        $grand = (float) $totals->sum();
+        $classes = [];
+        $before = 0.0;
+        foreach ($totals as $code => $net) {
+            // Se clasifica por lo acumulado ANTES del cliente: el primero siempre es A.
+            $share = $grand > 0 ? $before / $grand * 100 : 0;
+            $classes[(string) $code] = $share < self::ABC_A_PCT ? 'A' : ($share < self::ABC_B_PCT ? 'B' : 'C');
+            $before += (float) $net;
+        }
+
+        return $classes;
+    }
 
     /**
      * Búsqueda por código, nombre o nombre comercial, con una fila por cliente (compañía + código).
      *
      * @return array{rows: list<array<string, mixed>>, has_more: bool}
      */
-    public function search(?string $term, ?int $companyId, string $sort, int $page): array
+    public function search(?string $term, ?int $companyId, string $sort, int $page, ?int $typeId = null): array
     {
         $sales = SalesDocument::query()
             ->join('sales_lines as sl', 'sl.sales_document_id', '=', 'sales_documents.id')
@@ -39,7 +79,9 @@ class CustomerInsights
         $query = Customer::query()
             ->join('companies', 'companies.id', '=', 'customers.company_id')
             ->leftJoinSub($sales, 's', fn ($j) => $j->on('s.company_id', '=', 'customers.company_id')->on('s.code', '=', 'customers.code'))
-            ->when($companyId, fn ($q) => $q->where('customers.company_id', $companyId));
+            ->leftJoin('customer_types', 'customer_types.id', '=', 'customers.customer_type_id')
+            ->when($companyId, fn ($q) => $q->where('customers.company_id', $companyId))
+            ->when($typeId, fn ($q) => $q->where('customers.customer_type_id', $typeId));
 
         $term = trim((string) $term);
         if ($term !== '') {
@@ -58,17 +100,20 @@ class CustomerInsights
         };
 
         $rows = $query->toBase()
-            ->selectRaw('customers.company_id as company_id, companies.name as company, customers.code as code, customers.name as name, customers.trade_name as trade_name')
+            ->selectRaw('customers.company_id as company_id, companies.name as company, customers.code as code, customers.name as name, customers.trade_name as trade_name, customer_types.name as type')
             ->selectRaw('coalesce(s.documents, 0) as documents, coalesce(s.net_total, 0) as net_total, s.first_purchase as first_purchase, s.last_purchase as last_purchase')
             ->orderByRaw($order.', customers.name asc, customers.code asc')
             ->offset(($page - 1) * self::PER_PAGE)
             ->limit(self::PER_PAGE + 1)
             ->get();
 
+        $page_rows = $rows->take(self::PER_PAGE);
+        $abc = $page_rows->pluck('company_id')->unique()->mapWithKeys(fn ($id) => [(int) $id => $this->abcClasses((int) $id)]);
+
         return [
-            'rows' => $rows->take(self::PER_PAGE)->map(fn ($r) => [
+            'rows' => $page_rows->map(fn ($r) => [
                 'company_id' => (int) $r->company_id, 'company' => (string) $r->company, 'code' => (string) $r->code, 'name' => (string) $r->name,
-                'trade_name' => $r->trade_name, 'documents' => (int) $r->documents,
+                'trade_name' => $r->trade_name, 'type' => $r->type, 'abc' => $abc[(int) $r->company_id][(string) $r->code] ?? null, 'documents' => (int) $r->documents,
                 'net_total' => number_format((float) $r->net_total, 2, '.', ''),
                 'first_purchase' => $r->first_purchase ? $this->date($r->first_purchase) : null,
                 'last_purchase' => $r->last_purchase ? $this->date($r->last_purchase) : null,
@@ -85,7 +130,7 @@ class CustomerInsights
     public function profile(int $companyId, string $code, ?CarbonImmutable $today = null): ?array
     {
         $today ??= CarbonImmutable::today();
-        $customer = Customer::query()->with(['company', 'branch'])->where('company_id', $companyId)->where('code', $code)->first();
+        $customer = Customer::query()->with(['company', 'branch', 'type'])->where('company_id', $companyId)->where('code', $code)->first();
         if (! $customer) {
             return null;
         }
@@ -109,6 +154,8 @@ class CustomerInsights
                 'code' => $customer->code, 'name' => $customer->name, 'trade_name' => $customer->trade_name, 'contact_name' => $customer->contact_name,
                 'phone' => $customer->phone, 'whatsapp' => $customer->whatsapp, 'email' => $customer->email, 'address' => $customer->address,
                 'source' => $customer->source,
+                'type' => $customer->type ? ['id' => $customer->type->id, 'name' => $customer->type->name] : null,
+                'abc' => $this->abcClasses($companyId, $today)[$code] ?? null,
             ],
             'first_purchase' => $overall['first'],
             'last_purchase' => $overall['last'],
@@ -148,8 +195,11 @@ class CustomerInsights
             ->offset(($page - 1) * self::PER_PAGE)->limit(self::PER_PAGE + 1)
             ->get();
 
+        $page_rows = $rows->take(self::PER_PAGE);
+        $abc = $page_rows->pluck('company_id')->unique()->mapWithKeys(fn ($id) => [(int) $id => $this->abcClasses((int) $id)]);
+
         return [
-            'rows' => $rows->take(self::PER_PAGE)->map(fn ($r) => [
+            'rows' => $page_rows->map(fn ($r) => [
                 'id' => (int) $r->id, 'document' => "{$r->series}-{$r->number}", 'issued_on' => $this->date($r->issued_on),
                 'branch' => (string) $r->branch, 'seller' => (string) $r->seller, 'operator' => (string) $r->operator, 'lines' => (int) $r->lines,
                 'net_total' => number_format((float) $r->net_total, 2, '.', ''), 'grand_total' => number_format((float) $r->grand_total, 2, '.', ''),

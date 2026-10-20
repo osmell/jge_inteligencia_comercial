@@ -2,7 +2,9 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { AuthProvider } from './auth/AuthContext'
 import CustomerProfilePage from './pages/CustomerProfilePage'
+import CustomerTypesPage from './pages/CustomerTypesPage'
 import CustomersPage from './pages/CustomersPage'
 import type { CustomerProfile } from './lib/customers'
 
@@ -16,6 +18,7 @@ const profile = (o: Partial<CustomerProfile> = {}): CustomerProfile => ({
   customer: {
     id: 1, company_id: 1, company: 'Compañía Alfa', branch: 'Central', code: 'C1', name: 'Taller Pérez S.A.', trade_name: 'Pérez Motors',
     contact_name: 'Pedro', phone: '5555-1234', whatsapp: null, email: 'taller@example.com', address: 'Zona 1', source: 'import',
+    type: { id: 1, name: 'Taller' }, abc: 'A',
   },
   first_purchase: '2026-08-01', last_purchase: '2026-08-31', days_since_last_purchase: 50, history_starts_on: '2025-11-01', totals: kpis,
   frequency: { purchase_days: 3, average_days_between: 15 },
@@ -25,16 +28,27 @@ const profile = (o: Partial<CustomerProfile> = {}): CustomerProfile => ({
 })
 
 let urls: string[]
+let calls: { path: string; method: string; body?: string }[]
+let permissions: string[]
 let respond: (path: string) => unknown
 
 beforeEach(() => {
   urls = []
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+  calls = []
+  permissions = ['customers.view']
+  document.cookie = 'XSRF-TOKEN=x'
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     const path = url.replace('http://localhost:8000/api/v1', '')
     urls.push(path)
+    calls.push({ path, method: init?.method ?? 'GET', body: init?.body as string | undefined })
     return new Response(JSON.stringify(respond(path)), { status: 200 })
   }))
   respond = (path) => {
+    if (path === '/auth/me') {
+      return { data: { id: 1, username: 'gg', name: 'Gerencia', role: { slug: 'gerente_general', name: 'Gerente General' }, permissions, companies: [], branches: [] } }
+    }
+    if (path === '/customers/types') return { data: [{ id: 1, name: 'Taller', active: true }, { id: 2, name: 'Mayorista', active: false }] }
+    if (path.startsWith('/customers/types/') || path === '/customers/type') return { data: {} }
     if (path.startsWith('/companies')) return { data: [{ id: 1, code: 'A', name: 'Compañía Alfa', is_active: true }] }
     if (path.startsWith('/customers/profile')) return { data: profile() }
     if (path.startsWith('/customers/purchases')) {
@@ -44,7 +58,7 @@ beforeEach(() => {
       return { data: [{ line: 1, product_code: 'P1', product_name: 'Filtro de aceite', category: 'Filtros', units: '2.00', net_total: '100.00', grand_total: '112.00' }] }
     }
     if (path.startsWith('/customers')) {
-      return { data: [{ company_id: 1, company: 'Compañía Alfa', code: 'C1', name: 'Taller Pérez', trade_name: 'Pérez Motors', documents: 3, net_total: '650.00', first_purchase: '2026-08-01', last_purchase: '2026-08-31' }], meta: { page: 1, has_more: true } }
+      return { data: [{ company_id: 1, company: 'Compañía Alfa', code: 'C1', name: 'Taller Pérez', trade_name: 'Pérez Motors', type: 'Taller', abc: 'A', documents: 3, net_total: '650.00', first_purchase: '2026-08-01', last_purchase: '2026-08-31' }], meta: { page: 1, has_more: true } }
     }
     return { data: [] }
   }
@@ -52,12 +66,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 const renderProfile = (search = '?codigo=C1&compania=1') =>
-  render(<MemoryRouter initialEntries={[`/clientes/ficha${search}`]}><Routes><Route path="/clientes/ficha" element={<CustomerProfilePage />} /></Routes></MemoryRouter>)
+  render(<AuthProvider><MemoryRouter initialEntries={[`/clientes/ficha${search}`]}><Routes><Route path="/clientes/ficha" element={<CustomerProfilePage />} /></Routes></MemoryRouter></AuthProvider>)
 
 describe('listado de clientes', () => {
   it('lista, enlaza a la ficha y busca esperando a que termine de escribir', async () => {
     const u = userEvent.setup()
-    render(<MemoryRouter><CustomersPage /></MemoryRouter>)
+    render(<AuthProvider><MemoryRouter><CustomersPage /></MemoryRouter></AuthProvider>)
 
     const table = await screen.findByRole('table', { name: 'Clientes' })
     expect(within(table).getByRole('link', { name: 'Taller Pérez' })).toHaveAttribute('href', '/clientes/ficha?codigo=C1&compania=1')
@@ -110,5 +124,65 @@ describe('ficha de cliente', () => {
     renderProfile('?codigo=C1')
     expect(await screen.findByText(/Indica un cliente/)).toBeInTheDocument()
     expect(urls.filter((x) => x.startsWith('/customers'))).toEqual([])
+  })
+})
+
+describe('tipos de cliente', () => {
+  it('el listado muestra tipo y clase ABC y filtra por tipo', async () => {
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><CustomersPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Clientes' })
+    expect(within(table).getByText('Taller')).toBeInTheDocument()
+    expect(within(table).getByText('A')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Tipos de cliente' })).not.toBeInTheDocument()
+
+    await u.selectOptions(await screen.findByLabelText('Tipo'), '1')
+    await waitFor(() => expect(urls.at(-1)).toContain('type_id=1'))
+  })
+
+  it('con permiso de gestión, la ficha cambia el tipo y lo guarda', async () => {
+    permissions = ['customers.view', 'customers.manage']
+    const u = userEvent.setup()
+    renderProfile()
+
+    const select = await screen.findByLabelText('Cambiar tipo')
+    expect(within(select).queryByRole('option', { name: 'Mayorista' })).not.toBeInTheDocument() // inactivo
+    await u.selectOptions(select, '')
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/customers/type')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.method === 'PUT')!.body!)).toEqual({ company_id: 1, code: 'C1', customer_type_id: null })
+  })
+
+  it('sin permiso de gestión la ficha no ofrece cambiar el tipo', async () => {
+    renderProfile()
+    await screen.findByRole('heading', { name: 'Taller Pérez S.A.' })
+    expect(screen.queryByLabelText('Cambiar tipo')).not.toBeInTheDocument()
+    expect(screen.getByText('Clasificación ABC').closest('div')).toHaveTextContent('Clase A')
+  })
+
+  it('el catálogo permite crear, renombrar y desactivar', async () => {
+    permissions = ['customers.view', 'customers.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><CustomerTypesPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Tipos de cliente' })
+    expect(within(table).getByText('Inactivo')).toBeInTheDocument()
+
+    await u.type(screen.getByLabelText('Nuevo tipo'), 'Ferretería')
+    await u.click(screen.getByRole('button', { name: 'Agregar tipo' }))
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.path === '/customers/types')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.method === 'POST')!.body!)).toEqual({ name: 'Ferretería' })
+
+    await u.click(screen.getByRole('button', { name: 'Desactivar Taller' }))
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/customers/types/1')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/types/1')!.body!)).toEqual({ active: false })
+
+    await u.click(screen.getByRole('button', { name: 'Renombrar Taller' }))
+    const input = screen.getByLabelText('Nombre de Taller')
+    await u.clear(input)
+    await u.type(input, 'Taller mecánico')
+    await u.click(screen.getByRole('button', { name: 'Guardar' }))
+    await waitFor(() => expect(calls.filter((c) => c.path === '/customers/types/1').length).toBe(2))
+    expect(JSON.parse(calls.filter((c) => c.path === '/customers/types/1')[1].body!)).toEqual({ name: 'Taller mecánico' })
   })
 })

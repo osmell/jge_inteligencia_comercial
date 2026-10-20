@@ -14,7 +14,7 @@ class CustomerController extends Controller
 
     public function index(CustomersRequest $request): JsonResponse
     {
-        $result = $this->customers->search($request->validated('q'), $request->companyId(), $request->validated('sort') ?? 'last_purchase', $request->page());
+        $result = $this->customers->search($request->validated('q'), $request->companyId(), $request->validated('sort') ?? 'last_purchase', $request->page(), $request->integer('type_id') ?: null);
 
         return response()->json(['data' => $result['rows'], 'meta' => ['page' => $request->page(), 'has_more' => $result['has_more']]]);
     }

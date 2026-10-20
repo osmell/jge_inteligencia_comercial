@@ -1,11 +1,27 @@
 import type { BreakdownRow, Kpis } from './sales'
 
+export type Abc = 'A' | 'B' | 'C'
+
+export interface CustomerType {
+  id: number
+  name: string
+  active: boolean
+}
+
+export const ABC_HINT: Record<Abc, string> = {
+  A: 'Clase A: concentra hasta el 80 % de la venta de los últimos 12 meses.',
+  B: 'Clase B: del 80 % al 95 % acumulado de la venta de los últimos 12 meses.',
+  C: 'Clase C: el 5 % final de la venta de los últimos 12 meses.',
+}
+
 export interface CustomerListRow {
   company_id: number
   company: string
   code: string
   name: string
   trade_name: string | null
+  type: string | null
+  abc: Abc | null
   documents: number
   net_total: string
   first_purchase: string | null
@@ -26,6 +42,8 @@ export interface CustomerMaster {
   email: string | null
   address: string | null
   source: 'import' | 'sales'
+  type: { id: number; name: string } | null
+  abc: Abc | null
 }
 
 export interface CustomerProfile {

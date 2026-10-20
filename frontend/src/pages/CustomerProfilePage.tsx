@@ -1,11 +1,13 @@
 import { ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
+import { useToast } from '../components/toast'
 import { BarChart } from '../components/charts'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/format'
-import { formatDate, sinceLabel, type CustomerProfile, type CustomerPurchase, type DocumentLine } from '../lib/customers'
+import { ABC_HINT, formatDate, sinceLabel, type CustomerProfile, type CustomerType, type CustomerPurchase, type DocumentLine } from '../lib/customers'
 import type { BreakdownRow } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
 
@@ -41,6 +43,9 @@ function TopTable({ title, label, rows }: { title: string; label: string; rows: 
 }
 
 export default function CustomerProfilePage() {
+  const { can } = useAuth()
+  const toast = useToast()
+  const [typeError, setTypeError] = useState<string | null>(null)
   const [params] = useSearchParams()
   const code = params.get('codigo') ?? ''
   const companyId = params.get('compania') ?? ''
@@ -51,6 +56,19 @@ export default function CustomerProfilePage() {
   const ready = code !== '' && companyId !== ''
   const profile = useLoad<{ data: CustomerProfile }>(`/customers/profile?${base}`, { enabled: ready })
   const purchases = useLoad<{ data: CustomerPurchase[]; meta: { has_more: boolean } }>(`/customers/purchases?${base}&page=${page}`, { enabled: ready })
+
+  const types = useLoad<{ data: CustomerType[] }>('/customers/types', { enabled: can('customers.manage') })
+
+  async function changeType(value: string) {
+    setTypeError(null)
+    try {
+      await api('/customers/type', { method: 'PUT', body: { company_id: Number(companyId), code, customer_type_id: value === '' ? null : Number(value) } })
+      toast.success('Tipo de cliente actualizado.')
+      profile.reload()
+    } catch (e) {
+      setTypeError(e instanceof Error ? e.message : 'No se pudo actualizar el tipo.')
+    }
+  }
 
   async function toggle(id: number) {
     if (open[id]) {
@@ -85,7 +103,14 @@ export default function CustomerProfilePage() {
           <Card className="mb-4 p-4">
             <h2 className="mb-2 text-sm font-semibold text-ink">Datos del cliente</h2>
             <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              <div>
+                <dt className="text-ink-muted">Clasificación ABC</dt>
+                <dd className="font-medium">
+                  {p.customer.abc ? <>{p.customer.abc} <span className="text-xs font-normal text-ink-muted">{ABC_HINT[p.customer.abc]}</span></> : '—'}
+                </dd>
+              </div>
               {([
+                ['Tipo de cliente', p.customer.type?.name],
                 ['Nombre comercial', p.customer.trade_name],
                 ['Contacto', p.customer.contact_name],
                 ['Sucursal', p.customer.branch],
@@ -100,6 +125,15 @@ export default function CustomerProfilePage() {
                 </div>
               ))}
             </dl>
+            {can('customers.manage') && (
+              <div className="mt-3 max-w-xs">
+                <SelectField id="customer-type-edit" label="Cambiar tipo" value={p.customer.type?.id ?? ''} onChange={(e) => void changeType(e.target.value)}>
+                  <option value="">Sin tipo</option>
+                  {(types.data?.data ?? []).filter((t) => t.active || t.id === p.customer.type?.id).map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </SelectField>
+                <FormError message={typeError} />
+              </div>
+            )}
             {p.customer.source === 'sales' && (
               <p className="mt-3 text-xs text-ink-muted">Este cliente se creó al aparecer en las ventas; aún no tiene datos del archivo maestro.</p>
             )}
