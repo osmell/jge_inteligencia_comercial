@@ -4,11 +4,12 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
 import { BarChart } from '../components/charts'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
-import { api } from '../lib/api'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { ApiError, api } from '../lib/api'
 import { formatMoney } from '../lib/format'
-import { ABC_HINT, ACTIVITY_LABEL, formatDate, sinceLabel, type CustomerProfile, type CustomerType, type SellerRow, type CustomerPurchase, type DocumentLine } from '../lib/customers'
+import { ABC_HINT, ACTIVITY_LABEL, formatDate, sinceLabel, type CustomerProfile, type CustomerType, type CustomerMaster, type OperatorRow, type SellerRow, type CustomerPurchase, type DocumentLine } from '../lib/customers'
 import type { BreakdownRow } from '../lib/sales'
+import type { Branch } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
 function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -46,6 +47,9 @@ export default function CustomerProfilePage() {
   const { can } = useAuth()
   const toast = useToast()
   const [typeError, setTypeError] = useState<string | null>(null)
+  const [draft, setDraft] = useState<Record<string, string> | null>(null)
+  const [draftErrors, setDraftErrors] = useState<Record<string, string[]>>({})
+  const [saving, setSaving] = useState(false)
   const [params] = useSearchParams()
   const code = params.get('codigo') ?? ''
   const companyId = params.get('compania') ?? ''
@@ -59,7 +63,34 @@ export default function CustomerProfilePage() {
 
   const types = useLoad<{ data: CustomerType[] }>('/customers/types', { enabled: can('customers.manage') })
   const sellers = useLoad<{ data: SellerRow[] }>(`/customers/sellers?company_id=${companyId}`, { enabled: can('customers.manage') && companyId !== '' })
-  const operators = useLoad<{ data: { id: number; name: string }[] }>(`/customers/operators?company_id=${companyId}`, { enabled: can('customers.manage') && companyId !== '' })
+  const operators = useLoad<{ data: OperatorRow[] }>(`/customers/operators?company_id=${companyId}`, { enabled: can('customers.manage') && companyId !== '' })
+
+  const branches = useLoad<{ data: Branch[] }>('/branches', { enabled: can('customers.manage') })
+
+  function startEdit(c: CustomerMaster) {
+    setDraftErrors({})
+    setDraft({
+      name: c.name, trade_name: c.trade_name ?? '', contact_name: c.contact_name ?? '', phone: c.phone ?? '', whatsapp: c.whatsapp ?? '',
+      email: c.email ?? '', address: c.address ?? '', branch_id: c.branch_id === null ? '' : String(c.branch_id),
+    })
+  }
+
+  async function saveEdit() {
+    if (!draft) return
+    setSaving(true)
+    setDraftErrors({})
+    const { branch_id, ...text } = draft
+    try {
+      await api('/customers/data', { method: 'PUT', body: { company_id: Number(companyId), code, ...text, branch_id: branch_id === '' ? null : Number(branch_id) } })
+      toast.success('Datos del cliente actualizados.')
+      setDraft(null)
+      profile.reload()
+    } catch (e) {
+      setDraftErrors(e instanceof ApiError ? e.errors : { name: [e instanceof Error ? e.message : 'No se pudo guardar.'] })
+    } finally {
+      setSaving(false)
+    }
+  }
 
   async function assign(patch: { seller_id?: number | null; operator_id?: number | null }) {
     if (!profile.data) return
@@ -175,11 +206,38 @@ export default function CustomerProfilePage() {
                 </SelectField>
                 <SelectField id="customer-operator-edit" label="Asignar facturador" value={p.assignment.operator?.id ?? ''} onChange={(e) => void assign({ operator_id: e.target.value === '' ? null : Number(e.target.value) })}>
                   <option value="">Sin facturador</option>
-                  {(operators.data?.data ?? []).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+                  {(operators.data?.data ?? []).filter((o) => o.is_active || o.id === p.assignment.operator?.id).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
                 </SelectField>
               </div>
             )}
             <FormError message={typeError} />
+            {can('customers.manage') && (
+              <div className="mt-4 border-t border-line pt-3">
+                {draft === null ? (
+                  <Button variant="secondary" onClick={() => startEdit(p.customer)}>Editar datos</Button>
+                ) : (
+                  <form onSubmit={(e) => { e.preventDefault(); void saveEdit() }} className="space-y-3">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {([
+                        ['name', 'Nombre', 'text'], ['trade_name', 'Nombre comercial', 'text'], ['contact_name', 'Contacto', 'text'],
+                        ['phone', 'Teléfono', 'tel'], ['whatsapp', 'WhatsApp', 'tel'], ['email', 'Correo', 'email'], ['address', 'Dirección', 'text'],
+                      ] as const).map(([key, label, type]) => (
+                        <TextField key={key} id={`edit-${key}`} label={label} type={type} value={draft[key]} errors={draftErrors[key]} onChange={(e) => setDraft({ ...draft, [key]: e.target.value })} />
+                      ))}
+                      <SelectField id="edit-branch_id" label="Sucursal" value={draft.branch_id} errors={draftErrors.branch_id} onChange={(e) => setDraft({ ...draft, branch_id: e.target.value })}>
+                        <option value="">Sin sucursal</option>
+                        {(branches.data?.data ?? []).filter((b) => String(b.company_id) === companyId).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                      </SelectField>
+                    </div>
+                    <p className="text-xs text-ink-muted">El código del cliente no se cambia: enlaza al cliente con sus ventas. Una importación de clientes posterior vuelve a escribir estos datos con lo que traiga el archivo.</p>
+                    <div className="flex gap-2">
+                      <Button type="submit" loading={saving} disabled={draft.name.trim() === ''}>Guardar cambios</Button>
+                      <Button type="button" variant="secondary" onClick={() => setDraft(null)}>Cancelar</Button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
             {p.customer.source === 'sales' && (
               <p className="mt-3 text-xs text-ink-muted">Este cliente se creó al aparecer en las ventas; aún no tiene datos del archivo maestro.</p>
             )}

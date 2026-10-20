@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('sales-report/export', [CustomerSalesReportController::class, 'export']);
         Route::get('sellers', [CustomerAssignmentController::class, 'sellers']);
         Route::get('operators', [CustomerAssignmentController::class, 'operators']);
+        Route::get('seller-users', [CustomerAssignmentController::class, 'sellerUsers'])->middleware('permission:customers.manage');
         Route::get('supervisors', [CustomerAssignmentController::class, 'supervisors']);
         Route::get('activity-rules', [CustomerController::class, 'activityRules']);
     });
@@ -62,6 +63,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('customers/types', [CustomerTypeController::class, 'store']);
         Route::put('customers/types/{customerType}', [CustomerTypeController::class, 'update'])->whereNumber('customerType');
         Route::put('customers/type', [CustomerTypeController::class, 'assign']);
+        Route::put('customers/data', [CustomerAssignmentController::class, 'updateCustomer']);
+        Route::post('customers/sellers', [CustomerAssignmentController::class, 'storeSeller']);
+        Route::post('customers/operators', [CustomerAssignmentController::class, 'storeOperator']);
+        Route::put('customers/operators/{operator}', [CustomerAssignmentController::class, 'updateOperator'])->whereNumber('operator');
         Route::put('customers/assignment', [CustomerAssignmentController::class, 'assign']);
         Route::put('customers/sellers/{seller}', [CustomerAssignmentController::class, 'updateSeller'])->whereNumber('seller');
         Route::put('customers/activity-rules', [CustomerController::class, 'updateActivityRules']);

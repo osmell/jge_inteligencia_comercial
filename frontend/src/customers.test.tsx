@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import CustomerProfilePage from './pages/CustomerProfilePage'
 import CustomerSalesReportPage from './pages/CustomerSalesReportPage'
+import OperatorsPage from './pages/OperatorsPage'
 import SellersPage from './pages/SellersPage'
 import CustomerTypesPage from './pages/CustomerTypesPage'
 import CustomersPage from './pages/CustomersPage'
@@ -19,7 +20,7 @@ const brow = (key: string, label: string, net: string) => ({ key, label, ...kpis
 const profile = (o: Partial<CustomerProfile> = {}): CustomerProfile => ({
   customer: {
     id: 1, company_id: 1, company: 'Compañía Alfa', branch: 'Central', code: 'C1', name: 'Taller Pérez S.A.', trade_name: 'Pérez Motors',
-    contact_name: 'Pedro', phone: '5555-1234', whatsapp: null, email: 'taller@example.com', address: 'Zona 1', source: 'import',
+    contact_name: 'Pedro', phone: '5555-1234', whatsapp: null, email: 'taller@example.com', address: 'Zona 1', source: 'import', branch_id: 3,
     type: { id: 1, name: 'Taller' }, abc: 'A',
   },
   activity: { status: 'inactive', inactive_days: 30, lost_days: 90 },
@@ -60,9 +61,11 @@ beforeEach(() => {
     }
     if (path.startsWith('/customers/sellers/')) return { data: {} }
     if (path.startsWith('/customers/sellers')) {
-      return { data: [{ id: 7, name: 'Ana', company_id: 1, is_active: true, branch_id: null, branch: null, is_default: false, supervisor: null }, { id: 8, name: 'Tienda Centro', company_id: 1, is_active: true, branch_id: 3, branch: 'Centro', is_default: true, supervisor: { id: 9, name: 'Sara' } }] }
+      return { data: [{ id: 7, name: 'Ana', company_id: 1, is_active: true, branch_id: null, branch: null, is_default: false, user_id: null, supervisor: null }, { id: 8, name: 'Tienda Centro', company_id: 1, is_active: true, branch_id: 3, branch: 'Centro', is_default: true, user_id: null, supervisor: { id: 9, name: 'Sara' } }] }
     }
-    if (path.startsWith('/customers/operators')) return { data: [{ id: 4, name: 'Caja 1', company_id: 1 }] }
+    if (path.startsWith('/customers/operators')) return { data: [{ id: 4, name: 'Caja 1', company_id: 1, is_active: true }, { id: 5, name: 'Caja vieja', company_id: 1, is_active: false }] }
+    if (path === '/customers/seller-users') return { data: [{ id: 20, name: 'Vera', username: 'vera' }] }
+    if (path === '/customers/data') return { data: {} }
     if (path === '/customers/supervisors') return { data: [{ id: 9, name: 'Sara' }] }
     if (path === '/branches') return { data: [{ id: 3, company_id: 1, code: 'C', name: 'Centro', is_active: true }] }
     if (path === '/customers/assignment') return { data: {} }
@@ -283,5 +286,81 @@ describe('reporte de ventas por cliente', () => {
     fireEvent.change(screen.getByLabelText('Desde'), { target: { value: '2999-01-01' } })
     expect(await screen.findByText(/periodo válido/)).toBeInTheDocument()
     expect(urls.filter((x) => x.startsWith('/customers/sales-report')).length).toBe(before)
+  })
+})
+
+describe('mantenimiento', () => {
+  it('la ficha permite editar los datos generales y envía el cambio', async () => {
+    permissions = ['customers.view', 'customers.manage']
+    const u = userEvent.setup()
+    renderProfile()
+
+    await u.click(await screen.findByRole('button', { name: 'Editar datos' }))
+    const name = screen.getByLabelText('Nombre')
+    expect(name).toHaveValue('Taller Pérez S.A.')
+    await u.clear(name)
+    await u.type(name, 'Taller Pérez y Cía')
+    await u.clear(screen.getByLabelText('Teléfono'))
+    await u.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/customers/data')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/data')!.body!)).toMatchObject({ company_id: 1, code: 'C1', name: 'Taller Pérez y Cía', phone: '', branch_id: 3 })
+  })
+
+  it('sin permiso de gestión la ficha no ofrece editar y no ofrece facturadores inactivos', async () => {
+    renderProfile()
+    await screen.findByRole('heading', { name: 'Taller Pérez S.A.' })
+    expect(screen.queryByRole('button', { name: 'Editar datos' })).not.toBeInTheDocument()
+  })
+
+  it('el catálogo de vendedores crea, renombra, vincula usuario y desactiva', async () => {
+    permissions = ['customers.view', 'customers.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><SellersPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Vendedores' })
+    await u.type(screen.getByLabelText('Nuevo vendedor'), 'Beto Ríos')
+    await screen.findByRole('option', { name: 'Compañía Alfa' })
+    await u.selectOptions(screen.getByLabelText('Compañía'), '1')
+    await u.click(screen.getByRole('button', { name: 'Agregar vendedor' }))
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.path === '/customers/sellers')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.method === 'POST')!.body!)).toEqual({ company_id: 1, name: 'Beto Ríos' })
+
+    await screen.findAllByRole('option', { name: 'Vera (vera)' })
+    await u.selectOptions(within(table).getByLabelText('Usuario de Ana'), '20')
+    await waitFor(() => expect(calls.some((c) => c.path === '/customers/sellers/7' && c.method === 'PUT')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/sellers/7')!.body!)).toEqual({ user_id: 20 })
+
+    await u.click(within(table).getByLabelText('Ana está activo'))
+    await waitFor(() => expect(calls.filter((c) => c.path === '/customers/sellers/7').length).toBe(2))
+    expect(JSON.parse(calls.filter((c) => c.path === '/customers/sellers/7')[1].body!)).toEqual({ is_active: false })
+
+    await u.click(within(table).getByRole('button', { name: 'Renombrar Ana' }))
+    const input = within(table).getByLabelText('Nombre de Ana')
+    await u.clear(input)
+    await u.type(input, 'Ana Torres')
+    await u.click(within(table).getByRole('button', { name: 'Guardar' }))
+    await waitFor(() => expect(calls.filter((c) => c.path === '/customers/sellers/7').length).toBe(3))
+    expect(JSON.parse(calls.filter((c) => c.path === '/customers/sellers/7')[2].body!)).toEqual({ name: 'Ana Torres' })
+  })
+
+  it('el catálogo de facturadores crea, renombra y desactiva', async () => {
+    permissions = ['customers.view', 'customers.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><OperatorsPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Facturadores' })
+    expect(within(table).getByLabelText('Caja vieja está activo')).not.toBeChecked()
+
+    await screen.findByRole('option', { name: 'Compañía Alfa' })
+    await u.selectOptions(screen.getByLabelText('Compañía'), '1')
+    await u.type(screen.getByLabelText('Nuevo facturador'), 'Caja 2')
+    await u.click(screen.getByRole('button', { name: 'Agregar facturador' }))
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.path === '/customers/operators')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.method === 'POST')!.body!)).toEqual({ company_id: 1, name: 'Caja 2' })
+
+    await u.click(within(table).getByLabelText('Caja vieja está activo'))
+    await waitFor(() => expect(calls.some((c) => c.path === '/customers/operators/5' && c.method === 'PUT')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/operators/5')!.body!)).toEqual({ is_active: true })
   })
 })

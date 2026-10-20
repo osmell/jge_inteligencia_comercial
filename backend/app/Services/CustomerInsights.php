@@ -162,7 +162,7 @@ class CustomerInsights
 
         return [
             'customer' => [
-                'id' => $customer->id, 'company_id' => $customer->company_id, 'company' => $customer->company->name, 'branch' => $customer->branch?->name,
+                'id' => $customer->id, 'company_id' => $customer->company_id, 'company' => $customer->company->name, 'branch' => $customer->branch?->name, 'branch_id' => $customer->branch_id,
                 'code' => $customer->code, 'name' => $customer->name, 'trade_name' => $customer->trade_name, 'contact_name' => $customer->contact_name,
                 'phone' => $customer->phone, 'whatsapp' => $customer->whatsapp, 'email' => $customer->email, 'address' => $customer->address,
                 'source' => $customer->source,

@@ -21,7 +21,15 @@ export interface SellerRow {
   branch_id: number | null
   branch: string | null
   is_default: boolean
+  user_id: number | null
   supervisor: { id: number; name: string } | null
+}
+
+export interface OperatorRow {
+  id: number
+  name: string
+  company_id: number
+  is_active: boolean
 }
 
 export interface Assignment {
@@ -69,6 +77,7 @@ export interface CustomerMaster {
   company_id: number
   company: string
   branch: string | null
+  branch_id: number | null
   code: string
   name: string
   trade_name: string | null
@@ -77,7 +86,7 @@ export interface CustomerMaster {
   whatsapp: string | null
   email: string | null
   address: string | null
-  source: 'import' | 'sales'
+  source: 'import' | 'sales' | 'manual'
   type: { id: number; name: string } | null
   abc: Abc | null
 }

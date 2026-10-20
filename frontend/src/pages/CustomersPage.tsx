@@ -39,6 +39,7 @@ export default function CustomersPage() {
           <span className="flex gap-4 text-sm">
             <Link className="text-jge-blue hover:underline" to="/clientes/reporte">Ventas por cliente</Link>
             {can('customers.manage') && <Link className="text-jge-blue hover:underline" to="/clientes/vendedores">Vendedores</Link>}
+            {can('customers.manage') && <Link className="text-jge-blue hover:underline" to="/clientes/facturadores">Facturadores</Link>}
             {can('customers.manage') && <Link className="text-jge-blue hover:underline" to="/clientes/tipos">Tipos de cliente</Link>}
           </span>
         )}

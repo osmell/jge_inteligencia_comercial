@@ -84,6 +84,13 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - **Sucursal:** indica dónde se generó la factura y solo se valida (debe existir y ser de la compañía). Un mismo producto en varias sucursales de la compañía no es conflicto si el resto de los datos coincide; con datos distintos, el lote se rechaza.
 - **Pendiente:** el catálogo aún no alimenta los reportes (la categoría de las ventas sigue viniendo del archivo de ventas) ni tiene pantalla de consulta. Falta decidir si el desglose por categoría pasa a usar el Nivel 3.
 
+### Paso 8 — Mantenimiento de clientes, vendedores y facturadores
+- **Datos generales del cliente:** el botón «Editar datos» de la ficha (permiso `customers.manage`) cambia nombre, nombre comercial, contacto, teléfono, WhatsApp, correo, dirección y sucursal, con las mismas validaciones que la importación. El código no se cambia. Un cliente creado desde ventas pasa a origen «manual»; cada cambio se audita (`customers.updated`). Una importación de clientes posterior vuelve a escribir esos datos con lo que traiga el archivo.
+- **Vendedores** (`/clientes/vendedores`): alta, renombrar, activar/desactivar, sucursal, «Tienda por defecto», supervisor y **usuario vinculado** (usuarios con rol Vendedor; de ahí sale la visibilidad del rol Vendedor). El nombre es único por compañía sin distinguir mayúsculas ni espacios de más. Auditado (`sellers.created|updated`).
+- **Facturadores** (`/clientes/facturadores`): alta, renombrar y activar/desactivar (`operators.created|updated`). Un facturador inactivo ya no se ofrece al asignar clientes.
+- **Aviso de enlace por nombre:** las ventas se enlazan a vendedores y facturadores por su nombre al importar; renombrar a alguien exige que el archivo de ventas traiga el nombre nuevo o se creará otro registro. La pantalla lo advierte.
+- **API:** `PUT /customers/data`, `POST /customers/sellers`, `PUT /customers/sellers/{id}` (ahora con nombre, estado y usuario), `GET /customers/seller-users`, `POST /customers/operators`, `PUT /customers/operators/{id}`. Alta y cambios exigen acceso completo a la compañía.
+
 ### Respuestas recibidas (ronda 2)
 - Productos: el archivo usa los encabezados **Nivel 1, Nivel 2, Nivel 3**; la sucursal es donde se generó la factura y un código puede venderse en varias sucursales de la misma compañía.
 - Atribución: la venta es del vendedor aunque el facturador emita la factura; si el facturador vende directamente, es del facturador y cuenta en sus estadísticas.
@@ -91,4 +98,4 @@ Respuestas del responsable (`13_PREGUNTAS_FASE_04_CLIENTES.md`): el código de c
 - Las devoluciones restan a la venta del cliente.
 
 ### Siguiente
-Lo pedido en las respuestas ya está implementado. Quedan: vincular un usuario con su vendedor desde una pantalla (`sellers.user_id`), asignar tipo y vendedor desde el Excel de clientes, descontar devoluciones cuando exista su formato, que el catálogo de productos alimente los reportes (Nivel 3 como categoría) y, sobre todo, contrastar los totales con un reporte de ventas validado y revisar las pantallas en un navegador (incluido móvil).
+Lo pedido en las respuestas ya está implementado. Quedan: asignar tipo y vendedor desde el Excel de clientes, descontar devoluciones cuando exista su formato, que el catálogo de productos alimente los reportes (Nivel 3 como categoría) y, sobre todo, contrastar los totales con un reporte de ventas validado y revisar las pantallas en un navegador (incluido móvil).
