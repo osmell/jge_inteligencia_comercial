@@ -82,6 +82,13 @@ Para **cada** pantalla de las secciones 2 a 6, comprueba:
 - [ ] Un vendedor solo ve y registra contactos de sus clientes; un usuario sin `interactions.manage` consulta pero no registra.
 - [ ] «El cliente pidió no ser contactado»: pide motivo, muestra el aviso, bloquea contactos salientes y próximas acciones, permite registrar los que inicia el cliente y se puede retirar.
 
+### Agenda de seguimiento (`/agenda`, Fase 5 paso 2)
+- [ ] El menú «Agenda» aparece solo con `interactions.manage`; la pantalla funciona en móvil sin desplazamiento horizontal de la página.
+- [ ] Las acciones con fecha pasada salen en «vencidas» (con los días de atraso en texto); las del plazo elegido, en «próximas»; las cumplidas no aparecen.
+- [ ] «Marcar cumplida» la quita de la agenda (y en la ficha del cliente aparece como cumplida).
+- [ ] Un vendedor ve solo lo de sus clientes. Un supervisor ve los clientes de los vendedores donde él figura como supervisor (revisa el catálogo de Vendedores) y lo que registró.
+- [ ] «Clientes por reactivar»: solo inactivos y perdidos, sin contacto en el plazo elegido, y sin los marcados «no contactar».
+
 ## 4b. Productos (`/productos`)
 
 - [ ] Tarjetas de cobertura: productos en catálogo, vendidos en 12 meses, vendidos sin catálogo y % de venta con catálogo; aviso si faltan productos.

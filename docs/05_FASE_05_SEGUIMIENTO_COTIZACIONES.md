@@ -38,5 +38,13 @@ El vendedor registra actividad, resultado y siguiente acción; adjunta cotizaci�
 - API: `GET customers/interactions`, `POST customers/interactions`, `PUT customers/interactions/{id}`, `PUT customers/contact-preference`. Auditoría: `customer_interactions.created|updated`, `customers.contact_preference_updated`.
 - Pantalla: sección «Seguimiento comercial» en la ficha del cliente.
 
+### Paso 2 — Agenda de seguimiento (hecho)
+- Pantalla **Agenda** (`/agenda`, permisos `customers.view` + `interactions.manage`) y API `GET customers/agenda`.
+- **Acciones vencidas y próximas:** las próximas acciones de los contactos que siguen pendientes. Se marcan **cumplidas** (también desde la ficha del cliente) con `PUT customers/interactions/{id}/complete` y se pueden reabrir; cambiar la próxima acción de un contacto la deja otra vez pendiente. Auditoría: `customer_interactions.action_completed|action_reopened`.
+- **Clientes por reactivar:** clientes inactivos o perdidos (según las reglas de actividad vigentes), que aceptan comunicaciones y sin contacto registrado en los últimos N días (15, 30, 60 o 90; por defecto 30). Inactivos primero; dentro de cada grupo, la compra más reciente. Se muestran hasta 50.
+- **Alcance:** el vendedor, solo sus clientes; el supervisor, los clientes de los vendedores que tiene asignados como supervisor (catálogo de Vendedores) y lo que él mismo registró; el resto de roles, todo su ámbito de compañías. Si un supervisor no está asignado a ningún vendedor, su agenda sale vacía.
+- Filtros: compañía, vendedor, plazo de las acciones (hoy, 7, 15, 30 días), días sin contacto y «solo lo que yo registré».
+- No hay notificaciones ni correos: la agenda se consulta en pantalla.
+
 ### Pendiente
-2. Agenda del vendedor y del supervisor (próximas acciones, vencidas, clientes inactivos). 3. Cotizaciones. 4. KPI.
+3. Cotizaciones. 4. KPI.

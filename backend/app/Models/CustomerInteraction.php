@@ -21,8 +21,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $response
  * @property string|null $next_action
  * @property Carbon|null $next_action_at
+ * @property Carbon|null $next_action_done_at
  */
-#[Fillable(['company_id', 'customer_id', 'user_id', 'channel', 'direction', 'outcome', 'occurred_at', 'response', 'next_action', 'next_action_at'])]
+#[Fillable(['company_id', 'customer_id', 'user_id', 'channel', 'direction', 'outcome', 'occurred_at', 'response', 'next_action', 'next_action_at', 'next_action_done_at', 'next_action_done_by'])]
 class CustomerInteraction extends Model
 {
     public const CHANNELS = ['call', 'email', 'whatsapp', 'visit', 'meeting', 'other'];
@@ -34,7 +35,7 @@ class CustomerInteraction extends Model
 
     protected function casts(): array
     {
-        return ['occurred_at' => 'datetime', 'next_action_at' => 'datetime'];
+        return ['occurred_at' => 'datetime', 'next_action_at' => 'datetime', 'next_action_done_at' => 'datetime'];
     }
 
     /** @return BelongsTo<Customer, $this> */

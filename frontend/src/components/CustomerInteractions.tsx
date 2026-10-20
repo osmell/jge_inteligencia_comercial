@@ -37,6 +37,7 @@ export default function CustomerInteractions({ companyId, code }: { companyId: s
   const [saving, setSaving] = useState(false)
   const [prefReason, setPrefReason] = useState<string | null>(null)
   const [prefError, setPrefError] = useState<FieldErrors>({})
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const base = new URLSearchParams({ company_id: companyId, code })
   const list = useLoad<{ data: CustomerInteraction[]; meta: { has_more: boolean; contact_preference: ContactPreference } }>(`/customers/interactions?${base}&page=${page}`)
@@ -70,6 +71,17 @@ export default function CustomerInteractions({ companyId, code }: { companyId: s
     }
   }
 
+  async function complete(id: number) {
+    setActionError(null)
+    try {
+      await api(`/customers/interactions/${id}/complete`, { method: 'PUT', body: { done: true } })
+      toast.success('Acción marcada como cumplida.')
+      list.reload()
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'No se pudo marcar la acción.')
+    }
+  }
+
   async function savePreference(on: boolean) {
     setPrefError({})
     try {
@@ -92,7 +104,7 @@ export default function CustomerInteractions({ companyId, code }: { companyId: s
         {manage && draft === null && blocked && <Button small variant="secondary" onClick={() => open({ ...emptyDraft(), direction: 'inbound' }, null)}>Registrar contacto del cliente</Button>}
       </div>
 
-      <FormError message={list.error} />
+      <FormError message={list.error ?? actionError} />
 
       {blocked && pref && (
         <div className="mb-3">
@@ -150,7 +162,13 @@ export default function CustomerInteractions({ companyId, code }: { companyId: s
               </div>
               {i.response && <p className="mt-1 whitespace-pre-line">{i.response}</p>}
               {i.next_action && (
-                <p className="mt-1 text-ink-muted">Próxima acción: <span className="text-ink">{i.next_action}</span>{i.next_action_at ? ` — ${formatDateTime(i.next_action_at)}` : ''}</p>
+                <p className="mt-1 text-ink-muted">
+                  Próxima acción: <span className="text-ink">{i.next_action}</span>{i.next_action_at ? ` — ${formatDateTime(i.next_action_at)}` : ''}
+                  {i.next_action_done_at && <span className="ml-2 font-medium text-success">Cumplida el {formatDateTime(i.next_action_done_at)}</span>}
+                </p>
+              )}
+              {manage && i.next_action && i.next_action_at && !i.next_action_done_at && (
+                <div className="mt-1"><Button small variant="secondary" onClick={() => void complete(i.id)} aria-label={`Marcar cumplida: ${i.next_action}`}>Marcar cumplida</Button></div>
               )}
               {manage && i.can_edit && draft === null && (
                 <div className="mt-1"><Button small variant="ghost" onClick={() => open(toDraft(i), i.id)} aria-label={`Corregir contacto del ${formatDateTime(i.occurred_at)}`}>Corregir</Button></div>

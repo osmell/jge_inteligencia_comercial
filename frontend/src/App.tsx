@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage'
 import ImportDetailPage from './pages/ImportDetailPage'
 import ImportsPage from './pages/ImportsPage'
 import LoginPage from './pages/LoginPage'
+import AgendaPage from './pages/AgendaPage'
 import AuditPage from './pages/AuditPage'
 import BranchesPage from './pages/BranchesPage'
 import CompaniesPage from './pages/CompaniesPage'
@@ -41,6 +42,9 @@ export default function App() {
                 <Route path="clientes" element={<CustomersPage />} />
                 <Route path="clientes/ficha" element={<CustomerProfilePage />} />
                 <Route path="clientes/reporte" element={<CustomerSalesReportPage />} />
+                <Route element={<RequirePermission permission="interactions.manage" />}>
+                  <Route path="agenda" element={<AgendaPage />} />
+                </Route>
               </Route>
               <Route element={<RequirePermission permission="customers.manage" />}>
                 <Route path="clientes/tipos" element={<CustomerTypesPage />} />

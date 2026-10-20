@@ -249,6 +249,7 @@ export interface CustomerInteraction {
   response: string | null
   next_action: string | null
   next_action_at: string | null
+  next_action_done_at: string | null
   user: { id: number; name: string } | null
   can_edit: boolean
 }
@@ -262,4 +263,33 @@ export function formatDateTime(iso: string): string {
 export function toLocalInput(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+export interface AgendaAction {
+  id: number
+  customer: { company_id: number; code: string; name: string; phone: string | null; whatsapp: string | null; seller: string | null }
+  next_action: string
+  next_action_at: string
+  days_overdue: number
+  origin: { channel: InteractionChannel; outcome: InteractionOutcome; occurred_at: string }
+  user: { id: number; name: string } | null
+}
+
+export interface ReactivateRow {
+  company_id: number
+  company: string
+  code: string
+  name: string
+  phone: string | null
+  whatsapp: string | null
+  status: 'inactive' | 'lost'
+  last_purchase: string
+  days_since_last_purchase: number
+  seller: string | null
+  last_contact_at: string | null
+}
+
+export interface Agenda {
+  data: { overdue: AgendaAction[]; upcoming: AgendaAction[]; reactivate: ReactivateRow[] }
+  meta: { overdue_total: number; upcoming_total: number; reactivate_total: number; horizon_days: number; no_contact_days: number; truncated: boolean }
 }

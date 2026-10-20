@@ -46,7 +46,7 @@ beforeEach(() => {
   preference = { do_not_contact: false, reason: null, since: null }
   interactions = [{
     id: 1, channel: 'call', direction: 'outbound', outcome: 'interested', occurred_at: '2026-10-10T15:30:00-06:00', response: 'Pidió precios de llantas',
-    next_action: 'Enviar lista de precios', next_action_at: '2026-10-12T09:00:00-06:00', user: { id: 3, name: 'Vera' }, can_edit: true,
+    next_action: 'Enviar lista de precios', next_action_at: '2026-10-12T09:00:00-06:00', next_action_done_at: null, user: { id: 3, name: 'Vera' }, can_edit: true,
   }]
   document.cookie = 'XSRF-TOKEN=x'
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
@@ -81,6 +81,7 @@ beforeEach(() => {
     if (path.startsWith('/customers/types/') || path === '/customers/type') return { data: {} }
     if (path.startsWith('/companies')) return { data: [{ id: 1, code: 'A', name: 'Compañía Alfa', is_active: true }] }
     if (path.startsWith('/customers/interactions')) return { data: interactions, meta: { page: 1, has_more: false, contact_preference: preference } }
+    if (path.endsWith('/complete')) return { data: interactions[0] }
     if (path === '/customers/contact-preference') return { data: preference }
     if (path.startsWith('/customers/profile')) return { data: profile() }
     if (path.startsWith('/customers/purchases')) {
@@ -171,6 +172,21 @@ describe('seguimiento comercial', () => {
     expect(list).toHaveTextContent('Vera')
     expect(screen.queryByRole('button', { name: 'Registrar contacto' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Corregir contacto/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Marcar cumplida/ })).not.toBeInTheDocument()
+  })
+
+  it('marca como cumplida una próxima acción pendiente y muestra las cumplidas', async () => {
+    permissions = ['customers.view', 'interactions.manage']
+    interactions = [...interactions, { ...interactions[0], id: 2, next_action: 'Ya enviada', next_action_done_at: '2026-10-11T10:00:00-06:00' }]
+    const u = userEvent.setup()
+    renderProfile()
+
+    const list = await screen.findByRole('list', { name: 'Contactos con el cliente' })
+    expect(within(list).getAllByRole('button', { name: /Marcar cumplida/ })).toHaveLength(1)
+    expect(list).toHaveTextContent('Cumplida')
+    await u.click(within(list).getByRole('button', { name: /Marcar cumplida: Enviar lista de precios/ }))
+    await waitFor(() => expect(calls.some((c) => c.path === '/customers/interactions/1/complete' && c.method === 'PUT')).toBe(true))
+    expect(JSON.parse(calls.find((c) => c.path === '/customers/interactions/1/complete')?.body ?? '{}')).toEqual({ done: true })
   })
 
   it('registra un contacto con su próxima acción', async () => {

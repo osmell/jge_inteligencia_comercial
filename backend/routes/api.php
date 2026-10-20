@@ -67,7 +67,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
     // Seguimiento comercial: el vendedor y el supervisor registran contactos con sus clientes.
     Route::middleware(['permission:customers.view', 'permission:interactions.manage'])->prefix('customers')->group(function () {
+        Route::get('agenda', [CustomerInteractionController::class, 'agenda']);
         Route::post('interactions', [CustomerInteractionController::class, 'store']);
+        Route::put('interactions/{interaction}/complete', [CustomerInteractionController::class, 'complete'])->whereNumber('interaction');
         Route::put('interactions/{interaction}', [CustomerInteractionController::class, 'update'])->whereNumber('interaction');
         Route::put('contact-preference', [CustomerInteractionController::class, 'updatePreference']);
     });

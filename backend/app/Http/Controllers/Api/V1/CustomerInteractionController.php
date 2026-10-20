@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AgendaRequest;
+use App\Http\Requests\CompleteActionRequest;
 use App\Http\Requests\ContactPreferenceRequest;
 use App\Http\Requests\CustomerInteractionRequest;
 use App\Http\Requests\CustomersRequest;
@@ -10,6 +12,7 @@ use App\Models\Customer;
 use App\Models\CustomerInteraction;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\FollowUpAgenda;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +25,7 @@ class CustomerInteractionController extends Controller
 {
     private const PAGE_SIZE = 20;
 
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly FollowUpAgenda $agenda) {}
 
     public function index(CustomersRequest $request): JsonResponse
     {
@@ -51,6 +54,29 @@ class CustomerInteractionController extends Controller
         return response()->json(['data' => $this->present($interaction->load('user'), $request->user())], 201);
     }
 
+    public function agenda(AgendaRequest $request): JsonResponse
+    {
+        $result = $this->agenda->build($request->user(), $request->options());
+
+        return response()->json(['data' => ['overdue' => $result['overdue'], 'upcoming' => $result['upcoming'], 'reactivate' => $result['reactivate']], 'meta' => $result['meta']]);
+    }
+
+    /** Marca la próxima acción de un contacto como cumplida (o la reabre). */
+    public function complete(CompleteActionRequest $request, int $interaction): JsonResponse
+    {
+        $record = CustomerInteraction::query()->findOrFail($interaction);
+        $this->customerById($record->customer_id);
+        abort_if($record->next_action_at === null, 422, 'Este contacto no tiene una próxima acción.');
+
+        $done = $request->boolean('done');
+        if (($record->next_action_done_at !== null) !== $done) {
+            $record->forceFill(['next_action_done_at' => $done ? now() : null, 'next_action_done_by' => $done ? $request->user()->id : null])->save();
+            $this->audit->record($done ? 'customer_interactions.action_completed' : 'customer_interactions.action_reopened', $request->user(), auditable: $record, new: ['customer_id' => $record->customer_id, 'next_action' => $record->next_action], companyId: $record->company_id);
+        }
+
+        return response()->json(['data' => $this->present($record->load('user'), $request->user())]);
+    }
+
     /** Corrige un contacto: solo quien lo registró o quien gestiona clientes. */
     public function update(CustomerInteractionRequest $request, int $interaction): JsonResponse
     {
@@ -61,7 +87,13 @@ class CustomerInteractionController extends Controller
         $data = $request->safe()->only(['channel', 'direction', 'outcome', 'occurred_at', 'response', 'next_action', 'next_action_at']);
         $this->guardDoNotContact($customer, $data);
         $before = $this->audited($record);
-        $record->update($data);
+        $record->fill($data);
+        if ($record->isDirty(['next_action', 'next_action_at'])) {
+            // Cambiar la próxima acción la vuelve a dejar pendiente.
+            $record->next_action_done_at = null;
+            $record->next_action_done_by = null;
+        }
+        $record->save();
         if ($record->wasChanged(array_keys($data))) {
             $this->audit->record('customer_interactions.updated', $request->user(), auditable: $record, old: $before, new: $this->audited($record), companyId: $record->company_id);
         }
@@ -135,6 +167,7 @@ class CustomerInteractionController extends Controller
             'id' => $i->id, 'channel' => $i->channel, 'direction' => $i->direction, 'outcome' => $i->outcome,
             'occurred_at' => $i->occurred_at->toIso8601String(), 'response' => $i->response,
             'next_action' => $i->next_action, 'next_action_at' => $i->next_action_at?->toIso8601String(),
+            'next_action_done_at' => $i->next_action_done_at?->toIso8601String(),
             'user' => $i->user ? ['id' => $i->user->id, 'name' => $i->user->name] : null,
             'can_edit' => $viewer->hasPermission('interactions.manage') && $this->canEdit($i, $viewer),
         ];
