@@ -22,9 +22,10 @@ use Illuminate\Support\Carbon;
  * @property string|null $note
  * @property int|null $user_id
  * @property int|null $reverses_id
+ * @property int|null $credit_note_id
  * @property Carbon $created_at
  */
-#[Fillable(['company_id', 'credit_invoice_id', 'type', 'amount', 'occurred_on', 'method', 'reference', 'note', 'user_id', 'reverses_id', 'import_batch_id', 'created_at'])]
+#[Fillable(['company_id', 'credit_invoice_id', 'type', 'amount', 'occurred_on', 'method', 'reference', 'note', 'user_id', 'reverses_id', 'credit_note_id', 'import_batch_id', 'created_at'])]
 class CreditMovement extends Model
 {
     use Immutable;

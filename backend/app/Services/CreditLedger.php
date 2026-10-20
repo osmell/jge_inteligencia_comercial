@@ -31,7 +31,7 @@ class CreditLedger
     /**
      * Abono, nota de crédito o ajuste (con signo: positivo aumenta el saldo, negativo lo reduce).
      *
-     * @param  array{method?: string|null, reference?: string|null, note?: string|null}  $meta
+     * @param  array{method?: string|null, reference?: string|null, note?: string|null, credit_note_id?: int|null}  $meta
      */
     public function record(CreditInvoice $invoice, string $type, string $amount, CarbonInterface $occurredOn, User $user, array $meta = []): CreditMovement
     {
@@ -69,11 +69,11 @@ class CreditLedger
                 throw ValidationException::withMessages(['movement' => 'Este movimiento ya fue anulado.']);
             }
 
-            return $this->append($invoice, CreditMovement::REVERSAL, -Decimal::units((string) $movement->amount), now(), $user, ['note' => $note], $movement->id, locked: true);
+            return $this->append($invoice, CreditMovement::REVERSAL, -Decimal::units((string) $movement->amount), now(), $user, ['note' => $note, 'credit_note_id' => $movement->credit_note_id], $movement->id, locked: true);
         });
     }
 
-    /** @param  array{method?: string|null, reference?: string|null, note?: string|null}  $meta */
+    /** @param  array{method?: string|null, reference?: string|null, note?: string|null, credit_note_id?: int|null}  $meta */
     private function append(CreditInvoice $invoice, string $type, int $signed, CarbonInterface $occurredOn, User $user, array $meta, ?int $reverses = null, bool $locked = false): CreditMovement
     {
         $work = function (CreditInvoice $locked) use ($type, $signed, $occurredOn, $user, $meta, $reverses) {
@@ -95,9 +95,9 @@ class CreditLedger
                 'company_id' => $locked->company_id, 'credit_invoice_id' => $locked->id, 'type' => $type, 'amount' => Decimal::format($signed),
                 'occurred_on' => $reverses === null ? $occurredOn->toDateString() : now()->toDateString(),
                 'method' => $meta['method'] ?? null, 'reference' => $meta['reference'] ?? null, 'note' => $meta['note'] ?? null,
-                'user_id' => $user->id, 'reverses_id' => $reverses, 'created_at' => now(),
+                'user_id' => $user->id, 'reverses_id' => $reverses, 'credit_note_id' => $meta['credit_note_id'] ?? null, 'created_at' => now(),
             ]);
-            $this->audit->record('credit.movement_'.$type, $user, auditable: $movement, new: $movement->only(['credit_invoice_id', 'type', 'amount', 'occurred_on', 'method', 'reference', 'note', 'reverses_id']), companyId: $locked->company_id);
+            $this->audit->record('credit.movement_'.$type, $user, auditable: $movement, new: $movement->only(['credit_invoice_id', 'type', 'amount', 'occurred_on', 'method', 'reference', 'note', 'reverses_id', 'credit_note_id']), companyId: $locked->company_id);
 
             return $movement;
         };

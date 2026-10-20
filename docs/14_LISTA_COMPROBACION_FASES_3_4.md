@@ -172,3 +172,10 @@ Puntos a tener presentes al comparar:
 - [ ] Lista de fallos entregada (pantalla, usuario, pasos, esperado/obtenido).
 - [ ] Definido el formato de **devoluciones / notas de crédito** para poder descontarlas.
 - [ ] Fases 3 y 4 aceptadas, o lista de cambios pendientes acordada.
+
+### Crédito: abonos y notas de crédito (Fase 6, paso 3)
+- [ ] Otorgar `credit.payments` a quienes cobran y `credit.notes` solo a administrador y supervisor.
+- [ ] Registrar un abono repartido en dos facturas del mismo cliente: los saldos bajan y aparece en Auditoría.
+- [ ] Intentar un abono mayor al saldo: se rechaza y no queda ningún movimiento.
+- [ ] Registrar una nota de crédito (total = suma de lo aplicado) y repetir la misma serie/documento: se rechaza.
+- [ ] Anular un abono y una nota de crédito: los saldos vuelven y el original queda marcado como «Anulado».

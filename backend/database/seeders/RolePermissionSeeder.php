@@ -22,6 +22,8 @@ class RolePermissionSeeder extends Seeder
         'goals.manage' => 'Captura de metas de ventas',
         'interactions.manage' => 'Seguimiento de clientes (registrar contactos)',
         'credit.view' => 'Crédito y cobranzas (consulta de facturas y saldos)',
+        'credit.payments' => 'Crédito y cobranzas (registrar abonos)',
+        'credit.notes' => 'Crédito y cobranzas (registrar notas de crédito)',
     ];
 
     public function run(): void

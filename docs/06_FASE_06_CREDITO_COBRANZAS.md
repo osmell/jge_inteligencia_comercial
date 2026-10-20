@@ -42,7 +42,15 @@ Decisiones tomadas con esas respuestas: la nota de crédito se **captura en pant
 - **El saldo es la suma de los movimientos**; no existe forma de editarlo. `CreditLedger` ofrece abonos, notas de crédito, ajustes (con nota obligatoria) y **anulaciones** que crean un movimiento contrario enlazado (el original queda intacto y no se anula dos veces).
 - **Sin sobrepago:** ningún movimiento puede dejar el saldo en negativo; la fecha no puede ser anterior a la factura ni futura; la factura original no se anula. Cada movimiento queda en Auditoría (`credit.movement_*`) con usuario, importe, método y referencia.
 - Pantallas **Crédito** (`/credito`, permiso `credit.view`): facturas con total, saldo, antigüedad en texto y filtros por compañía, estado, tramo y texto; detalle con sus movimientos. Un vendedor solo ve las facturas que le corresponden como vendedor.
-- Los abonos y notas de crédito **se registran en el paso 3** (pantalla de captura); aquí queda el libro y las reglas ya probadas.
+
+### Paso 3 — Abonos y notas de crédito en pantalla (hecho)
+- Permisos nuevos, que se otorgan en «Roles y permisos» (no se dan solos): `credit.payments` (registrar y anular abonos) y `credit.notes` (registrar y anular notas de crédito; se asigna solo a administrador y supervisor). `credit.view` solo consulta.
+- En el detalle de una factura con saldo: **Registrar abono** y **Registrar nota de crédito**. La captura carga las facturas con saldo del mismo cliente (de la más antigua a la más reciente); se reparte a mano o con «Aplicar a las más antiguas».
+- **Abono:** fecha (no futura ni anterior a la factura), método obligatorio, referencia y nota; se puede repartir entre varias facturas del cliente.
+- **Nota de crédito:** fecha, serie, documento, subtotal, impuesto, total y observaciones. Subtotal + impuesto = total, y **lo aplicado a las facturas debe ser igual al total**: un excedente no se acepta como saldo. Se guarda en `credit_notes` (inmutable, única por compañía + serie + documento).
+- **Todo o nada:** si una parte supera el saldo de su factura (sobrepago) no se registra ninguna. Cada movimiento y cada nota quedan en Auditoría.
+- **Anulación:** un abono se anula solo (con motivo); una nota de crédito se anula completa en todas las facturas que tocó. El original se conserva marcado como «Anulado». Los ajustes no se anulan por pantalla.
+- **Pendiente de decidir:** que la nota de crédito descuente también de las ventas del cliente (tablero, rankings) no está hecho: la nota no trae líneas por producto, así que habría que definir cómo se muestra (p. ej. un renglón aparte «Devoluciones» por cliente y compañía).
 
 ### Pendiente
-3. Abonos y notas de crédito en pantalla (la nota solo para administrador y supervisor; descuenta de las ventas del cliente). 4. Antigüedad de cartera y reportes. 5. Promesas de pago. 6. Scoring.
+4. Antigüedad de cartera y reportes. 5. Promesas de pago. 6. Scoring.

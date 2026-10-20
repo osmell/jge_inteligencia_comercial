@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import CreditDetailPage from './pages/CreditDetailPage'
 import CreditPage from './pages/CreditPage'
-import { bucketLabel, type CreditInvoiceDetail, type CreditInvoiceRow, type CreditList } from './lib/credit'
+import { allocateOldestFirst, bucketLabel, type CreditInvoiceDetail, type CreditInvoiceRow, type CreditList } from './lib/credit'
 
 const row = (o: Partial<CreditInvoiceRow> = {}): CreditInvoiceRow => ({
   id: 1, company_id: 1, company: 'Compañía Alfa', document: 'FC-D-3088', issued_on: '2026-09-10', customer: { code: '3892', name: 'LYDIA LUDIC' }, seller: 'IRIS',
@@ -13,11 +13,15 @@ const row = (o: Partial<CreditInvoiceRow> = {}): CreditInvoiceRow => ({
 })
 
 let calls: string[]
+let posts: { path: string; body: Record<string, unknown> }[]
+let permissions: string[]
 let list: CreditList
 let detail: CreditInvoiceDetail
 
 beforeEach(() => {
   calls = []
+  posts = []
+  permissions = ['credit.view']
   document.cookie = 'XSRF-TOKEN=x'
   list = {
     data: [row(), row({ id: 2, document: 'FC-D-3089', balance: '100.00', bucket: 'current', age_days: 0, issued_on: '2026-10-20', customer: { code: '1', name: 'Taller Pérez' } }), row({ id: 3, document: 'FC-D-3090', balance: '0.00', bucket: null, paid: '1035.00' })],
@@ -31,11 +35,16 @@ beforeEach(() => {
       { id: 3, type: 'reversal', amount: '250.00', occurred_on: '2026-09-21', method: null, reference: null, note: 'Error de captura', user: 'Ana', reverses_id: 2, reversed: false },
     ],
   }
-  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     const path = url.replace('http://localhost:8000/api/v1', '')
     calls.push(path)
+    if (init?.method === 'POST') {
+      posts.push({ path, body: JSON.parse(String(init.body)) })
+      return new Response(JSON.stringify({ data: {} }), { status: 201 })
+    }
     let body: unknown = { data: [] }
-    if (path === '/auth/me') body = { data: { id: 3, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions: ['credit.view'], companies: [], branches: [] } }
+    if (path === '/auth/me') body = { data: { id: 3, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
+    else if (path.startsWith('/credit/open-invoices')) body = { data: [{ id: 1, document: 'FC-D-3088', issued_on: '2026-09-10', total: '1035.00', balance: '785.00' }, { id: 5, document: 'FC-D-3095', issued_on: '2026-10-01', total: '500.00', balance: '500.00' }] }
     else if (path.startsWith('/credit/invoices/1')) body = { data: detail }
     else if (path.startsWith('/credit/invoices')) body = list
     else if (path.startsWith('/companies')) body = { data: [{ id: 1, code: 'A', name: 'Compañía Alfa', is_active: true }] }
@@ -105,5 +114,81 @@ describe('crédito y cobranzas', () => {
     expect(table).toHaveTextContent('Anulado')
     expect(table).toHaveTextContent('Error de captura')
     expect(screen.getByText(/un error se corrige con una anulación/)).toBeInTheDocument()
+  })
+
+  it('reparte un importe de la factura más antigua a la más reciente sin pasar del saldo', () => {
+    const open = [{ id: 1, document: 'A', issued_on: '', total: '', balance: '785.00' }, { id: 2, document: 'B', issued_on: '', total: '', balance: '500.00' }]
+    expect(allocateOldestFirst(open, 8000000)).toEqual({ 1: '785', 2: '15' })
+    expect(allocateOldestFirst(open, 1000000)).toEqual({ 1: '100' })
+  })
+
+  it('sin permisos de cobro no ofrece registrar ni anular', async () => {
+    renderDetail()
+
+    await screen.findByRole('heading', { name: 'Factura de crédito FC-D-3088' })
+    expect(screen.queryByRole('button', { name: 'Registrar abono' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Registrar nota de crédito' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Anular' })).not.toBeInTheDocument()
+  })
+
+  it('registra un abono repartido entre facturas del cliente', async () => {
+    permissions = ['credit.view', 'credit.payments']
+    const u = userEvent.setup()
+    renderDetail()
+
+    await u.click(await screen.findByRole('button', { name: 'Registrar abono' }))
+    const dialog = await screen.findByRole('dialog')
+    const first = await within(dialog).findByLabelText('Importe a aplicar a FC-D-3088')
+    expect(first).toHaveValue('785')
+    await u.clear(first)
+    await u.type(within(dialog).getByLabelText('Repartir importe'), '900')
+    await u.click(within(dialog).getByRole('button', { name: 'Aplicar a las más antiguas' }))
+    expect(within(dialog).getByLabelText('Importe a aplicar a FC-D-3095')).toHaveValue('115')
+    await u.selectOptions(within(dialog).getByLabelText('Método'), 'transferencia')
+    await u.type(within(dialog).getByLabelText('Referencia'), 'T-9')
+    await u.click(within(dialog).getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(posts).toHaveLength(1))
+    expect(posts[0].path).toBe('/credit/payments')
+    expect(posts[0].body).toMatchObject({ company_id: 1, code: '3892', method: 'transferencia', reference: 'T-9', allocations: [{ invoice_id: 1, amount: '785' }, { invoice_id: 5, amount: '115' }] })
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  it('la nota de crédito exige que lo aplicado sea igual a su total', async () => {
+    permissions = ['credit.view', 'credit.notes']
+    const u = userEvent.setup()
+    renderDetail()
+
+    await u.click(await screen.findByRole('button', { name: 'Registrar nota de crédito' }))
+    const dialog = await screen.findByRole('dialog')
+    await within(dialog).findByLabelText('Importe a aplicar a FC-D-3088')
+    await u.type(within(dialog).getByLabelText('Serie'), 'NC')
+    await u.type(within(dialog).getByLabelText('Documento'), '77')
+    await u.type(within(dialog).getByLabelText('Subtotal'), '200')
+    await u.type(within(dialog).getByLabelText('Impuesto'), '30')
+    await u.type(within(dialog).getByLabelText('Total'), '230')
+    expect(within(dialog).getByText(/Debe ser igual al total de la nota/)).toBeInTheDocument()
+
+    await u.click(within(dialog).getByRole('button', { name: 'Aplicar a las más antiguas' }))
+    expect(within(dialog).queryByText(/Debe ser igual al total de la nota/)).not.toBeInTheDocument()
+    await u.click(within(dialog).getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(posts).toHaveLength(1))
+    expect(posts[0].path).toBe('/credit/credit-notes')
+    expect(posts[0].body).toMatchObject({ series: 'NC', number: '77', subtotal: '200', tax_total: '30', total: '230', allocations: [{ invoice_id: 1, amount: '230' }] })
+  })
+
+  it('anula un abono con su motivo', async () => {
+    permissions = ['credit.view', 'credit.payments']
+    detail = { ...detail, movements: detail.movements.map((m) => (m.id === 2 ? { ...m, reversed: false } : m)) }
+    const u = userEvent.setup()
+    renderDetail()
+
+    await u.click(await screen.findByRole('button', { name: 'Anular' }))
+    const dialog = await screen.findByRole('dialog')
+    await u.type(within(dialog).getByLabelText('Motivo de la anulación'), 'Error de captura')
+    await u.click(within(dialog).getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(posts).toEqual([{ path: '/credit/movements/2/reverse', body: { note: 'Error de captura' } }]))
   })
 })

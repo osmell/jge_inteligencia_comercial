@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CreditInvoiceController;
+use App\Http\Controllers\Api\V1\CreditSettlementController;
 use App\Http\Controllers\Api\V1\CustomerAssignmentController;
 use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerInteractionController;
@@ -71,6 +72,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::middleware('permission:credit.view')->prefix('credit')->group(function () {
         Route::get('invoices', [CreditInvoiceController::class, 'index']);
         Route::get('invoices/{invoice}', [CreditInvoiceController::class, 'show'])->whereNumber('invoice');
+        Route::get('open-invoices', [CreditSettlementController::class, 'openInvoices']);
+        Route::post('payments', [CreditSettlementController::class, 'payment'])->middleware('permission:credit.payments');
+        Route::post('credit-notes', [CreditSettlementController::class, 'creditNote'])->middleware('permission:credit.notes');
+        Route::post('movements/{movement}/reverse', [CreditSettlementController::class, 'reverse'])->whereNumber('movement');
     });
 
     // Cotizaciones: consulta con permiso de clientes; alta y cambios con el permiso de seguimiento.
