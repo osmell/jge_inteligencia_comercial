@@ -293,3 +293,22 @@ export interface Agenda {
   data: { overdue: AgendaAction[]; upcoming: AgendaAction[]; reactivate: ReactivateRow[] }
   meta: { overdue_total: number; upcoming_total: number; reactivate_total: number; horizon_days: number; no_contact_days: number; truncated: boolean }
 }
+
+export interface FollowUpKpis {
+  period: { from: string; to: string }
+  contacts: {
+    total: number; outbound: number; inbound: number; customers: number; effective: number; effective_pct: number | null
+    by_channel: Partial<Record<InteractionChannel, number>>; by_outcome: Partial<Record<InteractionOutcome, number>>
+  }
+  actions: { on_time: number; late: number; open_overdue: number; upcoming: number; due: number; on_time_pct: number | null; completed_pct: number | null }
+  customers: { new: number; recovered: number; inactive_days: number }
+  quotations: {
+    issued: number; issued_amount: string; converted: number; converted_amount: string; accepted_without_invoice: number; rejected: number
+    cancelled: number; expired: number; open: number; conversion_pct: number | null; amount_conversion_pct: number | null
+    avg_days_to_convert: number | null; loss_reasons: Partial<Record<string, number>>
+  }
+  by_user: {
+    user: { id: number; name: string }; contacts: number; customers: number; effective: number; actions_due: number; actions_completed: number
+    actions_open_overdue: number; compliance_pct: number | null; quotations_issued: number; quotations_converted: number; conversion_pct: number | null
+  }[]
+}

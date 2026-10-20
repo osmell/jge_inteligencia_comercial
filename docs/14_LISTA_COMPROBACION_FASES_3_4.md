@@ -99,6 +99,14 @@ Para **cada** pantalla de las secciones 2 a 6, comprueba:
 - [ ] Un vendedor solo ve las cotizaciones de sus clientes; sin `interactions.manage` solo consulta.
 - [ ] Un cliente «no contactar» no permite marcar la cotización como enviada.
 
+### Indicadores de seguimiento (`/seguimiento`, Fase 5 paso 4)
+- [ ] Contactos del periodo = los registrados en las fichas en esas fechas (el día final incluido); «efectivos» no incluye sin respuesta ni contacto incorrecto.
+- [ ] Cumplimiento: una acción cerrada el mismo día programado cuenta «a tiempo»; las que aún no vencen no bajan el porcentaje.
+- [ ] Clientes nuevos y recuperados: contrasta 2 o 3 clientes con sus fechas de compra en la ficha.
+- [ ] Conversión: cuenta las cotizaciones **emitidas** en el periodo; solo las que tienen factura vinculada son «convertidas»; las abiertas salen aparte.
+- [ ] Un vendedor solo ve cifras de sus clientes; un supervisor, las de su equipo (vendedores donde figura como supervisor) y lo que él registró.
+- [ ] La pantalla se ve completa en móvil y un periodo invertido avisa sin consultar.
+
 ## 4b. Productos (`/productos`)
 
 - [ ] Tarjetas de cobertura: productos en catálogo, vendidos en 12 meses, vendidos sin catálogo y % de venta con catálogo; aviso si faltan productos.

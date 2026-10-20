@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\CustomerInteraction;
-use App\Models\Role;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,7 +22,7 @@ class FollowUpAgenda
 
     public const REACTIVATE_LIMIT = 50;
 
-    public function __construct(private readonly CustomerActivity $activity) {}
+    public function __construct(private readonly CustomerActivity $activity, private readonly FollowUpScope $scope) {}
 
     /**
      * @param  array{company_id?: int|null, seller_id?: int|null, mine?: bool, horizon_days: int, no_contact_days: int}  $opts
@@ -49,28 +48,6 @@ class FollowUpAgenda
         ];
     }
 
-    /** @param  Builder<Customer>  $query  @param  array<string, mixed>  $opts */
-    private function filterCustomers(Builder $query, array $opts): void
-    {
-        if (! empty($opts['company_id'])) {
-            $query->where('customers.company_id', $opts['company_id']);
-        }
-        if (! empty($opts['seller_id'])) {
-            $query->where('customers.seller_id', $opts['seller_id']);
-        }
-    }
-
-    /** @param  Builder<Customer>  $query */
-    private function team(Builder $query, User $user): void
-    {
-        $query->whereIn('customers.seller_id', DB::table('sellers')->where('supervisor_id', $user->id)->select('id'));
-    }
-
-    private function isSupervisor(User $user): bool
-    {
-        return $user->role->slug === Role::SUPERVISOR_VENTAS;
-    }
-
     /**
      * @param  array<string, mixed>  $opts
      * @return Collection<int, CustomerInteraction>
@@ -80,14 +57,11 @@ class FollowUpAgenda
         $query = CustomerInteraction::query()->with(['customer.seller', 'user'])
             ->whereNotNull('next_action_at')->whereNull('next_action_done_at')
             ->where('next_action_at', '<', $now->addDays($opts['horizon_days'])->endOfDay())
-            ->whereHas('customer', fn (Builder $q) => $this->filterCustomers($q, $opts))
             ->when(! empty($opts['mine']), fn (Builder $q) => $q->where('user_id', $user->id))
             ->orderBy('next_action_at')->orderBy('id')
             ->limit(self::LIMIT * 2 + 1);
 
-        if ($this->isSupervisor($user)) {
-            $query->where(fn (Builder $q) => $q->whereHas('customer', fn (Builder $c) => $this->team($c, $user))->orWhere('user_id', $user->id));
-        }
+        $this->scope->restrict($query, $user, $opts);
 
         return $query->get();
     }
@@ -101,8 +75,8 @@ class FollowUpAgenda
     private function reactivate(User $user, array $opts, CarbonImmutable $now): array
     {
         $customers = Customer::query()->with(['seller', 'company'])->where('do_not_contact', false)
-            ->tap(fn (Builder $q) => $this->filterCustomers($q, $opts))
-            ->when($this->isSupervisor($user), fn (Builder $q) => $this->team($q, $user))
+            ->tap(fn (Builder $q) => $this->scope->filterCustomers($q, $opts))
+            ->when($this->scope->isSupervisor($user), fn (Builder $q) => $this->scope->team($q, $user))
             ->get();
         if ($customers->isEmpty()) {
             return [];

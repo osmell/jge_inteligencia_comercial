@@ -57,5 +57,13 @@ El vendedor registra actividad, resultado y siguiente acción; adjunta cotizaci�
 - **Infraestructura:** PHP del contenedor admitía solo 2 MB por archivo; se agregó `backend/docker/uploads.ini` (20 MB por archivo, 24 MB por petición, cubre también las importaciones de 20 MB). **Hay que reconstruir la imagen:** `docker compose build backend queue` y volver a levantar.
 - Auditoría: `quotations.created|updated|status_changed|linked|unlinked|attachment_added|attachment_removed`.
 
-### Pendiente
-4. KPI: contactos, cumplimiento, clientes nuevos y recuperados, y conversión por cohorte (usa el historial de estados de las cotizaciones).
+### Paso 4 — Indicadores de seguimiento (hecho)
+- Pantalla **Seguimiento** (`/seguimiento`, permisos `customers.view` + `interactions.manage`) y API `GET customers/follow-up-kpis?from&to[&company_id&seller_id]` (periodo máximo de 366 días; por defecto la pantalla propone los últimos 30). Mismo alcance que la agenda (vendedor: sus clientes; supervisor: su equipo y lo que registró; resto: su ámbito).
+- **Contactos:** total, iniciados por el vendedor o por el cliente, clientes distintos contactados, por canal y por resultado. *Efectivo* = se habló con el cliente (se habló, interesado, pidió cotización, pidió que se le vuelva a contactar, no interesado); no cuentan «sin respuesta» ni «contacto incorrecto».
+- **Cumplimiento:** acciones programadas dentro del periodo. *Vencidas* = ya pasó su día. *A tiempo* = cerrada a más tardar el final del día programado; *tarde* = cerrada después; *sin cumplir* = abierta y vencida; *próximas* = aún no vencen (no entran en el porcentaje).
+- **Cartera:** clientes **nuevos** (primera compra dentro del periodo y posterior al inicio del historial cargado) y **recuperados** (compraron en el periodo tras más días sin comprar que el plazo de «inactivo» vigente; un cliente nuevo no se cuenta como recuperado). Describe la cartera: **no se atribuye ninguna venta a un contacto o cotización**.
+- **Conversión de cotizaciones por cohorte (propuesta aprobada):** elegibles = **todas las emitidas en el periodo** (los borradores no entran). Conversión = convertidas (con factura vinculada) / emitidas, y por importe. Las **abiertas** (vigentes y aceptadas sin factura) se muestran aparte porque la tasa todavía puede subir; también rechazadas, vencidas, canceladas, motivos de pérdida y días promedio hasta la conversión.
+- **Por usuario:** contactos, clientes, efectivos, acciones vencidas y cumplimiento, cotizaciones emitidas y convertidas, asignados a quien los registró.
+
+### Fase 5 completa
+Pendiente de la fase solo la validación con datos reales y la revisión visual (ver `docs/14_LISTA_COMPROBACION_FASES_3_4.md`).

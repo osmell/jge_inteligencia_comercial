@@ -8,11 +8,14 @@ use App\Http\Requests\CompleteActionRequest;
 use App\Http\Requests\ContactPreferenceRequest;
 use App\Http\Requests\CustomerInteractionRequest;
 use App\Http\Requests\CustomersRequest;
+use App\Http\Requests\FollowUpKpisRequest;
 use App\Models\Customer;
 use App\Models\CustomerInteraction;
 use App\Models\User;
 use App\Services\AuditLogger;
 use App\Services\FollowUpAgenda;
+use App\Services\FollowUpKpis;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
@@ -25,7 +28,7 @@ class CustomerInteractionController extends Controller
 {
     private const PAGE_SIZE = 20;
 
-    public function __construct(private readonly AuditLogger $audit, private readonly FollowUpAgenda $agenda) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly FollowUpAgenda $agenda, private readonly FollowUpKpis $kpis) {}
 
     public function index(CustomersRequest $request): JsonResponse
     {
@@ -59,6 +62,13 @@ class CustomerInteractionController extends Controller
         $result = $this->agenda->build($request->user(), $request->options());
 
         return response()->json(['data' => ['overdue' => $result['overdue'], 'upcoming' => $result['upcoming'], 'reactivate' => $result['reactivate']], 'meta' => $result['meta']]);
+    }
+
+    public function kpis(FollowUpKpisRequest $request): JsonResponse
+    {
+        $data = $this->kpis->build($request->user(), CarbonImmutable::parse($request->input('from')), CarbonImmutable::parse($request->input('to')), $request->options());
+
+        return response()->json(['data' => $data]);
     }
 
     /** Marca la próxima acción de un contacto como cumplida (o la reabre). */

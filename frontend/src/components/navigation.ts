@@ -1,4 +1,4 @@
-import { BarChart3, CalendarCheck, FileText, Contact, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
+import { BarChart3, CalendarCheck, ClipboardList, FileText, Contact, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -22,6 +22,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/metas', label: 'Metas', icon: Target, permission: 'sales.view' },
       { to: '/clientes', label: 'Clientes', icon: Contact, permission: 'customers.view' },
       { to: '/agenda', label: 'Agenda', icon: CalendarCheck, permission: 'interactions.manage' },
+      { to: '/seguimiento', label: 'Seguimiento', icon: ClipboardList, permission: 'interactions.manage' },
       { to: '/cotizaciones', label: 'Cotizaciones', icon: FileText, permission: 'customers.view' },
       { to: '/productos', label: 'Productos', icon: Package, permission: 'sales.view' },
     ],
