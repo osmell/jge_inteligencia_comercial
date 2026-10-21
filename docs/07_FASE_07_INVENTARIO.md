@@ -36,3 +36,11 @@ Los pasos 1 y 2 no dependen de las plantillas y pueden avanzar ya; del 3 en adel
 5. **Salidas desde ventas.** Cada línea de venta genera su salida de forma idempotente (también al importar ventas anteriores a la fecha de corte: se ignoran), con aviso de saldos negativos para conciliar.
 6. **Devoluciones, traslados y ajustes.** Captura en pantalla con motivo, autorización y auditoría; reversas sin borrar historia.
 7. **Reportes de rotación y cobertura.** Rotación, cobertura en días, productos sin movimiento y mínimos/máximos con alertas, según las respuestas.
+
+## Respuestas recibidas (responsable)
+- **Unidad de referencia: galón.** Hay equivalencias desde barril, cubeta, litro, octavo, 1/16, 1/32 y 1/64. Habrá otras unidades sin equivalencia (cada producto conserva su propia unidad base).
+- **Inventario inicial** (Excel): Fecha Corte, Código Producto, Unidad de Medida, Cantidad, Sucursal, Compañía.
+- **Entradas** (Excel): Fecha, Documento, Proveedor, Sucursal, Compañía, Código Producto, Unidad Medida, Costo, Descuento, Sub Total, Iva, Total, Observaciones. *(No trae columna de cantidad: pendiente.)*
+- **No se permiten existencias negativas.** Valuación por **costo promedio ponderado**. **Los costos los ve el administrador.**
+- Rotación, máximos y mínimos: los propone el sistema (ver propuesta).
+- No hay inventario real: se hará una **toma de prueba** (datos de demostración) para validar y presentar la demo.
