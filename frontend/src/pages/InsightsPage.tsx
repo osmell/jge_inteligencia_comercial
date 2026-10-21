@@ -106,6 +106,7 @@ export default function InsightsPage() {
         <Link className="text-jge-blue hover:underline" to="/inteligencia/alertas">Recomendaciones →</Link>
         <Link className="text-jge-blue hover:underline" to="/inteligencia/venta-cruzada">Venta cruzada →</Link>
         {user?.role.slug !== 'vendedor' && <Link className="text-jge-blue hover:underline" to="/inteligencia/concentracion">Concentración y cohortes →</Link>}
+        {user?.role.slug !== 'vendedor' && <Link className="text-jge-blue hover:underline" to="/inteligencia/estacionalidad">Estacionalidad →</Link>}
       </p>
 
       <div className="grid gap-4 lg:grid-cols-2" aria-busy={status.loading}>

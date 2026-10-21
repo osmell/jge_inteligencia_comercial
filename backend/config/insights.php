@@ -35,6 +35,8 @@ return [
 
         'seasonality.min_history_months' => ['group' => 'Estacionalidad', 'label' => 'Historial mínimo', 'unit' => 'meses', 'default' => 24, 'min' => 12, 'max' => 60, 'help' => 'Un índice por mes del año necesita al menos dos años para no confundir tendencia con temporada.'],
 
+        'seasonality.top_lines' => ['group' => 'Estacionalidad', 'label' => 'Líneas que se analizan', 'unit' => 'líneas', 'default' => 10, 'min' => 1, 'max' => 50, 'help' => 'Cuántas líneas (Nivel 2 del catálogo) con más venta tienen su propio índice estacional.'],
+        'seasonality.marked_points' => ['group' => 'Estacionalidad', 'label' => 'Estacionalidad marcada', 'unit' => 'puntos de índice', 'default' => 20, 'min' => 5, 'max' => 100, 'help' => 'Diferencia entre el mejor y el peor mes para considerar que hay una temporada marcada.'],
         'cross_sell.period_months' => ['group' => 'Venta cruzada', 'label' => 'Periodo de análisis', 'unit' => 'meses', 'default' => 12, 'min' => 3, 'max' => 36, 'help' => 'Meses de ventas sobre los que se buscan asociaciones entre categorías.'],
         'cross_sell.level' => ['group' => 'Venta cruzada', 'label' => 'Nivel de análisis (1 = línea, 2 = categoría)', 'unit' => '1 o 2', 'default' => 2, 'min' => 1, 'max' => 2, 'help' => 'Si las asociaciones se buscan entre líneas (Nivel 2 del catálogo) o entre categorías (Nivel 3).'],
         'cross_sell.max_per_customer' => ['group' => 'Venta cruzada', 'label' => 'Oportunidades por cliente', 'unit' => 'oportunidades', 'default' => 3, 'min' => 1, 'max' => 10, 'help' => 'Máximo de oportunidades que se guardan por cliente, las de mayor confianza.'],

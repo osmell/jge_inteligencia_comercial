@@ -10,6 +10,7 @@ import InsightsConcentrationPage from './pages/InsightsConcentrationPage'
 import InsightsAlertsPage from './pages/InsightsAlertsPage'
 import InsightsCrossSellPage from './pages/InsightsCrossSellPage'
 import InsightsPage from './pages/InsightsPage'
+import InsightsSeasonalityPage from './pages/InsightsSeasonalityPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
 
 let permissions: string[]
@@ -21,6 +22,7 @@ let urls: string[]
 let crossRun: unknown
 let concentration: unknown
 let cohorts: unknown
+let seasonality: unknown
 
 beforeEach(() => {
   permissions = ['insights.view']
@@ -35,6 +37,15 @@ beforeEach(() => {
   })
   crossRun = { id: 9, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2025-10-21', period_to: '2026-10-20', note: null, customers: 40, rules: 2, opportunities: 10, level: 'categoría', parameters: { 'cross_sell.min_support_customers': 20, 'cross_sell.min_confidence_pct': 30 } }
   concentration = { id: 5, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2025-10-21', period_to: '2026-10-20', note: null, parameters: {}, summary: { alert_pct: 15, customers: block('Cliente'), products: block('Producto') } }
+  seasonality = {
+    id: 11, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2024-02-01', period_to: '2026-06-30', note: null, parameters: {},
+    summary: {
+      months: 29, first_month: '2024-02', last_month: '2026-06', marked_points: 20,
+      company: { indices: [80, 80, 90, 100, 100, 110, 110, 100, 90, 100, 120, 120], observations: [2, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2], peak: 11, trough: 1, amplitude: 40, marked: true },
+      lines: [{ name: 'Línea B', indices: Array(12).fill(100), observations: Array(12).fill(2), peak: 1, trough: 2, amplitude: 1.2, marked: false }],
+      yoy: [{ month: '2026-06', value: '1600.00', previous: '1490.00', change_pct: 7.4 }],
+    },
+  }
   cohorts = {
     id: 6, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2026-01-10', period_to: '2026-08-10', note: null, parameters: {},
     summary: { depth: 3, first_month: '2026-01', last_month: '2026-08', cohorts: [
@@ -79,6 +90,7 @@ beforeEach(() => {
       ], meta: { run: crossRun } }
     } else if (path.startsWith('/insights/concentration')) body = { data: concentration }
     else if (path.startsWith('/insights/cohorts')) body = { data: cohorts }
+    else if (path.startsWith('/insights/seasonality')) body = { data: seasonality }
     else if (path === '/companies') body = { data: [{ id: 1, code: 'A', name: 'Alfa', is_active: true }] }
     else if (path.startsWith('/insights/rfm/customer')) {
       body = { data: path.includes('NADIE') ? null : { code: 'C25', name: 'Cliente C25', segment: 'champion', segment_label: 'Campeones', first_purchase: '2026-04-01', last_purchase: '2026-10-19', recency_days: 1, frequency: 25, gross: '2500.0000', returns: '0.0000', monetary: '2500.0000', r: 5, f: 5, m: 5, explanation: 'Compró por última vez hace 1 días (recencia 5/5).' }, meta: { run } }
@@ -353,5 +365,35 @@ describe('inteligencia comercial', () => {
     render(<AuthProvider><MemoryRouter><CustomerAlerts companyId="1" code="C05" /></MemoryRouter></AuthProvider>)
     await waitFor(() => expect(urls.some((x) => x.includes('code=C05'))).toBe(true))
     expect(screen.queryByText('Recomendaciones del cliente')).not.toBeInTheDocument()
+  })
+
+  it('la estacionalidad muestra el índice por mes, la lectura por línea y la comparación anual', async () => {
+    render(<AuthProvider><MemoryRouter><InsightsSeasonalityPage /></MemoryRouter></AuthProvider>)
+
+    expect(await screen.findByText(/Temporada marcada: mejor mes/)).toHaveTextContent('Noviembre')
+    const months = await screen.findByRole('table', { name: 'Índice estacional por mes' })
+    expect(within(months).getByText('Enero').closest('tr')).toHaveTextContent('-20 %')
+    expect(within(months).getByText('Enero').closest('tr')).toHaveTextContent('Más bajo')
+    expect(screen.getByRole('table', { name: 'Índice estacional por línea' })).toHaveTextContent('Sin temporada marcada')
+    expect(screen.getByRole('table', { name: 'Comparación con el mismo mes del año anterior' })).toHaveTextContent('+7,4 %')
+    expect(screen.getByText(/29 meses completos de ventas/)).toBeInTheDocument()
+    expect(screen.getByText(/Describe el pasado; no es una predicción/)).toBeInTheDocument()
+  })
+
+  it('sin 24 meses de historial la estacionalidad lo explica y no muestra índices', async () => {
+    seasonality = { id: 12, status: 'insufficient', computed_at: '2026-10-20T02:00:00Z', period_from: null, period_to: null, note: 'Historial insuficiente para calcular la estacionalidad.', summary: null, parameters: {} }
+    render(<AuthProvider><MemoryRouter><InsightsSeasonalityPage /></MemoryRouter></AuthProvider>)
+
+    expect(await screen.findByText(/necesita al menos 24 meses de ventas/)).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Índice estacional por mes' })).not.toBeInTheDocument()
+  })
+
+  it('recalcular la estacionalidad requiere el permiso de gestión', async () => {
+    permissions = ['insights.view', 'insights.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InsightsSeasonalityPage /></MemoryRouter></AuthProvider>)
+
+    await u.click(await screen.findByRole('button', { name: 'Recalcular' }))
+    await waitFor(() => expect(posts).toEqual(['/insights/seasonality/recalculate']))
   })
 })

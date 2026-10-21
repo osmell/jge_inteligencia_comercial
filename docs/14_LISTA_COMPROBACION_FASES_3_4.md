@@ -262,3 +262,8 @@ Puntos a tener presentes al comparar:
 - [ ] Crear una acción desde una recomendación: aparece en la Agenda como próxima acción y NO aumenta los contactos en Seguimiento (indicadores).
 - [ ] Un cliente «no contactar» no permite crear la acción.
 - [ ] Un vendedor ve y cierra solo las recomendaciones de sus clientes; un supervisor, las de su ámbito.
+
+### Inteligencia comercial: estacionalidad (Fase 8, paso 4)
+- [ ] Con 24 meses o más de ventas reales, comparar el mejor y el peor mes del índice con lo que gerencia conoce de la temporada del negocio.
+- [ ] Con menos de 24 meses, la pantalla dice que falta historial y no muestra índices.
+- [ ] Revisar las líneas analizadas: las de mayor venta del catálogo, sin «Sin clasificar».

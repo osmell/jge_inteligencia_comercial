@@ -88,5 +88,14 @@ Pantalla **Recomendaciones** (`/inteligencia/alertas`, `insights.view`) y secci�
 - **Alcance:** cada usuario ve y gestiona las recomendaciones de los clientes que puede ver (un vendedor, las suyas).
 - Los parámetros y las reglas de cada análisis se consultan en Inteligencia; los análisis sin historial suficiente no generan recomendaciones.
 
+
+## Paso 4 — Estacionalidad (hecho; se activa con 24 meses de historial)
+Pantalla `/inteligencia/estacionalidad` (`insights.view`; no disponible para vendedores, porque son cifras de toda la compañía). Se calcula cada noche (`insights:refresh`) o con «Recalcular» (`insights.manage`).
+- **Qué muestra:** un **índice por mes del año** (100 = el mes promedio; 120 = 20 % por encima) para toda la compañía y para las **10 líneas con más venta** (`seasonality.top_lines`, líneas = Nivel 2 del catálogo), con el mejor y el peor mes, y si la temporada es **marcada** (diferencia de 20 puntos o más entre el mejor y el peor mes; `seasonality.marked_points`).
+- **Cómo se calcula, sin confundir temporada con crecimiento:** sobre la venta neta mensual de los **meses completos** (se descartan el primer y el último mes del historial), se quita primero la **tendencia lineal** de la serie; el índice de cada mes del año es el promedio de esos cocientes, escalado para que los doce promedien 100. Cada mes del año necesita **al menos dos observaciones** (por eso hacen falta ~24 meses); una línea necesita venta en al menos 18 meses.
+- **Comparación con el mismo mes del año anterior** para los últimos 12 meses completos.
+- **Historial suficiente:** 24 meses (`seasonality.min_history_months`). Con menos, el cálculo queda registrado como «insuficiente» y la pantalla lo explica; **no se muestra ningún índice**. Con los 12 meses de la demostración aparece así.
+- Describe el pasado; **no es una predicción** y no dispara ninguna acción. La venta es neta de impuestos y no descuenta devoluciones.
+
 ## Fase 8 completa en código
-Falta el paso 4 (estacionalidad), que se activa por sí solo cuando haya 24 meses de historial, y validar todo con datos reales y las respuestas del cuestionario (`16_PREGUNTAS_FASE_08_INTELIGENCIA.md`).
+Falta validarla con datos reales y con las respuestas del cuestionario (`16_PREGUNTAS_FASE_08_INTELIGENCIA.md`): historial disponible, umbrales de alerta y quién ve qué.

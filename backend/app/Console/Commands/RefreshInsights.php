@@ -9,6 +9,7 @@ use App\Services\ConcentrationAnalysis;
 use App\Services\CrossSellAnalysis;
 use App\Services\InactivityRiskAnalysis;
 use App\Services\RfmSegmentation;
+use App\Services\SeasonalityAnalysis;
 use Illuminate\Console\Command;
 
 class RefreshInsights extends Command
@@ -17,11 +18,11 @@ class RefreshInsights extends Command
 
     protected $description = 'Recalcula la inteligencia comercial (RFM, concentración, cohortes, venta cruzada, riesgo de inactividad y cambios anormales) de las compañías activas; cada cálculo queda registrado.';
 
-    public function handle(RfmSegmentation $rfm, ConcentrationAnalysis $concentration, CohortAnalysis $cohorts, CrossSellAnalysis $crossSell, InactivityRiskAnalysis $inactivity, AnomalyAnalysis $anomalies): int
+    public function handle(RfmSegmentation $rfm, ConcentrationAnalysis $concentration, CohortAnalysis $cohorts, CrossSellAnalysis $crossSell, InactivityRiskAnalysis $inactivity, AnomalyAnalysis $anomalies, SeasonalityAnalysis $seasonality): int
     {
         $companies = Company::withoutGlobalScopes()->where('is_active', true)->when($this->option('company'), fn ($q) => $q->whereKey((int) $this->option('company')))->get();
         foreach ($companies as $company) {
-            foreach (['RFM' => $rfm, 'Concentración' => $concentration, 'Cohortes' => $cohorts, 'Venta cruzada' => $crossSell, 'Riesgo de inactividad' => $inactivity, 'Cambios anormales' => $anomalies] as $label => $service) {
+            foreach (['RFM' => $rfm, 'Concentración' => $concentration, 'Cohortes' => $cohorts, 'Venta cruzada' => $crossSell, 'Riesgo de inactividad' => $inactivity, 'Cambios anormales' => $anomalies, 'Estacionalidad' => $seasonality] as $label => $service) {
                 $run = $service->compute($company);
                 $this->line("{$company->name} · {$label}: ".($run->status === 'ok' ? 'calculado' : (string) $run->note));
             }

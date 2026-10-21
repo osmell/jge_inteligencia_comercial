@@ -17,6 +17,7 @@ import InsightsCrossSellPage from './pages/InsightsCrossSellPage'
 import InsightsAlertsPage from './pages/InsightsAlertsPage'
 import InsightsConcentrationPage from './pages/InsightsConcentrationPage'
 import InsightsPage from './pages/InsightsPage'
+import InsightsSeasonalityPage from './pages/InsightsSeasonalityPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
 import InventoryKardexPage from './pages/InventoryKardexPage'
 import InventoryMovementsPage from './pages/InventoryMovementsPage'
@@ -71,6 +72,7 @@ export default function App() {
                 <Route path="inteligencia/segmentos" element={<InsightsSegmentsPage />} />
                 <Route path="inteligencia/concentracion" element={<InsightsConcentrationPage />} />
                 <Route path="inteligencia/alertas" element={<InsightsAlertsPage />} />
+                <Route path="inteligencia/estacionalidad" element={<InsightsSeasonalityPage />} />
                 <Route path="inteligencia/venta-cruzada" element={<InsightsCrossSellPage />} />
               </Route>
               <Route element={<RequirePermission permission="inventory.view" />}>

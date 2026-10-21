@@ -8,6 +8,7 @@ use App\Models\InsightRun;
 use App\Models\Role;
 use App\Services\CohortAnalysis;
 use App\Services\ConcentrationAnalysis;
+use App\Services\SeasonalityAnalysis;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,7 +18,7 @@ use Illuminate\Http\Request;
  */
 class InsightAnalysisController extends Controller
 {
-    public function __construct(private readonly ConcentrationAnalysis $concentration, private readonly CohortAnalysis $cohorts) {}
+    public function __construct(private readonly ConcentrationAnalysis $concentration, private readonly CohortAnalysis $cohorts, private readonly SeasonalityAnalysis $seasonality) {}
 
     public function concentration(Request $request): JsonResponse
     {
@@ -29,12 +30,21 @@ class InsightAnalysisController extends Controller
         return $this->show($request, 'cohorts');
     }
 
+    public function seasonality(Request $request): JsonResponse
+    {
+        return $this->show($request, 'seasonality');
+    }
+
     public function recalculate(Request $request, string $analysis): JsonResponse
     {
         $this->guard($request);
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1']]);
         $company = Company::query()->findOrFail($data['company_id']);
-        $run = $analysis === 'concentration' ? $this->concentration->compute($company, $request->user()) : $this->cohorts->compute($company, $request->user());
+        $run = match ($analysis) {
+            'concentration' => $this->concentration->compute($company, $request->user()),
+            'seasonality' => $this->seasonality->compute($company, $request->user()),
+            default => $this->cohorts->compute($company, $request->user()),
+        };
 
         return response()->json(['data' => $this->present($run)]);
     }

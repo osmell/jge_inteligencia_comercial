@@ -220,3 +220,24 @@ export interface InsightAlertList {
   data: InsightAlertRow[]
   meta: { page: number; has_more: boolean; counts: Record<AlertType, number> }
 }
+
+export interface SeasonalIndex {
+  indices: (number | null)[]
+  observations: number[]
+  peak: number | null
+  trough: number | null
+  amplitude: number | null
+  marked: boolean
+}
+
+export interface SeasonalitySummary {
+  months: number
+  first_month: string
+  last_month: string
+  company: SeasonalIndex
+  lines: (SeasonalIndex & { name: string })[]
+  yoy: { month: string; value: string; previous: string; change_pct: number | null }[]
+  marked_points: number
+}
+
+export const MONTH_NAMES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']

@@ -127,7 +127,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('runs', [InsightController::class, 'runs']);
         Route::get('concentration', [InsightAnalysisController::class, 'concentration']);
         Route::get('cohorts', [InsightAnalysisController::class, 'cohorts']);
-        Route::post('{analysis}/recalculate', [InsightAnalysisController::class, 'recalculate'])->whereIn('analysis', ['concentration', 'cohorts'])->middleware('permission:insights.manage');
+        Route::get('seasonality', [InsightAnalysisController::class, 'seasonality']);
+        Route::post('{analysis}/recalculate', [InsightAnalysisController::class, 'recalculate'])->whereIn('analysis', ['concentration', 'cohorts', 'seasonality'])->middleware('permission:insights.manage');
         Route::get('alerts', [InsightAlertController::class, 'index']);
         Route::get('alerts/customer', [InsightAlertController::class, 'customer']);
         Route::post('alerts/{alert}/close', [InsightAlertController::class, 'close'])->middleware('permission:interactions.manage')->whereNumber('alert');
