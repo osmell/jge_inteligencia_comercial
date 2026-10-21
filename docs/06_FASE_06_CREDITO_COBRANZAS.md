@@ -75,6 +75,6 @@ Decisiones tomadas con esas respuestas: la nota de crédito se **captura en pant
   - **Frecuencia de compra (10 %):** según el estado de actividad (activo 100, recuperado 80, nuevo 70, inactivo 40, perdido 0).
 - **Factor sin datos** (p. ej. sin promesas resueltas): no suma ni resta; su peso se reparte entre los demás y la pantalla lo dice («Sin datos»). Sin ningún dato: «Sin datos suficientes para calificar».
 - Pesos, ventana y cortes de banda se cambian en `config/credit.php` (`scoring`).
-- Pendiente de decidir: mostrar la calificación como columna en la antigüedad de cartera (hoy solo en la ficha, porque calcularla para todos los clientes es más pesado).
+- Decidido: la calificación se muestra solo en la ficha del cliente; no se agrega a la antigüedad de cartera.
 
 ### Fase 6 completa en código; falta validarla con datos reales
