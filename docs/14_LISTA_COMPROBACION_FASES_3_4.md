@@ -272,3 +272,9 @@ Puntos a tener presentes al comparar:
 - [ ] Pulsar «Enviarme un aviso de prueba» en Avisos: aparece en la campana con el contador y se puede abrir, ver y descartar.
 - [ ] Apagar un tipo de aviso o pausar todos: el aviso de prueba no se entrega y la campana lo indica.
 - [ ] Un usuario sin permiso de crédito no ve ese tipo de aviso en sus preferencias.
+
+### Automatizaciones (Fase 9, paso 2)
+- [ ] Asignar `automations.manage` solo a administración y confirmar que el programador de Laravel está en ejecución (`schedule:work` o cron cada minuto).
+- [ ] En «Automatizaciones»: pausar el recálculo, esperar su hora y comprobar que no corre; reanudarlo y usar «Ejecutar ahora»: aparece en el registro como correcta.
+- [ ] El interruptor general detiene todo, incluida la ejecución manual.
+- [ ] Revisar la ventana de avisos (lunes a sábado, 7 a 19) con gerencia.

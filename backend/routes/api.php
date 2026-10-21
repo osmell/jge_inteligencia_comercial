@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Admin\RolePermissionController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\AutomationController;
 use App\Http\Controllers\Api\V1\CreditInvoiceController;
 use App\Http\Controllers\Api\V1\CreditPortfolioController;
 use App\Http\Controllers\Api\V1\CreditSettlementController;
@@ -119,6 +120,15 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::put('units/{unit}', [InventoryUnitController::class, 'updateUnit'])->whereNumber('unit');
             Route::put('products/{product}/units', [InventoryUnitController::class, 'updateProductUnits'])->whereNumber('product');
         });
+    });
+
+    // Administración de las automatizaciones (catálogo, parámetros, interruptor general, ejecución manual y registro).
+    Route::middleware('permission:automations.manage')->prefix('automations')->group(function () {
+        Route::get('/', [AutomationController::class, 'index']);
+        Route::put('settings', [AutomationController::class, 'settings']);
+        Route::get('runs', [AutomationController::class, 'runs']);
+        Route::put('{automation}', [AutomationController::class, 'update']);
+        Route::post('{automation}/run', [AutomationController::class, 'run']);
     });
 
     // Avisos internos de la persona que inició sesión (la campana). No requieren un permiso: cada quien solo ve los suyos.
