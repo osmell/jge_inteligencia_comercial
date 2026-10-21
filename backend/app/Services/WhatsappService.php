@@ -32,6 +32,7 @@ class WhatsappService
         return [
             'enabled' => $s->enabled, 'phone_number_id' => $s->phone_number_id, 'business_account_id' => $s->business_account_id, 'api_version' => $s->api_version,
             'unassigned_company_id' => $s->unassigned_company_id, 'has_access_token' => ! empty($s->access_token), 'has_app_secret' => ! empty($s->app_secret), 'has_verify_token' => ! empty($s->verify_token),
+            'away_enabled' => $s->away_enabled, 'away_message' => $s->away_message, 'away_start_hour' => $s->away_start_hour, 'away_end_hour' => $s->away_end_hour, 'away_days' => array_values(array_map('intval', array_filter(explode(',', (string) $s->away_days), fn (string $d) => $d !== ''))),
             'ready' => $s->ready(), 'updated_at' => $s->updated_at?->toIso8601String(),
         ];
     }
@@ -45,9 +46,15 @@ class WhatsappService
             throw ValidationException::withMessages(['phone_number_id' => 'Para activar WhatsApp indica el identificador del número y el token de acceso.']);
         }
         $keep = fn (string $key) => ($data[$key] ?? '') !== '' ? (string) $data[$key] : $current->{$key};
+        if (($data['away_enabled'] ?? false) && trim((string) ($data['away_message'] ?? $current->away_message)) === '') {
+            throw ValidationException::withMessages(['away_message' => 'Escribe el mensaje de ausencia para activarlo.']);
+        }
         $setting = $current->exists ? $current : new WhatsappSetting(['id' => 1]);
         $setting->forceFill([
             'id' => 1, 'enabled' => (bool) $data['enabled'], 'phone_number_id' => $data['phone_number_id'] ?? null, 'business_account_id' => $data['business_account_id'] ?? null, 'api_version' => $data['api_version'], 'unassigned_company_id' => $data['unassigned_company_id'] ?? null,
+            'away_enabled' => (bool) ($data['away_enabled'] ?? $current->away_enabled), 'away_message' => array_key_exists('away_message', $data) ? $data['away_message'] : $current->away_message,
+            'away_start_hour' => (int) ($data['away_start_hour'] ?? $current->away_start_hour ?? 8), 'away_end_hour' => (int) ($data['away_end_hour'] ?? $current->away_end_hour ?? 18),
+            'away_days' => isset($data['away_days']) ? implode(',', array_unique(array_map('intval', $data['away_days']))) : ($current->away_days ?? '1,2,3,4,5,6'),
             'access_token' => $keep('access_token'), 'app_secret' => $keep('app_secret'), 'verify_token' => $keep('verify_token'), 'updated_by' => $user->id, 'updated_at' => now(),
         ])->save();
 

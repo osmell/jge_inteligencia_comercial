@@ -123,7 +123,7 @@ class DashboardTest extends TestCase
     public function test_each_role_gets_its_profile_and_only_the_sections_its_permissions_allow(): void
     {
         $this->assertSame(['company', null], [$this->actingAs($this->admin, 'sanctum')->getJson('/api/v1/dashboard')->assertOk()->json('data.profile'), $this->getJson('/api/v1/dashboard')->json('data.linked_sellers')]);
-        $this->assertSame(['sales', 'goals', 'rankings', 'companies', 'credit', 'quotations', 'followup', 'inventory', 'insights'], $this->getJson('/api/v1/dashboard')->json('data.sections'));
+        $this->assertSame(['sales', 'goals', 'rankings', 'companies', 'credit', 'quotations', 'followup', 'conversations', 'inventory', 'insights'], $this->getJson('/api/v1/dashboard')->json('data.sections'));
 
         $team = $this->actingAs($this->supervisor, 'sanctum')->getJson('/api/v1/dashboard')->assertOk();
         $this->assertSame(['team', 1, ['Vera']], [$team->json('data.profile'), $team->json('data.linked_sellers'), $team->json('data.team')]);

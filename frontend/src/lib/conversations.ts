@@ -58,3 +58,15 @@ export const STATUS_TEXT: Record<string, string> = {
 export function renderTemplate(body: string, params: string[]): string {
   return body.replace(/\{\{(\d+)\}\}/g, (_, n: string) => params[Number(n) - 1] || `{{${n}}}`)
 }
+
+/** Etiquetas disponibles (la misma lista fija que valida el servidor). */
+export const LABELS = ['Cotización', 'Pedido', 'Reclamo', 'Cobranza', 'Urgente'] as const
+
+export type QuickReply = { id: number; title: string; body: string; shared: boolean; mine: boolean; author: string | null }
+export type QuotationFile = { id: number; number: string; status: string; amount: string; name: string | null; size: number | null }
+export type Candidate = { id: number; code: string; name: string; whatsapp: string | null }
+
+/** Sustituye {nombre} por el nombre del cliente al usar una respuesta rápida. */
+export function fillQuickReply(body: string, customerName: string | null): string {
+  return body.replace(/\{nombre\}/gi, customerName ?? '').replace(/\s+([,.!?])/g, '$1').trim()
+}

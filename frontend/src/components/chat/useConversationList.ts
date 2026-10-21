@@ -89,5 +89,7 @@ export function useConversationList(tab: ListTab, query: string, selectedId: num
 
   const clearUnread = useCallback((id: number) => setRows((cur) => cur.map((r) => (r.id === id && r.unread > 0 ? { ...r, unread: 0 } : r))), [])
 
-  return { rows, loading, error, hasMore, more, reload: () => load(false), clearUnread }
+  const patch = useCallback((id: number, changes: Partial<ConversationRow>) => setRows((cur) => cur.map((r) => (r.id === id ? { ...r, ...changes } : r))), [])
+
+  return { rows, patch, loading, error, hasMore, more, reload: () => load(false), clearUnread }
 }

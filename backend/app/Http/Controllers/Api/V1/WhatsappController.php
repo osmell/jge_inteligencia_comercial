@@ -32,6 +32,8 @@ class WhatsappController extends Controller
         $data = $request->validate([
             'enabled' => ['required', 'boolean'], 'phone_number_id' => ['nullable', 'string', 'max:100'], 'business_account_id' => ['nullable', 'string', 'max:100'], 'api_version' => ['required', 'regex:/^v\d+\.\d+$/'],
             'unassigned_company_id' => ['nullable', 'integer', 'exists:companies,id'], 'access_token' => ['nullable', 'string', 'max:1000'], 'app_secret' => ['nullable', 'string', 'max:300'], 'verify_token' => ['nullable', 'string', 'max:200'],
+            'away_enabled' => ['sometimes', 'boolean'], 'away_message' => ['nullable', 'string', 'max:1000'], 'away_start_hour' => ['sometimes', 'integer', 'between:0,23'], 'away_end_hour' => ['sometimes', 'integer', 'between:1,24', 'gt:away_start_hour'],
+            'away_days' => ['sometimes', 'array', 'max:7'], 'away_days.*' => ['integer', 'between:1,7'],
         ]);
         $this->wa->save($request->user(), $data);
 

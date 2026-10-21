@@ -21,6 +21,7 @@ use LogicException;
  * @property string|null $last_message_preview
  * @property Carbon|null $last_message_at
  * @property Carbon|null $last_inbound_at
+ * @property Carbon|null $last_away_at
  * @property Carbon $created_at
  */
 class WhatsappConversation extends Model
@@ -43,7 +44,7 @@ class WhatsappConversation extends Model
 
     protected function casts(): array
     {
-        return ['last_message_at' => 'datetime', 'last_inbound_at' => 'datetime', 'created_at' => 'datetime'];
+        return ['last_message_at' => 'datetime', 'last_inbound_at' => 'datetime', 'last_away_at' => 'datetime', 'created_at' => 'datetime'];
     }
 
     /** @return BelongsTo<Customer, $this> */

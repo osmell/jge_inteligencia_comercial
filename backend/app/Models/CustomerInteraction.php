@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $next_action_at
  * @property Carbon|null $next_action_done_at
  */
-#[Fillable(['company_id', 'customer_id', 'user_id', 'channel', 'direction', 'outcome', 'occurred_at', 'response', 'next_action', 'next_action_at', 'next_action_done_at', 'next_action_done_by', 'insight_alert_id'])]
+#[Fillable(['company_id', 'customer_id', 'user_id', 'channel', 'direction', 'outcome', 'occurred_at', 'response', 'next_action', 'next_action_at', 'next_action_done_at', 'next_action_done_by', 'insight_alert_id', 'conversation_id'])]
 class CustomerInteraction extends Model
 {
     public const CHANNELS = ['call', 'email', 'whatsapp', 'visit', 'meeting', 'other'];

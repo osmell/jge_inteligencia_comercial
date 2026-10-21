@@ -20,7 +20,7 @@ export default function ConversationsPage() {
   const [opened, setOpened] = useState<ConversationRow | null>(null)
   // La conversación abierta se toma de la lista; si llegó por un enlace y no está en la página cargada, se conserva la última vista.
   const selected = list.rows.find((r) => r.id === selectedId) ?? (opened?.id === selectedId ? opened : null)
-  const { clearUnread } = list
+  const { clearUnread, patch } = list
 
   const open = (c: ConversationRow) => {
     setOpened(c)
@@ -51,7 +51,7 @@ export default function ConversationsPage() {
               </header>
               <div className="min-h-0 flex-1"><MessageThread key={selected.id} conversation={selected} onRead={onRead} /></div>
             </section>
-            <div className="hidden min-h-0 lg:block"><SidePanel key={selected.id} conversation={selected} /></div>
+            <div className="hidden min-h-0 lg:block"><SidePanel key={selected.id} conversation={selected} onUpdate={(changes) => { patch(selected.id, changes); setOpened({ ...selected, ...changes }) }} /></div>
           </>
         ) : (
           <div className="hidden flex-col items-center justify-center gap-2 bg-surface-muted p-8 text-center md:flex lg:col-span-2">

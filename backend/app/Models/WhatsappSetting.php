@@ -15,6 +15,11 @@ use Illuminate\Support\Carbon;
  * @property string|null $access_token
  * @property string|null $app_secret
  * @property string|null $verify_token
+ * @property bool $away_enabled
+ * @property string|null $away_message
+ * @property int $away_start_hour
+ * @property int $away_end_hour
+ * @property string $away_days
  * @property Carbon|null $updated_at
  */
 class WhatsappSetting extends Model
@@ -27,7 +32,7 @@ class WhatsappSetting extends Model
 
     protected function casts(): array
     {
-        return ['enabled' => 'boolean', 'access_token' => 'encrypted', 'app_secret' => 'encrypted', 'verify_token' => 'encrypted', 'updated_at' => 'datetime'];
+        return ['enabled' => 'boolean', 'away_enabled' => 'boolean', 'access_token' => 'encrypted', 'app_secret' => 'encrypted', 'verify_token' => 'encrypted', 'updated_at' => 'datetime'];
     }
 
     public static function current(): self

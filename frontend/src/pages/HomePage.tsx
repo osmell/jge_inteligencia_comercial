@@ -2,7 +2,7 @@ import { ArrowRight, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { type BlockProps, CompaniesBlock, CreditBlock, FollowupBlock, GoalsBlock, InsightsBlock, InventoryBlock, QuotationsBlock, RankingsBlock, SalesBlock } from '../components/DashboardSections'
+import { type BlockProps, CompaniesBlock, ConversationsBlock, CreditBlock, FollowupBlock, GoalsBlock, InsightsBlock, InventoryBlock, QuotationsBlock, RankingsBlock, SalesBlock } from '../components/DashboardSections'
 import { NAV_ITEMS } from '../components/navigation'
 import { Alert, Button, PageHeader, SelectField } from '../components/ui'
 import { type DashboardMeta, PERIOD_LABEL } from '../lib/dashboard'
@@ -12,11 +12,11 @@ import { useLoad } from '../lib/useLoad'
 
 const BLOCKS: Record<string, (props: BlockProps) => React.ReactNode> = {
   sales: SalesBlock, goals: GoalsBlock, rankings: RankingsBlock, companies: CompaniesBlock, credit: CreditBlock,
-  quotations: QuotationsBlock, followup: FollowupBlock, inventory: InventoryBlock, insights: InsightsBlock,
+  quotations: QuotationsBlock, followup: FollowupBlock, conversations: ConversationsBlock, inventory: InventoryBlock, insights: InsightsBlock,
 }
 
 /** Lo primero que necesita un vendedor es su agenda y su meta; el resto de los perfiles conserva el orden de la API. */
-const SELLER_ORDER = ['followup', 'goals', 'sales', 'credit', 'quotations', 'insights', 'rankings', 'inventory']
+const SELLER_ORDER = ['conversations', 'followup', 'goals', 'sales', 'credit', 'quotations', 'insights', 'rankings', 'inventory']
 
 /** Secciones que ocupan todo el ancho; las demás se acomodan en dos columnas. */
 const WIDE = new Set(['sales', 'rankings', 'companies'])

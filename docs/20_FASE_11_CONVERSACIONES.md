@@ -116,3 +116,28 @@ Cuenta de WhatsApp Business configurable (credenciales cifradas, prueba de conex
 **Tiempo real.** Mensajes nuevos, palomitas y archivos descargados llegan por Reverb; si la conexión cae, la lista se consulta cada 15 s y la conversación abierta cada 10 s.
 
 **Decisión / límite.** La grabación de notas de voz desde el navegador no se incluyó: Chrome/Firefox graban WebM, que WhatsApp no admite (exige OGG/Opus, AAC, MP3, AMR…); se pueden adjuntar archivos de audio ya grabados. Convertir en el servidor requiere `ffmpeg` y queda como mejora (paso 7). La asignación de números desconocidos a un cliente está en el paso 7.
+
+## Paso 7 — Supervisión, pulido y cierre
+
+**Asignar números desconocidos.** Solo supervisión (rol y permiso de responder) puede asignar una conversación sin cliente, y solo a un cliente de su equipo en la misma compañía (`POST /conversations/{id}/assign`, buscador `GET /conversations/{id}/candidates`). Si el cliente no tenía WhatsApp registrado, se guarda el número de la conversación (para poder usar plantillas); los mensajes anteriores quedan ligados al cliente; queda en Auditoría. Desde ese momento la ve su vendedor. No se creó «crear cliente desde la conversación»: los clientes llegan por importación y crearlos a mano rompería esa fuente única.
+
+**Transferencia al cambiar de vendedor.** No hay que mover nada: cada conversación sigue al cliente, y quién la ve depende del vendedor actual del cliente (y de su supervisor). Al reasignar el cliente, el vendedor anterior deja de verla y el nuevo la recibe con todo su historial (probado).
+
+**Etiquetas.** Lista fija en `config/conversations.php` (Cotización, Pedido, Reclamo, Cobranza, Urgente), hasta 5 por conversación, se cambian en el panel del cliente, se ven en la lista y quedan en Auditoría. La misma lista está en `frontend/src/lib/conversations.ts` (`LABELS`): si se cambia una, cambiar la otra.
+
+**Respuestas rápidas.** Personales de cada vendedor o compartidas por supervisión con todo el equipo (solo supervisión comparte). `{nombre}` se reemplaza por el nombre del cliente. No se borran: se quitan (desactivan). Se usan desde el rayo del cuadro de envío.
+
+**Cotizaciones desde el chat.** Botón del cuadro de envío: lista las cotizaciones del cliente que tienen archivo adjunto y la envía como documento (mismas validaciones y límites; queda en Auditoría). El «estado de cuenta» en PDF no existe todavía en el sistema, por eso no se ofrece.
+
+**Registro automático en Seguimiento.** Cuando una persona (no el sistema) contesta a un cliente, se registra un contacto «Habló con el cliente» por WhatsApp, **una sola vez por cliente y día**: si ya hay un contacto por WhatsApp ese día (a mano o de otra conversación) no se agrega otro. Las plantillas y los mensajes automáticos no cuentan. Límite conocido: si el vendedor registra a mano el contacto *después* de que el automático ya existe, ese día quedarán dos.
+
+**Mensaje de ausencia y horario.** En WhatsApp (administración): activar, horas y días de atención y texto. Fuera de horario se contesta automáticamente una vez cada 12 horas por conversación, solo con la ventana de 24 h abierta y nunca a clientes «no contactar»; no cuenta como contacto. Usa la zona horaria de la aplicación (`APP_TIMEZONE`).
+
+**Dashboard.** Nueva sección «Atención por WhatsApp» (vendedor: «Tus conversaciones»), con el alcance de cada rol: clientes esperando respuesta, los que pasaron el límite (`CONVERSATION_WAITING_MINUTES`), respuesta típica (mediana, de cada mensaje del cliente hasta la siguiente respuesta de una persona), % respondido dentro del límite, mensajes recibidos/enviados, números sin asignar (no para vendedor) y los 5 que más esperan. Los indicadores se calculan sobre los mensajes del periodo (tope de 20 000).
+
+**Respaldo y verificación de archivos.** Los archivos viven en `backend/storage/app/private/conversations` (disco `conversations`), y los mensajes en la base de datos. Respaldar ambos juntos (la base y la carpeta) con la misma frecuencia, p. ej. `rsync -a --delete-after storage/app/private/conversations/ <destino>/` o instantánea del volumen. Después de restaurar: `php artisan conversations:verify-files` (existencia) o `--checksums` (recalcula sha256); termina con error si falta o cambió algo.
+
+**Cierre de la fase.**
+- Criterios de aceptación de este documento: cumplidos en código y pruebas (backend 568, frontend 233); falta validarlos con el número de prueba/aprobado de Meta (ver `docs/14`, «Conversaciones»).
+- Servicios que deben estar corriendo: `backend`, `queue` (envíos, descargas, eventos), `reverb` (tiempo real) y el programador (`schedule:work` o cron) para el aviso de clientes esperando.
+- Pendientes que decide el responsable: política de conservación (hoy nada se borra), notas de voz grabadas en el navegador (requieren `ffmpeg`), estado de cuenta en PDF, etiquetas configurables, crear clientes desde la conversación.

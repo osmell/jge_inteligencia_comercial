@@ -16,6 +16,7 @@ export type ConversationSummary = {
   preview: string | null
   last_message_at: string | null
   window_open: boolean
+  labels: string[]
 }
 
 export type LiveMessage = {

@@ -96,6 +96,21 @@ export interface FollowupSection {
   no_contact: { count: number; days: number; top: { code: string; company_id: number; name: string; status: 'inactive' | 'lost'; days_since_last_purchase: number; seller: string | null }[] }
 }
 
+export interface ConversationsSection {
+  limit_minutes: number
+  waiting: number
+  over_limit: number
+  unassigned: number
+  top: { id: number; customer: string; minutes: number }[]
+  received: number
+  sent: number
+  answered: number
+  median_minutes: number | null
+  within_limit_pct: number | null
+  from: string
+  to: string
+}
+
 export interface InventorySection {
   out_of_stock: number
   below_min: number

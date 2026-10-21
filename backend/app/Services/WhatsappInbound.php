@@ -78,7 +78,10 @@ class WhatsappInbound
                     'last_message_preview' => mb_substr($body !== '' ? $body : $this->label($type), 0, 200),
                 ])->save();
                 if ($type !== 'reaction') {
-                    DB::afterCommit(fn () => app(ConversationAlerts::class)->inbound($message));
+                    DB::afterCommit(function () use ($message, $conversation) {
+                        app(ConversationAlerts::class)->inbound($message);
+                        app(ConversationAway::class)->handle($conversation);
+                    });
                 }
                 if ($attachment !== null) {
                     DB::afterCommit(fn () => DownloadWhatsappMedia::dispatch($attachment->id));

@@ -4,6 +4,7 @@ import { api, ApiError } from '../../lib/api'
 import { formatBytes } from '../../lib/format'
 import { renderTemplate, type ChatMessage, type ConversationRow, type Template } from '../../lib/conversations'
 import { Alert, Button } from '../ui'
+import { QuickReplies, QuotationSender } from './ComposerTools'
 
 /** Tamaños máximos de WhatsApp por clase de archivo (el servidor los vuelve a comprobar). */
 const LIMITS: [RegExp, number, string][] = [[/^image\//, 5, 'imagen'], [/^video\//, 16, 'video'], [/^audio\//, 16, 'audio']]
@@ -156,6 +157,8 @@ export default function Composer({
       <div className="flex items-end gap-2">
         <input ref={input} type="file" accept={ACCEPT} className="sr-only" aria-label="Archivo adjunto" tabIndex={-1} onChange={(e) => pick(e.target.files?.[0] ?? null)} />
         <button type="button" onClick={() => input.current?.click()} aria-label="Adjuntar archivo" className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-line-strong text-ink-muted hover:bg-surface-muted"><Paperclip className="h-5 w-5" aria-hidden="true" /></button>
+        <QuickReplies customerName={conversation.customer?.name ?? null} onPick={(t) => { setText((cur) => (cur ? `${cur} ${t}` : t)); area.current?.focus() }} />
+        <QuotationSender conversation={conversation} onSent={onSent} />
         <div className="min-w-0 flex-1">
           <label htmlFor="chat-text" className="sr-only">Mensaje</label>
           <textarea id="chat-text" ref={area} value={text} rows={1} maxLength={4096} placeholder="Escribe un mensaje"

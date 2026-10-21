@@ -18,7 +18,7 @@ beforeEach(() => {
     calls.push({ path, method: init?.method ?? 'GET', body: init?.body ? JSON.parse(String(init.body)) : undefined })
     let body: unknown = { data: [] }
     if (path === '/auth/me') body = { data: { id: 1, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Admin' }, permissions: ['whatsapp.manage', 'interactions.manage'], companies: [], branches: [] } }
-    else if (path === '/whatsapp/settings') body = { data: { unassigned_company_id: null, enabled: false, phone_number_id: '123', business_account_id: null, api_version: 'v21.0', has_access_token: true, has_app_secret: false, has_verify_token: false, ready: false } }
+    else if (path === '/whatsapp/settings') body = { data: { away_enabled: false, away_message: null, away_start_hour: 8, away_end_hour: 18, away_days: [1, 2, 3, 4, 5, 6], unassigned_company_id: null, enabled: false, phone_number_id: '123', business_account_id: null, api_version: 'v21.0', has_access_token: true, has_app_secret: false, has_verify_token: false, ready: false } }
     else if (path === '/whatsapp/test') body = { data: { ok: true, message: 'Conexión correcta con JGE.' } }
     else if (path === '/whatsapp/messages') body = { data: [{ id: 1, customer: 'Cliente Uno', to: '503', body: 'Hola', status: 'not_sent', error: 'Sin consentimiento', created_at: '2026-10-21T12:00:00Z' }] }
     else if (path === '/customers/5/whatsapp') body = { data: { number: '+503 7000-1234', consent: blockers.length ? null : 'granted', blockers, ready: true, consents: [], templates: [{ id: 3, name: 'recordatorio', body: 'Hola {{1}}', variables: 1 }], messages: [] } }

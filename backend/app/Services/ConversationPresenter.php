@@ -48,6 +48,7 @@ class ConversationPresenter
             'id' => $c->id, 'company_id' => $c->company_id, 'customer' => $customer === null ? null : ['id' => $customer->id, 'code' => $customer->code, 'name' => $customer->name],
             'wa_number' => $c->wa_number, 'profile_name' => $c->profile_name, 'status' => $c->status, 'preview' => $c->last_message_preview,
             'last_message_at' => $c->last_message_at?->toIso8601String(), 'window_open' => $c->windowOpen(),
+            'labels' => DB::table('conversation_labels')->where('conversation_id', $c->id)->orderBy('label')->pluck('label')->all(),
         ];
     }
 }

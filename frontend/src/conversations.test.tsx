@@ -26,10 +26,11 @@ let rows: ConversationRow[]
 let messages: Record<number, ChatMessage[]>
 let more: boolean
 let realtime: boolean
+let role: string
 
 const row = (o: Partial<ConversationRow>): ConversationRow => ({
   id: 1, company_id: 3, customer: { id: 10, code: 'C-10', name: 'Ferretería Lupita' }, wa_number: '50370001111', profile_name: 'Lupita', status: 'open', preview: 'Hola, ¿tienen cemento?',
-  last_message_at: new Date().toISOString(), window_open: true, unread: 2, can_reply: true, ...o,
+  last_message_at: new Date().toISOString(), window_open: true, unread: 2, can_reply: true, labels: [], ...o,
 })
 const msg = (o: Partial<ChatMessage>): ChatMessage => ({
   id: 1, direction: 'in', type: 'text', body: 'Hola, ¿tienen cemento?', status: 'received', error: null, author: null, created_at: new Date().toISOString(), delivered_at: null, read_at: null, reply_to: null, attachments: [], ...o,
@@ -41,6 +42,7 @@ beforeEach(() => {
   calls = []
   more = false
   realtime = false
+  role = 'vendedor'
   rows = [row({}), row({ id: 2, customer: null, profile_name: null, wa_number: '50370009999', preview: 'Quiero cotizar', unread: 0, can_reply: false })]
   messages = {
     1: [
@@ -58,7 +60,7 @@ beforeEach(() => {
     calls.push({ path, method, body: raw instanceof FormData ? Object.fromEntries(raw.entries()) : raw ? JSON.parse(String(raw)) : undefined })
     let body: unknown = { data: [] }
     let status = 200
-    if (path === '/auth/me') body = { data: { id: 1, username: 'vera', name: 'Vera', role: { slug: 'vendedor', name: 'Vendedor' }, permissions: ['conversations.view', 'conversations.reply'], companies: [], branches: [] } }
+    if (path === '/auth/me') body = { data: { id: 1, username: 'vera', name: 'Vera', role: { slug: role, name: role }, permissions: ['conversations.view', 'conversations.reply'], companies: [], branches: [] } }
     else if (path === '/realtime/config') body = { data: realtime ? { key: 'k', host: 'localhost', port: 8080, scheme: 'http' } : null }
     else if (path.startsWith('/conversations?')) body = { data: rows, meta: { page: 1, has_more: false } }
     else if (path === '/conversations/templates') body = { data: [{ id: 5, name: 'seguimiento', body: 'Hola {{1}}, ¿seguimos con tu pedido?', variables: 1 }] }
@@ -78,6 +80,13 @@ beforeEach(() => {
     else if (/\/read$/.test(path)) body = { data: { last_read_message_id: 4 } }
     else if (/\/notes$/.test(path) && method === 'POST') { body = { data: { id: 2, body: 'Pidió factura a su nombre', author: 'Vera', created_at: new Date().toISOString() } }; status = 201 }
     else if (/\/notes$/.test(path)) body = { data: [{ id: 1, body: 'Paga de contado', author: 'Beto', created_at: new Date().toISOString() }] }
+    else if (/\/candidates/.test(path)) body = { data: [{ id: 30, code: 'C-30', name: 'Cliente Nuevo', whatsapp: null }] }
+    else if (path.endsWith('/assign')) body = { data: { ...rows[1], customer: { id: 30, code: 'C-30', name: 'Cliente Nuevo' }, can_reply: true } }
+    else if (path.endsWith('/labels')) body = { data: { labels: (calls.at(-1)!.body as { labels: string[] }).labels } }
+    else if (path === '/conversations/quick-replies' && method === 'GET') body = { data: [{ id: 1, title: 'Saludo', body: 'Hola {nombre}, ¿en qué te ayudo?', shared: true, mine: false, author: 'Supervisor' }, { id: 2, title: 'Mi firma', body: 'Saludos, Vera', shared: false, mine: true, author: 'Vera' }] }
+    else if (path.startsWith('/conversations/quick-replies')) { body = { data: { id: 3 } }; status = method === 'POST' ? 201 : 200 }
+    else if (/\/quotations$/.test(path)) body = { data: [{ id: 9, number: 'COT-000009', status: 'sent', amount: '500.00', name: 'Cotización.pdf', size: 2048 }] }
+    else if (/\/quotation$/.test(path)) { body = { data: msg({ id: 60, direction: 'out', type: 'document', status: 'sent', body: '', attachments: [{ id: 99, kind: 'document', name: 'Cotización.pdf', mime: 'application/pdf', size: 2048, status: 'stored', error: null }] }) }; status = 201 }
     else if (path === '/conversations/unread') body = { data: { conversations: 1 } }
     return new Response(JSON.stringify(body), { status })
   }))
@@ -220,7 +229,7 @@ describe('conversaciones', () => {
     await screen.findByText('Mira esta foto')
     await act(async () => { await startRealtime(1, true) })
 
-    const conversation = (id: number, name: string) => ({ id, company_id: 3, customer: { id: 10 + id, code: `C-${id}`, name }, wa_number: '1', profile_name: null, status: 'open', preview: 'Nuevo mensaje', last_message_at: new Date().toISOString(), window_open: true })
+    const conversation = (id: number, name: string) => ({ id, company_id: 3, customer: { id: 10 + id, code: `C-${id}`, name }, wa_number: '1', profile_name: null, status: 'open', preview: 'Nuevo mensaje', last_message_at: new Date().toISOString(), window_open: true, labels: [] })
     act(() => channels['users.1.conversations']!['.message.created']!({ conversation: conversation(1, 'Ferretería Lupita'), message: msg({ id: 20, body: 'Me urge el pedido' }) }))
     expect(await screen.findByText('Me urge el pedido')).toBeInTheDocument()
 
@@ -229,5 +238,74 @@ describe('conversaciones', () => {
 
     act(() => channels['users.1.conversations']!['.message.updated']!({ conversation: conversation(1, 'Ferretería Lupita'), message: msg({ id: 2, direction: 'out', status: 'delivered', body: 'Sí, hay disponibilidad' }) }))
     expect(await screen.findAllByText('Entregado')).not.toHaveLength(0)
+  })
+
+  it('supervisión asigna un número desconocido a un cliente de su equipo', async () => {
+    role = 'supervisor_ventas'
+    const u = userEvent.setup()
+    renderPage()
+    await open(/\+50370009999/)
+
+    const panel = await screen.findByRole('complementary', { name: 'Datos del cliente' })
+    await u.type(within(panel).getByLabelText('Buscar cliente de tu equipo'), 'nuevo')
+    await u.click(within(panel).getByRole('button', { name: 'Buscar' }))
+    await u.click(await within(panel).findByRole('button', { name: 'Asignar a Cliente Nuevo' }))
+
+    await waitFor(() => expect(calls.some((c) => c.path === '/conversations/2/assign' && (c.body as { customer_id: number }).customer_id === 30)).toBe(true))
+    expect((await screen.findAllByText('Cliente Nuevo')).length).toBeGreaterThan(0)
+    expect(screen.queryByRole('button', { name: 'Buscar' })).not.toBeInTheDocument()
+  })
+
+  it('un vendedor no ve la opción de asignar números desconocidos', async () => {
+    renderPage()
+    await open(/\+50370009999/)
+
+    expect(await screen.findByText(/no es de ningún cliente registrado/)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Buscar cliente de tu equipo')).not.toBeInTheDocument()
+  })
+
+  it('las etiquetas se marcan y quitan, y se ven en la lista', async () => {
+    const u = userEvent.setup()
+    renderPage()
+    await open(/Ferretería Lupita/)
+
+    await u.click(await screen.findByRole('button', { name: 'Reclamo' }))
+    await waitFor(() => expect(calls.find((c) => c.path === '/conversations/1/labels')?.body).toEqual({ labels: ['Reclamo'] }))
+    expect(await screen.findByRole('button', { name: 'Reclamo', pressed: true })).toBeInTheDocument()
+    expect(within(screen.getByRole('region', { name: 'Conversaciones' })).getByText('Reclamo')).toBeInTheDocument()
+    await u.click(screen.getByRole('button', { name: 'Reclamo', pressed: true }))
+    await waitFor(() => expect(calls.filter((c) => c.path === '/conversations/1/labels').at(-1)?.body).toEqual({ labels: [] }))
+  })
+
+  it('las respuestas rápidas se insertan con el nombre del cliente y se pueden crear', async () => {
+    const u = userEvent.setup()
+    renderPage()
+    await open(/Ferretería Lupita/)
+
+    await u.click(await screen.findByRole('button', { name: 'Respuestas rápidas' }))
+    expect(await screen.findByText('Compartida')).toBeInTheDocument()
+    await u.click(screen.getByRole('button', { name: /^Saludo/ }))
+    expect(screen.getByLabelText('Mensaje')).toHaveValue('Hola Ferretería Lupita, ¿en qué te ayudo?')
+
+    await u.click(screen.getByRole('button', { name: 'Respuestas rápidas' }))
+    expect(screen.queryByLabelText('Compartir con todo el equipo', { exact: false })).not.toBeInTheDocument()            // solo supervisión comparte
+    await u.type(await screen.findByLabelText('Título'), 'Gracias')
+    await u.type(screen.getByLabelText(/Texto \(usa/), 'Gracias por tu compra')
+    await u.click(screen.getByRole('button', { name: 'Guardar respuesta' }))
+    await waitFor(() => expect(calls.find((c) => c.path === '/conversations/quick-replies' && c.method === 'POST')?.body).toEqual({ title: 'Gracias', body: 'Gracias por tu compra', shared: false }))
+    await u.click(screen.getByRole('button', { name: 'Quitar la respuesta Mi firma' }))
+    await waitFor(() => expect(calls.some((c) => c.path === '/conversations/quick-replies/2' && c.method === 'PUT')).toBe(true))
+  })
+
+  it('envía la cotización con archivo del cliente por la conversación', async () => {
+    const u = userEvent.setup()
+    renderPage()
+    await open(/Ferretería Lupita/)
+
+    await u.click(await screen.findByRole('button', { name: 'Enviar una cotización' }))
+    await u.click(await screen.findByRole('button', { name: 'Enviar COT-000009' }))
+
+    await waitFor(() => expect(calls.some((c) => c.path === '/conversations/1/quotation' && (c.body as { quotation_id: number }).quotation_id === 9)).toBe(true))
+    expect(await within(screen.getByRole('log')).findByRole('link', { name: /Cotización\.pdf/ })).toBeInTheDocument()
   })
 })

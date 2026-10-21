@@ -50,10 +50,11 @@ class ConversationController extends Controller
             })
             ->orderByRaw('whatsapp_conversations.last_message_at desc nulls last')->orderByDesc('whatsapp_conversations.id')
             ->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE + 1)->get();
+        $labels = DB::table('conversation_labels')->whereIn('conversation_id', $rows->pluck('id'))->orderBy('label')->get()->groupBy('conversation_id');
         $customers = Customer::withoutGlobalScopes()->whereIn('id', $rows->pluck('customer_id')->filter())->get(['id', 'code', 'name', 'company_id'])->keyBy('id');
 
         return response()->json([
-            'data' => $rows->take(self::PAGE_SIZE)->map(fn (WhatsappConversation $c) => $this->present($c, $customers->get($c->customer_id), (int) $c->getAttribute('unread'), $user))->values()->all(),
+            'data' => $rows->take(self::PAGE_SIZE)->map(fn (WhatsappConversation $c) => $this->present($c, $customers->get($c->customer_id), (int) $c->getAttribute('unread'), $user, $labels->get($c->id, collect())->pluck('label')->all()))->values()->all(),
             'meta' => ['page' => $page, 'has_more' => $rows->count() > self::PAGE_SIZE],
         ]);
     }
@@ -194,13 +195,16 @@ class ConversationController extends Controller
         return $this->access->visible($request->user())->whereKey($id)->firstOrFail();
     }
 
-    /** @return array<string, mixed> */
-    private function present(WhatsappConversation $c, ?Customer $customer, int $unread, User $user): array
+    /**
+     * @param  list<string>  $labels
+     * @return array<string, mixed>
+     */
+    private function present(WhatsappConversation $c, ?Customer $customer, int $unread, User $user, array $labels = []): array
     {
         return [
             'id' => $c->id, 'company_id' => $c->company_id, 'customer' => $customer === null ? null : ['id' => $customer->id, 'code' => $customer->code, 'name' => $customer->name],
             'wa_number' => $c->wa_number, 'profile_name' => $c->profile_name, 'status' => $c->status, 'preview' => $c->last_message_preview,
-            'last_message_at' => $c->last_message_at?->toIso8601String(), 'window_open' => $c->windowOpen(), 'unread' => $unread, 'can_reply' => $this->access->canReply($user, $c),
+            'last_message_at' => $c->last_message_at?->toIso8601String(), 'window_open' => $c->windowOpen(), 'labels' => $labels, 'unread' => $unread, 'can_reply' => $this->access->canReply($user, $c),
         ];
     }
 }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AutomationController;
 use App\Http\Controllers\Api\V1\ConversationController;
+use App\Http\Controllers\Api\V1\ConversationToolsController;
 use App\Http\Controllers\Api\V1\CreditInvoiceController;
 use App\Http\Controllers\Api\V1\CreditPortfolioController;
 use App\Http\Controllers\Api\V1\CreditSettlementController;
@@ -160,9 +161,17 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('{conversation}/notes', [ConversationController::class, 'storeNote'])->whereNumber('conversation');
         Route::get('templates', [ConversationController::class, 'templates']);
         Route::get('unread', [ConversationController::class, 'unread']);
+        Route::get('quick-replies', [ConversationToolsController::class, 'quickReplies']);
+        Route::get('{conversation}/quotations', [ConversationToolsController::class, 'quotations'])->whereNumber('conversation');
+        Route::get('{conversation}/candidates', [ConversationToolsController::class, 'candidates'])->whereNumber('conversation');
         Route::middleware(['permission:conversations.reply', 'throttle:60,1'])->group(function () {
             Route::post('{conversation}/messages', [ConversationController::class, 'reply'])->whereNumber('conversation');
             Route::post('{conversation}/template', [ConversationController::class, 'sendTemplate'])->whereNumber('conversation');
+            Route::post('quick-replies', [ConversationToolsController::class, 'storeQuickReply']);
+            Route::put('quick-replies/{reply}', [ConversationToolsController::class, 'updateQuickReply'])->whereNumber('reply');
+            Route::post('{conversation}/assign', [ConversationToolsController::class, 'assign'])->whereNumber('conversation');
+            Route::put('{conversation}/labels', [ConversationToolsController::class, 'labels'])->whereNumber('conversation');
+            Route::post('{conversation}/quotation', [ConversationToolsController::class, 'sendQuotation'])->whereNumber('conversation');
             Route::post('messages/{message}/retry', [ConversationController::class, 'retry'])->whereNumber('message');
         });
     });

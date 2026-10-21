@@ -88,6 +88,24 @@ class ConversationSender
         return $message;
     }
 
+    /** Mensaje automático del sistema (por ejemplo, el de ausencia): sin persona que lo escriba, solo con la ventana abierta. */
+    public function automatic(WhatsappConversation $c, string $body): ?WhatsappMessage
+    {
+        $customer = $c->customer_id === null ? null : Customer::withoutGlobalScopes()->find($c->customer_id);
+        if (! WhatsappSetting::current()->ready() || ! $c->windowOpen() || $customer?->do_not_contact === true) {
+            return null;
+        }
+        $message = new WhatsappMessage;
+        $message->forceFill([
+            'customer_id' => $c->customer_id, 'user_id' => null, 'conversation_id' => $c->id, 'direction' => 'out', 'to_number' => $c->wa_number, 'message_type' => 'text',
+            'body' => $body, 'kind' => 'away', 'status' => WhatsappMessage::QUEUED, 'created_at' => now(),
+        ])->save();
+        $c->forceFill(['last_message_at' => $message->created_at, 'last_message_preview' => mb_substr($body, 0, 200)])->save();
+        SendWhatsappMessage::dispatch($message->id)->afterCommit();
+
+        return $message;
+    }
+
     /** Vuelve a poner en cola un mensaje fallido (solo mensajes libres, y con la ventana todavía abierta). */
     public function retry(User $user, WhatsappMessage $message): WhatsappMessage
     {
@@ -136,6 +154,7 @@ class ConversationSender
         $r = $this->call(fn () => Http::withToken((string) $s->access_token)->timeout(20)->post("https://graph.facebook.com/{$s->api_version}/{$s->phone_number_id}/messages", $payload));
         if ($r->successful() && $r->json('messages.0.id')) {
             $message->forceFill(['status' => WhatsappMessage::SENT, 'wa_message_id' => $r->json('messages.0.id'), 'sent_at' => now(), 'error' => null])->save();
+            app(ConversationLog::class)->contact($message);
         } else {
             $this->giveUp($message, 'Meta respondió: '.mb_substr((string) ($r->json('error.message') ?? $r->status()), 0, 800));
         }

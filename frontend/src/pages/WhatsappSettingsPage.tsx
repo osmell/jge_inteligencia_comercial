@@ -5,7 +5,7 @@ import { api } from '../lib/api'
 import { formatDateTime } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
 
-interface WaConfig { unassigned_company_id: number | null; enabled: boolean; phone_number_id: string | null; business_account_id: string | null; api_version: string; has_access_token: boolean; has_app_secret: boolean; has_verify_token: boolean; ready: boolean }
+interface WaConfig { away_enabled: boolean; away_message: string | null; away_start_hour: number; away_end_hour: number; away_days: number[]; unassigned_company_id: number | null; enabled: boolean; phone_number_id: string | null; business_account_id: string | null; api_version: string; has_access_token: boolean; has_app_secret: boolean; has_verify_token: boolean; ready: boolean }
 interface Template { id: number; name: string; language: string; category: string; body: string; status: 'draft' | 'pending' | 'approved' | 'rejected'; variables: number }
 interface Message { id: number; customer: string | null; to: string | null; body: string; status: 'sent' | 'delivered' | 'read' | 'failed' | 'not_sent'; error: string | null; created_at: string }
 
@@ -14,12 +14,12 @@ const TEMPLATE_STATUS = { draft: 'Borrador', pending: 'En revisión', approved: 
 
 function ConfigForm({ config, onSaved }: { config: WaConfig; onSaved: () => void }) {
   const toast = useToast()
-  const [form, setForm] = useState({ enabled: config.enabled, phone_number_id: config.phone_number_id ?? '', business_account_id: config.business_account_id ?? '', api_version: config.api_version, unassigned_company_id: config.unassigned_company_id === null ? '' : String(config.unassigned_company_id), access_token: '', app_secret: '', verify_token: '' })
+  const [form, setForm] = useState({ enabled: config.enabled, phone_number_id: config.phone_number_id ?? '', business_account_id: config.business_account_id ?? '', api_version: config.api_version, unassigned_company_id: config.unassigned_company_id === null ? '' : String(config.unassigned_company_id), access_token: '', app_secret: '', verify_token: '', away_enabled: config.away_enabled, away_message: config.away_message ?? '', away_start_hour: String(config.away_start_hour), away_end_hour: String(config.away_end_hour), away_days: config.away_days })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
   const companies = useLoad<{ data: { id: number; name: string }[] }>('/companies')
-  const set = (k: keyof typeof form, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }))
+  const set = (k: keyof typeof form, v: string | boolean | number[]) => setForm((f) => ({ ...f, [k]: v }))
   const kept = (has: boolean) => (has ? 'Hay un valor guardado (cifrado). Déjalo vacío para conservarlo.' : 'Se guarda cifrado y no se vuelve a mostrar.')
 
   async function save(e: FormEvent) {
@@ -27,7 +27,7 @@ function ConfigForm({ config, onSaved }: { config: WaConfig; onSaved: () => void
     setBusy(true)
     setError(null)
     try {
-      await api('/whatsapp/settings', { method: 'PUT', body: { ...form, unassigned_company_id: form.unassigned_company_id === '' ? null : Number(form.unassigned_company_id) } })
+      await api('/whatsapp/settings', { method: 'PUT', body: { ...form, unassigned_company_id: form.unassigned_company_id === '' ? null : Number(form.unassigned_company_id), away_start_hour: Number(form.away_start_hour), away_end_hour: Number(form.away_end_hour) } })
       toast.success('Configuración de WhatsApp guardada.')
       onSaved()
     } catch (err) { setError(err instanceof Error ? err.message : 'No se pudo guardar.') } finally { setBusy(false) }
@@ -49,6 +49,20 @@ function ConfigForm({ config, onSaved }: { config: WaConfig; onSaved: () => void
           <option value="">La primera compañía activa</option>
           {(companies.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </SelectField>
+        <fieldset className="space-y-3 rounded-lg border border-line p-3 sm:col-span-2">
+          <legend className="px-1 text-sm font-semibold text-ink">Mensaje de ausencia</legend>
+          <CheckField label="Contestar automáticamente a quien escribe fuera del horario de atención" checked={form.away_enabled} onChange={(e) => set('away_enabled', e.target.checked)} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField id="wa-away-start" label="Atiende desde (hora, 0 a 23)" type="number" min={0} max={23} value={form.away_start_hour} onChange={(e) => set('away_start_hour', e.target.value)} />
+            <TextField id="wa-away-end" label="Atiende hasta (hora, 1 a 24)" type="number" min={1} max={24} value={form.away_end_hour} onChange={(e) => set('away_end_hour', e.target.value)} />
+          </div>
+          <div role="group" aria-label="Días de atención" className="flex flex-wrap gap-3">
+            {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((d, i) => (
+              <CheckField key={d} label={d} checked={form.away_days.includes(i + 1)} onChange={(e) => set('away_days', e.target.checked ? [...form.away_days, i + 1].sort() : form.away_days.filter((x) => x !== i + 1))} />
+            ))}
+          </div>
+          <TextField id="wa-away-message" label="Mensaje de ausencia" value={form.away_message} onChange={(e) => set('away_message', e.target.value)} hint="Se envía una sola vez cada 12 horas por conversación, solo con la ventana de 24 horas abierta, y no cuenta como contacto en Seguimiento." />
+        </fieldset>
         <TextField id="wa-token" label="Token de acceso" type="password" autoComplete="new-password" value={form.access_token} onChange={(e) => set('access_token', e.target.value)} hint={kept(config.has_access_token)} />
         <TextField id="wa-secret" label="Secreto de la aplicación (firma del webhook)" type="password" autoComplete="new-password" value={form.app_secret} onChange={(e) => set('app_secret', e.target.value)} hint={kept(config.has_app_secret)} />
         <TextField id="wa-verify" label="Token de verificación del webhook" type="password" autoComplete="new-password" value={form.verify_token} onChange={(e) => set('verify_token', e.target.value)} hint={kept(config.has_verify_token)} />

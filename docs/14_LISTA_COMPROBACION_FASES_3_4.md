@@ -315,3 +315,18 @@ Puntos a tener presentes al comparar:
 - [ ] Un vendedor sin vendedor vinculado y un supervisor sin equipo ven el aviso, no cifras en cero sin explicación.
 - [ ] Revisar en teléfono: tarjetas en una columna, gráficos legibles y tablas alternas plegadas.
 - [ ] Confirmar con gerencia las respuestas de `docs/19` (qué indicadores, periodo por omisión, umbrales).
+
+### Conversaciones de WhatsApp (Fase 11)
+- [ ] Con el número de prueba de Meta: configurar el webhook, enviar un mensaje desde un teléfono y verlo aparecer en `/conversaciones` sin recargar (requiere `queue` y `reverb` corriendo).
+- [ ] Enviar texto, imagen, PDF y audio desde el sistema al teléfono y desde el teléfono al sistema: los archivos se guardan en `storage/app/private/conversations` y se abren en la conversación.
+- [ ] Comprobar las palomitas (enviado, entregado, leído) y que un mensaje rechazado por Meta muestra el motivo y se puede reintentar.
+- [ ] Dejar pasar 24 horas (o simularlo): el cuadro de envío solo ofrece plantillas aprobadas.
+- [ ] Un número desconocido cae en «Sin asignar» de la compañía elegida; supervisión lo asigna a un cliente de su equipo y desde entonces lo ve su vendedor.
+- [ ] Como vendedor solo se ven las conversaciones propias; como supervisor, las del equipo; como administrador/gerente, todas las de su ámbito y en solo lectura (sin cuadro de envío).
+- [ ] La campana avisa de un mensaje nuevo y, tras 15 minutos sin respuesta, supervisión recibe el aviso de cliente esperando (solo lunes a sábado, 7–19 h).
+- [ ] Probar etiquetas, notas internas, respuestas rápidas (personal y compartida) y el envío de una cotización con adjunto.
+- [ ] Contestar a un cliente y confirmar que aparece un solo contacto de WhatsApp ese día en su ficha (Seguimiento).
+- [ ] Activar el mensaje de ausencia, escribir fuera de horario y comprobar que llega una sola vez.
+- [ ] Revisar la sección «Atención por WhatsApp» del dashboard con conversaciones reales.
+- [ ] Hacer un respaldo de la carpeta de archivos y de la base, restaurarlos en una copia y correr `php artisan conversations:verify-files --checksums`.
+- [ ] Probar la pantalla en teléfono (una zona a la vez) y con el teclado.

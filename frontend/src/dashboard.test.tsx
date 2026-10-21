@@ -45,6 +45,7 @@ beforeEach(() => {
     else if (path.startsWith('/dashboard/sales')) body = { data: emptySales ? { ...sales, current: { net_total: '0.00', documents: 0, customers: 0, average_ticket: null }, daily: [], daily_previous: [], monthly: [] } : sales }
     else if (path.startsWith('/dashboard/goals')) body = { data: { month: '2026-10', state: 'current', totals: { goal: 7000, actual: 3500, remaining: 3500, compliance_pct: 50, projected: 5000, projected_pct: 71.4, days_left: 11, needed_per_day: 318.18, sellers_with_goal: 2, met: 0 }, rows: [{ seller_id: 1, seller: 'Vera', effective_goal: 3000, actual: 1500, compliance_pct: 50, projected: 2000, projected_pct: 66.7, status: 'danger', behind_pace: true }] } }
     else if (path.startsWith('/dashboard/credit')) body = { data: { total: '1500.0000', overdue: '1500.00', overdue_pct: 100, invoices: 2, customers: 2, buckets: [{ bucket: 'current', amount: '0.0000' }, { bucket: '31-60', amount: '1000.0000' }, { bucket: '121+', amount: '500.0000' }], top_debtors: [{ company_id: 1, code: 'CV', name: 'Cliente CV', total: '1000.0000', oldest_days: 40 }], promises: { due_next_7_days: 1, due_amount: '300.00', broken_30_days: 1, attention: [{ company_id: 1, code: 'CV', name: 'Cliente CV', promised_on: '2026-10-25', amount: '300.00', status: 'open', days_overdue: 0 }, { company_id: 1, code: 'CB', name: 'Cliente CB', promised_on: '2026-10-15', amount: '100.00', status: 'broken', days_overdue: 6 }] } } }
+    else if (path.startsWith('/dashboard/conversations')) body = { data: { limit_minutes: 15, waiting: 2, over_limit: 1, unassigned: 3, top: [{ id: 7, customer: 'Taller Beto', minutes: 80 }], received: 12, sent: 9, answered: 8, median_minutes: 6, within_limit_pct: 75, from: '2026-10-01', to: '2026-10-21' } }
     else if (path.startsWith('/dashboard/followup')) body = { data: { overdue: 2, today: 1, date: '2026-10-21', actions: [{ customer: { company_id: 1, code: 'CV', name: 'Cliente CV' }, next_action: 'Llamar', next_action_at: '2026-10-19T10:00:00Z', days_overdue: 2 }, { customer: { company_id: 1, code: 'CB', name: 'Cliente CB' }, next_action: 'Visitar', next_action_at: '2026-10-21T15:00:00Z', days_overdue: 0 }], no_contact: { count: 3, days: 30, top: [{ code: 'CV', company_id: 1, name: 'Cliente CV', status: 'lost', days_since_last_purchase: 120, seller: 'Vera' }] } } }
     else if (path.startsWith('/dashboard/quotations')) body = { data: { open: { count: 2, amount: '600.00' }, expiring: { count: 1, amount: '300.00' }, expired_unclosed: 0, issued: { count: 2, amount: '600.00' }, converted: { count: 0, amount: '0.00' } } }
     return new Response(JSON.stringify(body), { status })
@@ -200,5 +201,34 @@ describe('dashboard de inicio', () => {
     renderHome()
 
     expect(await screen.findByText(/No hay ventas en este periodo \(el historial cargado empieza el 8 oct 2025\)/)).toBeInTheDocument()
+  })
+
+  it('la atención por WhatsApp muestra los clientes esperando, la rapidez de respuesta y enlaza a la conversación', async () => {
+    profile = 'team'
+    sections = ['conversations']
+    team = ['Vera']
+    linked = 1
+    renderHome()
+
+    const box = await screen.findByRole('region', { name: 'Atención por WhatsApp' })
+    expect(await within(box).findByText('Clientes esperando respuesta')).toBeInTheDocument()
+    expect(within(box).getByText('Esperan más de 15 min')).toBeInTheDocument()
+    expect(within(box).getByText('6 min')).toBeInTheDocument()
+    expect(within(box).getByText(/75% en menos de 15 min · 8 respuestas/)).toBeInTheDocument()
+    expect(within(box).getByText('Números sin asignar')).toBeInTheDocument()
+    expect(within(box).getByRole('link', { name: 'Taller Beto' })).toHaveAttribute('href', '/conversaciones?c=7')
+    expect(within(box).getByText('Hace 1 h 20 min')).toBeInTheDocument()
+  })
+
+  it('el vendedor ve sus conversaciones sin la tarjeta de números sin asignar', async () => {
+    profile = 'seller'
+    sections = ['conversations']
+    linked = 1
+    team = ['Vera']
+    renderHome()
+
+    const box = await screen.findByRole('region', { name: 'Tus conversaciones' })
+    expect(await within(box).findByText('Mensajes recibidos')).toBeInTheDocument()
+    expect(within(box).queryByText('Números sin asignar')).not.toBeInTheDocument()
   })
 })

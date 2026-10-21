@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  type CompaniesSection, type CreditSection, type FollowupSection, type GoalsSection, type InsightsSection, type InventorySection, type QuotationsSection, type RankingsSection, type SalesSection,
+  type CompaniesSection, type ConversationsSection, type CreditSection, type FollowupSection, type GoalsSection, type InsightsSection, type InventorySection, type QuotationsSection, type RankingsSection, type SalesSection,
   customerLink, dailyPoints, formatChange, type Profile,
 } from '../lib/dashboard'
 import { formatMoney } from '../lib/format'
@@ -188,6 +188,45 @@ export function QuotationsBlock({ query, profile }: BlockProps) {
           <Stat label="Por vencer en 3 días" value={q.expiring.count} tone={q.expiring.count > 0 ? 'bad' : undefined} hint={`Monto ${formatMoney(q.expiring.amount)}`} />
           <Stat label="Vencidas sin cerrar" value={q.expired_unclosed} tone={q.expired_unclosed > 0 ? 'bad' : 'good'} />
           <Stat label="Emitidas / convertidas en el periodo" value={`${q.issued.count} / ${q.converted.count}`} hint={`Convertidas: ${formatMoney(q.converted.amount)}`} />
+        </div>
+      )}
+    </Frame>
+  )
+}
+
+/** «3 min», «1 h 20 min». */
+function waitText(minutes: number): string {
+  return minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} h ${minutes % 60 ? `${minutes % 60} min` : ''}`.trim()
+}
+
+export function ConversationsBlock({ query, profile }: BlockProps) {
+  return (
+    <Frame<ConversationsSection> title={own(profile, 'Tus conversaciones', 'Atención por WhatsApp')} path={`/dashboard/conversations?${query}`} detail={{ to: '/conversaciones', label: 'Ver conversaciones' }}>
+      {(c) => (
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Stat label="Clientes esperando respuesta" value={c.waiting} tone={c.waiting > 0 ? 'bad' : 'good'} to="/conversaciones" />
+            <Stat label={`Esperan más de ${c.limit_minutes} min`} value={c.over_limit} tone={c.over_limit > 0 ? 'bad' : 'good'} to="/conversaciones" />
+            <Stat label="Respuesta típica" value={c.median_minutes === null ? '—' : waitText(c.median_minutes)} hint={c.within_limit_pct === null ? 'Sin respuestas en el periodo' : `${c.within_limit_pct}% en menos de ${c.limit_minutes} min · ${c.answered} respuestas`} />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Stat label="Mensajes recibidos" value={c.received} />
+            <Stat label="Mensajes enviados" value={c.sent} />
+            {profile !== 'seller' && <Stat label="Números sin asignar" value={c.unassigned} tone={c.unassigned > 0 ? 'bad' : 'good'} to="/conversaciones" />}
+          </div>
+          {c.top.length > 0 && (
+            <Card className="p-4">
+              <h3 className="mb-2 text-sm font-medium">Los que llevan más tiempo esperando</h3>
+              <ul className="space-y-1 text-sm" aria-label="Clientes esperando respuesta">
+                {c.top.map((t) => (
+                  <li key={t.id} className="flex flex-wrap justify-between gap-x-3">
+                    <Link className="text-jge-blue hover:underline" to={`/conversaciones?c=${t.id}`}>{t.customer}</Link>
+                    <span className={t.minutes >= c.limit_minutes ? 'text-danger' : 'text-ink-muted'}>Hace {waitText(t.minutes)}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
         </div>
       )}
     </Frame>

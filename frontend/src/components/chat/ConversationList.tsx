@@ -67,7 +67,12 @@ export default function ConversationList({
                     <span className="truncate text-xs text-ink-muted">{c.preview ?? 'Sin mensajes'}</span>
                     {c.unread > 0 && <span className="tabular flex min-w-5 shrink-0 items-center justify-center rounded-full bg-jge-red px-1.5 text-[11px] font-semibold leading-5 text-white">{c.unread > 99 ? '99+' : c.unread}</span>}
                   </span>
-                  {!c.customer && <span className="mt-0.5 inline-block rounded bg-warning/15 px-1.5 text-[11px] font-medium text-ink">Sin asignar</span>}
+                  {(!c.customer || c.labels.length > 0) && (
+                    <span className="mt-0.5 flex flex-wrap gap-1">
+                      {!c.customer && <span className="rounded bg-warning-50 px-1.5 text-[11px] font-medium text-ink">Sin asignar</span>}
+                      {c.labels.map((l) => <span key={l} className="rounded bg-jge-blue-50 px-1.5 text-[11px] font-medium text-jge-blue">{l}</span>)}
+                    </span>
+                  )}
                 </span>
               </button>
             </li>
