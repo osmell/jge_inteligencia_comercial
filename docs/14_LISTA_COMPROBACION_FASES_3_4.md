@@ -290,3 +290,9 @@ Puntos a tener presentes al comparar:
 - [ ] La comparación de la venta de ayer con su promedio del mismo día de la semana es razonable para el negocio (sábados, feriados).
 - [ ] Un usuario limitado a una sucursal no ve los resúmenes de la compañía.
 - [ ] Confirmar con gerencia el contenido, la hora y si quieren un resumen consolidado de todas las compañías.
+
+### Correo interno (Fase 9, paso 5)
+- [ ] En «Correo» capturar el servidor real, guardar y enviar una prueba a una cuenta propia; confirmar que llega.
+- [ ] Verificar que la contraseña no se vuelve a ver al reabrir la pantalla.
+- [ ] Un usuario con correo y el resumen diario: llega el correo con cifras y enlace, una sola vez.
+- [ ] Apagar el servidor/credencial falsa: el registro muestra el reintento y luego «Falló».

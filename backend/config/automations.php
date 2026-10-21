@@ -7,6 +7,7 @@ use App\Automations\FollowupDueHandler;
 use App\Automations\InsightHighHandler;
 use App\Automations\InsightsRefreshHandler;
 use App\Automations\InventoryLowHandler;
+use App\Automations\MailDispatchHandler;
 use App\Automations\PromiseDueHandler;
 use App\Automations\PruneNotificationsHandler;
 use App\Automations\QuotationExpiringHandler;
@@ -37,6 +38,11 @@ return [
             'label' => 'Limpieza de avisos antiguos', 'description' => 'Borra cada semana los avisos internos vistos o descartados con más de 90 días.',
             'frequency' => 'weekly', 'respect_window' => false, 'handler' => PruneNotificationsHandler::class, 'default_enabled' => true,
             'params' => ['hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 3, 'min' => 0, 'max' => 23, 'help' => 'Hora del lunes a la que corre.']],
+        ],
+        'mail_dispatch' => [
+            'label' => 'Envío de correos', 'description' => 'Cada hora envía los correos pendientes (avisos y resúmenes) y reintenta los que fallaron (a los 10 y 60 minutos). Sin el correo configurado, los correos quedan registrados como no enviados.',
+            'frequency' => 'hourly', 'respect_window' => true, 'handler' => MailDispatchHandler::class, 'default_enabled' => true,
+            'params' => [],
         ],
         'followup_due' => [
             'label' => 'Acciones de seguimiento del día y vencidas', 'description' => 'Avisa a cada vendedor y supervisor de las acciones de su agenda que vencen hoy o ya vencieron.',

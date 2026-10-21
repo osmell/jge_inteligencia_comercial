@@ -31,6 +31,7 @@ class RolePermissionSeeder extends Seeder
         'insights.view' => 'Inteligencia comercial (consultar análisis y recomendaciones)',
         'insights.manage' => 'Inteligencia comercial (cambiar parámetros)',
         'digests.view' => 'Resúmenes para gerencia (diario y semanal)',
+        'mail.manage' => 'Correo (configurar el servidor y consultar los envíos)',
         'automations.manage' => 'Automatizaciones (configurar, pausar y consultar el registro)',
     ];
 

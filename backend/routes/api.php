@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\V1\InventoryRotationController;
 use App\Http\Controllers\Api\V1\InventoryShortfallController;
 use App\Http\Controllers\Api\V1\InventoryStockController;
 use App\Http\Controllers\Api\V1\InventoryUnitController;
+use App\Http\Controllers\Api\V1\MailController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\PaymentPromiseController;
@@ -128,6 +129,14 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('/', [DigestController::class, 'index']);
         Route::post('generate', [DigestController::class, 'generate']);
         Route::get('{digest}', [DigestController::class, 'show'])->whereNumber('digest');
+    });
+
+    // Configuración del servidor de correo y registro de envíos (credenciales: solo administración).
+    Route::middleware('permission:mail.manage')->prefix('mail')->group(function () {
+        Route::get('settings', [MailController::class, 'show']);
+        Route::put('settings', [MailController::class, 'update']);
+        Route::post('test', [MailController::class, 'test']);
+        Route::get('log', [MailController::class, 'log']);
     });
 
     // Administración de las automatizaciones (catálogo, parámetros, interruptor general, ejecución manual y registro).

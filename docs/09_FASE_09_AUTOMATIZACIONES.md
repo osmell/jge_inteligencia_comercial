@@ -78,3 +78,10 @@ Pantalla **Resúmenes** (`/resumenes`, permiso nuevo `digests.view`; no se otorg
 - **Se generan una sola vez por periodo y guardan las cifras tal como estaban**: un dato corregido después no cambia un resumen ya generado (el historial sirve para comparar). Quien administra las automatizaciones puede generar a mano el del periodo actual («Generar el diario / el semanal»).
 - Quedan listos para enviarse por correo cuando se configure el servidor (paso 5); hoy llegan a la campana con un enlace al resumen.
 - **Supuestos pendientes de confirmar** (cuestionario, preguntas 8 a 10): contenido de cada resumen, que gerencia general y administración los reciban, y la hora (7:00). El resumen consolidado de varias compañías no está hecho: cada compañía va por separado.
+
+## Paso 5 — Correo interno (hecho)
+- **Pantalla «Correo»** (`/admin/correo`, permiso nuevo `mail.manage`, solo administración): servidor SMTP, puerto, cifrado (STARTTLS, SSL o ninguno), usuario, contraseña, remitente y nombre, activar/desactivar, **correo de prueba** y registro de envíos. La contraseña se guarda **cifrada**, nunca se devuelve ni aparece en Auditoría (solo «cambiada»); vacía al guardar = se conserva la actual.
+- **Avisos por correo:** cada persona decide por tipo de aviso en «Avisos» si lo quiere también por correo (por omisión solo los resúmenes). Se usa el correo del usuario; sin correo o con el servidor sin activar, el envío queda en el registro como **No enviado** (nunca se pierde en silencio ni sale por otra vía).
+- **Sin duplicados:** cada correo tiene clave (aviso + destinatario); una repetición no lo manda dos veces. Los resúmenes salen con sus cifras en el cuerpo y un enlace.
+- **Envío y reintentos:** automatización «Envío de correos» (cada hora, ventana de avisos); si falla se reintenta a los 10 y 60 minutos y luego queda como **Falló** con el motivo. Un envío sin confirmar tras 30 min no se reenvía solo.
+- Pendiente de confirmar: dirección remitente definitiva y los datos reales del servidor (se capturan en la pantalla).

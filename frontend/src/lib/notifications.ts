@@ -21,8 +21,9 @@ export interface NoticeSummary {
 }
 
 export interface NoticePreferences {
-  types: { type: string; label: string; enabled: boolean }[]
+  types: { type: string; label: string; enabled: boolean; email: boolean }[]
   paused: boolean
+  email: string | null
 }
 
 export const SEVERITY_TEXT: Record<NoticeSeverity, string> = { info: 'Informativo', warning: 'Atención', danger: 'Urgente' }

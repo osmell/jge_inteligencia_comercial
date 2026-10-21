@@ -53,6 +53,11 @@ function Preferences() {
             <legend className="mb-1 text-sm font-medium text-ink">Tipos de aviso</legend>
             {data.types.map((t) => <CheckField key={t.type} label={t.label} checked={t.enabled} onChange={(e) => void save({ types: { [t.type]: e.target.checked } })} />)}
           </fieldset>
+          <fieldset className="space-y-1" disabled={busy}>
+            <legend className="mb-1 text-sm font-medium text-ink">Recibir también por correo{data.email ? ` (${data.email})` : ''}</legend>
+            {!data.email && <p className="text-xs text-ink-muted">Tu usuario no tiene correo registrado; pide a administración que lo agregue.</p>}
+            {data.types.map((t) => <CheckField key={t.type} label={`${t.label} por correo`} checked={t.email} onChange={(e) => void save({ email: { [t.type]: e.target.checked } })} />)}
+          </fieldset>
           <Button variant="secondary" loading={busy} onClick={() => void sendTest()}>Enviarme un aviso de prueba</Button>
         </Card>
       )}

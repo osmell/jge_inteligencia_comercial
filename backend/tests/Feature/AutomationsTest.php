@@ -232,7 +232,7 @@ class AutomationsTest extends TestCase
         config(['automations.automations' => $catalog['automations']]);
 
         $this->assertEquals(
-            ['insights_refresh' => true, 'notifications_prune' => true, 'followup_due' => true, 'quotation_expiring' => true, 'promise_due' => true, 'credit_bucket' => true, 'inventory_low' => true, 'insight_high' => true, 'digest_daily' => true, 'digest_weekly' => true],
+            ['insights_refresh' => true, 'notifications_prune' => true, 'followup_due' => true, 'quotation_expiring' => true, 'promise_due' => true, 'credit_bucket' => true, 'inventory_low' => true, 'insight_high' => true, 'digest_daily' => true, 'digest_weekly' => true, 'mail_dispatch' => true],
             collect(app(AutomationCatalog::class)->describe())->pluck('available', 'key')->all(),
         );
         $this->assertSame(['deleted' => 0], app(PruneNotificationsHandler::class)->run([]));

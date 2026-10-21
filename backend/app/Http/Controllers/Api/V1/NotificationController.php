@@ -75,14 +75,14 @@ class NotificationController extends Controller
 
     public function preferences(Request $request): JsonResponse
     {
-        return response()->json(['data' => ['types' => $this->notifier->typesFor($request->user()), 'paused' => $this->notifier->isPaused($request->user())]]);
+        return response()->json(['data' => ['types' => $this->notifier->typesFor($request->user()), 'paused' => $this->notifier->isPaused($request->user()), 'email' => $request->user()->email]]);
     }
 
     public function updatePreferences(Request $request): JsonResponse
     {
         $user = $request->user();
         $allowed = array_column($this->notifier->typesFor($user), 'type');
-        $data = $request->validate(['paused' => ['nullable', 'boolean'], 'types' => ['nullable', 'array'], 'types.*' => ['boolean']]);
+        $data = $request->validate(['paused' => ['nullable', 'boolean'], 'types' => ['nullable', 'array'], 'types.*' => ['boolean'], 'email' => ['nullable', 'array'], 'email.*' => ['boolean']]);
 
         DB::transaction(function () use ($user, $allowed, $data) {
             if (array_key_exists('paused', $data) && $data['paused'] !== null) {
@@ -91,6 +91,12 @@ class NotificationController extends Controller
             foreach (($data['types'] ?? []) as $type => $enabled) {
                 if (in_array($type, $allowed, true)) {
                     DB::table('notification_preferences')->updateOrInsert(['user_id' => $user->id, 'type' => $type], ['enabled' => (bool) $enabled]);
+                }
+            }
+            foreach (($data['email'] ?? []) as $type => $email) {
+                if (in_array($type, $allowed, true)) {
+                    $enabled = DB::table('notification_preferences')->where(['user_id' => $user->id, 'type' => $type])->value('enabled');
+                    DB::table('notification_preferences')->updateOrInsert(['user_id' => $user->id, 'type' => $type], ['email' => (bool) $email, 'enabled' => $enabled ?? (bool) (config("notifications.types.{$type}.default") ?? true)]);
                 }
             }
         });

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Tipos de aviso interno. Cada tipo dice qué permiso hace falta para recibirlo (el servidor nunca entrega un aviso a quien no podría
+ * Tipos de aviso interno (con «email» => true, además llegan por correo por omisión; cada persona lo puede cambiar). Cada tipo dice qué permiso hace falta para recibirlo (el servidor nunca entrega un aviso a quien no podría
  * ver lo que describe) y si se entrega por omisión. Cada persona puede apagar los tipos que no quiera o pausar todos sus avisos.
  */
 return [
@@ -12,7 +12,7 @@ return [
         'credit_bucket' => ['label' => 'Facturas que pasan a otro tramo de cartera', 'permission' => 'credit.view', 'default' => true],
         'inventory_low' => ['label' => 'Productos bajo el mínimo o agotados', 'permission' => 'inventory.view', 'default' => true],
         'insight_high' => ['label' => 'Recomendaciones de gravedad alta', 'permission' => 'insights.view', 'default' => true],
-        'digest' => ['label' => 'Resúmenes para gerencia', 'permission' => 'digests.view', 'default' => true],
+        'digest' => ['label' => 'Resúmenes para gerencia', 'permission' => 'digests.view', 'default' => true, 'email' => true],
         'system' => ['label' => 'Avisos del sistema', 'permission' => null, 'default' => true],
     ],
 

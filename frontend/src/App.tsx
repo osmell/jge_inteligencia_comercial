@@ -20,6 +20,7 @@ import InsightsPage from './pages/InsightsPage'
 import InsightsSeasonalityPage from './pages/InsightsSeasonalityPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
 import DigestDetailPage from './pages/DigestDetailPage'
+import MailSettingsPage from './pages/MailSettingsPage'
 import DigestsPage from './pages/DigestsPage'
 import AutomationsPage from './pages/AutomationsPage'
 import NotificationsPage from './pages/NotificationsPage'
@@ -75,6 +76,9 @@ export default function App() {
               <Route element={<RequirePermission permission="digests.view" />}>
                 <Route path="resumenes" element={<DigestsPage />} />
                 <Route path="resumenes/:id" element={<DigestDetailPage />} />
+              </Route>
+              <Route element={<RequirePermission permission="mail.manage" />}>
+                <Route path="admin/correo" element={<MailSettingsPage />} />
               </Route>
               <Route element={<RequirePermission permission="automations.manage" />}>
                 <Route path="admin/automatizaciones" element={<AutomationsPage />} />

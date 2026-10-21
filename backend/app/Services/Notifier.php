@@ -27,12 +27,13 @@ class Notifier
     public function typesFor(User $user): array
     {
         $prefs = DB::table('notification_preferences')->where('user_id', $user->id)->pluck('enabled', 'type');
+        $emails = DB::table('notification_preferences')->where('user_id', $user->id)->pluck('email', 'type');
         $out = [];
         foreach ($this->types() as $key => $t) {
             if ($t['permission'] !== null && ! $user->hasPermission($t['permission'])) {
                 continue;
             }
-            $out[] = ['type' => $key, 'label' => $t['label'], 'enabled' => isset($prefs[$key]) ? (bool) $prefs[$key] : (bool) $t['default']];
+            $out[] = ['type' => $key, 'label' => $t['label'], 'enabled' => isset($prefs[$key]) ? (bool) $prefs[$key] : (bool) $t['default'], 'email' => isset($emails[$key]) ? (bool) $emails[$key] : (bool) ($t['email'] ?? false)];
         }
 
         return $out;
@@ -74,10 +75,23 @@ class Notifier
             return $existing;
         }
 
-        return UserNotification::create([
+        $notice = UserNotification::create([
             'user_id' => $user->id, 'company_id' => $companyId, 'type' => $type, 'severity' => $severity, 'title' => mb_substr($title, 0, 255), 'body' => $body === null ? null : mb_substr($body, 0, 1000),
             'url' => $url, 'dedupe_key' => $dedupeKey, 'status' => UserNotification::NEW, 'created_at' => now(),
         ]);
+        if ($this->wantsEmail($user, $type)) {
+            app(MailService::class)->queueNotice($user, $notice);
+        }
+
+        return $notice;
+    }
+
+    /** Si la persona pidió recibir este tipo de aviso también por correo (por omisión, solo los resúmenes). */
+    public function wantsEmail(User $user, string $type): bool
+    {
+        $pref = DB::table('notification_preferences')->where(['user_id' => $user->id, 'type' => $type])->value('email');
+
+        return $pref === null ? (bool) ($this->types()[$type]['email'] ?? false) : (bool) $pref;
     }
 
     /** Borra los avisos vistos o descartados más antiguos que el tiempo de conservación. */
