@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
 use App\Http\Controllers\Api\V1\OrganizationController;
+use App\Http\Controllers\Api\V1\PaymentPromiseController;
 use App\Http\Controllers\Api\V1\QuotationController;
 use App\Http\Controllers\Api\V1\Sales\ProductController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
@@ -76,6 +77,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('aging', [CreditPortfolioController::class, 'aging']);
         Route::get('aging/export', [CreditPortfolioController::class, 'export']);
         Route::get('customer', [CreditPortfolioController::class, 'customer']);
+        Route::get('promises', [PaymentPromiseController::class, 'index']);
+        Route::post('promises', [PaymentPromiseController::class, 'store'])->middleware('permission:credit.promises');
+        Route::post('promises/{promise}/cancel', [PaymentPromiseController::class, 'cancel'])->middleware('permission:credit.promises')->whereNumber('promise');
         Route::get('open-invoices', [CreditSettlementController::class, 'openInvoices']);
         Route::post('payments', [CreditSettlementController::class, 'payment'])->middleware('permission:credit.payments');
         Route::post('credit-notes', [CreditSettlementController::class, 'creditNote'])->middleware('permission:credit.notes');

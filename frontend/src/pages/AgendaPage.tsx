@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
 import { Alert, Button, Card, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
 import { api } from '../lib/api'
+import { PROMISE_LABEL, type PaymentPromiseRow } from '../lib/credit'
+import { formatMoney } from '../lib/format'
 import { ACTIVITY_LABEL, CHANNEL_LABEL, formatDate, formatDateTime, sinceLabel, type Agenda, type AgendaAction, type ReactivateRow, type SellerRow } from '../lib/customers'
 import type { Company } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
@@ -61,6 +64,34 @@ function ActionsTable({ title, rows, total, loading, onDone, overdue }: { title:
   )
 }
 
+function PromisesTable({ rows, loading }: { rows: PaymentPromiseRow[]; loading: boolean }) {
+  return (
+    <section>
+      <h2 className="mb-1 text-sm font-semibold text-ink">Promesas de pago</h2>
+      <p className="mb-2 text-xs text-ink-muted">Pendientes dentro del plazo elegido e incumplidas en los últimos 30 días. Una promesa se cumple con los abonos registrados hasta su fecha.</p>
+      <DataTable label="Promesas de pago">
+        <thead>
+          <tr><th className={th}>Cliente</th><th className={`${th} text-right`}>Prometido</th><th className={`${th} text-right`}>Abonado</th><th className={th}>Fecha prometida</th><th className={th}>Estado</th><th className={th}>Lo registró</th></tr>
+        </thead>
+        <tbody>
+          {loading ? <TableSkeleton cols={6} /> : rows.length === 0 ? (
+            <EmptyRow cols={6}>No hay promesas de pago por atender.</EmptyRow>
+          ) : rows.map((p) => (
+            <tr key={p.id} className={tr}>
+              <td className={td}><Link className="font-medium text-jge-blue hover:underline" to={profileLink(p.company_id, p.customer.code)}>{p.customer.name}</Link></td>
+              <td className={`${td} tabular text-right`}>{formatMoney(p.amount)}</td>
+              <td className={`${td} tabular text-right`}>{formatMoney(p.paid)}</td>
+              <td className={td}>{formatDate(p.promised_on)}</td>
+              <td className={td}>{PROMISE_LABEL[p.status]}{p.days_overdue > 0 && <div className="text-xs font-medium text-danger">Venció {sinceLabel(p.days_overdue)}</div>}</td>
+              <td className={td}>{p.user ?? '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </DataTable>
+    </section>
+  )
+}
+
 function ReactivateTable({ rows, total, loading, days }: { rows: ReactivateRow[]; total: number; loading: boolean; days: number }) {
   return (
     <section>
@@ -96,6 +127,7 @@ function ReactivateTable({ rows, total, loading, days }: { rows: ReactivateRow[]
 
 export default function AgendaPage() {
   const toast = useToast()
+  const { can } = useAuth()
   const [companyId, setCompanyId] = useState('')
   const [sellerId, setSellerId] = useState('')
   const [mine, setMine] = useState(false)
@@ -111,6 +143,10 @@ export default function AgendaPage() {
   if (mine) query.set('mine', '1')
   const agenda = useLoad<Agenda>(`/customers/agenda?${query}`)
   const a = agenda.data
+  const promiseQuery = new URLSearchParams({ status: 'pending', horizon_days: String(horizon) })
+  if (companyId) promiseQuery.set('company_id', companyId)
+  if (mine) promiseQuery.set('mine', '1')
+  const promises = useLoad<{ data: PaymentPromiseRow[] }>(`/credit/promises?${promiseQuery}`, { enabled: can('credit.view') })
 
   async function done(id: number) {
     setError(null)
@@ -159,6 +195,7 @@ export default function AgendaPage() {
       <div className="space-y-6">
         <ActionsTable title="Acciones vencidas" rows={a?.data.overdue ?? []} total={a?.meta.overdue_total ?? 0} loading={agenda.loading && !a} onDone={(id) => void done(id)} overdue />
         <ActionsTable title="Acciones próximas" rows={a?.data.upcoming ?? []} total={a?.meta.upcoming_total ?? 0} loading={agenda.loading && !a} onDone={(id) => void done(id)} />
+        {can('credit.view') && <PromisesTable rows={promises.data?.data ?? []} loading={promises.loading && !promises.data} />}
         <ReactivateTable rows={a?.data.reactivate ?? []} total={a?.meta.reactivate_total ?? 0} loading={agenda.loading && !a} days={noContact} />
       </div>
     </section>

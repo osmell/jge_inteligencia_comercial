@@ -47,6 +47,7 @@ beforeEach(() => {
     let body: unknown = { data: [] }
     if (path === '/auth/me') body = { data: { id: 3, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
     else if (path.startsWith('/credit/aging')) body = { data: { buckets: ['current', '1-30', '121+'], totals: { current: '100.0000', '1-30': '0.0000', '121+': '700.0000', total: '800.0000' }, customers: [{ company_id: 1, company: 'Compañía Alfa', code: '3892', name: 'LYDIA LUDIC', buckets: { current: '100.0000', '1-30': '0.0000', '121+': '700.0000' }, total: '800.0000', invoices: 2, oldest_days: 172 }] }, meta: { customers_total: 1, truncated: false } }
+    else if (path.startsWith('/credit/promises')) body = { data: [{ id: 9, company_id: 1, customer: { code: '3892', name: 'LYDIA LUDIC' }, made_on: '2026-10-20', promised_on: '2026-10-25', amount: '400.0000', paid: '150.0000', status: 'open', note: 'Pasa el viernes', days_overdue: 0, user: 'Ana', cancel_reason: null }, { id: 8, company_id: 1, customer: { code: '3892', name: 'LYDIA LUDIC' }, made_on: '2026-10-01', promised_on: '2026-10-05', amount: '100.0000', paid: '0.0000', status: 'broken', note: null, days_overdue: 15, user: 'Ana', cancel_reason: null }] }
     else if (path.startsWith('/credit/customer')) body = { data: { buckets: ['current', '121+'], totals: { current: '100.0000', '121+': '700.0000', total: '800.0000' }, open_invoices: 2, oldest_days: 172, returns: { count: 1, subtotal: '200.0000', tax_total: '30.0000', total: '230.0000' } } }
     else if (path.startsWith('/credit/open-invoices')) body = { data: [{ id: 1, document: 'FC-D-3088', issued_on: '2026-09-10', total: '1035.00', balance: '785.00' }, { id: 5, document: 'FC-D-3095', issued_on: '2026-10-01', total: '500.00', balance: '500.00' }] }
     else if (path.startsWith('/credit/invoices/1')) body = { data: detail }
@@ -209,10 +210,38 @@ describe('crédito y cobranzas', () => {
   })
 
   it('la ficha del cliente muestra el saldo por tramo y las devoluciones aparte de las ventas', async () => {
-    render(<AuthProvider><MemoryRouter><CustomerCredit companyId="1" code="3892" netTotal="5000.00" /></MemoryRouter></AuthProvider>)
+    render(<AuthProvider><MemoryRouter><CustomerCredit companyId="1" code="3892" name="LYDIA LUDIC" netTotal="5000.00" /></MemoryRouter></AuthProvider>)
 
     expect(await screen.findByText(/Saldo por cobrar/)).toHaveTextContent('800,00')
     expect(screen.getByText(/Devoluciones \(notas de crédito vigentes\)/)).toHaveTextContent('200,00')
     expect(screen.getByText(/Venta neta menos devoluciones/)).toHaveTextContent('4800,00')
+  })
+
+  it('la ficha lista las promesas de pago y permite registrarlas con el permiso', async () => {
+    permissions = ['credit.view', 'credit.promises']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><CustomerCredit companyId="1" code="3892" name="LYDIA LUDIC" netTotal="5000.00" /></MemoryRouter></AuthProvider>)
+
+    const list = await screen.findByRole('list', { name: 'Promesas de pago del cliente' })
+    expect(list).toHaveTextContent('Pendiente')
+    expect(list).toHaveTextContent('Abonado 150,00')
+    expect(list).toHaveTextContent('Incumplida')
+
+    await u.click(await screen.findByRole('button', { name: 'Registrar promesa' }))
+    const dialog = await screen.findByRole('dialog')
+    await u.type(within(dialog).getByLabelText('Monto prometido'), '300')
+    await u.click(within(dialog).getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(posts).toHaveLength(1))
+    expect(posts[0].path).toBe('/credit/promises')
+    expect(posts[0].body).toMatchObject({ company_id: 1, code: '3892', amount: '300', note: null })
+  })
+
+  it('sin el permiso de promesas no ofrece registrarlas ni cancelarlas', async () => {
+    render(<AuthProvider><MemoryRouter><CustomerCredit companyId="1" code="3892" name="LYDIA LUDIC" netTotal="5000.00" /></MemoryRouter></AuthProvider>)
+
+    await screen.findByRole('list', { name: 'Promesas de pago del cliente' })
+    expect(screen.queryByRole('button', { name: 'Registrar promesa' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Cancelar promesa/ })).not.toBeInTheDocument()
   })
 })

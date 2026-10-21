@@ -58,5 +58,12 @@ Decisiones tomadas con esas respuestas: la nota de crédito se **captura en pant
 - Ficha del cliente: sección «Crédito y devoluciones» (visible con `credit.view`) con saldo por tramo, factura más antigua y devoluciones vigentes (las notas anuladas no cuentan).
 - No incluye todavía exportación a Excel/PDF de la cartera ni filtro por vendedor.
 
+### Paso 5 — Promesas de pago (hecho)
+- Permiso nuevo `credit.promises` (registrar y cancelar; no se otorga solo). Consultar las promesas basta con `credit.view`.
+- Una promesa guarda cliente, monto y fecha prometida (desde hoy y hasta 90 días; el monto no puede superar el saldo por cobrar del cliente) y una nota. Se registra en la ficha del cliente («Crédito y devoluciones» → «Registrar promesa»).
+- **El estado no se captura: se deriva.** *Cumplida* cuando los abonos vigentes (no anulados) del cliente registrados desde el día de la promesa hasta la fecha prometida suman al menos el monto; *pendiente* mientras no llegue la fecha; *incumplida* al día siguiente si no se alcanzó; *cancelada* si alguien la cancela con motivo. No bloquea nada: solo se muestra.
+- La **Agenda de seguimiento** incluye «Promesas de pago» (para quien tenga `credit.view`): las pendientes dentro del plazo elegido y las incumplidas de los últimos 30 días, con los mismos filtros de compañía y «lo que yo registré».
+- Una promesa que cambia de fecha se cancela y se registra otra; el historial queda en la ficha y en Auditoría (`credit.promise_created`, `credit.promise_cancelled`).
+
 ### Pendiente
-5. Promesas de pago. 6. Scoring.
+6. Scoring.

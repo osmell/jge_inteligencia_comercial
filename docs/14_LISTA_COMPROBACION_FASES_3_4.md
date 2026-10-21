@@ -185,3 +185,10 @@ Puntos a tener presentes al comparar:
 - [ ] Exportar el CSV y comparar un cliente contra su ficha.
 - [ ] En la ficha de un cliente con nota de crédito: «Devoluciones» muestra el subtotal; tras anular la nota, vuelve a cero.
 - [ ] Un vendedor solo ve la cartera de sus facturas.
+
+### Crédito: promesas de pago (Fase 6, paso 5)
+- [ ] Otorgar `credit.promises` a quien cobra.
+- [ ] Registrar una promesa en la ficha; aparece en la Agenda como pendiente.
+- [ ] Registrar abonos por el monto hasta la fecha prometida: pasa a «Cumplida». Anular el abono: vuelve a pendiente.
+- [ ] Pasada la fecha sin abonos suficientes: «Incumplida» en la Agenda durante 30 días.
+- [ ] Cancelar una promesa con motivo: queda «Cancelada» y sale de la Agenda.

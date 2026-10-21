@@ -248,7 +248,7 @@ export default function CustomerProfilePage() {
 
           <CustomerInteractions companyId={companyId} code={code} />
           <CustomerQuotations companyId={companyId} code={code} name={p.customer.name} />
-          {can('credit.view') && <CustomerCredit companyId={companyId} code={code} netTotal={p.totals.net_total} />}
+          {can('credit.view') && <CustomerCredit companyId={companyId} code={code} name={p.customer.name} netTotal={p.totals.net_total} />}
 
           <div className="mb-4 space-y-2">
             {p.history_starts_on && (

@@ -107,3 +107,27 @@ export interface CustomerCreditSummary {
   oldest_days: number
   returns: { count: number; subtotal: string; tax_total: string; total: string }
 }
+
+export type PromiseStatus = 'open' | 'kept' | 'broken' | 'cancelled'
+
+export const PROMISE_LABEL: Record<PromiseStatus, string> = {
+  open: 'Pendiente',
+  kept: 'Cumplida',
+  broken: 'Incumplida',
+  cancelled: 'Cancelada',
+}
+
+export interface PaymentPromiseRow {
+  id: number
+  company_id: number
+  customer: { code: string; name: string }
+  made_on: string
+  promised_on: string
+  amount: string
+  paid: string
+  status: PromiseStatus
+  note: string | null
+  days_overdue: number
+  user: string | null
+  cancel_reason: string | null
+}

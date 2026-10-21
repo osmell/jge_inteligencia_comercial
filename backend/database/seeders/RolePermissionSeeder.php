@@ -23,6 +23,7 @@ class RolePermissionSeeder extends Seeder
         'interactions.manage' => 'Seguimiento de clientes (registrar contactos)',
         'credit.view' => 'Crédito y cobranzas (consulta de facturas y saldos)',
         'credit.payments' => 'Crédito y cobranzas (registrar abonos)',
+        'credit.promises' => 'Crédito y cobranzas (registrar promesas de pago)',
         'credit.notes' => 'Crédito y cobranzas (registrar notas de crédito)',
     ];
 
