@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\ConversationBroadcast;
 use Illuminate\Database\Eloquent\Model;
 use LogicException;
 
@@ -39,6 +40,8 @@ class WhatsappAttachment extends Model
                 throw new LogicException('El adjunto ya está definido y no se modifica.');
             }
         });
+        // Cuando el archivo termina de descargarse (o falla), la conversación abierta se actualiza.
+        static::updated(fn (self $a) => ConversationBroadcast::dispatch($a->message_id, 'updated'));
         static::deleting(fn () => throw new LogicException('Los adjuntos no se eliminan.'));
     }
 

@@ -13,3 +13,5 @@ Schedule::command('imports:fail-stale')->hourly();
 // Las automatizaciones (recálculo de inteligencia, limpieza de avisos y los avisos operativos) las gobierna el catálogo: se pueden
 // pausar, cambiar de hora y consultar su registro desde la aplicación.
 Schedule::command('automations:run')->everyFiveMinutes();
+// Clientes de WhatsApp que llevan esperando respuesta más de lo permitido: avisa a quien supervisa a su vendedor.
+Schedule::command('conversations:alert-waiting')->everyFiveMinutes();

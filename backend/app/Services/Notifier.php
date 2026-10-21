@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\NoticeCreated;
 use App\Models\User;
 use App\Models\UserNotification;
 use Closure;
@@ -83,6 +84,7 @@ class Notifier
             app(MailService::class)->queueNotice($user, $notice);
         }
         app(WebhookService::class)->queueNotice($notice);
+        NoticeCreated::dispatch($user->id, $type);
 
         return $notice;
     }

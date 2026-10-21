@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    // Autorización de los canales privados del tiempo real (sesión de la SPA).
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum']])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
         // El permiso se comprueba antes de resolver el modelo: sin permiso siempre 403, nunca 404.

@@ -2,3 +2,6 @@ vendor
 node_modules
 .env
 storage/logs/*
+storage/app/private
+storage/app/public
+storage/framework/testing

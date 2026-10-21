@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { BrandEmblem, BrandPlate } from './Brand'
+import { onConversationEvent, startRealtime } from '../lib/realtime'
+import { playMessageSound } from '../lib/sound'
 import NotificationBell from './NotificationBell'
 import { NAV_GROUPS, NAV_ITEMS } from './navigation'
 
@@ -16,6 +18,27 @@ export default function Layout() {
   const { pathname } = useLocation()
   const menuButton = useRef<HTMLButtonElement>(null)
   const current = NAV_ITEMS.find((i) => (i.to === '/' ? pathname === '/' : pathname.startsWith(i.to)))
+
+  // Tiempo real: la campana y las conversaciones se actualizan al instante; sin servidor de tiempo real, la aplicación sigue con consultas periódicas.
+  const userId = user?.id
+  const watchesConversations = can('conversations.view')
+  useEffect(() => {
+    if (userId === undefined) return
+    let stop: (() => void) | undefined
+    let cancelled = false
+    void startRealtime(userId, watchesConversations).then((close) => {
+      if (cancelled) close()
+      else stop = close
+    })
+    const unsubscribe = onConversationEvent((e) => {
+      if (e.kind === 'created' && e.message.direction === 'in' && e.message.type !== 'reaction') playMessageSound()
+    })
+    return () => {
+      cancelled = true
+      unsubscribe()
+      stop?.()
+    }
+  }, [userId, watchesConversations])
 
   useEffect(() => {
     if (!open) return

@@ -13,6 +13,8 @@ return [
         'inventory_low' => ['label' => 'Productos bajo el mínimo o agotados', 'permission' => 'inventory.view', 'default' => true],
         'insight_high' => ['label' => 'Recomendaciones de gravedad alta', 'permission' => 'insights.view', 'default' => true],
         'digest' => ['label' => 'Resúmenes para gerencia', 'permission' => 'digests.view', 'default' => true, 'email' => true],
+        'conversation_message' => ['label' => 'Mensajes nuevos de clientes por WhatsApp', 'permission' => 'conversations.view', 'default' => true],
+        'conversation_waiting' => ['label' => 'Clientes esperando respuesta (equipo que supervisas)', 'permission' => 'conversations.view', 'default' => true],
         'system' => ['label' => 'Avisos del sistema', 'permission' => null, 'default' => true],
     ],
 

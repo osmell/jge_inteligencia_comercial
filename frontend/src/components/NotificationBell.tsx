@@ -5,16 +5,23 @@ import { api } from '../lib/api'
 import { formatDateTime } from '../lib/format'
 import type { Notice, NoticeSummary } from '../lib/notifications'
 import { SEVERITY_TEXT } from '../lib/notifications'
+import { onNotice } from '../lib/realtime'
+import { setSoundEnabled, soundEnabled } from '../lib/sound'
 import { useLoad } from '../lib/useLoad'
 
-/** Campana de avisos internos: contador de nuevos (se actualiza solo cada minuto) y los más recientes. */
+/** Campana de avisos internos: contador de nuevos (al instante por tiempo real; cada minuto como respaldo) y los más recientes. */
 export default function NotificationBell() {
   const navigate = useNavigate()
   const summary = useLoad<{ data: NoticeSummary }>('/notifications/summary', { pollEvery: 60000, pollWhile: () => true })
   const [open, setOpen] = useState(false)
+  const [sound, setSound] = useState(soundEnabled)
   const box = useRef<HTMLDivElement>(null)
   const data = summary.data?.data
   const unread = data?.unread ?? 0
+
+  // Un aviso nuevo llega por el tiempo real: se actualiza sin esperar al sondeo.
+  const reload = summary.reload
+  useEffect(() => onNotice(() => void reload()), [reload])
 
   useEffect(() => {
     if (!open) return
@@ -84,6 +91,10 @@ export default function NotificationBell() {
               ))}
             </ul>
           )}
+          <label className="flex cursor-pointer items-center gap-2 border-t border-line px-4 py-2 text-xs text-ink-muted">
+            <input type="checkbox" checked={sound} onChange={(e) => { setSound(e.target.checked); setSoundEnabled(e.target.checked) }} />
+            Sonido al llegar un mensaje de un cliente
+          </label>
           <div className="border-t border-line px-4 py-2.5 text-center">
             <Link to="/notificaciones" onClick={() => setOpen(false)} className="text-sm text-jge-blue hover:underline">Ver todos los avisos y preferencias</Link>
           </div>

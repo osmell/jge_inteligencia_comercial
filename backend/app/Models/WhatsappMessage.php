@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\ConversationBroadcast;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
@@ -51,6 +52,13 @@ class WhatsappMessage extends Model
     protected static function booted(): void
     {
         static::deleting(fn () => throw new \LogicException('Los mensajes de WhatsApp no se eliminan.'));
+        // Tiempo real: cualquier mensaje nuevo o cambio de estado de una conversación se emite a quienes la ven.
+        static::created(fn (self $m) => $m->conversation_id === null ?: ConversationBroadcast::dispatch($m->id, 'created'));
+        static::updated(function (self $m) {
+            if ($m->conversation_id !== null && $m->wasChanged(['status', 'wa_message_id', 'delivered_at', 'read_at', 'error'])) {
+                ConversationBroadcast::dispatch($m->id, 'updated');
+            }
+        });
     }
 
     protected function casts(): array

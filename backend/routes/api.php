@@ -147,6 +147,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('log', [MailController::class, 'log']);
     });
 
+    // Datos públicos de conexión al tiempo real (vacío si no está configurado).
+    Route::get('realtime/config', fn () => response()->json(['data' => config('broadcasting.default') === 'reverb' && config('conversations.realtime.key') ? config('conversations.realtime') : null]));
+
     // Conversaciones de WhatsApp: el alcance de cada persona lo resuelve ConversationAccess.
     Route::middleware('permission:conversations.view')->prefix('conversations')->group(function () {
         Route::get('/', [ConversationController::class, 'index']);

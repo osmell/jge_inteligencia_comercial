@@ -11,12 +11,12 @@ use App\Models\WhatsappConversation;
 use App\Models\WhatsappMessage;
 use App\Models\WhatsappTemplate;
 use App\Services\ConversationAccess;
+use App\Services\ConversationPresenter;
 use App\Services\ConversationSender;
 use App\Services\WhatsappService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -31,7 +31,7 @@ class ConversationController extends Controller
     /** Tipos que el navegador puede mostrar en línea; el resto siempre se descarga. */
     private const INLINE = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/aac', 'application/pdf'];
 
-    public function __construct(private readonly ConversationAccess $access, private readonly ConversationSender $sender, private readonly WhatsappService $wa) {}
+    public function __construct(private readonly ConversationAccess $access, private readonly ConversationSender $sender, private readonly WhatsappService $wa, private readonly ConversationPresenter $presenter) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -76,7 +76,7 @@ class ConversationController extends Controller
         $authors = DB::table('users')->whereIn('id', $page->pluck('user_id')->filter())->pluck('name', 'id');
 
         return response()->json([
-            'data' => $page->map(fn (WhatsappMessage $m) => $this->message($m, $attachments->get($m->id, collect()), $replies->get($m->reply_to_id), $authors[$m->user_id] ?? null))->all(),
+            'data' => $page->map(fn (WhatsappMessage $m) => $this->presenter->message($m, $attachments->get($m->id, collect()), $replies->get($m->reply_to_id), $authors[$m->user_id] ?? null))->all(),
             'meta' => ['has_more' => $rows->count() > self::MESSAGES, 'oldest_id' => $page->first()?->id, 'window_open' => $c->windowOpen(), 'can_reply' => $this->access->canReply($request->user(), $c)],
         ]);
     }
@@ -92,7 +92,7 @@ class ConversationController extends Controller
         ]);
         $m = $this->sender->send($request->user(), $c, $data['body'] ?? null, $request->file('file'), isset($data['reply_to_id']) ? (int) $data['reply_to_id'] : null, $data['client_key'] ?? null);
 
-        return response()->json(['data' => $this->presentOne($m)], 201);
+        return response()->json(['data' => $this->presenter->one($m)], 201);
     }
 
     /** Reenvía un mensaje libre que había fallado. */
@@ -102,7 +102,7 @@ class ConversationController extends Controller
         $c = $this->find($request, (int) $m->conversation_id);
         abort_unless($this->access->canReply($request->user(), $c), 403, 'No puedes escribir en esta conversación.');
 
-        return response()->json(['data' => $this->presentOne($this->sender->retry($request->user(), $m))]);
+        return response()->json(['data' => $this->presenter->one($this->sender->retry($request->user(), $m))]);
     }
 
     /** Plantillas aprobadas, para escribir al cliente cuando la ventana de 24 horas está cerrada. */
@@ -125,7 +125,7 @@ class ConversationController extends Controller
             return response()->json(['message' => (string) $m->error], 422);
         }
 
-        return response()->json(['data' => $this->presentOne($m)], 201);
+        return response()->json(['data' => $this->presenter->one($m)], 201);
     }
 
     /** Marca como leída la conversación (hasta su último mensaje) para quien la abre. */
@@ -174,15 +174,6 @@ class ConversationController extends Controller
         ], $inline ? 'inline' : 'attachment');
     }
 
-    /** @return array<string, mixed> */
-    private function presentOne(WhatsappMessage $m): array
-    {
-        $m = $m->fresh() ?? $m;                            // con cola síncrona el envío ya pudo cambiar su estado
-        $reply = $m->reply_to_id === null ? null : WhatsappMessage::query()->find($m->reply_to_id);
-
-        return $this->message($m, WhatsappAttachment::query()->where('message_id', $m->id)->get(), $reply, $m->user_id === null ? null : DB::table('users')->where('id', $m->user_id)->value('name'));
-    }
-
     private function find(Request $request, int $id): WhatsappConversation
     {
         return $this->access->visible($request->user())->whereKey($id)->firstOrFail();
@@ -195,20 +186,6 @@ class ConversationController extends Controller
             'id' => $c->id, 'company_id' => $c->company_id, 'customer' => $customer === null ? null : ['id' => $customer->id, 'code' => $customer->code, 'name' => $customer->name],
             'wa_number' => $c->wa_number, 'profile_name' => $c->profile_name, 'status' => $c->status, 'preview' => $c->last_message_preview,
             'last_message_at' => $c->last_message_at?->toIso8601String(), 'window_open' => $c->windowOpen(), 'unread' => $unread, 'can_reply' => $this->access->canReply($user, $c),
-        ];
-    }
-
-    /**
-     * @param  Collection<int, WhatsappAttachment>  $files
-     * @return array<string, mixed>
-     */
-    private function message(WhatsappMessage $m, $files, ?WhatsappMessage $reply, ?string $author): array
-    {
-        return [
-            'id' => $m->id, 'direction' => $m->direction, 'type' => $m->message_type, 'body' => $m->body, 'status' => $m->status, 'error' => $m->error, 'author' => $author,
-            'created_at' => $m->created_at->toIso8601String(), 'delivered_at' => $m->delivered_at?->toIso8601String(), 'read_at' => $m->read_at?->toIso8601String(),
-            'reply_to' => $reply === null ? null : ['id' => $reply->id, 'direction' => $reply->direction, 'body' => mb_substr($reply->body, 0, 120)],
-            'attachments' => $files->map(fn (WhatsappAttachment $a) => ['id' => $a->id, 'kind' => $a->kind, 'name' => $a->original_name, 'mime' => $a->mime, 'size' => $a->size])->values()->all(),
         ];
     }
 }

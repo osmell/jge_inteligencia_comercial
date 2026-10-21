@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use App\Models\WhatsappConversation;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -51,6 +52,16 @@ class ConversationAccess
             && in_array($user->role->slug, self::WRITERS, true)
             && $conversation->customer_id !== null
             && $this->canView($user, $conversation);
+    }
+
+    /**
+     * Personas activas que pueden ver la conversación (a quienes se les emite en tiempo real).
+     *
+     * @return Collection<int, User>
+     */
+    public function watchers(WhatsappConversation $conversation): Collection
+    {
+        return User::query()->where('is_active', true)->with('role.permissions')->get()->filter(fn (User $u) => $u->hasPermission('conversations.view') && $this->canView($u, $conversation))->values();
     }
 
     /** Deja constancia cuando alguien ajeno al vendedor responsable abre la conversación. */
