@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\DigestController;
 use App\Http\Controllers\Api\V1\InsightAlertController;
 use App\Http\Controllers\Api\V1\InsightAnalysisController;
@@ -125,6 +126,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::put('products/{product}/units', [InventoryUnitController::class, 'updateProductUnits'])->whereNumber('product');
         });
     });
+
+    // Dashboard inicial: cada sección exige el permiso de su pantalla de origen (lo valida el servicio).
+    Route::get('dashboard', [DashboardController::class, 'index']);
+    Route::get('dashboard/{section}', [DashboardController::class, 'show'])->where('section', '[a-z]+');
 
     // Resúmenes para gerencia.
     Route::middleware('permission:digests.view')->prefix('digests')->group(function () {

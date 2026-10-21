@@ -16,9 +16,10 @@ use Illuminate\Support\Facades\DB;
 class CreditPortfolio
 {
     /**
+     * @param  list<int>|null  $sellerIds  limita a las facturas de esos vendedores (null = todas las visibles)
      * @return array{buckets: list<string>, totals: array<string, string>, customers: list<array<string, mixed>>}
      */
-    public function aging(?int $companyId = null, ?string $code = null, ?CarbonImmutable $today = null): array
+    public function aging(?int $companyId = null, ?string $code = null, ?CarbonImmutable $today = null, ?array $sellerIds = null): array
     {
         $today ??= CarbonImmutable::today();
         $buckets = CreditAging::buckets();
@@ -31,6 +32,7 @@ class CreditPortfolio
             ->whereRaw('coalesce(m.balance, 0) > 0')
             ->when($companyId !== null, fn ($q) => $q->where('credit_invoices.company_id', $companyId))
             ->when($code !== null, fn ($q) => $q->where('credit_invoices.customer_code', $code))
+            ->when($sellerIds !== null, fn ($q) => $q->whereIn('credit_invoices.seller_id', $sellerIds))
             ->orderBy('credit_invoices.id')->get();
 
         $zero = array_fill_keys($buckets, 0);

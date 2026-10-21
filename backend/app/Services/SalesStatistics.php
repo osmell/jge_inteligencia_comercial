@@ -228,6 +228,11 @@ class SalesStatistics
             }
         }
 
+        // Varios vendedores a la vez (equipo de un supervisor); una lista vacía no devuelve nada.
+        if (isset($filters['seller_ids'])) {
+            $query->whereIn('sd.seller_id', $filters['seller_ids']);
+        }
+
         foreach (['group' => self::GROUP_SQL, 'line' => self::LINE_SQL, 'category' => self::CATEGORY_SQL, 'product_code' => 'sales_lines.product_code', 'customer_code' => 'sd.customer_code'] as $filter => $column) {
             if (isset($filters[$filter]) && $filters[$filter] !== '') {
                 in_array($filter, ['group', 'line', 'category'], true) ? $query->whereRaw($column.' = ?', [$filters[$filter]]) : $query->where($column, $filters[$filter]);
