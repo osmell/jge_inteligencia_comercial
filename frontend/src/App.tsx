@@ -20,6 +20,7 @@ import InsightsPage from './pages/InsightsPage'
 import InsightsSeasonalityPage from './pages/InsightsSeasonalityPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
 import DigestDetailPage from './pages/DigestDetailPage'
+import WebhookSettingsPage from './pages/WebhookSettingsPage'
 import WhatsappSettingsPage from './pages/WhatsappSettingsPage'
 import MailSettingsPage from './pages/MailSettingsPage'
 import DigestsPage from './pages/DigestsPage'
@@ -77,6 +78,9 @@ export default function App() {
               <Route element={<RequirePermission permission="digests.view" />}>
                 <Route path="resumenes" element={<DigestsPage />} />
                 <Route path="resumenes/:id" element={<DigestDetailPage />} />
+              </Route>
+              <Route element={<RequirePermission permission="webhooks.manage" />}>
+                <Route path="admin/webhook" element={<WebhookSettingsPage />} />
               </Route>
               <Route element={<RequirePermission permission="whatsapp.manage" />}>
                 <Route path="admin/whatsapp" element={<WhatsappSettingsPage />} />

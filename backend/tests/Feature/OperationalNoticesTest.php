@@ -248,7 +248,7 @@ class OperationalNoticesTest extends TestCase
         $this->interaction($this->c1, '2026-10-21 15:00:00', $this->seller);
         $runner = app(AutomationRunner::class);
 
-        $this->assertSame(2, $runner->tick(CarbonImmutable::parse('2026-10-25 08:00:00'))['started']);                  // domingo: solo el mantenimiento
+        $this->assertSame(3, $runner->tick(CarbonImmutable::parse('2026-10-25 08:00:00'))['started']);                  // domingo: solo el mantenimiento y los envíos al webhook
         $this->assertCount(0, $this->notices($this->seller));
 
         $r = $runner->tick(CarbonImmutable::parse('2026-10-21 08:00:00'));

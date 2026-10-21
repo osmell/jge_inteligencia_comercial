@@ -11,6 +11,7 @@ use App\Automations\MailDispatchHandler;
 use App\Automations\PromiseDueHandler;
 use App\Automations\PruneNotificationsHandler;
 use App\Automations\QuotationExpiringHandler;
+use App\Automations\WebhookDispatchHandler;
 
 /*
  * Catálogo de automatizaciones. Cada una tiene su frecuencia, la hora a la que se ejecuta, parámetros editables (con rango), un
@@ -42,6 +43,11 @@ return [
         'mail_dispatch' => [
             'label' => 'Envío de correos', 'description' => 'Cada hora envía los correos pendientes (avisos y resúmenes) y reintenta los que fallaron (a los 10 y 60 minutos). Sin el correo configurado, los correos quedan registrados como no enviados.',
             'frequency' => 'hourly', 'respect_window' => true, 'handler' => MailDispatchHandler::class, 'default_enabled' => true,
+            'params' => [],
+        ],
+        'webhook_dispatch' => [
+            'label' => 'Envío al webhook', 'description' => 'Cada hora envía al webhook de salida los eventos pendientes y reintenta los que fallaron (a los 10 y 60 minutos). Sin el webhook activo no se envía nada.',
+            'frequency' => 'hourly', 'respect_window' => false, 'handler' => WebhookDispatchHandler::class, 'default_enabled' => true,
             'params' => [],
         ],
         'followup_due' => [

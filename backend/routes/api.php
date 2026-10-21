@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\V1\QuotationController;
 use App\Http\Controllers\Api\V1\Sales\ProductController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
+use App\Http\Controllers\Api\V1\WebhookController;
 use App\Http\Controllers\Api\V1\WhatsappController;
 use Illuminate\Support\Facades\Route;
 
@@ -149,6 +150,14 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('templates', [WhatsappController::class, 'storeTemplate']);
         Route::put('templates/{template}', [WhatsappController::class, 'updateTemplate'])->whereNumber('template');
         Route::get('messages', [WhatsappController::class, 'messages']);
+    });
+
+    // Webhook de salida (secreto de firma: solo administración).
+    Route::middleware('permission:webhooks.manage')->prefix('webhook')->group(function () {
+        Route::get('settings', [WebhookController::class, 'show']);
+        Route::put('settings', [WebhookController::class, 'update']);
+        Route::post('test', [WebhookController::class, 'test']);
+        Route::get('log', [WebhookController::class, 'log']);
     });
 
     // Administración de las automatizaciones (catálogo, parámetros, interruptor general, ejecución manual y registro).

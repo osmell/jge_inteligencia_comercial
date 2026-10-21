@@ -82,6 +82,7 @@ class Notifier
         if ($this->wantsEmail($user, $type)) {
             app(MailService::class)->queueNotice($user, $notice);
         }
+        app(WebhookService::class)->queueNotice($notice);
 
         return $notice;
     }

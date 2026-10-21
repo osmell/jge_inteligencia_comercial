@@ -94,3 +94,10 @@ Pantalla **Resúmenes** (`/resumenes`, permiso nuevo `digests.view`; no se otorg
 - **Estados:** webhook firmado (`/api/v1/webhooks/whatsapp`, verificación con token y firma `X-Hub-Signature-256`) actualiza enviado → entregado → leído o fallido; un estado no retrocede.
 - Los contactos por WhatsApp hechos a mano siguen registrándose en Seguimiento; el envío del sistema no crea interacciones ni cuenta en los indicadores de seguimiento.
 - Envío automático de avisos por WhatsApp (cobro, cotizaciones) **no está hecho**: requiere plantillas aprobadas y decisión de negocio (cuestionario, preguntas 12 a 14).
+
+## Paso 7 — Webhook de salida genérico (hecho)
+- **Decisión:** n8n queda fuera como dependencia. El sistema envía por sí mismo correos y WhatsApp; el webhook solo **avisa** a cualquier receptor (n8n u otro) que ocurrió un evento. No recibe órdenes ni cambia datos, y las reglas financieras y de permisos siguen en el sistema.
+- **Pantalla «Webhook»** (`/admin/webhook`, permiso nuevo `webhooks.manage`, solo administración): URL de destino, secreto de firma (mínimo 16 caracteres, **cifrado**, nunca devuelto ni auditado), eventos a enviar (los tipos de aviso: seguimiento, cotizaciones, promesas, cartera, inventario, recomendaciones graves, resúmenes), envío de prueba y registro.
+- **Envío:** POST con JSON (`event`, `occurred_at`, `title`, `body`, `severity`, `company_id`, `url`) y encabezados `X-JGE-Event`, `X-JGE-Delivery`, `X-JGE-Timestamp`, `X-JGE-Signature` = `sha256=` + HMAC-SHA256 de «marca de tiempo.cuerpo» con el secreto (el receptor debe verificarla y rechazar marcas de tiempo viejas).
+- **Sin duplicados:** un evento (tipo + clave del aviso) se envía una sola vez aunque lo reciban varias personas. La automatización «Envío al webhook» (cada hora) reintenta a los 10 y 60 minutos y luego deja el envío como **Falló** con el motivo; un envío sin confirmar tras 30 min no se reenvía solo.
+- Con esto queda completa la Fase 9 (pasos 1 a 7). Pendiente de negocio: respuestas al cuestionario (docs/17) y validar con datos y cuentas reales (docs/14).

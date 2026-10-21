@@ -302,3 +302,8 @@ Puntos a tener presentes al comparar:
 - [ ] Registrar una plantilla aprobada en Meta, marcarla «Aprobada» y enviarla a un cliente de prueba con consentimiento: llega y pasa a «Entregado/Leído».
 - [ ] Comprobar que a un cliente «no contactar», sin consentimiento o sin número no sale nada y queda el motivo.
 - [ ] Configurar el webhook en Meta con la URL y el token de verificación.
+
+### Webhook de salida (Fase 9, paso 7)
+- [ ] Configurar el receptor (por ejemplo un flujo de n8n), guardar URL y secreto, y usar «Enviar prueba»: llega y la firma se verifica.
+- [ ] Elegir un evento (p. ej. resúmenes) y confirmar que llega una sola vez cuando se genera.
+- [ ] Con el receptor apagado, el registro muestra los reintentos y luego «Falló».

@@ -1,4 +1,4 @@
-import { BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Mail, MessageCircle, Newspaper, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
+import { BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Mail, Webhook, MessageCircle, Newspaper, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -53,6 +53,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/admin/automatizaciones', label: 'Automatizaciones', icon: Workflow, permission: 'automations.manage' },
       { to: '/admin/correo', label: 'Correo', icon: Mail, permission: 'mail.manage' },
       { to: '/admin/whatsapp', label: 'WhatsApp', icon: MessageCircle, permission: 'whatsapp.manage' },
+      { to: '/admin/webhook', label: 'Webhook', icon: Webhook, permission: 'webhooks.manage' },
       { to: '/admin/auditoria', label: 'Auditoría', icon: ScrollText, permission: 'audit.view' },
     ],
   },
