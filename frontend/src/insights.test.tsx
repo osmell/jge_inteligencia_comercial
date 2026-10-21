@@ -3,8 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
+import CustomerCrossSell from './components/CustomerCrossSell'
 import CustomerSegment from './components/CustomerSegment'
 import InsightsConcentrationPage from './pages/InsightsConcentrationPage'
+import InsightsCrossSellPage from './pages/InsightsCrossSellPage'
 import InsightsPage from './pages/InsightsPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
 
@@ -12,6 +14,7 @@ let permissions: string[]
 let puts: { path: string; body: { values: Record<string, string> } }[]
 let posts: string[]
 let run: unknown
+let crossRun: unknown
 let concentration: unknown
 let cohorts: unknown
 
@@ -24,6 +27,7 @@ beforeEach(() => {
     top: [{ code: 'C1', name: `${entity} uno`, net: '8000.0000', share_pct: 80, cumulative_pct: 80 }, { code: 'C2', name: `${entity} dos`, net: '1000.0000', share_pct: 10, cumulative_pct: 90 }],
     curve: [5, 10, 15, 20, 25, 100].map((e) => ({ entities_pct: e, sales_pct: e < 20 ? 40 : 80 })), alerts: entity === 'Cliente' ? [{ code: 'C1', name: 'Cliente uno', net: '8000.0000', share_pct: 80, cumulative_pct: 80 }] : [],
   })
+  crossRun = { id: 9, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2025-10-21', period_to: '2026-10-20', note: null, customers: 40, rules: 2, opportunities: 10, level: 'categoría', parameters: { 'cross_sell.min_support_customers': 20, 'cross_sell.min_confidence_pct': 30 } }
   concentration = { id: 5, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2025-10-21', period_to: '2026-10-20', note: null, parameters: {}, summary: { alert_pct: 15, customers: block('Cliente'), products: block('Producto') } }
   cohorts = {
     id: 6, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2026-01-10', period_to: '2026-08-10', note: null, parameters: {},
@@ -46,7 +50,16 @@ beforeEach(() => {
     }
     let body: unknown = { data: [] }
     if (path === '/auth/me') body = { data: { id: 1, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
-    else if (path.startsWith('/insights/concentration')) body = { data: concentration }
+    else if (path.startsWith('/insights/cross-sell/opportunities')) {
+      body = { data: [{ code: 'C21', name: 'Cliente C21', suggestion: 'Frenos', because: 'Filtros', confidence_pct: 66.7, support: 20, lift: 1.33, explanation: 'Compra «Filtros» y todavía no «Frenos». 20 de 30 clientes que compran «Filtros» (66,7 %) también compran «Frenos».' }], meta: { has_more: false, total: 10, run: crossRun } }
+    } else if (path.startsWith('/insights/cross-sell/customer')) {
+      body = { data: path.includes('C05') ? [] : [{ code: 'C21', name: 'Cliente C21', suggestion: 'Frenos', because: 'Filtros', confidence_pct: 66.7, support: 20, lift: 1.33, explanation: 'Compra «Filtros» y todavía no «Frenos».' }], meta: { run: crossRun } }
+    } else if (path.startsWith('/insights/cross-sell')) {
+      body = { data: [
+        { id: 1, antecedent: 'Frenos', consequent: 'Filtros', antecedent_customers: 20, consequent_customers: 30, both_customers: 20, total_customers: 40, confidence_pct: 100, lift: 1.33, explanation: '20 de 20 clientes que compran «Frenos» (100,0 %) también compran «Filtros».' },
+        { id: 2, antecedent: 'Filtros', consequent: 'Frenos', antecedent_customers: 30, consequent_customers: 20, both_customers: 20, total_customers: 40, confidence_pct: 66.7, lift: 1.33, explanation: '20 de 30 clientes que compran «Filtros» (66,7 %) también compran «Frenos».' },
+      ], meta: { run: crossRun } }
+    } else if (path.startsWith('/insights/concentration')) body = { data: concentration }
     else if (path.startsWith('/insights/cohorts')) body = { data: cohorts }
     else if (path === '/companies') body = { data: [{ id: 1, code: 'A', name: 'Alfa', is_active: true }] }
     else if (path.startsWith('/insights/rfm/customer')) {
@@ -215,5 +228,47 @@ describe('inteligencia comercial', () => {
 
     await u.click(await screen.findByRole('button', { name: 'Recalcular' }))
     await waitFor(() => expect(posts.sort()).toEqual(['/insights/cohorts/recalculate', '/insights/concentration/recalculate']))
+  })
+
+  it('la venta cruzada muestra las oportunidades con su explicación y las reglas que las respaldan', async () => {
+    render(<AuthProvider><MemoryRouter><InsightsCrossSellPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Oportunidades de venta cruzada' })
+    await waitFor(() => expect(table).toHaveTextContent('Cliente C21'))
+    expect(table).toHaveTextContent('Compra «Filtros» y todavía no «Frenos»')
+    expect(table).toHaveTextContent('66,7 %')
+    const rules = await screen.findByRole('table', { name: 'Reglas de asociación' })
+    expect(rules).toHaveTextContent('20 de 20')
+    expect(screen.getByText(/a nivel de categoría: 2 reglas y 10 oportunidades entre 40 clientes/)).toBeInTheDocument()
+    expect(screen.getByText(/Son sugerencias para el vendedor, no decisiones automáticas/)).toBeInTheDocument()
+  })
+
+  it('sin datos suficientes la venta cruzada lo explica', async () => {
+    crossRun = { id: 10, status: 'insufficient', computed_at: '2026-10-20T02:00:00Z', period_from: null, period_to: null, note: 'Historial o facturas insuficientes para la venta cruzada.', customers: null, rules: null, opportunities: null, level: 'categoría', parameters: {} }
+    render(<AuthProvider><MemoryRouter><InsightsCrossSellPage /></MemoryRouter></AuthProvider>)
+
+    expect(await screen.findByText(/Historial o facturas insuficientes/)).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Reglas de asociación' })).not.toBeInTheDocument()
+  })
+
+  it('la ficha del cliente sugiere qué ofrecer, y avisa cuando no hay sugerencia', async () => {
+    const { unmount } = render(<AuthProvider><MemoryRouter><CustomerCrossSell companyId="1" code="C21" /></MemoryRouter></AuthProvider>)
+    const list = await screen.findByRole('list', { name: 'Oportunidades del cliente' })
+    expect(list).toHaveTextContent('Ofrecer')
+    expect(list).toHaveTextContent('Frenos')
+    expect(screen.getByText(/no se registra ningún contacto ni venta por sí sola/)).toBeInTheDocument()
+    unmount()
+
+    render(<AuthProvider><MemoryRouter><CustomerCrossSell companyId="1" code="C05" /></MemoryRouter></AuthProvider>)
+    expect(await screen.findByText(/no hay una categoría para sugerirle/)).toBeInTheDocument()
+  })
+
+  it('solo quien gestiona puede recalcular la venta cruzada', async () => {
+    permissions = ['insights.view', 'insights.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InsightsCrossSellPage /></MemoryRouter></AuthProvider>)
+
+    await u.click(await screen.findByRole('button', { name: 'Recalcular' }))
+    await waitFor(() => expect(posts).toEqual(['/insights/cross-sell/recalculate']))
   })
 })

@@ -138,3 +138,41 @@ export interface CohortSummary {
   cohorts: CohortRow[]
   average: (number | null)[]
 }
+
+export interface CrossSellRun {
+  id: number
+  status: 'ok' | 'insufficient'
+  computed_at: string
+  period_from: string | null
+  period_to: string | null
+  note: string | null
+  customers: number | null
+  rules: number | null
+  opportunities: number | null
+  level: 'línea' | 'categoría'
+  parameters: Record<string, number>
+}
+
+export interface CrossSellRule {
+  id: number
+  antecedent: string
+  consequent: string
+  antecedent_customers: number
+  consequent_customers: number
+  both_customers: number
+  total_customers: number
+  confidence_pct: number
+  lift: number
+  explanation: string
+}
+
+export interface CrossSellOpportunity {
+  code: string
+  name: string
+  suggestion: string
+  because: string
+  confidence_pct: number
+  support: number
+  lift: number
+  explanation: string
+}

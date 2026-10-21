@@ -103,6 +103,7 @@ export default function InsightsPage() {
       <FormError message={status.error} />
       <p className="mb-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
         <Link className="text-jge-blue hover:underline" to="/inteligencia/segmentos">Segmentación de clientes (RFM) →</Link>
+        <Link className="text-jge-blue hover:underline" to="/inteligencia/venta-cruzada">Venta cruzada →</Link>
         {user?.role.slug !== 'vendedor' && <Link className="text-jge-blue hover:underline" to="/inteligencia/concentracion">Concentración y cohortes →</Link>}
       </p>
 

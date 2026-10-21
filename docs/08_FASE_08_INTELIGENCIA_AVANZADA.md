@@ -57,3 +57,14 @@ Pantalla `/inteligencia/concentracion` (`insights.view`; **no disponible para ve
 - **Cohortes:** clientes agrupados por mes de su primera compra y, para cada mes siguiente (hasta 12), el porcentaje que volvió a comprar, con un promedio ponderado. **El primer mes del historial** agrupa a clientes que ya existían antes de que hubiera datos: se muestra aparte con esa aclaración y no entra en el promedio. **El mes de la última venta** se considera incompleto y no se mide; las celdas aún no observables quedan vacías.
 - **Historial suficiente:** concentración 3 meses, cohortes 6. Sin eso el cálculo queda registrado como «insuficiente», con la razón, y la pantalla no muestra resultados.
 - Son descripciones del historial: no predicen nada ni disparan acciones.
+
+## Paso 5 — Venta cruzada (hecho, con los supuestos propuestos)
+Pantalla `/inteligencia/venta-cruzada` (`insights.view`), y en la ficha del cliente la sección «Oportunidades de venta cruzada». Se recalcula cada noche (`insights:refresh`) o con «Recalcular» (`insights.manage`).
+- **Qué hace:** para cada cliente toma las **categorías** que compró en los últimos 12 meses (solo compras netas positivas y categorías clasificadas). Una **regla A → B** dice qué porcentaje de los clientes de A compra también B (**confianza**) y cuántas veces más que el cliente promedio (**elevación** = confianza ÷ proporción de clientes que compran B).
+- **Cuándo se guarda una regla:** al menos 20 clientes que la respalden, 30 % de confianza y elevación mayor que 1 (parámetros `cross_sell.min_support_customers`, `cross_sell.min_confidence_pct`). El nivel es categoría (Nivel 3 del catálogo) por omisión; con `cross_sell.level` = 1 se analiza por línea (Nivel 2).
+- **Oportunidad:** un cliente que compra el antecedente de una regla y todavía no su consecuente. Por cliente se conservan las 3 de mayor confianza (`cross_sell.max_per_customer`), una por categoría sugerida.
+- **Cada una trae su evidencia en palabras:** «20 de 30 clientes que compran X (66,7 %) también compran Y; la elevación es 1,33…» y los conteos en las reglas. Es una **sugerencia para conversar con el cliente**: no registra ningún contacto ni venta por sí sola.
+- **Solo con datos suficientes:** 3 meses de historial, 1.000 facturas y al menos 20 clientes con compras clasificadas; si no, el cálculo queda registrado como «insuficiente» con la razón y no se muestran asociaciones.
+- **Alcance:** las reglas son agregadas de la compañía; las oportunidades las ve cada usuario solo para los clientes que puede ver (un vendedor, los suyos).
+- Solo se guarda el último cálculo de cada compañía; los anteriores quedan en el registro de cálculos.
+- Queda fuera por ahora el nivel de producto, que se activaría si el catálogo tiene volumen suficiente.

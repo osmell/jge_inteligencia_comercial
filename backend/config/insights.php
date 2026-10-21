@@ -35,6 +35,9 @@ return [
 
         'seasonality.min_history_months' => ['group' => 'Estacionalidad', 'label' => 'Historial mínimo', 'unit' => 'meses', 'default' => 24, 'min' => 12, 'max' => 60, 'help' => 'Un índice por mes del año necesita al menos dos años para no confundir tendencia con temporada.'],
 
+        'cross_sell.period_months' => ['group' => 'Venta cruzada', 'label' => 'Periodo de análisis', 'unit' => 'meses', 'default' => 12, 'min' => 3, 'max' => 36, 'help' => 'Meses de ventas sobre los que se buscan asociaciones entre categorías.'],
+        'cross_sell.level' => ['group' => 'Venta cruzada', 'label' => 'Nivel de análisis (1 = línea, 2 = categoría)', 'unit' => '1 o 2', 'default' => 2, 'min' => 1, 'max' => 2, 'help' => 'Si las asociaciones se buscan entre líneas (Nivel 2 del catálogo) o entre categorías (Nivel 3).'],
+        'cross_sell.max_per_customer' => ['group' => 'Venta cruzada', 'label' => 'Oportunidades por cliente', 'unit' => 'oportunidades', 'default' => 3, 'min' => 1, 'max' => 10, 'help' => 'Máximo de oportunidades que se guardan por cliente, las de mayor confianza.'],
         'cross_sell.min_history_months' => ['group' => 'Venta cruzada', 'label' => 'Historial mínimo', 'unit' => 'meses', 'default' => 3, 'min' => 1, 'max' => 36, 'help' => 'Meses de ventas para calcular asociaciones.'],
         'cross_sell.min_documents' => ['group' => 'Venta cruzada', 'label' => 'Facturas mínimas', 'unit' => 'facturas', 'default' => 1000, 'min' => 100, 'max' => 1000000, 'help' => 'Con menos facturas las asociaciones no son confiables.'],
         'cross_sell.min_confidence_pct' => ['group' => 'Venta cruzada', 'label' => 'Confianza mínima', 'unit' => '%', 'default' => 30, 'min' => 5, 'max' => 100, 'help' => 'Porcentaje de clientes que compran A y también B para sugerir B.'],

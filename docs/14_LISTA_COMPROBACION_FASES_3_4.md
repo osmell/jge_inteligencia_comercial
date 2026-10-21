@@ -245,3 +245,8 @@ Puntos a tener presentes al comparar:
 - [ ] Revisar con gerencia a los 3 clientes principales y el porcentaje que pesan; confirmar si el 15 % es el umbral de aviso adecuado.
 - [ ] En cohortes, la primera fila aparece marcada como «previos al historial» y la retención del primer mes de cada cohorte es 100 %.
 - [ ] Un vendedor no ve estas cifras.
+
+### Inteligencia comercial: venta cruzada (Fase 8, paso 5)
+- [ ] Con historial real, revisar con un vendedor las 5 reglas de mayor confianza: ¿tienen sentido comercial? Ajustar `cross_sell.min_confidence_pct` y el nivel (categoría o línea) si salen demasiadas o muy obvias.
+- [ ] Una oportunidad de un cliente real: confirmar que de verdad no ha comprado esa categoría en los últimos 12 meses.
+- [ ] Un vendedor ve las oportunidades solo de sus clientes; la ficha muestra qué ofrecer y por qué.
