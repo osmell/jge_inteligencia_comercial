@@ -49,3 +49,11 @@ Los pasos 1 a 3 solo dependen de las ventas que ya están cargadas; los demás s
 - **Trazabilidad:** cada cálculo queda en el registro (`insight_runs`) con periodo, parámetros y resumen; cada cliente guarda sus valores y puntuaciones (`rfm_scores`, solo el último cálculo de cada compañía).
 - **Recálculo:** cada noche a las 2:00 (`php artisan insights:rfm`; requiere el programador de Laravel en ejecución) o a mano con el botón «Recalcular» (`insights.manage`).
 - **Alcance:** el cálculo usa todos los clientes de la compañía, pero cada usuario ve solo los segmentos de los clientes que puede ver (un vendedor, los suyos).
+
+## Paso 3 — Concentración y cohortes (hecho)
+Pantalla `/inteligencia/concentracion` (`insights.view`; **no disponible para vendedores**, porque son cifras de toda la compañía). Se calculan cada noche (`php artisan insights:refresh`, que ahora recalcula RFM, concentración y cohortes) o con «Recalcular» (`insights.manage`); cada cálculo queda registrado con su periodo y parámetros.
+- **Concentración, por clientes y por productos**, sobre los últimos 12 meses (parámetro `concentration.period_months`): peso del principal, peso de los 10 principales, cuántos suman el **80 % de la venta** (Pareto) con su curva, el **índice HHI** (0 a 10.000, más alto = más concentrado) y los 10 principales con su venta, peso y acumulado. La venta de los clientes es **neta de devoluciones** (notas de crédito vigentes).
+- **Aviso por dependencia** (informativo): clientes que pesan el 15 % o más de la venta de la compañía (`concentration.alert_pct`). Es una señal para diversificar, no una acción automática. Los productos no llevan aviso.
+- **Cohortes:** clientes agrupados por mes de su primera compra y, para cada mes siguiente (hasta 12), el porcentaje que volvió a comprar, con un promedio ponderado. **El primer mes del historial** agrupa a clientes que ya existían antes de que hubiera datos: se muestra aparte con esa aclaración y no entra en el promedio. **El mes de la última venta** se considera incompleto y no se mide; las celdas aún no observables quedan vacías.
+- **Historial suficiente:** concentración 3 meses, cohortes 6. Sin eso el cálculo queda registrado como «insuficiente», con la razón, y la pantalla no muestra resultados.
+- Son descripciones del historial: no predicen nada ni disparan acciones.

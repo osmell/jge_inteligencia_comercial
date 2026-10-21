@@ -85,3 +85,56 @@ export interface RfmList {
     segments: { key: RfmSegment; label: string; rule: string }[]
   }
 }
+
+export interface ConcentrationEntry {
+  code: string
+  name: string
+  net: string
+  share_pct: number
+  cumulative_pct: number
+}
+
+export interface ConcentrationBlock {
+  count: number
+  total: string
+  top1_pct: number
+  top10_pct: number
+  n80: number
+  n80_pct: number
+  hhi: number
+  top: ConcentrationEntry[]
+  curve: { entities_pct: number; sales_pct: number }[]
+  alerts: ConcentrationEntry[]
+}
+
+export interface AnalysisRun<S> {
+  id: number
+  status: 'ok' | 'insufficient'
+  computed_at: string
+  period_from: string | null
+  period_to: string | null
+  note: string | null
+  summary: S | null
+  parameters: Record<string, number>
+}
+
+export interface ConcentrationSummary {
+  alert_pct: number
+  customers: ConcentrationBlock
+  products: ConcentrationBlock
+}
+
+export interface CohortRow {
+  month: string
+  customers: number
+  prior: boolean
+  retention: (number | null)[]
+}
+
+export interface CohortSummary {
+  depth: number
+  first_month: string
+  last_month: string
+  cohorts: CohortRow[]
+  average: (number | null)[]
+}

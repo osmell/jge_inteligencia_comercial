@@ -90,7 +90,7 @@ function ParametersForm({ rows, manage, onReload }: { rows: InsightParameter[]; 
 }
 
 export default function InsightsPage() {
-  const { can } = useAuth()
+  const { can, user } = useAuth()
   const status = useLoad<{ data: InsightCompany[] }>('/insights/status')
   const runs = useLoad<{ data: InsightRunRow[] }>('/insights/runs')
   const companies = status.data?.data ?? []
@@ -101,7 +101,10 @@ export default function InsightsPage() {
       <PageHeader title="Inteligencia comercial" description="Qué análisis avanzados se pueden activar con el historial de ventas disponible, con qué reglas se calculan y cuándo se calcularon por última vez." />
       <div className="mb-4"><Alert tone="info">Un análisis solo se activa con historial suficiente: si faltan datos, aquí se explica qué falta. Las recomendaciones son sugerencias, no decisiones automáticas, y son distintas del scoring de crédito.</Alert></div>
       <FormError message={status.error} />
-      <p className="mb-3 text-sm"><Link className="text-jge-blue hover:underline" to="/inteligencia/segmentos">Segmentación de clientes (RFM) →</Link></p>
+      <p className="mb-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+        <Link className="text-jge-blue hover:underline" to="/inteligencia/segmentos">Segmentación de clientes (RFM) →</Link>
+        {user?.role.slug !== 'vendedor' && <Link className="text-jge-blue hover:underline" to="/inteligencia/concentracion">Concentración y cohortes →</Link>}
+      </p>
 
       <div className="grid gap-4 lg:grid-cols-2" aria-busy={status.loading}>
         {companies.map((c) => <CompanyStatus key={c.company_id} c={c} />)}

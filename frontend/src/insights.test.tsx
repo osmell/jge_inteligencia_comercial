@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import CustomerSegment from './components/CustomerSegment'
+import InsightsConcentrationPage from './pages/InsightsConcentrationPage'
 import InsightsPage from './pages/InsightsPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
 
@@ -11,11 +12,26 @@ let permissions: string[]
 let puts: { path: string; body: { values: Record<string, string> } }[]
 let posts: string[]
 let run: unknown
+let concentration: unknown
+let cohorts: unknown
 
 beforeEach(() => {
   permissions = ['insights.view']
   puts = []
   posts = []
+  const block = (entity: string) => ({
+    count: 5, total: '10000.0000', top1_pct: 80, top10_pct: 100, n80: 1, n80_pct: 20, hhi: 6538,
+    top: [{ code: 'C1', name: `${entity} uno`, net: '8000.0000', share_pct: 80, cumulative_pct: 80 }, { code: 'C2', name: `${entity} dos`, net: '1000.0000', share_pct: 10, cumulative_pct: 90 }],
+    curve: [5, 10, 15, 20, 25, 100].map((e) => ({ entities_pct: e, sales_pct: e < 20 ? 40 : 80 })), alerts: entity === 'Cliente' ? [{ code: 'C1', name: 'Cliente uno', net: '8000.0000', share_pct: 80, cumulative_pct: 80 }] : [],
+  })
+  concentration = { id: 5, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2025-10-21', period_to: '2026-10-20', note: null, parameters: {}, summary: { alert_pct: 15, customers: block('Cliente'), products: block('Producto') } }
+  cohorts = {
+    id: 6, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2026-01-10', period_to: '2026-08-10', note: null, parameters: {},
+    summary: { depth: 3, first_month: '2026-01', last_month: '2026-08', cohorts: [
+      { month: '2026-01', customers: 1, prior: true, retention: [100, 100, 0, null] },
+      { month: '2026-02', customers: 2, prior: false, retention: [100, 50, 50, 50] },
+    ], average: [100, 50, 50, 50] },
+  }
   run = { id: 1, status: 'ok', computed_at: '2026-10-20T02:00:00Z', period_from: '2025-10-21', period_to: '2026-10-20', note: null, customers: 26, parameters: {} }
   document.cookie = 'XSRF-TOKEN=x'
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
@@ -30,6 +46,8 @@ beforeEach(() => {
     }
     let body: unknown = { data: [] }
     if (path === '/auth/me') body = { data: { id: 1, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
+    else if (path.startsWith('/insights/concentration')) body = { data: concentration }
+    else if (path.startsWith('/insights/cohorts')) body = { data: cohorts }
     else if (path === '/companies') body = { data: [{ id: 1, code: 'A', name: 'Alfa', is_active: true }] }
     else if (path.startsWith('/insights/rfm/customer')) {
       body = { data: path.includes('NADIE') ? null : { code: 'C25', name: 'Cliente C25', segment: 'champion', segment_label: 'Campeones', first_purchase: '2026-04-01', last_purchase: '2026-10-19', recency_days: 1, frequency: 25, gross: '2500.0000', returns: '0.0000', monetary: '2500.0000', r: 5, f: 5, m: 5, explanation: 'Compró por última vez hace 1 días (recencia 5/5).' }, meta: { run } }
@@ -154,5 +172,48 @@ describe('inteligencia comercial', () => {
     expect(await screen.findByText('Campeones')).toBeInTheDocument()
     expect(screen.getByText(/Compró por última vez hace 1 días \(recencia 5\/5\)/)).toBeInTheDocument()
     expect(screen.getByText(/Es distinto del scoring de crédito/)).toBeInTheDocument()
+  })
+
+  it('la concentración muestra los pesos, la curva de Pareto y el aviso de dependencia', async () => {
+    render(<AuthProvider><MemoryRouter><InsightsConcentrationPage /></MemoryRouter></AuthProvider>)
+
+    expect(await screen.findByText(/Dependencia de clientes \(informativo\)/)).toHaveTextContent('Cliente uno pesa 80 %')
+    expect(screen.getByText(/no una acción automática|no es una acción automática/i)).toBeInTheDocument()
+    const customers = within(screen.getByRole('region', { name: 'Clientes' }))
+    expect(customers.getByText('Peso del cliente principal').closest('div')).toHaveTextContent('80 %')
+    expect(customers.getByText('Suman el 80 % de la venta').closest('div')).toHaveTextContent('1 clientes')
+    expect(customers.getByText(/Índice de concentración/).closest('div')).toHaveTextContent('6538')
+    expect(customers.getByRole('img', { name: /Porcentaje acumulado de la venta según el porcentaje de clientes/ })).toBeInTheDocument()
+    expect(customers.getByRole('table', { name: 'Principales clientes' })).toHaveTextContent('Cliente uno')
+    expect(within(screen.getByRole('region', { name: 'Productos' })).getByRole('table', { name: 'Principales productos' })).toHaveTextContent('Producto dos')
+  })
+
+  it('las cohortes muestran la retención y explican la cohorte previa y el mes incompleto', async () => {
+    render(<AuthProvider><MemoryRouter><InsightsConcentrationPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Retención por cohorte' })
+    expect(table).toHaveTextContent('Incluye clientes previos al historial')
+    expect(table).toHaveTextContent('Promedio ponderado')
+    expect(within(table).getByText('2026-02').closest('tr')).toHaveTextContent('50 %')
+    expect(screen.getByText(/el mes de la última venta está incompleto/)).toBeInTheDocument()
+  })
+
+  it('sin historial suficiente lo explica y no muestra resultados', async () => {
+    concentration = { id: 7, status: 'insufficient', computed_at: '2026-10-20T02:00:00Z', period_from: null, period_to: null, note: 'Historial insuficiente para medir la concentración.', summary: null, parameters: {} }
+    cohorts = null
+    render(<AuthProvider><MemoryRouter><InsightsConcentrationPage /></MemoryRouter></AuthProvider>)
+
+    expect(await screen.findByText(/Historial insuficiente para medir la concentración/)).toBeInTheDocument()
+    expect(await screen.findByText(/Todavía no se ha calculado/)).toBeInTheDocument()
+    expect(screen.queryByRole('table', { name: 'Retención por cohorte' })).not.toBeInTheDocument()
+  })
+
+  it('recalcular concentración y cohortes requiere el permiso de gestión', async () => {
+    permissions = ['insights.view', 'insights.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InsightsConcentrationPage /></MemoryRouter></AuthProvider>)
+
+    await u.click(await screen.findByRole('button', { name: 'Recalcular' }))
+    await waitFor(() => expect(posts.sort()).toEqual(['/insights/cohorts/recalculate', '/insights/concentration/recalculate']))
   })
 })

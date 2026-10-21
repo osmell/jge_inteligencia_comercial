@@ -239,3 +239,9 @@ Puntos a tener presentes al comparar:
 - [ ] Revisar con gerencia tres clientes conocidos (uno estrella, uno que se enfrió, uno nuevo): el segmento y la explicación coinciden con su criterio.
 - [ ] Un cliente con una devolución grande baja su valor neto y puede cambiar de segmento.
 - [ ] Un vendedor solo ve los segmentos de sus clientes; la ficha muestra el segmento y la fecha de cálculo.
+
+### Inteligencia comercial: concentración y cohortes (Fase 8, paso 3)
+- [ ] Recalcular una compañía con historial real: el total de «Clientes» coincide con la venta neta del periodo menos devoluciones.
+- [ ] Revisar con gerencia a los 3 clientes principales y el porcentaje que pesan; confirmar si el 15 % es el umbral de aviso adecuado.
+- [ ] En cohortes, la primera fila aparece marcada como «previos al historial» y la retención del primer mes de cada cohorte es 100 %.
+- [ ] Un vendedor no ve estas cifras.

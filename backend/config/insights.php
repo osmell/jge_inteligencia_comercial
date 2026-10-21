@@ -26,6 +26,7 @@ return [
         'rfm.new_customer_days' => ['group' => 'RFM', 'label' => 'Cliente nuevo', 'unit' => 'días desde su primera compra', 'default' => 90, 'min' => 15, 'max' => 365, 'help' => 'Un cliente cuya primera compra es más reciente y que ha comprado pocas veces se clasifica como Nuevo.'],
         'rfm.min_history_months' => ['group' => 'RFM', 'label' => 'Historial mínimo', 'unit' => 'meses', 'default' => 6, 'min' => 1, 'max' => 36, 'help' => 'Sin este historial la segmentación no se activa.'],
 
+        'concentration.period_months' => ['group' => 'Concentración', 'label' => 'Periodo de análisis', 'unit' => 'meses', 'default' => 12, 'min' => 3, 'max' => 36, 'help' => 'Meses de ventas sobre los que se mide la concentración.'],
         'concentration.min_history_months' => ['group' => 'Concentración', 'label' => 'Historial mínimo', 'unit' => 'meses', 'default' => 3, 'min' => 1, 'max' => 36, 'help' => 'Meses de ventas para calcular la concentración.'],
         'concentration.alert_pct' => ['group' => 'Concentración', 'label' => 'Aviso por dependencia de un cliente', 'unit' => '% de la venta', 'default' => 15, 'min' => 1, 'max' => 100, 'help' => 'Aviso informativo cuando un cliente supera este porcentaje de la venta de la compañía.'],
 
