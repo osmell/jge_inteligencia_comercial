@@ -49,15 +49,18 @@ class InventoryUnitController extends Controller
     /** Búsqueda de productos con su configuración de unidades. */
     public function products(Request $request): JsonResponse
     {
-        $data = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'company_id' => ['nullable', 'integer', 'min:1'], 'missing_base' => ['nullable', 'boolean']]);
+        $data = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'company_id' => ['nullable', 'integer', 'min:1'], 'missing_base' => ['nullable', 'boolean'], 'page' => ['nullable', 'integer', 'min:1', 'max:100000'], 'per_page' => ['nullable', 'integer', 'min:1', 'max:100']]);
+        $perPage = (int) ($data['per_page'] ?? 25);
+        $page = (int) ($data['page'] ?? 1);
         $like = isset($data['q']) ? '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower($data['q'])).'%' : null;
-        $rows = Product::query()->with('baseUnit:id,code,name')->withCount('equivalences')
+        $query = Product::query()
             ->when(isset($data['company_id']), fn ($q) => $q->where('company_id', $data['company_id']))
             ->when($request->boolean('missing_base'), fn ($q) => $q->whereNull('base_unit_id'))
-            ->when($like !== null, fn ($q) => $q->where(fn ($w) => $w->whereRaw("lower(code) like ? escape '\\'", [$like])->orWhereRaw("lower(name) like ? escape '\\'", [$like])))
-            ->orderBy('name')->limit(25)->get();
+            ->when($like !== null, fn ($q) => $q->where(fn ($w) => $w->whereRaw("lower(code) like ? escape '\\'", [$like])->orWhereRaw("lower(name) like ? escape '\\'", [$like])));
+        $total = (clone $query)->count();
+        $rows = $query->with('baseUnit:id,code,name')->withCount('equivalences')->orderBy('name')->orderBy('id')->offset(($page - 1) * $perPage)->limit($perPage)->get();
 
-        return response()->json(['data' => $rows->map(fn (Product $p) => [
+        return response()->json(['meta' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'last_page' => max(1, (int) ceil($total / $perPage))], 'data' => $rows->map(fn (Product $p) => [
             'id' => $p->id, 'company_id' => $p->company_id, 'code' => $p->code, 'name' => $p->name,
             'base_unit' => $p->baseUnit?->only(['id', 'code', 'name']), 'equivalences_count' => $p->getAttribute('equivalences_count'),
         ])->all()]);

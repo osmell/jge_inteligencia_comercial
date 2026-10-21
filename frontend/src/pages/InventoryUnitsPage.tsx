@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Button, Card, DataTable, EmptyRow, FormActions, FormError, PageHeader, SearchInput, SelectField, StatusBadge, TextField, td, th, tr, type FieldErrors } from '../components/ui'
+import { Alert, Button, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, StatusBadge, TextField, td, th, tr, type FieldErrors } from '../components/ui'
 import { ApiError, api } from '../lib/api'
-import type { InventoryProductRow, ProductUnits, Unit } from '../lib/inventory'
+import type { InventoryProductRow, PageMeta, ProductUnits, Unit } from '../lib/inventory'
 import { useLoad } from '../lib/useLoad'
 
 interface Row {
@@ -69,16 +69,16 @@ function UnitsCatalog({ units, manage, onChanged }: { units: Unit[]; manage: boo
   )
 }
 
-function ProductEditor({ productId, units, manage, onSaved }: { productId: number; units: Unit[]; manage: boolean; onSaved: () => void }) {
+function ProductEditor({ productId, units, manage, onSaved, onClose }: { productId: number; units: Unit[]; manage: boolean; onSaved: () => void; onClose: () => void }) {
   const detail = useLoad<{ data: ProductUnits }>(`/inventory/products/${productId}/units`)
   const d = detail.data?.data
 
   if (!d) return <FormError message={detail.error} />
 
-  return <ProductForm key={JSON.stringify(d)} d={d} units={units} manage={manage} onReload={detail.reload} onSaved={onSaved} />
+  return <ProductForm key={JSON.stringify(d)} d={d} units={units} manage={manage} onSaved={onSaved} onClose={onClose} />
 }
 
-function ProductForm({ d, units, manage, onReload, onSaved }: { d: ProductUnits; units: Unit[]; manage: boolean; onReload: () => void; onSaved: () => void }) {
+function ProductForm({ d, units, manage, onSaved, onClose }: { d: ProductUnits; units: Unit[]; manage: boolean; onSaved: () => void; onClose: () => void }) {
   const toast = useToast()
   const [base, setBase] = useState(d.base_unit ? String(d.base_unit.id) : '')
   const [rows, setRows] = useState<Row[]>(d.equivalences.map((e) => ({ unit_id: String(e.unit_id), factor: e.factor })))
@@ -91,7 +91,6 @@ function ProductForm({ d, units, manage, onReload, onSaved }: { d: ProductUnits;
     try {
       await api(`/inventory/products/${d.id}/units`, { method: 'PUT', body: { base_unit_id: Number(base), equivalences: rows.map((r) => ({ unit_id: Number(r.unit_id), factor: r.factor.trim() })) } })
       toast.success('Unidades del producto guardadas.')
-      onReload()
       onSaved()
     } catch (e) {
       setErrors(e instanceof ApiError ? e.errors : { base_unit_id: [e instanceof Error ? e.message : 'No se pudo guardar.'] })
@@ -104,9 +103,9 @@ function ProductForm({ d, units, manage, onReload, onSaved }: { d: ProductUnits;
   const set = (i: number, patch: Partial<Row>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)))
 
   return (
-    <Card className="p-4">
-      <h3 className="text-sm font-semibold">{d.name} <span className="font-normal text-ink-muted">({d.code})</span></h3>
-      <form onSubmit={(e) => { e.preventDefault(); void save() }} className="mt-3 space-y-3">
+    <>
+      <p className="mb-3 text-sm text-ink-muted">{d.name} <span>({d.code})</span></p>
+      <form onSubmit={(e) => { e.preventDefault(); void save() }} className="space-y-3">
         <SelectField id="base-unit" label="Unidad base (en la que se lleva el inventario)" value={base} disabled={!manage} errors={errors.base_unit_id} onChange={(e) => setBase(e.target.value)}>
           <option value="">Elige una unidad…</option>
           {units.filter((u) => u.active || String(u.id) === base).map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -129,10 +128,15 @@ function ProductForm({ d, units, manage, onReload, onSaved }: { d: ProductUnits;
           {manage && <Button type="button" small variant="secondary" onClick={() => setRows([...rows, { unit_id: '', factor: '' }])}>Agregar equivalencia</Button>}
           {errors.equivalences && <FormError message={errors.equivalences[0]} />}
         </fieldset>
-        {manage && <FormActions saving={saving} onCancel={onReload} />}
+        {manage && <FormActions saving={saving} onCancel={onClose} />}
       </form>
-    </Card>
+    </>
   )
+}
+
+/** Filas que caben en la altura de la ventana sin hacer scroll (descontando encabezado, filtros, encabezado de la tabla y paginación). */
+function rowsThatFit(height: number): number {
+  return Math.max(5, Math.min(50, Math.floor((height - 460) / 58)))
 }
 
 export default function InventoryUnitsPage() {
@@ -141,19 +145,45 @@ export default function InventoryUnitsPage() {
   const [text, setText] = useState('')
   const [term, setTerm] = useState('')
   const [onlyMissing, setOnlyMissing] = useState(false)
-  const [selected, setSelected] = useState<number | null>(null)
+  const [selected, setSelected] = useState<InventoryProductRow | null>(null)
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(() => rowsThatFit(window.innerHeight))
+  const perPageRef = useRef(perPage)
 
   useEffect(() => {
-    const t = setTimeout(() => setTerm(text.trim()), 300)
+    const t = setTimeout(() => { setTerm(text.trim()); setPage(1) }, 300)
     return () => clearTimeout(t)
   }, [text])
 
+  // La cantidad de filas sigue a la altura de la ventana; al cambiarla se vuelve a la primera página.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const onResize = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        const next = rowsThatFit(window.innerHeight)
+        if (next !== perPageRef.current) {
+          perPageRef.current = next
+          setPerPage(next)
+          setPage(1)
+        }
+      }, 200)
+    }
+    window.addEventListener('resize', onResize)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [])
+
   const units = useLoad<{ data: Unit[] }>('/inventory/units')
-  const query = new URLSearchParams()
+  const query = new URLSearchParams({ page: String(page), per_page: String(perPage) })
   if (term) query.set('q', term)
   if (onlyMissing) query.set('missing_base', '1')
-  const products = useLoad<{ data: InventoryProductRow[] }>(`/inventory/products?${query}`)
+  const products = useLoad<{ data: InventoryProductRow[]; meta?: PageMeta }>(`/inventory/products?${query}`)
   const list = units.data?.data ?? []
+  const meta = products.data?.meta
+  const lastPage = meta?.last_page ?? 1
 
   return (
     <section>
@@ -168,25 +198,37 @@ export default function InventoryUnitsPage() {
           <h2 id="products-title" className="mb-2 text-sm font-semibold text-ink">Productos</h2>
           <div className="mb-2 grid gap-3 sm:grid-cols-2 sm:items-end">
             <SearchInput label="Buscar producto" value={text} onChange={setText} placeholder="Código o nombre" />
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={onlyMissing} onChange={(e) => setOnlyMissing(e.target.checked)} /> Solo sin unidad base</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={onlyMissing} onChange={(e) => { setOnlyMissing(e.target.checked); setPage(1) }} /> Solo sin unidad base</label>
           </div>
           <DataTable label="Productos y unidad base">
             <thead><tr><th className={th}>Producto</th><th className={th}>Unidad base</th><th className={th}>Equivalencias</th></tr></thead>
             <tbody>
               {(products.data?.data ?? []).length === 0 ? <EmptyRow cols={3}>No hay productos con estos filtros.</EmptyRow> : (products.data?.data ?? []).map((p) => (
-                <tr key={p.id} className={tr}>
-                  <td className={td}><button type="button" className="text-left font-medium text-jge-blue hover:underline" onClick={() => setSelected(p.id)}>{p.name}</button><div className="text-xs text-ink-muted">{p.code}</div></td>
+                <tr key={p.id} className={`${tr} cursor-pointer`} onClick={() => setSelected(p)}>
+                  <td className={td}><button type="button" className="cursor-pointer text-left font-medium text-jge-blue hover:underline" onClick={(e) => { e.stopPropagation(); setSelected(p) }}>{p.name}</button><div className="text-xs text-ink-muted">{p.code}</div></td>
                   <td className={td}>{p.base_unit ? p.base_unit.name : <span className="text-danger">Sin definir</span>}</td>
                   <td className={`${td} tabular`}>{p.equivalences_count}</td>
                 </tr>
               ))}
             </tbody>
           </DataTable>
-          <p className="mt-1 text-xs text-ink-muted">Se muestran los primeros 25; usa la búsqueda para encontrar otros.</p>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm text-ink-muted" aria-live="polite">
+            <span>{meta ? `${meta.total} ${meta.total === 1 ? 'producto' : 'productos'} · Página ${meta.page} de ${lastPage}` : ''}</span>
+            {lastPage > 1 && (
+              <span className="flex gap-2">
+                <Button small variant="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>Anterior</Button>
+                <Button small variant="secondary" disabled={page >= lastPage} onClick={() => setPage(page + 1)}>Siguiente</Button>
+              </span>
+            )}
+          </div>
         </section>
       </div>
 
-      {selected !== null && <div className="mt-6"><ProductEditor key={selected} productId={selected} units={list} manage={manage} onSaved={products.reload} /></div>}
+      {selected !== null && (
+        <Modal title={manage ? `Unidades de ${selected.name}` : `Unidades de ${selected.name} (solo consulta)`} onClose={() => setSelected(null)} wide>
+          <ProductEditor productId={selected.id} units={list} manage={manage} onClose={() => setSelected(null)} onSaved={() => { setSelected(null); void products.reload() }} />
+        </Modal>
+      )}
     </section>
   )
 }

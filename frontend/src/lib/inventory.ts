@@ -5,6 +5,13 @@ export interface Unit {
   active: boolean
 }
 
+export interface PageMeta {
+  page: number
+  per_page: number
+  total: number
+  last_page: number
+}
+
 export interface InventoryProductRow {
   id: number
   company_id: number

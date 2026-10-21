@@ -124,4 +124,20 @@ class InventoryUnitsApiTest extends TestCase
         $this->assertSame('unidad', $this->getJson('/api/v1/inventory/products?q=fil')->json('data.0.base_unit.code'));
         $this->assertNotNull($other->id);
     }
+
+    public function test_the_product_list_is_paginated_by_the_server_with_totals(): void
+    {
+        foreach (range(1, 7) as $n) {
+            Product::create(['company_id' => $this->a->id, 'code' => sprintf('P-%02d', $n), 'name' => sprintf('Producto %02d', $n)]);
+        }
+        $first = $this->actingAs($this->reader, 'sanctum')->getJson('/api/v1/inventory/products?per_page=3&missing_base=1')->assertOk();
+        $this->assertSame(['ACE-1', 'P-01', 'P-02'], array_column($first->json('data'), 'code'));
+        $this->assertSame([1, 3, 8, 3], [$first->json('meta.page'), $first->json('meta.per_page'), $first->json('meta.total'), $first->json('meta.last_page')]);
+
+        $last = $this->getJson('/api/v1/inventory/products?per_page=3&page=3&missing_base=1')->assertOk();
+        $this->assertSame(['P-06', 'P-07'], array_column($last->json('data'), 'code'));
+        $this->assertSame(['P-03', 'P-04', 'P-05'], array_column($this->getJson('/api/v1/inventory/products?per_page=3&page=2&missing_base=1')->json('data'), 'code'));      // sin repetir ni saltar
+        $this->assertCount(8, $this->getJson('/api/v1/inventory/products?missing_base=1')->json('data'));                  // sin paginar: 25 por página
+        $this->getJson('/api/v1/inventory/products?per_page=500')->assertUnprocessable();
+    }
 }

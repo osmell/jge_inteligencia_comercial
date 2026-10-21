@@ -13,6 +13,7 @@ import InventoryUnitsPage from './pages/InventoryUnitsPage'
 let permissions: string[]
 let costsVisible: boolean
 let urls: string[]
+let productRequests: string[] = []
 let puts: { path: string; body: Record<string, unknown> }[]
 let posts: { path: string; body: Record<string, unknown> }[]
 
@@ -25,6 +26,7 @@ const units = [
 beforeEach(() => {
   permissions = ['inventory.view', 'inventory.manage']
   puts = []
+  productRequests = []
   posts = []
   urls = []
   costsVisible = false
@@ -86,9 +88,12 @@ beforeEach(() => {
     else if (path === '/branches') body = { data: [{ id: 2, company_id: 1, code: 'C', name: 'Central', is_active: true }, { id: 3, company_id: 1, code: 'N', name: 'Norte', is_active: true }] }
     else if (path === '/inventory/units') body = { data: units }
     else if (path === '/inventory/products/7/units') body = { data: { id: 7, company_id: 1, code: 'ACE-1', name: 'Aceite 20W50', base_unit: { id: 1, code: 'galon', name: 'Galón' }, equivalences: [{ unit_id: 2, unit: 'Cubeta', factor: '5' }] } }
+    else if (path === '/inventory/products/8/units') body = { data: { id: 8, company_id: 1, code: 'FIL-9', name: 'Filtro', base_unit: null, equivalences: [] } }
     else if (path === '/inventory/products?q=ace&company_id=1') body = { data: [{ id: 7, company_id: 1, code: 'ACE-1', name: 'Aceite 20W50', base_unit: { id: 1, code: 'galon', name: 'Galón' }, equivalences_count: 1 }] }
     else if (path.startsWith('/inventory/products')) {
-      body = { data: [{ id: 7, company_id: 1, code: 'ACE-1', name: 'Aceite 20W50', base_unit: { id: 1, code: 'galon', name: 'Galón' }, equivalences_count: 1 }, { id: 8, company_id: 1, code: 'FIL-9', name: 'Filtro', base_unit: null, equivalences_count: 0 }] }
+      const params = new URLSearchParams(path.split('?')[1] ?? '')
+      productRequests.push(path)
+      body = { meta: { page: Number(params.get('page') ?? 1), per_page: Number(params.get('per_page') ?? 25), total: 12, last_page: 3 }, data: [{ id: 7, company_id: 1, code: 'ACE-1', name: 'Aceite 20W50', base_unit: { id: 1, code: 'galon', name: 'Galón' }, equivalences_count: 1 }, { id: 8, company_id: 1, code: 'FIL-9', name: 'Filtro', base_unit: null, equivalences_count: 0 }] }
     }
     return new Response(JSON.stringify(body), { status: 200 })
   }))
@@ -123,8 +128,59 @@ describe('unidades y equivalencias', () => {
     await u.click(screen.getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(puts).toHaveLength(1))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())                  // al guardar, el modal se cierra
     expect(puts[0].path).toBe('/inventory/products/7/units')
     expect(puts[0].body).toEqual({ base_unit_id: 1, equivalences: [{ unit_id: 2, factor: '5.5' }, { unit_id: 3, factor: '0.0625' }] })
+  })
+
+  it('la edición de un producto se abre en un modal que se cierra con Escape o Cancelar, sin llevar al final de la página', async () => {
+    const u = userEvent.setup()
+    renderPage()
+
+    await u.click(await screen.findByRole('button', { name: 'Aceite 20W50' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByLabelText('Unidad base (en la que se lleva el inventario)')).toBeInTheDocument()
+    await u.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    await u.click(screen.getAllByRole('row').find((r) => r.textContent?.includes('Filtro'))!)              // también se abre al hacer clic en la fila
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    await u.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('pagina la lista de productos con tantas filas como caben en la ventana y vuelve a la primera página al filtrar', async () => {
+    const u = userEvent.setup()
+    renderPage()
+
+    expect(await screen.findByText('12 productos · Página 1 de 3')).toBeInTheDocument()
+    const first = new URLSearchParams(productRequests[0]!.split('?')[1])
+    expect([first.get('page'), first.get('per_page')]).toEqual(['1', '5'])                                  // jsdom: 768 px de alto
+
+    await u.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(await screen.findByText('12 productos · Página 2 de 3')).toBeInTheDocument()
+    expect(new URLSearchParams(productRequests.at(-1)!.split('?')[1]).get('page')).toBe('2')
+    expect(screen.getByRole('button', { name: 'Anterior' })).toBeEnabled()
+
+    await u.click(screen.getByLabelText('Solo sin unidad base'))
+    await waitFor(() => expect(new URLSearchParams(productRequests.at(-1)!.split('?')[1]).get('page')).toBe('1'))
+    expect(new URLSearchParams(productRequests.at(-1)!.split('?')[1]).get('missing_base')).toBe('1')
+  })
+
+  it('con otra altura de ventana cambia la cantidad de filas por página', async () => {
+    const u = userEvent.setup()
+    const original = window.innerHeight
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1200 })
+    renderPage()
+    await screen.findByText('12 productos · Página 1 de 3')
+    expect(new URLSearchParams(productRequests[0]!.split('?')[1]).get('per_page')).toBe('12')            // (1200 - 460) / 58
+
+    await u.click(screen.getByRole('button', { name: 'Siguiente' }))
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 800 })
+    window.dispatchEvent(new Event('resize'))
+    await waitFor(() => expect(new URLSearchParams(productRequests.at(-1)!.split('?')[1]).get('per_page')).toBe('5'))
+    expect(new URLSearchParams(productRequests.at(-1)!.split('?')[1]).get('page')).toBe('1')
+    Object.defineProperty(window, 'innerHeight', { configurable: true, value: original })
   })
 
   it('con solo consulta no ofrece editar', async () => {
