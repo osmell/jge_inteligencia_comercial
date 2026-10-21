@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\InventoryRotationController;
 use App\Http\Controllers\Api\V1\InventoryShortfallController;
 use App\Http\Controllers\Api\V1\InventoryStockController;
 use App\Http\Controllers\Api\V1\InventoryUnitController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\PaymentPromiseController;
 use App\Http\Controllers\Api\V1\QuotationController;
@@ -118,6 +119,18 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::put('units/{unit}', [InventoryUnitController::class, 'updateUnit'])->whereNumber('unit');
             Route::put('products/{product}/units', [InventoryUnitController::class, 'updateProductUnits'])->whereNumber('product');
         });
+    });
+
+    // Avisos internos de la persona que inició sesión (la campana). No requieren un permiso: cada quien solo ve los suyos.
+    Route::prefix('notifications')->group(function () {
+        Route::get('summary', [NotificationController::class, 'summary']);
+        Route::get('/', [NotificationController::class, 'index']);
+        Route::post('seen-all', [NotificationController::class, 'seenAll']);
+        Route::post('test', [NotificationController::class, 'test']);
+        Route::get('preferences', [NotificationController::class, 'preferences']);
+        Route::put('preferences', [NotificationController::class, 'updatePreferences']);
+        Route::post('{notification}/seen', [NotificationController::class, 'seen'])->whereNumber('notification');
+        Route::post('{notification}/dismiss', [NotificationController::class, 'dismiss'])->whereNumber('notification');
     });
 
     // Inteligencia comercial avanzada: estado de los análisis, parámetros (solo insights.manage los cambia) y registro de cálculos.

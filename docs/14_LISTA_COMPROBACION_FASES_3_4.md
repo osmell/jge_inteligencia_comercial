@@ -267,3 +267,8 @@ Puntos a tener presentes al comparar:
 - [ ] Con 24 meses o más de ventas reales, comparar el mejor y el peor mes del índice con lo que gerencia conoce de la temporada del negocio.
 - [ ] Con menos de 24 meses, la pantalla dice que falta historial y no muestra índices.
 - [ ] Revisar las líneas analizadas: las de mayor venta del catálogo, sin «Sin clasificar».
+
+### Avisos internos (Fase 9, paso 1)
+- [ ] Pulsar «Enviarme un aviso de prueba» en Avisos: aparece en la campana con el contador y se puede abrir, ver y descartar.
+- [ ] Apagar un tipo de aviso o pausar todos: el aviso de prueba no se entrega y la campana lo indica.
+- [ ] Un usuario sin permiso de crédito no ve ese tipo de aviso en sus preferencias.

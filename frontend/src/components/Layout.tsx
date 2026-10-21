@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { BrandEmblem, BrandPlate } from './Brand'
+import NotificationBell from './NotificationBell'
 import { NAV_GROUPS, NAV_ITEMS } from './navigation'
 
 function initials(name: string) {
@@ -112,6 +113,7 @@ export default function Layout() {
           <p className="truncate text-sm font-medium text-ink-muted">{current?.label ?? ''}</p>
 
           <div className="ml-auto flex items-center gap-3">
+            <NotificationBell />
             <div className="flex items-center gap-2.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-jge-blue-50 text-xs font-semibold text-jge-blue" aria-hidden="true">
                 {initials(user?.name ?? '')}

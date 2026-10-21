@@ -19,6 +19,7 @@ import InsightsConcentrationPage from './pages/InsightsConcentrationPage'
 import InsightsPage from './pages/InsightsPage'
 import InsightsSeasonalityPage from './pages/InsightsSeasonalityPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
+import NotificationsPage from './pages/NotificationsPage'
 import InventoryKardexPage from './pages/InventoryKardexPage'
 import InventoryMovementsPage from './pages/InventoryMovementsPage'
 import InventoryRotationPage from './pages/InventoryRotationPage'
@@ -51,6 +52,7 @@ export default function App() {
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
+              <Route path="notificaciones" element={<NotificationsPage />} />
               <Route element={<RequirePermission permission="sales.view" />}>
                 <Route path="ventas" element={<SalesDashboardPage />} />
                 <Route path="metas" element={<GoalsPage />} />

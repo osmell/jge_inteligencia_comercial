@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 // Requiere un proceso que ejecute el programador (php artisan schedule:work o el cron del servidor).
 Schedule::command('imports:fail-stale')->hourly();
 Schedule::command('insights:refresh')->dailyAt('02:00');
+Schedule::command('notifications:prune')->weekly();
