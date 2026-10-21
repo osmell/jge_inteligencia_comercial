@@ -34,13 +34,15 @@ function CompanyStatus({ c }: { c: InsightCompany }) {
 
 function Parameters({ manage }: { manage: boolean }) {
   const params = useLoad<{ data: InsightParameter[] }>('/insights/parameters')
+  const [version, setVersion] = useState(0)
+  const reload = () => { setVersion((v) => v + 1); params.reload() }
 
   return (
     <section aria-labelledby="params-title" className="mt-8">
       <h2 id="params-title" className="mb-1 text-sm font-semibold text-ink">Parámetros</h2>
       <p className="mb-3 text-xs text-ink-muted">Reglas con las que se calculan los análisis. {manage ? 'Cada cambio queda en Auditoría.' : 'Solo quien tiene el permiso de gestión puede cambiarlos.'}</p>
       <FormError message={params.error} />
-      {params.data && <ParametersForm key={JSON.stringify(params.data.data)} rows={params.data.data} manage={manage} onReload={params.reload} />}
+      {params.data && <ParametersForm key={`${version}-${JSON.stringify(params.data.data)}`} rows={params.data.data} manage={manage} onReload={reload} />}
     </section>
   )
 }
