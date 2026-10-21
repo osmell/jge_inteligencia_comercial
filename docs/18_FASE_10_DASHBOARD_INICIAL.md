@@ -47,3 +47,10 @@ Se amplía `frontend/src/components/charts.tsx` (el `BarChart` y la `InlineBar` 
 - **`ChartData`:** tabla alterna plegada («Ver los datos en tabla») que acompaña a cada gráfico con las cifras exactas.
 - **`goalTone`** (`lib/tone.ts`): los umbrales ya usados en Metas (≥100 % cumplida, ≥75 % cerca, menos: lejos).
 Todos son `role="img"` con descripción; sin datos no fallan. Probados en `charts.test.tsx`.
+
+## Paso 4 — Dashboard de administración y gerencia (hecho)
+- La pantalla de inicio (`/`) pasa a ser el dashboard: saludo, alcance de la persona, fecha de la última venta y de la última carga, selector de **periodo** (mes en curso, mes anterior, trimestre, año), selector de **compañía** (si ve más de una) y botón **Actualizar**. Los accesos rápidos quedan al final.
+- Cada sección es un bloque independiente (`components/DashboardSections.tsx`) que pide su propia API, muestra «Cargando…», y si falla enseña su error con **Reintentar** sin afectar a las demás; cada una enlaza a su pantalla de detalle. La pantalla solo pide las secciones que la API indica para esa persona (mismo mecanismo que usarán supervisor y vendedor).
+- **Ventas:** venta neta con cambio contra el tramo anterior y contra el año anterior, facturas, clientes, ticket promedio; línea de venta diaria del periodo contra el tramo anterior (día n contra día n, con ceros en días sin venta) y barras de los últimos 12 meses, cada una con su tabla alterna. **Metas:** barra de cumplimiento del conjunto con la proyección al cierre como marca, y una barra por vendedor con estado en texto. **Cartera:** saldo, vencido, promesas, anillo por antigüedad y principales deudores. **Cotizaciones**, **Seguimiento**, **Inventario** y **Recomendaciones** como tarjetas con color y texto. **Principales del periodo** (clientes, productos, vendedores) y **Por compañía** (tabla comparativa).
+- API: se añadió `daily_previous` a la sección de ventas para la comparación diaria.
+- El diseño por rol (supervisor y vendedor) usa los mismos bloques; los pasos 5 y 6 ajustan lo propio de cada uno (p. ej. clientes sin contacto, agenda del día).

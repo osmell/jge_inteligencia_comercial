@@ -1,48 +1,68 @@
-import { ArrowRight, Building2, GitBranch, UserCircle } from 'lucide-react'
+import { ArrowRight, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { CompaniesBlock, CreditBlock, FollowupBlock, GoalsBlock, InsightsBlock, InventoryBlock, QuotationsBlock, RankingsBlock, SalesBlock } from '../components/DashboardSections'
 import { NAV_ITEMS } from '../components/navigation'
-import { Card, PageHeader } from '../components/ui'
+import { Alert, Button, PageHeader, SelectField } from '../components/ui'
+import { type DashboardMeta, PERIOD_LABEL } from '../lib/dashboard'
+import { formatDateTime } from '../lib/format'
+import { formatDay } from '../lib/quotations'
+import { useLoad } from '../lib/useLoad'
 
-function Stat({ icon: Icon, label, value, hint }: { icon: typeof Building2; label: string; value: string; hint?: string }) {
-  return (
-    <Card className="flex items-start gap-4 p-5">
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-jge-blue-50 text-jge-blue">
-        <Icon className="h-5 w-5" aria-hidden="true" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-sm text-ink-muted">{label}</p>
-        <p className="tabular truncate text-2xl font-semibold tracking-tight">{value}</p>
-        {hint && <p className="mt-0.5 text-xs text-ink-muted">{hint}</p>}
-      </div>
-    </Card>
-  )
+const BLOCKS: Record<string, (props: { query: string }) => React.ReactNode> = {
+  sales: SalesBlock, goals: GoalsBlock, rankings: RankingsBlock, companies: CompaniesBlock, credit: CreditBlock,
+  quotations: QuotationsBlock, followup: FollowupBlock, inventory: InventoryBlock, insights: InsightsBlock,
 }
 
+/** Secciones que ocupan todo el ancho; las demás se acomodan en dos columnas. */
+const WIDE = new Set(['sales', 'rankings', 'companies'])
+
+const SCOPE_TEXT = { company: 'Todo tu ámbito de compañías.', team: 'Lo de los vendedores que supervisas.', seller: 'Solo lo tuyo: tus ventas, clientes, cartera y cotizaciones.' } as const
+
+/** Pantalla de inicio: indicadores y gráficos según el rol, cada sección con su propia carga. */
 export default function HomePage() {
   const { user, can } = useAuth()
-  const isAdmin = user?.role.slug === 'administrador'
+  const meta = useLoad<{ data: DashboardMeta }>('/dashboard')
+  const [period, setPeriod] = useState('month')
+  const [companyId, setCompanyId] = useState('')
+  const [refresh, setRefresh] = useState(0)
   const shortcuts = NAV_ITEMS.filter((i) => i.to !== '/' && can(i.permission))
+  const m = meta.data?.data
+  const query = new URLSearchParams({ period, ...(companyId ? { company_id: companyId } : {}) }).toString()
 
   return (
     <section>
-      <PageHeader title={`Hola, ${user?.name}`} description="Resumen de tu acceso en la plataforma." />
+      <PageHeader
+        title={`Hola, ${user?.name}`}
+        description={m ? `${SCOPE_TEXT[m.profile]} ${m.last_sale ? `Ventas hasta el ${formatDay(m.last_sale)}${m.last_import ? ` (última carga: ${formatDateTime(m.last_import)})` : ''}.` : 'Todavía no hay ventas cargadas.'}` : 'Resumen de tu actividad.'}
+      />
+      {meta.error && !m && <Alert tone="danger">{meta.error}</Alert>}
+      {m && m.profile === 'seller' && m.linked_sellers === 0 && <div className="mb-4"><Alert tone="warning">Tu usuario todavía no está vinculado a un vendedor, por eso las cifras salen en cero. Pide a administración que lo vincule.</Alert></div>}
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Stat icon={UserCircle} label="Tu rol" value={user?.role.name ?? ''} />
-        <Stat
-          icon={Building2}
-          label="Compañías en tu ámbito"
-          value={isAdmin ? 'Todas' : String(user?.companies.length ?? 0)}
-          hint={isAdmin ? 'Acceso sin restricción' : user?.companies.map((c) => c.name).join(', ') || 'Sin compañías asignadas'}
-        />
-        <Stat
-          icon={GitBranch}
-          label="Sucursales"
-          value={isAdmin ? 'Todas' : user?.branches.length ? String(user.branches.length) : 'Todas las de tus compañías'}
-          hint={!isAdmin && user?.branches.length ? user.branches.map((b) => b.name).join(', ') : undefined}
-        />
-      </div>
+      {m && m.sections.length > 0 && (
+        <>
+          <div className="mb-4 flex flex-wrap items-end gap-3">
+            <SelectField id="dash-period" label="Periodo" value={period} onChange={(e) => setPeriod(e.target.value)}>
+              {m.periods.map((p) => <option key={p} value={p}>{PERIOD_LABEL[p] ?? p}</option>)}
+            </SelectField>
+            {m.companies.length > 1 && (
+              <SelectField id="dash-company" label="Compañía" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
+                <option value="">Todas</option>
+                {m.companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </SelectField>
+            )}
+            <Button variant="secondary" icon={<RefreshCw className="h-4 w-4" aria-hidden="true" />} onClick={() => setRefresh((n) => n + 1)}>Actualizar</Button>
+          </div>
+          <div key={`${query}-${refresh}`} className="grid gap-6 lg:grid-cols-2">
+            {m.sections.map((key) => {
+              const Block = BLOCKS[key]
+              return Block ? <div key={key} className={WIDE.has(key) ? 'lg:col-span-2' : ''}><Block query={query} /></div> : null
+            })}
+          </div>
+        </>
+      )}
+      {m && m.sections.length === 0 && <Alert tone="info">Tu rol todavía no tiene indicadores asignados. Usa los accesos rápidos o pide a administración los permisos que necesites.</Alert>}
 
       {shortcuts.length > 0 && (
         <div className="mt-8">

@@ -148,6 +148,7 @@ class DashboardService
             'previous' => $block($summary['previous'], $w['previous'], $summary['change_pct']['net_total'] ?? null),
             'year_ago' => $yearAgo === null ? null : $block($yearAgo['previous'], $w['year_ago'], $yearAgo['change_pct']['net_total'] ?? null),
             'daily' => $this->series('day', $w['from'], $w['to'], $filters, 'date'),
+            'daily_previous' => $this->series('day', $w['previous'][0], $w['previous'][1], $filters, 'date'),
             'monthly' => $this->series('month', $w['to']->subMonthsNoOverflow(11)->startOfMonth(), $w['to'], $filters, 'month'),
             'history_since' => $first,
         ];

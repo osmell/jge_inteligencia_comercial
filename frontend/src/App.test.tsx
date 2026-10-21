@@ -16,7 +16,10 @@ const admin: AuthUser = {
 
 function mockApi(handler: (url: string, init?: RequestInit) => { status: number; body?: unknown }) {
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
-    const { status, body } = handler(url, init)
+    // El dashboard del inicio no es lo que prueba este archivo: responde sin secciones.
+    const { status, body } = url.endsWith('/dashboard')
+      ? { status: 200, body: { data: { profile: 'company', linked_sellers: null, sections: [], periods: ['month'], companies: [], last_sale: null, last_import: null } } }
+      : handler(url, init)
     return new Response(status === 204 ? null : JSON.stringify(body ?? {}), { status })
   }))
 }

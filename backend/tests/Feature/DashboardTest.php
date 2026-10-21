@@ -145,6 +145,7 @@ class DashboardTest extends TestCase
         $this->assertSame(['2025-10-01', '2025-10-21'], [$r->json('data.year_ago.from'), $r->json('data.year_ago.to')]);
         $this->assertEquals(600, $r->json('data.year_ago.net_total'));
         $this->assertSame(['2026-10-05', '2026-10-10', '2026-10-20'], array_column($r->json('data.daily'), 'date'));
+        $this->assertSame(['2026-09-10', '2026-09-15'], array_column($r->json('data.daily_previous'), 'date'));
         $this->assertSame(['2026-09', '2026-10'], array_column($r->json('data.monthly'), 'month'));       // últimos 12 meses con ventas (octubre de 2025 queda fuera)
 
         $this->section($this->admin, 'sales', '?period=year')->assertJsonPath('data.year_ago', null);
