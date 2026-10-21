@@ -147,3 +147,7 @@ Cuenta de WhatsApp Business configurable (credenciales cifradas, prueba de conex
 2. No se registran notas de voz desde el navegador.
 3. El estado de cuenta en PDF no se necesita por ahora.
 4. Etiquetas configurables: el responsable las inspecciona y decide después; mientras tanto rige la lista fija.
+
+## Confirmaciones del responsable (antes del QA)
+- Fase 9 (`docs/17`) y Fase 10 (`docs/19`): rigen los valores por omisión y las propuestas de la implementación.
+- Fase 11: se mantienen los 15 minutos de espera, el horario de ausencia configurable y que el mensaje libre no exige consentimiento previo, hasta terminar las pruebas de QA.
