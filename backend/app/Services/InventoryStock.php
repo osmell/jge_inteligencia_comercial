@@ -23,9 +23,9 @@ class InventoryStock
 
     public const KARDEX_LIMIT = 500;
 
-    public function canSeeCosts(User $user): bool
+    public function canSeeCosts(?User $user): bool
     {
-        return $user->hasPermission('inventory.costs');
+        return $user !== null && $user->hasPermission('inventory.costs');
     }
 
     /**

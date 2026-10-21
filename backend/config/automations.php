@@ -1,6 +1,8 @@
 <?php
 
 use App\Automations\CreditBucketHandler;
+use App\Automations\DigestDailyHandler;
+use App\Automations\DigestWeeklyHandler;
 use App\Automations\FollowupDueHandler;
 use App\Automations\InsightHighHandler;
 use App\Automations\InsightsRefreshHandler;
@@ -66,6 +68,16 @@ return [
             'label' => 'Productos bajo el mínimo o agotados', 'description' => 'Avisa a quien consulta el inventario de los productos que necesitan reposición.',
             'frequency' => 'daily', 'respect_window' => true, 'handler' => InventoryLowHandler::class, 'default_enabled' => true,
             'params' => ['hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 7, 'min' => 0, 'max' => 23, 'help' => 'Hora del día a la que corre.']],
+        ],
+        'digest_daily' => [
+            'label' => 'Resumen diario para gerencia', 'description' => 'Genera cada día hábil el resumen corto de cada compañía (venta de ayer contra su promedio, cartera, cotizaciones, seguimiento e inventario) y avisa a gerencia.',
+            'frequency' => 'daily', 'respect_window' => true, 'handler' => DigestDailyHandler::class, 'default_enabled' => true,
+            'params' => ['hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 7, 'min' => 0, 'max' => 23, 'help' => 'Hora del día a la que corre.']],
+        ],
+        'digest_weekly' => [
+            'label' => 'Resumen semanal para gerencia', 'description' => 'Genera cada lunes el resumen de la semana anterior de cada compañía (ventas, principales clientes y productos, metas por vendedor, cartera, cotizaciones, recomendaciones e inventario) y avisa a gerencia.',
+            'frequency' => 'weekly', 'respect_window' => true, 'handler' => DigestWeeklyHandler::class, 'default_enabled' => true,
+            'params' => ['hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 7, 'min' => 0, 'max' => 23, 'help' => 'Hora del lunes a la que corre.']],
         ],
         'insight_high' => [
             'label' => 'Recomendaciones de gravedad alta', 'description' => 'Avisa de las recomendaciones nuevas de gravedad alta de los clientes de cada persona.',

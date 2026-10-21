@@ -19,6 +19,8 @@ import InsightsConcentrationPage from './pages/InsightsConcentrationPage'
 import InsightsPage from './pages/InsightsPage'
 import InsightsSeasonalityPage from './pages/InsightsSeasonalityPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
+import DigestDetailPage from './pages/DigestDetailPage'
+import DigestsPage from './pages/DigestsPage'
 import AutomationsPage from './pages/AutomationsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import InventoryKardexPage from './pages/InventoryKardexPage'
@@ -69,6 +71,10 @@ export default function App() {
                   <Route path="agenda" element={<AgendaPage />} />
                   <Route path="seguimiento" element={<FollowUpKpisPage />} />
                 </Route>
+              </Route>
+              <Route element={<RequirePermission permission="digests.view" />}>
+                <Route path="resumenes" element={<DigestsPage />} />
+                <Route path="resumenes/:id" element={<DigestDetailPage />} />
               </Route>
               <Route element={<RequirePermission permission="automations.manage" />}>
                 <Route path="admin/automatizaciones" element={<AutomationsPage />} />

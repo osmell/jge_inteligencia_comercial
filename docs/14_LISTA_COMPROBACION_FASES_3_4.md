@@ -284,3 +284,9 @@ Puntos a tener presentes al comparar:
 - [ ] Una cotización que vence en 3 días y otra vencida generan un aviso cada una, una sola vez aunque la automatización se ejecute otra vez.
 - [ ] Una promesa de pago incumplida avisa a quien la registró y al vendedor de la factura; una cumplida no avisa.
 - [ ] Con «Ejecutar ahora» de una automatización de avisos, la campana muestra el resultado y el registro dice cuántos avisos nuevos se enviaron.
+
+### Resúmenes para gerencia (Fase 9, paso 4)
+- [ ] Asignar `digests.view` a gerencia general; abrir «Resúmenes» y revisar un diario y un semanal con datos reales: la venta de ayer, el saldo por cobrar y las cotizaciones por vencer coinciden con las pantallas.
+- [ ] La comparación de la venta de ayer con su promedio del mismo día de la semana es razonable para el negocio (sábados, feriados).
+- [ ] Un usuario limitado a una sucursal no ve los resúmenes de la compañía.
+- [ ] Confirmar con gerencia el contenido, la hora y si quieren un resumen consolidado de todas las compañías.

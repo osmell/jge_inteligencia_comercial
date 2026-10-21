@@ -74,14 +74,14 @@ class PaymentPromises
      * @param  array{company_id?: int|null, code?: string|null, status?: string|null, horizon_days?: int|null, mine?: bool}  $opts
      * @return array{rows: list<array<string, mixed>>, counts: array<string, int>}
      */
-    public function list(User $user, array $opts, ?CarbonImmutable $today = null): array
+    public function list(?User $user, array $opts, ?CarbonImmutable $today = null): array
     {
         $today ??= CarbonImmutable::today();
         $query = PaymentPromise::query()->with('user:id,name')
             ->whereExists(CreditInvoice::query()->selectRaw('1')->whereColumn('credit_invoices.company_id', 'payment_promises.company_id')->whereColumn('credit_invoices.customer_code', 'payment_promises.customer_code')->toBase())
             ->when(! empty($opts['company_id']), fn (Builder $q) => $q->where('company_id', $opts['company_id']))
             ->when(! empty($opts['code']), fn (Builder $q) => $q->where('customer_code', $opts['code']))
-            ->when(! empty($opts['mine']), fn (Builder $q) => $q->where('user_id', $user->id))
+            ->when(! empty($opts['mine']) && $user !== null, fn (Builder $q) => $q->where('user_id', $user?->id))
             ->orderBy('promised_on')->orderBy('id');
 
         $rows = [];

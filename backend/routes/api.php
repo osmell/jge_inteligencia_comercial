@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
+use App\Http\Controllers\Api\V1\DigestController;
 use App\Http\Controllers\Api\V1\InsightAlertController;
 use App\Http\Controllers\Api\V1\InsightAnalysisController;
 use App\Http\Controllers\Api\V1\InsightController;
@@ -120,6 +121,13 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::put('units/{unit}', [InventoryUnitController::class, 'updateUnit'])->whereNumber('unit');
             Route::put('products/{product}/units', [InventoryUnitController::class, 'updateProductUnits'])->whereNumber('product');
         });
+    });
+
+    // Resúmenes para gerencia.
+    Route::middleware('permission:digests.view')->prefix('digests')->group(function () {
+        Route::get('/', [DigestController::class, 'index']);
+        Route::post('generate', [DigestController::class, 'generate']);
+        Route::get('{digest}', [DigestController::class, 'show'])->whereNumber('digest');
     });
 
     // Administración de las automatizaciones (catálogo, parámetros, interruptor general, ejecución manual y registro).

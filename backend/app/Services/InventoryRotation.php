@@ -44,7 +44,7 @@ class InventoryRotation
      * @param  array{company_id?: int|null, branch_id?: int|null, q?: string|null, status?: string|null}  $filters
      * @return array{rows: list<array<string, mixed>>, counts: array<string, int>, params: array<string, int>}
      */
-    public function report(User $user, array $filters, ?CarbonImmutable $today = null): array
+    public function report(?User $user, array $filters, ?CarbonImmutable $today = null): array
     {
         $today ??= CarbonImmutable::today();
         $p = $this->params();

@@ -1,4 +1,4 @@
-import { BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
+import { BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Newspaper, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -25,6 +25,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/seguimiento', label: 'Seguimiento', icon: ClipboardList, permission: 'interactions.manage' },
       { to: '/cotizaciones', label: 'Cotizaciones', icon: FileText, permission: 'customers.view' },
       { to: '/credito', label: 'Crédito', icon: Wallet, permission: 'credit.view' },
+      { to: '/resumenes', label: 'Resúmenes', icon: Newspaper, permission: 'digests.view' },
       { to: '/inteligencia', label: 'Inteligencia', icon: Lightbulb, permission: 'insights.view' },
       { to: '/productos', label: 'Productos', icon: Package, permission: 'sales.view' },
       { to: '/inventario', label: 'Existencias', icon: Warehouse, permission: 'inventory.view' },

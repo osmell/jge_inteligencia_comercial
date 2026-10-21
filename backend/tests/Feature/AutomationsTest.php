@@ -231,8 +231,8 @@ class AutomationsTest extends TestCase
         $catalog = require base_path('config/automations.php');
         config(['automations.automations' => $catalog['automations']]);
 
-        $this->assertSame(
-            ['insights_refresh' => true, 'notifications_prune' => true, 'followup_due' => true, 'quotation_expiring' => true, 'promise_due' => true, 'credit_bucket' => true, 'inventory_low' => true, 'insight_high' => true],
+        $this->assertEquals(
+            ['insights_refresh' => true, 'notifications_prune' => true, 'followup_due' => true, 'quotation_expiring' => true, 'promise_due' => true, 'credit_bucket' => true, 'inventory_low' => true, 'insight_high' => true, 'digest_daily' => true, 'digest_weekly' => true],
             collect(app(AutomationCatalog::class)->describe())->pluck('available', 'key')->all(),
         );
         $this->assertSame(['deleted' => 0], app(PruneNotificationsHandler::class)->run([]));
