@@ -18,7 +18,7 @@ Si un ajuste toca una regla de negocio (permisos, datos que se mueven o se borra
 |---|---|---|---|---|---|
 | 1 | Inicio (dashboard) y encabezado | Quitar los «Accesos rápidos» del dashboard y reemplazarlos por una barra de texto en el encabezado que funciona como línea de comandos con `/` (Fase 12, `docs/22`). | Implementado — por aprobar | `a2fee9f` | — |
 | 2 | Administración → Sucursales | Permitir mover una sucursal a otra compañía cuando no tiene datos relacionados; si los tiene, mostrar un mensaje claro de cuáles la impiden. | Implementado — por aprobar | `3549843` | — |
-| 3 | Inventario → Unidades y equivalencias | (a) La edición de unidad base y equivalencias de un producto debe abrirse en un **modal** al hacer clic en el producto (hoy aparece al final de la página y obliga a bajar). (b) La lista de productos debe **ajustarse al alto de la ventana** con **paginación** cuando es larga, para que el cliente no tenga que hacer scroll. | Implementado — por aprobar | `b82e051` | — |
+| 3 | Inventario → Unidades y equivalencias | (a) La edición de unidad base y equivalencias de un producto debe abrirse en un **modal** al hacer clic en el producto (hoy aparece al final de la página y obliga a bajar). (b) La lista de productos debe **ajustarse al alto de la ventana** con **paginación** cuando es larga, para que el cliente no tenga que hacer scroll. | Aprobado | `b82e051` | Aprobado por el responsable (2026-10-21) |
 
 ### Detalle de los ajustes
 
