@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
 use App\Http\Controllers\Api\V1\InventoryMovementController;
+use App\Http\Controllers\Api\V1\InventoryRotationController;
 use App\Http\Controllers\Api\V1\InventoryShortfallController;
 use App\Http\Controllers\Api\V1\InventoryStockController;
 use App\Http\Controllers\Api\V1\InventoryUnitController;
@@ -95,6 +96,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::middleware('permission:inventory.view')->prefix('inventory')->group(function () {
         Route::get('stock', [InventoryStockController::class, 'index']);
         Route::get('kardex', [InventoryStockController::class, 'kardex']);
+        Route::get('rotation', [InventoryRotationController::class, 'index']);
+        Route::get('rotation/export', [InventoryRotationController::class, 'export']);
         Route::get('movements', [InventoryMovementController::class, 'index']);
         Route::get('shortfalls', [InventoryShortfallController::class, 'index']);
         Route::get('units', [InventoryUnitController::class, 'units']);

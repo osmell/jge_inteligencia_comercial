@@ -116,3 +116,15 @@ Pantalla **Movimientos** (`/inventario/movimientos`): consulta con filtros de su
 - **Traslado entre sucursales de la misma compañía:** una salida y una entrada enlazadas por la misma referencia (`TR-XXXXXXXX`), al mismo valor, en una sola operación; si el origen no alcanza, no se registra nada.
 - **Reversas** con motivo, sin borrar historia: un ajuste o una devolución se revierte solo; **un traslado, con su pareja** (si el destino ya vendió la mercancía y quedaría en negativo, no se revierte nada); **un documento de entrada, completo** (todas sus líneas), y después el mismo documento, ya corregido, se puede volver a cargar. Las ventas (siguen a la factura) y el inventario inicial (se corrige con un ajuste) no se revierten aquí.
 - La cantidad de un movimiento se captura en cualquier unidad con equivalencia del producto y se guarda convertida a la unidad base.
+
+## Paso 7 — Rotación, cobertura, mínimos, máximos y alertas (hecho)
+Pantalla **Rotación** (`/inventario/rotacion`, `inventory.view`) y exportación a CSV (con Auditoría). Los criterios son los aceptados y se cambian en `backend/config/inventory.php`:
+- **Demanda diaria** = unidades vendidas en los últimos 90 días ÷ 90 (solo ventas; no cuentan traslados ni ajustes).
+- **Cobertura (días)** = existencia ÷ demanda diaria. **Rotación** = unidades vendidas en la ventana ÷ existencia promedio de la ventana (promedio entre la existencia al inicio y la actual).
+- **Mínimo** = demanda × 22 días (15 de reposición + 7 de seguridad). **Máximo** = mínimo + 30 días de ciclo de compra (= demanda × 52). Los 15 días de reposición son un supuesto: conviene ajustarlos al tiempo real de los proveedores.
+- **Estados**, por prioridad: *Agotado* (sin existencia pero con ventas), *Bajo el mínimo* (alerta de reposición, con la cantidad sugerida hasta el máximo), *Sin rotación* (existencia sin ventas en 60 días), *Sobre el máximo* y *Normal*. Los contadores de arriba filtran la lista; el orden es por urgencia y luego por menor cobertura.
+- Respeta el ámbito de compañías y sucursales del usuario; el valor inmovilizado solo se muestra (y exporta) con `inventory.costs`.
+- Solo muestra productos con existencia o con ventas en la ventana.
+
+## Fase 7 completa en código
+Falta validarla con datos reales: catálogo con unidades y equivalencias, inventario inicial por sucursal con su fecha de corte, entradas y ventas (ver `14_LISTA_COMPROBACION_FASES_3_4.md`).

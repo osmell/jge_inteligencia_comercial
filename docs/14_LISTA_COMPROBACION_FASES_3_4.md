@@ -222,3 +222,9 @@ Puntos a tener presentes al comparar:
 - [ ] Un traslado baja la sucursal de origen y sube la de destino al mismo valor; el kárdex de ambas lo muestra.
 - [ ] Revertir un traslado deja ambas sucursales como estaban; si el destino ya vendió, se rechaza.
 - [ ] Revertir un documento de entrada quita todas sus líneas y permite cargar el documento corregido.
+
+### Inventario: rotación y reposición (Fase 7, paso 7)
+- [ ] Revisar con el responsable los días de reposición (15), seguridad (7) y ciclo de compra (30), y los 60 días de «sin rotación»; ajustar en `config/inventory.php`.
+- [ ] Un producto que vende 1 por día con 10 en existencia aparece «Bajo el mínimo» con cobertura de 10 días y reposición sugerida hasta el máximo.
+- [ ] Un producto con existencia y sin ventas en 60 días aparece «Sin rotación».
+- [ ] El CSV coincide con la pantalla y solo el administrador ve el valor.

@@ -156,3 +156,43 @@ export interface MovementList {
   data: MovementRow[]
   meta: { page: number; has_more: boolean; costs_visible: boolean }
 }
+
+export type RotationStatus = 'out_of_stock' | 'below_min' | 'no_rotation' | 'above_max' | 'ok'
+
+export const ROTATION_LABEL: Record<RotationStatus, string> = {
+  out_of_stock: 'Agotado',
+  below_min: 'Bajo el mínimo',
+  no_rotation: 'Sin rotación',
+  above_max: 'Sobre el máximo',
+  ok: 'Normal',
+}
+
+export interface RotationRow {
+  company_id: number
+  branch_id: number
+  branch: string
+  product: { id: number; code: string; name: string }
+  stock: string
+  sold: string
+  daily_demand: string
+  coverage_days: string | null
+  rotation: string | null
+  min: string
+  max: string
+  suggested: string | null
+  last_sale: string | null
+  days_since_sale: number | null
+  status: RotationStatus
+  value?: string
+}
+
+export interface RotationReport {
+  data: RotationRow[]
+  meta: {
+    page: number
+    has_more: boolean
+    total: number
+    counts: Record<RotationStatus, number>
+    params: { demand_days: number; no_movement_days: number; reorder_days: number; safety_days: number; cycle_days: number }
+  }
+}

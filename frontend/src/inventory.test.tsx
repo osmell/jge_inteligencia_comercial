@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import InventoryKardexPage from './pages/InventoryKardexPage'
 import InventoryMovementsPage from './pages/InventoryMovementsPage'
+import InventoryRotationPage from './pages/InventoryRotationPage'
 import InventoryShortfallsPage from './pages/InventoryShortfallsPage'
 import InventoryStockPage from './pages/InventoryStockPage'
 import InventoryUnitsPage from './pages/InventoryUnitsPage'
@@ -44,7 +45,15 @@ beforeEach(() => {
     }
     urls.push(path)
     let body: unknown = { data: [] }
-    if (path.startsWith('/inventory/movements')) {
+    if (path.startsWith('/inventory/rotation')) {
+      body = {
+        data: [
+          { company_id: 1, branch_id: 2, branch: 'Central', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, stock: '10', sold: '90', daily_demand: '1', coverage_days: '10', rotation: '1.64', min: '22', max: '52', suggested: '42', last_sale: '2026-10-10', days_since_sale: 10, status: 'below_min', ...(costsVisible ? { value: '100.00' } : {}) },
+          { company_id: 1, branch_id: 2, branch: 'Central', product: { id: 8, code: 'FIL-9', name: 'Filtro' }, stock: '20', sold: '0', daily_demand: '0', coverage_days: null, rotation: null, min: '0', max: '0', suggested: null, last_sale: null, days_since_sale: null, status: 'no_rotation', ...(costsVisible ? { value: '60.00' } : {}) },
+        ],
+        meta: { page: 1, has_more: false, total: 2, counts: { out_of_stock: 0, below_min: 1, no_rotation: 1, above_max: 0, ok: 0 }, params: { demand_days: 90, no_movement_days: 60, reorder_days: 15, safety_days: 7, cycle_days: 30 } },
+      }
+    } else if (path.startsWith('/inventory/movements')) {
       body = { data: [
         { id: 11, date: '2026-10-10', type: 'adjustment_out', reason: 'damage', branch: 'Central', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, quantity: '-2', entered: '2', entered_unit: null, reference: 'Ajuste de salida', note: 'Envase roto', user: 'Ana', reversed: false, reversible: true },
         { id: 12, date: '2026-10-11', type: 'transfer_out', reason: null, branch: 'Central', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, quantity: '-4', entered: '4', entered_unit: null, reference: 'TR-ABC', note: null, user: 'Ana', reversed: true, reversible: false },
@@ -272,5 +281,28 @@ describe('unidades y equivalencias', () => {
     await waitFor(() => expect(screen.getByRole('table', { name: 'Movimientos de inventario' })).toHaveTextContent('Envase roto'))
     expect(screen.queryByRole('button', { name: 'Nuevo movimiento' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Revertir/ })).not.toBeInTheDocument()
+  })
+
+  it('la rotación muestra las alertas, los criterios y la sugerencia de reposición', async () => {
+    render(<AuthProvider><MemoryRouter><InventoryRotationPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Rotación y reposición' })
+    await waitFor(() => expect(table).toHaveTextContent('Aceite 20W50'))
+    expect(table).toHaveTextContent('22 / 52')
+    expect(table).toHaveTextContent('Reponer ≈ 42')
+    expect(table).toHaveTextContent('Sin ventas')
+    expect(table).not.toHaveTextContent('Valor')
+    expect(screen.getByText(/Mínimo = demanda × 22 días \(15 de reposición \+ 7 de seguridad\)/)).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Resumen por estado')).getByRole('button', { name: /Bajo el mínimo/ })).toHaveTextContent('1')
+  })
+
+  it('al elegir un estado filtra en el servidor y con costos muestra el valor', async () => {
+    costsVisible = true
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InventoryRotationPage /></MemoryRouter></AuthProvider>)
+
+    await waitFor(() => expect(screen.getByRole('table', { name: 'Rotación y reposición' })).toHaveTextContent('Valor'))
+    await u.click(within(screen.getByLabelText('Resumen por estado')).getByRole('button', { name: /Sin rotación/ }))
+    await waitFor(() => expect(urls.filter((x) => x.startsWith('/inventory/rotation')).at(-1)).toContain('status=no_rotation'))
   })
 })
