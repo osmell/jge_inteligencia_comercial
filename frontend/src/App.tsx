@@ -14,6 +14,7 @@ import CompaniesPage from './pages/CompaniesPage'
 import CreditAgingPage from './pages/CreditAgingPage'
 import CreditDetailPage from './pages/CreditDetailPage'
 import InventoryKardexPage from './pages/InventoryKardexPage'
+import InventoryMovementsPage from './pages/InventoryMovementsPage'
 import InventoryShortfallsPage from './pages/InventoryShortfallsPage'
 import InventoryStockPage from './pages/InventoryStockPage'
 import InventoryUnitsPage from './pages/InventoryUnitsPage'
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="inventario" element={<InventoryStockPage />} />
                 <Route path="inventario/kardex" element={<InventoryKardexPage />} />
                 <Route path="inventario/faltantes" element={<InventoryShortfallsPage />} />
+                <Route path="inventario/movimientos" element={<InventoryMovementsPage />} />
                 <Route path="inventario/unidades" element={<InventoryUnitsPage />} />
               </Route>
               <Route element={<RequirePermission permission="credit.view" />}>

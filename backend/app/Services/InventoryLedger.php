@@ -51,12 +51,13 @@ class InventoryLedger
         ?int $batchId = null,
         bool $audit = true,
         ?int $receiptId = null,
+        ?string $reason = null,
     ): InventoryMovement {
         if (! in_array($type, [...InventoryMovement::INFLOWS, ...InventoryMovement::OUTFLOWS], true)) {
             throw ValidationException::withMessages(['type' => 'Tipo de movimiento no válido.']);
         }
 
-        return DB::transaction(function () use ($companyId, $branchId, $product, $type, $quantity, $unitId, $occurredOn, $user, $value, $reference, $note, $sourceKey, $batchId, $audit, $receiptId) {
+        return DB::transaction(function () use ($companyId, $branchId, $product, $type, $quantity, $unitId, $occurredOn, $user, $value, $reference, $note, $sourceKey, $batchId, $audit, $receiptId, $reason) {
             $locked = Product::query()->lockForUpdate()->find($product->id) ?? throw ValidationException::withMessages(['product' => 'El producto no existe.']);
             if ($locked->company_id !== $companyId) {
                 throw ValidationException::withMessages(['product' => 'El producto no pertenece a la compañía.']);
@@ -87,7 +88,7 @@ class InventoryLedger
                 $signedValue = -$this->outflowValue($base, $balanceQty, $balanceValue);
             }
 
-            return $this->append($companyId, $branchId, $locked, $type, $signedQty, $signedValue, $occurredOn->toDateString(), $unitId === $locked->base_unit_id ? null : $unitId, $entered, $reference, $note, $user, null, $sourceKey, $batchId, [$balanceQty, $balanceValue], $audit, $receiptId);
+            return $this->append($companyId, $branchId, $locked, $type, $signedQty, $signedValue, $occurredOn->toDateString(), $unitId === $locked->base_unit_id ? null : $unitId, $entered, $reference, $note, $user, null, $sourceKey, $batchId, [$balanceQty, $balanceValue], $audit, $receiptId, $reason);
         });
     }
 
@@ -196,12 +197,12 @@ class InventoryLedger
     }
 
     /** @param  array{0: int, 1: int}  $balance */
-    private function append(int $companyId, int $branchId, Product $product, string $type, int $qty, int $value, string $on, ?int $unitId, int $entered, ?string $reference, ?string $note, ?User $user, ?int $reverses, ?string $sourceKey, ?int $batchId, array $balance, bool $audit, ?int $receiptId = null): InventoryMovement
+    private function append(int $companyId, int $branchId, Product $product, string $type, int $qty, int $value, string $on, ?int $unitId, int $entered, ?string $reference, ?string $note, ?User $user, ?int $reverses, ?string $sourceKey, ?int $batchId, array $balance, bool $audit, ?int $receiptId = null, ?string $reason = null): InventoryMovement
     {
         $movement = InventoryMovement::create([
             'company_id' => $companyId, 'branch_id' => $branchId, 'product_id' => $product->id, 'type' => $type, 'quantity' => Quantity::format($qty), 'value' => Decimal::format($value),
             'occurred_on' => $on, 'unit_id' => $unitId, 'entered_quantity' => Quantity::format($entered), 'reference' => $reference, 'note' => $note,
-            'user_id' => $user?->id, 'reverses_id' => $reverses, 'source_key' => $sourceKey, 'import_batch_id' => $batchId, 'receipt_id' => $receiptId, 'created_at' => now(),
+            'user_id' => $user?->id, 'reverses_id' => $reverses, 'source_key' => $sourceKey, 'import_batch_id' => $batchId, 'receipt_id' => $receiptId, 'reason' => $reason, 'created_at' => now(),
         ]);
 
         $key = ['company_id' => $companyId, 'branch_id' => $branchId, 'product_id' => $product->id];
@@ -214,7 +215,7 @@ class InventoryLedger
         }
 
         if ($audit && $user !== null) {
-            $this->audit->record('inventory.movement_'.$type, $user, auditable: $movement, new: $movement->only(['branch_id', 'product_id', 'type', 'quantity', 'value', 'occurred_on', 'reference', 'note', 'reverses_id']), companyId: $companyId);
+            $this->audit->record('inventory.movement_'.$type, $user, auditable: $movement, new: $movement->only(['branch_id', 'product_id', 'type', 'reason', 'quantity', 'value', 'occurred_on', 'reference', 'note', 'reverses_id']), companyId: $companyId);
         }
 
         return $movement;

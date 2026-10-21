@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $branch_id
  * @property int $product_id
  * @property string $type
+ * @property string|null $reason
  * @property string $quantity
  * @property string $value
  * @property Carbon $occurred_on
@@ -29,7 +30,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $source_key
  * @property int|null $receipt_id
  */
-#[Fillable(['company_id', 'branch_id', 'product_id', 'type', 'quantity', 'value', 'occurred_on', 'unit_id', 'entered_quantity', 'reference', 'note', 'user_id', 'reverses_id', 'source_key', 'import_batch_id', 'receipt_id', 'created_at'])]
+#[Fillable(['company_id', 'branch_id', 'product_id', 'type', 'reason', 'quantity', 'value', 'occurred_on', 'unit_id', 'entered_quantity', 'reference', 'note', 'user_id', 'reverses_id', 'source_key', 'import_batch_id', 'receipt_id', 'created_at'])]
 class InventoryMovement extends Model
 {
     use Immutable, ScopedByOrganization;
@@ -59,6 +60,13 @@ class InventoryMovement extends Model
 
     /** Tipos que restan existencias. */
     public const OUTFLOWS = [self::SALE, self::SUPPLIER_RETURN, self::TRANSFER_OUT, self::ADJUSTMENT_OUT];
+
+    public const ADJUSTMENT_REASONS = ['shrinkage', 'damage', 'count_error', 'other'];
+
+    public const RETURN_REASONS = ['defective', 'wrong_order', 'other'];
+
+    /** Movimientos que se capturan a mano y que se pueden revertir (los traslados, en pareja; las entradas, con todo su documento). */
+    public const REVERSIBLE = [self::ADJUSTMENT_IN, self::ADJUSTMENT_OUT, self::RETURN_IN, self::SUPPLIER_RETURN, self::TRANSFER_IN, self::TRANSFER_OUT, self::ENTRY];
 
     public $timestamps = false;
 

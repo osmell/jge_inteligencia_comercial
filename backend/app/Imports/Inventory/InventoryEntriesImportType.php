@@ -249,7 +249,7 @@ final class InventoryEntriesImportType implements ImportType
         return DB::table('inventory_receipts')->insertGetId([
             'company_id' => (int) $f['company'], 'branch_id' => (int) $f['branch'], 'supplier' => $f['supplier'], 'supplier_key' => $f['supplier_key'], 'document' => $f['code'],
             'received_on' => $f['received_on'], 'subtotal' => Decimal::format($sum['subtotal']), 'discount_total' => Decimal::format($sum['discount']), 'tax_total' => Decimal::format($sum['tax']),
-            'total' => Decimal::format($sum['total']), 'lines_count' => $lines, 'content_hash' => $hash, 'import_batch_id' => $context->batch->id, 'user_id' => $context->batch->user_id, 'created_at' => now(),
+            'total' => Decimal::format($sum['total']), 'lines_count' => $lines, 'content_hash' => $hash, 'active_key' => "{$f['company']}|{$f['supplier_key']}|{$f['code']}", 'import_batch_id' => $context->batch->id, 'user_id' => $context->batch->user_id, 'created_at' => now(),
         ]);
     }
 
@@ -332,7 +332,7 @@ final class InventoryEntriesImportType implements ImportType
         }
         foreach ($byCompany as $companyId => $documents) {
             foreach (array_chunk(array_unique($documents), 500) as $chunk) {
-                InventoryReceipt::withoutGlobalScopes()->where('company_id', $companyId)->whereIn('document', $chunk)->get(['company_id', 'supplier_key', 'document', 'content_hash'])
+                InventoryReceipt::withoutGlobalScopes()->whereNull('reversed_at')->where('company_id', $companyId)->whereIn('document', $chunk)->get(['company_id', 'supplier_key', 'document', 'content_hash'])
                     ->each(function (InventoryReceipt $r) use (&$found) {
                         $found["{$r->company_id}|{$r->supplier_key}|{$r->document}"] = $r->content_hash;
                     });

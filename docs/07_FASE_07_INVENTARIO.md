@@ -108,3 +108,11 @@ Tipo «Entradas de inventario» en Importaciones (`imports.manage`). Columnas: `
 - Las salidas se valoran a costo promedio ponderado, igual que cualquier salida del libro.
 - Simplificación conocida: las ventas se procesan de la más antigua a la más reciente contra las existencias de ese momento; una venta anterior a una entrada puede descontar mercancía que llegó después si ambas se cargan juntas.
 - La toma de prueba de demostración ahora se confirma por día (una sola transacción agotaba la memoria compartida de PostgreSQL con 17 000 líneas).
+
+## Paso 6 — Ajustes, devoluciones, traslados y reversas (hecho)
+Pantalla **Movimientos** (`/inventario/movimientos`): consulta con filtros de sucursal y tipo, y «Nuevo movimiento» para quien tiene `inventory.manage`. Todo pasa por el libro: sin existencias negativas, costo promedio ponderado, y queda registrado quién lo hizo y cuándo (Auditoría).
+- **Ajustes de entrada y de salida** con **motivo de una lista fija**: merma, daño, error de conteo u otro (con «Otro» la nota es obligatoria). No se pone una segunda aprobación para ajustes grandes (decisión por omisión; se puede agregar).
+- **Devolución de cliente** (reingresa a la existencia) y **devolución a proveedor** (sale), con motivo: producto defectuoso, error en el pedido u otro. Las entradas se valoran al costo promedio, o al costo unitario que se indique.
+- **Traslado entre sucursales de la misma compañía:** una salida y una entrada enlazadas por la misma referencia (`TR-XXXXXXXX`), al mismo valor, en una sola operación; si el origen no alcanza, no se registra nada.
+- **Reversas** con motivo, sin borrar historia: un ajuste o una devolución se revierte solo; **un traslado, con su pareja** (si el destino ya vendió la mercancía y quedaría en negativo, no se revierte nada); **un documento de entrada, completo** (todas sus líneas), y después el mismo documento, ya corregido, se puede volver a cargar. Las ventas (siguen a la factura) y el inventario inicial (se corrige con un ajuste) no se revierten aquí.
+- La cantidad de un movimiento se captura en cualquier unidad con equivalencia del producto y se guarda convertida a la unidad base.

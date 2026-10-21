@@ -216,3 +216,9 @@ Puntos a tener presentes al comparar:
 - [ ] Reimportar el mismo día de ventas o correr `inventory:sync-sales` otra vez no cambia las existencias.
 - [ ] Una venta mayor a la existencia deja la existencia en cero y aparece en Faltantes; al cargar la entrada y pulsar Conciliar, se descuenta y desaparece.
 - [ ] Ventas anteriores a la fecha de corte no descuentan.
+
+### Inventario: ajustes, devoluciones y traslados (Fase 7, paso 6)
+- [ ] Un ajuste de salida mayor a la existencia se rechaza; uno válido baja la existencia al costo promedio y muestra su motivo y quién lo hizo.
+- [ ] Un traslado baja la sucursal de origen y sube la de destino al mismo valor; el kárdex de ambas lo muestra.
+- [ ] Revertir un traslado deja ambas sucursales como estaban; si el destino ya vendió, se rechaza.
+- [ ] Revertir un documento de entrada quita todas sus líneas y permite cargar el documento corregido.

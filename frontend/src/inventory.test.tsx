@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import InventoryKardexPage from './pages/InventoryKardexPage'
+import InventoryMovementsPage from './pages/InventoryMovementsPage'
 import InventoryShortfallsPage from './pages/InventoryShortfallsPage'
 import InventoryStockPage from './pages/InventoryStockPage'
 import InventoryUnitsPage from './pages/InventoryUnitsPage'
@@ -12,6 +13,7 @@ let permissions: string[]
 let costsVisible: boolean
 let urls: string[]
 let puts: { path: string; body: Record<string, unknown> }[]
+let posts: { path: string; body: Record<string, unknown> }[]
 
 const units = [
   { id: 1, code: 'galon', name: 'Galón', active: true },
@@ -22,11 +24,16 @@ const units = [
 beforeEach(() => {
   permissions = ['inventory.view', 'inventory.manage']
   puts = []
+  posts = []
   urls = []
   costsVisible = false
   document.cookie = 'XSRF-TOKEN=x'
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     const path = url.replace('http://localhost:8000/api/v1', '')
+    if (init?.method === 'POST' && (path === '/inventory/movements' || path === '/inventory/transfers' || /\/reverse$/.test(path))) {
+      posts.push({ path, body: JSON.parse(String(init.body)) })
+      return new Response(JSON.stringify({ data: { id: 1, reference: 'TR-1' } }), { status: 201 })
+    }
     if (init?.method === 'POST') {
       puts.push({ path, body: {} })
       return new Response(JSON.stringify({ data: { applied: '2', missing: '1', resolved: false } }), { status: 200 })
@@ -37,7 +44,12 @@ beforeEach(() => {
     }
     urls.push(path)
     let body: unknown = { data: [] }
-    if (path.startsWith('/inventory/shortfalls')) {
+    if (path.startsWith('/inventory/movements')) {
+      body = { data: [
+        { id: 11, date: '2026-10-10', type: 'adjustment_out', reason: 'damage', branch: 'Central', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, quantity: '-2', entered: '2', entered_unit: null, reference: 'Ajuste de salida', note: 'Envase roto', user: 'Ana', reversed: false, reversible: true },
+        { id: 12, date: '2026-10-11', type: 'transfer_out', reason: null, branch: 'Central', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, quantity: '-4', entered: '4', entered_unit: null, reference: 'TR-ABC', note: null, user: 'Ana', reversed: true, reversible: false },
+      ], meta: { page: 1, has_more: false, costs_visible: false } }
+    } else if (path.startsWith('/inventory/shortfalls')) {
       body = { data: [{ id: 5, company_id: 1, branch_id: 2, branch: 'Central', issued_on: '2026-10-05', document: 'F-1', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, requested: '4', applied: '1', missing: '3', reason: 'insufficient', resolved: false }], meta: { page: 1, has_more: false, open_total: 1 } }
     } else if (path.startsWith('/inventory/stock')) {
       body = {
@@ -62,9 +74,10 @@ beforeEach(() => {
     }
     if (path === '/auth/me') body = { data: { id: 1, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
     else if (path === '/companies') body = { data: [{ id: 1, code: 'A', name: 'Alfa', is_active: true }] }
-    else if (path === '/branches') body = { data: [{ id: 2, company_id: 1, code: 'C', name: 'Central', is_active: true }] }
+    else if (path === '/branches') body = { data: [{ id: 2, company_id: 1, code: 'C', name: 'Central', is_active: true }, { id: 3, company_id: 1, code: 'N', name: 'Norte', is_active: true }] }
     else if (path === '/inventory/units') body = { data: units }
     else if (path === '/inventory/products/7/units') body = { data: { id: 7, company_id: 1, code: 'ACE-1', name: 'Aceite 20W50', base_unit: { id: 1, code: 'galon', name: 'Galón' }, equivalences: [{ unit_id: 2, unit: 'Cubeta', factor: '5' }] } }
+    else if (path === '/inventory/products?q=ace&company_id=1') body = { data: [{ id: 7, company_id: 1, code: 'ACE-1', name: 'Aceite 20W50', base_unit: { id: 1, code: 'galon', name: 'Galón' }, equivalences_count: 1 }] }
     else if (path.startsWith('/inventory/products')) {
       body = { data: [{ id: 7, company_id: 1, code: 'ACE-1', name: 'Aceite 20W50', base_unit: { id: 1, code: 'galon', name: 'Galón' }, equivalences_count: 1 }, { id: 8, company_id: 1, code: 'FIL-9', name: 'Filtro', base_unit: null, equivalences_count: 0 }] }
     }
@@ -201,5 +214,63 @@ describe('unidades y equivalencias', () => {
     await waitFor(() => expect(screen.getByRole('table', { name: 'Faltantes por conciliar' })).toHaveTextContent('F-1'))
     expect(screen.queryByRole('button', { name: /Conciliar/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Revisar ventas pendientes' })).not.toBeInTheDocument()
+  })
+
+  it('lista los movimientos, marca lo revertido y solo ofrece revertir lo que se puede', async () => {
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InventoryMovementsPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Movimientos de inventario' })
+    await waitFor(() => expect(table).toHaveTextContent('Envase roto'))
+    expect(table).toHaveTextContent('Daño')
+    expect(table).toHaveTextContent('Revertido')
+    expect(screen.getAllByRole('button', { name: /^Revertir/ })).toHaveLength(1)
+
+    await u.click(screen.getByRole('button', { name: /Revertir Ajuste \(salida\) de Aceite 20W50/ }))
+    const dialog = await screen.findByRole('dialog')
+    await u.type(within(dialog).getByLabelText('Motivo de la reversa'), 'Error de captura')
+    await u.click(within(dialog).getByRole('button', { name: 'Guardar' }))
+    await waitFor(() => expect(posts).toEqual([{ path: '/inventory/movements/11/reverse', body: { note: 'Error de captura' } }]))
+  })
+
+  it('registra un ajuste con su motivo', async () => {
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InventoryMovementsPage /></MemoryRouter></AuthProvider>)
+
+    await u.click(await screen.findByRole('button', { name: 'Nuevo movimiento' }))
+    const dialog = await screen.findByRole('dialog')
+    await u.selectOptions(within(dialog).getByLabelText('Compañía'), '1')
+    await u.selectOptions(within(dialog).getByLabelText('Sucursal'), '2')
+    await u.type(within(dialog).getByLabelText('Buscar producto'), 'ace')
+    await within(dialog).findByRole('option', { name: /ACE-1/ })
+    await u.selectOptions(within(dialog).getByLabelText('Producto'), '7')
+    await u.type(within(dialog).getByLabelText('Cantidad'), '2')
+    await u.selectOptions(within(dialog).getByLabelText('Motivo'), 'damage')
+    await u.type(within(dialog).getByLabelText('Nota (opcional)'), 'Envase roto')
+    await u.click(within(dialog).getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(posts).toHaveLength(1))
+    expect(posts[0].path).toBe('/inventory/movements')
+    expect(posts[0].body).toMatchObject({ type: 'adjustment_out', company_id: 1, branch_id: 2, product_id: 7, quantity: '2', reason: 'damage', note: 'Envase roto', unit_id: null })
+  })
+
+  it('el traslado pide origen y destino y no ofrece motivo', async () => {
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InventoryMovementsPage /></MemoryRouter></AuthProvider>)
+
+    await u.click(await screen.findByRole('button', { name: 'Nuevo movimiento' }))
+    const dialog = await screen.findByRole('dialog')
+    await u.selectOptions(within(dialog).getByLabelText('Tipo de movimiento'), 'transfer')
+    expect(within(dialog).getByLabelText('Sucursal de destino')).toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Motivo')).not.toBeInTheDocument()
+  })
+
+  it('sin permiso de gestión los movimientos son de consulta', async () => {
+    permissions = ['inventory.view']
+    render(<AuthProvider><MemoryRouter><InventoryMovementsPage /></MemoryRouter></AuthProvider>)
+
+    await waitFor(() => expect(screen.getByRole('table', { name: 'Movimientos de inventario' })).toHaveTextContent('Envase roto'))
+    expect(screen.queryByRole('button', { name: 'Nuevo movimiento' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Revertir/ })).not.toBeInTheDocument()
   })
 })

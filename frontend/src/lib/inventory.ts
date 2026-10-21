@@ -111,3 +111,48 @@ export interface ShortfallList {
   data: ShortfallRow[]
   meta: { page: number; has_more: boolean; open_total: number }
 }
+
+export const REASON_LABEL: Record<string, string> = {
+  shrinkage: 'Merma',
+  damage: 'Daño',
+  count_error: 'Error de conteo',
+  defective: 'Producto defectuoso',
+  wrong_order: 'Error en el pedido',
+  other: 'Otro',
+}
+
+export const ADJUSTMENT_REASONS = ['shrinkage', 'damage', 'count_error', 'other'] as const
+export const RETURN_REASONS = ['defective', 'wrong_order', 'other'] as const
+
+export type MovementKind = 'adjustment_in' | 'adjustment_out' | 'return_in' | 'supplier_return' | 'transfer'
+
+export const KIND_LABEL: Record<MovementKind, string> = {
+  adjustment_in: 'Ajuste de entrada',
+  adjustment_out: 'Ajuste de salida',
+  return_in: 'Devolución de cliente (reingresa)',
+  supplier_return: 'Devolución a proveedor (sale)',
+  transfer: 'Traslado entre sucursales',
+}
+
+export interface MovementRow {
+  id: number
+  date: string
+  type: InventoryMovementType
+  reason: string | null
+  branch: string
+  product: { id: number; code: string; name: string }
+  quantity: string
+  entered: string
+  entered_unit: string | null
+  reference: string | null
+  note: string | null
+  user: string | null
+  reversed: boolean
+  reversible: boolean
+  value?: string
+}
+
+export interface MovementList {
+  data: MovementRow[]
+  meta: { page: number; has_more: boolean; costs_visible: boolean }
+}

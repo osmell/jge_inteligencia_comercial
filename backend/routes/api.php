@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
+use App\Http\Controllers\Api\V1\InventoryMovementController;
 use App\Http\Controllers\Api\V1\InventoryShortfallController;
 use App\Http\Controllers\Api\V1\InventoryStockController;
 use App\Http\Controllers\Api\V1\InventoryUnitController;
@@ -94,12 +95,16 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::middleware('permission:inventory.view')->prefix('inventory')->group(function () {
         Route::get('stock', [InventoryStockController::class, 'index']);
         Route::get('kardex', [InventoryStockController::class, 'kardex']);
+        Route::get('movements', [InventoryMovementController::class, 'index']);
         Route::get('shortfalls', [InventoryShortfallController::class, 'index']);
         Route::get('units', [InventoryUnitController::class, 'units']);
         Route::get('products', [InventoryUnitController::class, 'products']);
         Route::get('products/{product}/units', [InventoryUnitController::class, 'productUnits'])->whereNumber('product');
         Route::middleware('permission:inventory.manage')->group(function () {
             Route::post('shortfalls/{shortfall}/reconcile', [InventoryShortfallController::class, 'reconcile'])->whereNumber('shortfall');
+            Route::post('movements', [InventoryMovementController::class, 'store']);
+            Route::post('transfers', [InventoryMovementController::class, 'transfer']);
+            Route::post('movements/{movement}/reverse', [InventoryMovementController::class, 'reverse'])->whereNumber('movement');
             Route::post('sync-sales', [InventoryShortfallController::class, 'sync']);
             Route::post('units', [InventoryUnitController::class, 'storeUnit']);
             Route::put('units/{unit}', [InventoryUnitController::class, 'updateUnit'])->whereNumber('unit');
