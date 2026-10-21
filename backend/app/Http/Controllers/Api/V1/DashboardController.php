@@ -20,7 +20,7 @@ class DashboardController extends Controller
         $profile = $this->dashboard->profile($user);
 
         return response()->json(['data' => [
-            'profile' => $profile['profile'], 'linked_sellers' => $profile['seller_ids'] === null ? null : count($profile['seller_ids']),
+            'profile' => $profile['profile'], 'team' => $this->dashboard->teamNames($user), 'linked_sellers' => $profile['seller_ids'] === null ? null : count($profile['seller_ids']),
             'sections' => $this->dashboard->sectionsFor($user), 'periods' => DashboardService::PERIODS,
             'companies' => Company::query()->whereIn('id', $this->dashboard->companyIds($user))->orderBy('name')->get(['id', 'name'])->all(),
         ] + $this->dashboard->freshness()]);

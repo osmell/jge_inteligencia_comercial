@@ -167,9 +167,25 @@ export function FollowupBlock({ query }: { query: string }) {
   return (
     <Frame<FollowupSection> title="Seguimiento" path={`/dashboard/followup?${query}`} detail={{ to: '/agenda', label: 'Ver agenda' }}>
       {(f) => (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Stat label="Acciones vencidas" value={f.overdue} tone={f.overdue > 0 ? 'bad' : 'good'} to="/agenda" />
-          <Stat label="Acciones para hoy" value={f.today} to="/agenda" />
+        <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Stat label="Acciones vencidas" value={f.overdue} tone={f.overdue > 0 ? 'bad' : 'good'} to="/agenda" />
+            <Stat label="Acciones para hoy" value={f.today} to="/agenda" />
+            <Stat label={`Sin contacto en ${f.no_contact.days} días`} value={f.no_contact.count} hint="Clientes inactivos o perdidos que aceptan comunicaciones" tone={f.no_contact.count > 0 ? 'bad' : 'good'} to="/agenda" />
+          </div>
+          {f.no_contact.top.length > 0 && (
+            <Card className="p-4">
+              <h3 className="mb-2 text-sm font-medium">Clientes por recuperar</h3>
+              <ul className="space-y-1 text-sm" aria-label="Clientes sin contacto reciente">
+                {f.no_contact.top.map((c) => (
+                  <li key={`${c.company_id}-${c.code}`} className="flex flex-wrap justify-between gap-x-3">
+                    <Link className="text-jge-blue hover:underline" to={`/clientes/ficha?codigo=${encodeURIComponent(c.code)}&compania=${c.company_id}`}>{c.name}</Link>
+                    <span className="text-ink-muted">{c.status === 'lost' ? 'Perdido' : 'Inactivo'} · {c.days_since_last_purchase} días sin comprar{c.seller ? ` · ${c.seller}` : ''}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
         </div>
       )}
     </Frame>

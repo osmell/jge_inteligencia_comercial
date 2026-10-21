@@ -4,6 +4,7 @@ export type Profile = 'company' | 'team' | 'seller'
 
 export interface DashboardMeta {
   profile: Profile
+  team: string[]
   linked_sellers: number | null
   sections: string[]
   periods: string[]
@@ -91,6 +92,7 @@ export interface QuotationsSection {
 export interface FollowupSection {
   overdue: number
   today: number
+  no_contact: { count: number; days: number; top: { code: string; company_id: number; name: string; status: 'inactive' | 'lost'; days_since_last_purchase: number; seller: string | null }[] }
 }
 
 export interface InventorySection {

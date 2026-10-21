@@ -64,6 +64,14 @@ class DashboardService
         return array_values(array_filter($keys, fn (string $k) => $k !== 'companies' || ($profile === 'company' && ($this->scope->companyIds($user) === null || count($this->scope->companyIds($user)) > 1))));
     }
 
+    /** @return list<string> nombres de los vendedores de quien supervisa o vendedor vinculado a la persona (vacío para el resto) */
+    public function teamNames(User $user): array
+    {
+        $ids = $this->profile($user)['seller_ids'];
+
+        return $ids === null ? [] : DB::table('sellers')->whereIn('id', $ids)->orderBy('name')->pluck('name')->all();
+    }
+
     /** @return list<int> compañías del ámbito de la persona (para el selector) */
     public function companyIds(User $user): array
     {
@@ -268,7 +276,16 @@ class DashboardService
     /** @return array<string, mixed> */
     private function followupSection(User $user, CarbonImmutable $today): array
     {
-        return $this->agenda->dueCounts($user, CarbonImmutable::now()) + ['date' => $today->toDateString()];
+        $days = 30;
+        $a = $this->agenda->build($user, ['horizon_days' => 0, 'no_contact_days' => $days], CarbonImmutable::now());
+
+        return [
+            'overdue' => $a['meta']['overdue_total'], 'today' => $a['meta']['upcoming_total'], 'date' => $today->toDateString(),
+            'no_contact' => [
+                'count' => $a['meta']['reactivate_total'], 'days' => $days,
+                'top' => array_map(fn (array $r) => ['code' => $r['code'], 'company_id' => $r['company_id'], 'name' => $r['name'], 'status' => $r['status'], 'days_since_last_purchase' => $r['days_since_last_purchase'], 'seller' => $r['seller']], array_slice($a['reactivate'], 0, 5)),
+            ],
+        ];
     }
 
     /** @return array<string, mixed> */

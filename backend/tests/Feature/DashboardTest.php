@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\CreditInvoice;
 use App\Models\CreditMovement;
 use App\Models\Customer;
+use App\Models\CustomerInteraction;
 use App\Models\ImportBatch;
 use App\Models\Operator;
 use App\Models\Quotation;
@@ -124,7 +125,7 @@ class DashboardTest extends TestCase
         $this->assertSame(['sales', 'goals', 'rankings', 'companies', 'credit', 'quotations', 'followup', 'inventory', 'insights'], $this->getJson('/api/v1/dashboard')->json('data.sections'));
 
         $team = $this->actingAs($this->supervisor, 'sanctum')->getJson('/api/v1/dashboard')->assertOk();
-        $this->assertSame(['team', 1], [$team->json('data.profile'), $team->json('data.linked_sellers')]);
+        $this->assertSame(['team', 1, ['Vera']], [$team->json('data.profile'), $team->json('data.linked_sellers'), $team->json('data.team')]);
         $this->assertSame(['sales', 'goals', 'rankings', 'credit', 'quotations', 'followup'], $team->json('data.sections'));          // sin inventario ni recomendaciones, ni comparativo
         $this->assertSame('seller', $this->actingAs($this->vera, 'sanctum')->getJson('/api/v1/dashboard')->json('data.profile'));
 
@@ -226,5 +227,22 @@ class DashboardTest extends TestCase
         $this->assertSame(0, $this->actingAs($lonely, 'sanctum')->getJson('/api/v1/dashboard')->json('data.linked_sellers'));
         $this->assertEquals(0, $this->section($lonely, 'sales')->json('data.current.net_total'));
         $this->assertEquals(0, $this->section($lonely, 'credit')->json('data.total'));
+    }
+
+    public function test_followup_counts_overdue_today_and_customers_without_recent_contact_in_each_scope(): void
+    {
+        $this->seedBusiness();
+        $cv = Customer::where('code', 'CV')->first();
+        $cb = Customer::where('code', 'CB')->first();
+        $action = fn (Customer $c, string $at) => CustomerInteraction::create(['company_id' => $this->a->id, 'customer_id' => $c->id, 'user_id' => $this->admin->id, 'channel' => 'call', 'direction' => 'outbound', 'outcome' => 'spoke', 'occurred_at' => now()->subDays(3), 'next_action' => 'Llamar', 'next_action_at' => $at]);
+        $action($cv, '2026-10-19 10:00:00');                                    // vencida
+        $action($cv, '2026-10-21 15:00:00');                                    // de hoy
+        $action($cb, '2026-10-18 10:00:00');                                    // vencida de otro equipo
+
+        $all = $this->section($this->admin, 'followup')->assertOk();
+        $this->assertEquals([2, 1, 30], [$all->json('data.overdue'), $all->json('data.today'), $all->json('data.no_contact.days')]);
+        $this->assertEquals([1, 1], [$this->section($this->vera, 'followup')->json('data.overdue'), $this->section($this->vera, 'followup')->json('data.today')]);
+        $this->assertEquals(1, $this->section($this->supervisor, 'followup')->json('data.overdue'));                 // solo la de su equipo
+        $this->assertIsArray($all->json('data.no_contact.top'));
     }
 }

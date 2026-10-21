@@ -38,6 +38,8 @@ export default function HomePage() {
         description={m ? `${SCOPE_TEXT[m.profile]} ${m.last_sale ? `Ventas hasta el ${formatDay(m.last_sale)}${m.last_import ? ` (última carga: ${formatDateTime(m.last_import)})` : ''}.` : 'Todavía no hay ventas cargadas.'}` : 'Resumen de tu actividad.'}
       />
       {meta.error && !m && <Alert tone="danger">{meta.error}</Alert>}
+      {m && m.profile === 'team' && m.linked_sellers === 0 && <div className="mb-4"><Alert tone="warning">Todavía no tienes vendedores asignados a tu equipo, por eso las cifras salen en cero. Pide a administración que te asigne como supervisor en la ficha de cada vendedor.</Alert></div>}
+      {m && m.profile === 'team' && m.team.length > 0 && <p className="mb-4 text-sm text-ink-muted">Tu equipo: <span className="font-medium text-ink">{m.team.join(', ')}</span>.</p>}
       {m && m.profile === 'seller' && m.linked_sellers === 0 && <div className="mb-4"><Alert tone="warning">Tu usuario todavía no está vinculado a un vendedor, por eso las cifras salen en cero. Pide a administración que lo vincule.</Alert></div>}
 
       {m && m.sections.length > 0 && (
