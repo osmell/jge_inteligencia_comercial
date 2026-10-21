@@ -250,3 +250,9 @@ Puntos a tener presentes al comparar:
 - [ ] Con historial real, revisar con un vendedor las 5 reglas de mayor confianza: ¿tienen sentido comercial? Ajustar `cross_sell.min_confidence_pct` y el nivel (categoría o línea) si salen demasiadas o muy obvias.
 - [ ] Una oportunidad de un cliente real: confirmar que de verdad no ha comprado esa categoría en los últimos 12 meses.
 - [ ] Un vendedor ve las oportunidades solo de sus clientes; la ficha muestra qué ofrecer y por qué.
+
+### Inteligencia comercial: alertas de clientes (Fase 8, paso 6)
+- [ ] Con historial real, revisar con un vendedor 5 alertas de riesgo de inactividad: ¿de verdad son clientes que se están enfriando? Ajustar el multiplicador (2) si salen demasiadas.
+- [ ] Revisar 3 caídas de venta: ¿el cliente realmente compró menos o es un cambio de facturación (otra compañía, otra sucursal)?
+- [ ] Un cliente que vuelve a comprar deja de aparecer en alertas al día siguiente (queda «resuelta»).
+- [ ] Un vendedor ve solo las alertas de sus clientes; la ficha las muestra con la explicación.

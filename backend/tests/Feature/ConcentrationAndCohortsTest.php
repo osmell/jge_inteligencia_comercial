@@ -178,7 +178,7 @@ class ConcentrationAndCohortsTest extends TestCase
 
         $this->artisan('insights:refresh', ['--company' => $this->a->id])->assertSuccessful();
 
-        $this->assertEqualsCanonicalizing(['rfm', 'concentration', 'cohorts', 'cross_sell'], InsightRun::where('company_id', $this->a->id)->pluck('analysis')->all());
+        $this->assertEqualsCanonicalizing(['rfm', 'concentration', 'cohorts', 'cross_sell', 'inactivity', 'anomalies'], InsightRun::where('company_id', $this->a->id)->pluck('analysis')->all());
         $this->assertSame('ok', InsightRun::where(['company_id' => $this->a->id, 'analysis' => 'cohorts'])->value('status'));
         $this->assertSame('insufficient', InsightRun::where(['company_id' => $this->a->id, 'analysis' => 'rfm'])->value('status'));   // menos de 20 clientes
     }

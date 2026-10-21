@@ -3,9 +3,11 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
+import CustomerAlerts from './components/CustomerAlerts'
 import CustomerCrossSell from './components/CustomerCrossSell'
 import CustomerSegment from './components/CustomerSegment'
 import InsightsConcentrationPage from './pages/InsightsConcentrationPage'
+import InsightsAlertsPage from './pages/InsightsAlertsPage'
 import InsightsCrossSellPage from './pages/InsightsCrossSellPage'
 import InsightsPage from './pages/InsightsPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
@@ -14,6 +16,7 @@ let permissions: string[]
 let puts: { path: string; body: { values: Record<string, string> } }[]
 let posts: string[]
 let run: unknown
+let urls: string[]
 let crossRun: unknown
 let concentration: unknown
 let cohorts: unknown
@@ -22,6 +25,7 @@ beforeEach(() => {
   permissions = ['insights.view']
   puts = []
   posts = []
+  urls = []
   const block = (entity: string) => ({
     count: 5, total: '10000.0000', top1_pct: 80, top10_pct: 100, n80: 1, n80_pct: 20, hhi: 6538,
     top: [{ code: 'C1', name: `${entity} uno`, net: '8000.0000', share_pct: 80, cumulative_pct: 80 }, { code: 'C2', name: `${entity} dos`, net: '1000.0000', share_pct: 10, cumulative_pct: 90 }],
@@ -48,9 +52,20 @@ beforeEach(() => {
       puts.push({ path, body: JSON.parse(String(init.body)) })
       return new Response(JSON.stringify({ data: [] }), { status: 200 })
     }
+    urls.push(path)
     let body: unknown = { data: [] }
     if (path === '/auth/me') body = { data: { id: 1, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
-    else if (path.startsWith('/insights/cross-sell/opportunities')) {
+    else if (path.startsWith('/insights/alerts/customer')) {
+      body = { data: path.includes('C05') ? [] : [{ id: 1, code: 'R1', name: 'Cliente R1', type: 'inactivity_risk', severity: 'high', status: 'open', explanation: 'Suele comprar cada 7 días y lleva 38 días sin comprar.', facts: {}, first_detected_at: '2026-10-20T02:00:00Z', last_detected_at: '2026-10-20T02:00:00Z', run_id: 3 }] }
+    } else if (path.startsWith('/insights/alerts')) {
+      body = {
+        data: [
+          { id: 1, code: 'R1', name: 'Cliente R1', type: 'inactivity_risk', severity: 'high', status: 'open', explanation: 'Suele comprar cada 7 días y lleva 38 días sin comprar.', facts: {}, first_detected_at: '2026-10-20T02:00:00Z', last_detected_at: '2026-10-20T02:00:00Z', run_id: 3 },
+          { id: 2, code: 'D1', name: 'Cliente D1', type: 'sales_drop', severity: 'medium', status: 'open', explanation: 'En 2026-09 compró 400,00, un 60 % menos que su promedio.', facts: {}, first_detected_at: '2026-10-20T02:00:00Z', last_detected_at: '2026-10-20T02:00:00Z', run_id: 4 },
+        ],
+        meta: { page: 1, has_more: false, counts: { inactivity_risk: 1, sales_drop: 1, sales_rise: 0, abandoned_line: 0 } },
+      }
+    } else if (path.startsWith('/insights/cross-sell/opportunities')) {
       body = { data: [{ code: 'C21', name: 'Cliente C21', suggestion: 'Frenos', because: 'Filtros', confidence_pct: 66.7, support: 20, lift: 1.33, explanation: 'Compra «Filtros» y todavía no «Frenos». 20 de 30 clientes que compran «Filtros» (66,7 %) también compran «Frenos».' }], meta: { has_more: false, total: 10, run: crossRun } }
     } else if (path.startsWith('/insights/cross-sell/customer')) {
       body = { data: path.includes('C05') ? [] : [{ code: 'C21', name: 'Cliente C21', suggestion: 'Frenos', because: 'Filtros', confidence_pct: 66.7, support: 20, lift: 1.33, explanation: 'Compra «Filtros» y todavía no «Frenos».' }], meta: { run: crossRun } }
@@ -270,5 +285,31 @@ describe('inteligencia comercial', () => {
 
     await u.click(await screen.findByRole('button', { name: 'Recalcular' }))
     await waitFor(() => expect(posts).toEqual(['/insights/cross-sell/recalculate']))
+  })
+
+  it('las alertas muestran cada aviso con su explicación y filtran por tipo', async () => {
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InsightsAlertsPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Alertas de clientes' })
+    await waitFor(() => expect(table).toHaveTextContent('Cliente R1'))
+    expect(table).toHaveTextContent('Suele comprar cada 7 días y lleva 38 días sin comprar')
+    expect(table).toHaveTextContent('Riesgo de inactividad')
+    expect(within(screen.getByLabelText('Alertas por tipo')).getByRole('button', { name: /Caída de venta/ })).toHaveTextContent('1')
+    expect(screen.getByText(/Son recomendaciones, no decisiones automáticas/)).toBeInTheDocument()
+    await u.click(within(screen.getByLabelText('Alertas por tipo')).getByRole('button', { name: /Caída de venta/ }))
+    await waitFor(() => expect(urls.filter((x) => x.startsWith('/insights/alerts')).at(-1)).toContain('type=sales_drop'))
+  })
+
+  it('la ficha muestra las alertas abiertas y se oculta si no hay', async () => {
+    const { unmount } = render(<AuthProvider><MemoryRouter><CustomerAlerts companyId="1" code="R1" /></MemoryRouter></AuthProvider>)
+    const list = await screen.findByRole('list', { name: 'Alertas abiertas del cliente' })
+    expect(list).toHaveTextContent('Riesgo de inactividad')
+    expect(list).toHaveTextContent('lleva 38 días sin comprar')
+    unmount()
+
+    render(<AuthProvider><MemoryRouter><CustomerAlerts companyId="1" code="C05" /></MemoryRouter></AuthProvider>)
+    await waitFor(() => expect(urls.some((x) => x.includes('code=C05'))).toBe(true))
+    expect(screen.queryByText('Alertas del cliente')).not.toBeInTheDocument()
   })
 })

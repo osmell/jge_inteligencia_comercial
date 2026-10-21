@@ -14,6 +14,7 @@ import CompaniesPage from './pages/CompaniesPage'
 import CreditAgingPage from './pages/CreditAgingPage'
 import CreditDetailPage from './pages/CreditDetailPage'
 import InsightsCrossSellPage from './pages/InsightsCrossSellPage'
+import InsightsAlertsPage from './pages/InsightsAlertsPage'
 import InsightsConcentrationPage from './pages/InsightsConcentrationPage'
 import InsightsPage from './pages/InsightsPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
@@ -69,6 +70,7 @@ export default function App() {
                 <Route path="inteligencia" element={<InsightsPage />} />
                 <Route path="inteligencia/segmentos" element={<InsightsSegmentsPage />} />
                 <Route path="inteligencia/concentracion" element={<InsightsConcentrationPage />} />
+                <Route path="inteligencia/alertas" element={<InsightsAlertsPage />} />
                 <Route path="inteligencia/venta-cruzada" element={<InsightsCrossSellPage />} />
               </Route>
               <Route element={<RequirePermission permission="inventory.view" />}>

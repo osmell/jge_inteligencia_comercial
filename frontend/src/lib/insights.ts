@@ -176,3 +176,33 @@ export interface CrossSellOpportunity {
   lift: number
   explanation: string
 }
+
+export type AlertType = 'inactivity_risk' | 'sales_drop' | 'sales_rise' | 'abandoned_line'
+
+export const ALERT_LABEL: Record<AlertType, string> = {
+  inactivity_risk: 'Riesgo de inactividad',
+  sales_drop: 'Caída de venta',
+  sales_rise: 'Alza de venta',
+  abandoned_line: 'Categoría abandonada',
+}
+
+export const SEVERITY_LABEL = { high: 'Alta', medium: 'Media', low: 'Baja' } as const
+
+export interface InsightAlertRow {
+  id: number
+  code: string
+  name: string
+  type: AlertType
+  severity: 'high' | 'medium' | 'low'
+  status: 'open' | 'resolved' | 'closed'
+  explanation: string
+  facts: Record<string, string | number | null>
+  first_detected_at: string
+  last_detected_at: string
+  run_id: number
+}
+
+export interface InsightAlertList {
+  data: InsightAlertRow[]
+  meta: { page: number; has_more: boolean; counts: Record<AlertType, number> }
+}

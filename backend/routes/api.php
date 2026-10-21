@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
+use App\Http\Controllers\Api\V1\InsightAlertController;
 use App\Http\Controllers\Api\V1\InsightAnalysisController;
 use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\InsightCrossSellController;
@@ -127,6 +128,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('concentration', [InsightAnalysisController::class, 'concentration']);
         Route::get('cohorts', [InsightAnalysisController::class, 'cohorts']);
         Route::post('{analysis}/recalculate', [InsightAnalysisController::class, 'recalculate'])->whereIn('analysis', ['concentration', 'cohorts'])->middleware('permission:insights.manage');
+        Route::get('alerts', [InsightAlertController::class, 'index']);
+        Route::get('alerts/customer', [InsightAlertController::class, 'customer']);
         Route::get('cross-sell', [InsightCrossSellController::class, 'index']);
         Route::get('cross-sell/opportunities', [InsightCrossSellController::class, 'opportunities']);
         Route::get('cross-sell/customer', [InsightCrossSellController::class, 'customer']);
