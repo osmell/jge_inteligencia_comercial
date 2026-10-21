@@ -2,6 +2,7 @@
 
 use App\Imports\Credit\CreditInvoicesImportType;
 use App\Imports\Customers\CustomersImportType;
+use App\Imports\Inventory\InventoryEntriesImportType;
 use App\Imports\Inventory\InventoryOpeningImportType;
 use App\Imports\Inventory\ProductUnitsImportType;
 use App\Imports\Products\ProductsImportType;
@@ -36,10 +37,11 @@ return [
         'credit_invoices' => CreditInvoicesImportType::class,
         'inventory_opening' => InventoryOpeningImportType::class,
         'product_units' => ProductUnitsImportType::class,
+        'inventory_entries' => InventoryEntriesImportType::class,
     ],
 
     // Nombre visible de cada tipo.
-    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes', 'products' => 'Productos', 'credit_invoices' => 'Facturas de crédito', 'inventory_opening' => 'Inventario inicial', 'product_units' => 'Unidades y equivalencias'],
+    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes', 'products' => 'Productos', 'credit_invoices' => 'Facturas de crédito', 'inventory_opening' => 'Inventario inicial', 'product_units' => 'Unidades y equivalencias', 'inventory_entries' => 'Entradas de inventario'],
 
     // Filas mostradas en la vista previa.
     'preview_rows' => 20,
@@ -190,5 +192,31 @@ return [
         ],
 
         'optional' => ['unit', 'factor'],
+    ],
+
+    // Entradas de inventario (compras): una fila por producto y unidad de un documento (compañía + proveedor + documento).
+    // Los importes son por línea: Sub Total = Cantidad × Costo − Descuento y Total = Sub Total + Iva. El IVA no entra al costo.
+    'inventory_entries' => [
+        'sheet' => null,
+
+        'columns' => [
+            'received_on' => ['Fecha'],
+            'document' => ['Documento'],
+            'supplier' => ['Proveedor'],
+            'branch' => ['Sucursal', 'Código Sucursal'],
+            'company' => ['Compañía', 'Compania', 'Código Compañía'],
+            'product_code' => ['Código Producto', 'Codigo Producto'],
+            'unit' => ['Unidad Medida', 'Unidad de Medida'],
+            'quantity' => ['Cantidad'],
+            'unit_cost' => ['Costo', 'Costo Unitario'],
+            'discount' => ['Descuento'],
+            'subtotal' => ['Sub Total', 'Subtotal'],
+            'tax' => ['Iva', 'IVA', 'Impuesto'],
+            'total' => ['Total'],
+            'observations' => ['Observaciones'],
+        ],
+
+        // Descuento e Iva vacíos = 0; Observaciones es libre.
+        'optional' => ['discount', 'tax', 'observations'],
     ],
 ];

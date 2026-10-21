@@ -204,3 +204,9 @@ Puntos a tener presentes al comparar:
 - [ ] Cargar el «Inventario inicial» de una sucursal con su fecha de corte; en Existencias el saldo coincide con el conteo y no aparece la marca «Sin inventario inicial».
 - [ ] Un producto contado en cubetas queda en galones; el kárdex muestra «2 Cubeta» y 10 en el saldo.
 - [ ] Un usuario sin `inventory.costs` no ve ningún costo en Existencias ni en el kárdex.
+
+### Inventario: entradas (Fase 7, paso 4)
+- [ ] Cargar un documento de entrada con descuento e IVA: el costo promedio sube con el Sub Total (sin IVA) y la existencia con la cantidad convertida a la unidad base.
+- [ ] Un Sub Total o Total que no cuadra se rechaza con el importe esperado en el mensaje.
+- [ ] Subir otro archivo con el mismo documento: se omite; con otra cantidad: se rechaza.
+- [ ] Un documento anterior a la fecha de corte de su sucursal se omite con aviso.

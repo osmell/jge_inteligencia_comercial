@@ -190,6 +190,26 @@ function InventorySummary({ batch }: { batch: ImportBatch }) {
   )
 }
 
+function EntriesSummary({ batch }: { batch: ImportBatch }) {
+  const e = batch.summary?.entries
+  if (!e) return null
+
+  return (
+    <section>
+      <PageHeader level={2} title="Resumen" description="Entradas de inventario: cada línea es un movimiento de entrada en la unidad base, valorado con el Sub Total (sin IVA)." />
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Stat label="Documentos nuevos" value={e.new} />
+        <Stat label="Ya cargados" value={e.unchanged} hint="Se omiten: mismo contenido" />
+        <Stat label="Líneas" value={e.lines} />
+        <Stat label="Omitidos por el corte" value={e.skipped_before_cutoff} hint="Fecha anterior o igual al inventario inicial" />
+      </div>
+      {e.branches_without_opening.length > 0 && (
+        <div className="mt-4"><Alert tone="warning">Sin inventario inicial en <strong>{e.branches_without_opening.join(', ')}</strong>: las entradas se cargan, pero la existencia será parcial hasta cargarlo.</Alert></div>
+      )}
+    </section>
+  )
+}
+
 function UnitsSummary({ batch }: { batch: ImportBatch }) {
   const u = batch.summary?.units
   if (!u) return null
@@ -212,6 +232,7 @@ function SummarySection({ batch }: { batch: ImportBatch }) {
   if (s?.credit) return <CreditSummary batch={batch} />
   if (s?.inventory) return <InventorySummary batch={batch} />
   if (s?.units) return <UnitsSummary batch={batch} />
+  if (s?.entries) return <EntriesSummary batch={batch} />
   if (s?.customers || s?.products) return <MasterSummary batch={batch} />
   if (!s?.totals) return null
 
@@ -365,6 +386,11 @@ export default function ImportDetailPage() {
             <>
               <p>Se cargarán <strong>{batch.documents_new}</strong> filas de inventario inicial{batch.documents_duplicate > 0 && <> (las {batch.documents_duplicate} ya cargadas se omitirán)</>}.</p>
               <p className="mt-2">Cada fila queda como un movimiento inicial en el libro de inventario, con la fecha de corte de su sucursal. No se pueden modificar: un cambio posterior se registra como ajuste. Si algo falla no se escribe nada.</p>
+            </>
+          ) : batch.type === 'inventory_entries' ? (
+            <>
+              <p>Se cargarán <strong>{batch.documents_new}</strong> documentos de entrada{batch.documents_duplicate > 0 && <> (los {batch.documents_duplicate} ya cargados se omitirán)</>}.</p>
+              <p className="mt-2">Cada línea suma existencias en la unidad base de su producto y actualiza el costo promedio con el Sub Total; el IVA no entra al costo. Los documentos no se modifican: una corrección se registra como reversa. Si algo falla no se escribe nada.</p>
             </>
           ) : batch.type === 'product_units' ? (
             <>

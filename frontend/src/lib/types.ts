@@ -113,6 +113,7 @@ export interface ImportSummary {
     new_sellers: string[]; new_operators: string[]
   }
   inventory?: { new: number; unchanged: number; conflicts: number; branches: { id: number; name: string; products: number; cutoff: string | null }[] }
+  entries?: { new: number; unchanged: number; lines: number; skipped_before_cutoff: number; branches_without_opening: string[] }
   units?: { bases_set: number; new: number; updated: number; unchanged: number }
   new_sellers?: string[]
   new_operators?: string[]

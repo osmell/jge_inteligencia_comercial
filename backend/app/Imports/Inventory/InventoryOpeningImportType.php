@@ -17,7 +17,6 @@ use App\Models\User;
 use App\Services\InventoryLedger;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
-use OverflowException;
 
 /**
  * Inventario inicial: una fila por producto, unidad y sucursal, con la fecha de corte (única por sucursal), la cantidad en la
@@ -87,22 +86,8 @@ final class InventoryOpeningImportType implements ImportType
             return null;
         }
         $this->checkCutoff($row, $cutoff, $branch->id);
-        $product = $this->lookup->product($company->id, $code);
-        if ($product === null) {
-            $row->fail('product_code', 'unknown_product', "El producto {$code} no existe en el catálogo de «{$company->name}». Cargue antes el catálogo de productos.");
-        } elseif ($product->base_unit_id === null) {
-            $row->fail('product_code', 'no_base_unit', "El producto {$code} no tiene unidad base: defínela en Inventario → Unidades o con la plantilla «Unidades y equivalencias».");
-        }
-        $unit = $this->lookup->unit($unitText);
-        if ($unit === null) {
-            $row->fail('unit', 'unknown_unit', "La unidad «{$unitText}» no existe o está inactiva (se busca por nombre o código).");
-        }
-        if ($row->failed() || $product === null || $unit === null) {
-            return null;
-        }
-
-        $this->checkConversion($row, $product->id, $product->base_unit_id, $unit->id, $product->code, $unit->name, $quantity);
-        if ($row->failed()) {
+        [$product, $unit] = $this->lookup->resolve($row, $company, $code, $unitText, $quantity) ?? [null, null];
+        if ($product === null || $unit === null) {
             return null;
         }
 
@@ -146,6 +131,15 @@ final class InventoryOpeningImportType implements ImportType
                 config('imports.inventory_opening.columns.product_code.0'),
                 $f['code'],
             );
+        }
+
+        // Lo que ya se movió hasta la fecha de corte quedaría contado dos veces: la fecha debe ser posterior.
+        foreach ($branches as $branchId => $count) {
+            $cutoff = $this->cutoffs[(int) $branchId][0] ?? null;
+            $row = $this->cutoffs[(int) $branchId][1] ?? null;
+            if ($cutoff !== null && InventoryMovement::withoutGlobalScopes()->where('branch_id', $branchId)->where('type', '!=', InventoryMovement::OPENING)->where('occurred_on', '<=', $cutoff)->exists()) {
+                $context->errors->error('movements_before_cutoff', "La sucursal ya tiene movimientos de inventario fechados hasta el {$cutoff}: el inventario inicial contaría dos veces lo ya movido. Use una fecha de corte posterior.", $row, config('imports.inventory_opening.columns.cutoff.0'), $cutoff);
+            }
         }
 
         $names = Branch::withoutGlobalScopes()->whereIn('id', array_keys($branches))->pluck('name', 'id');
@@ -198,32 +192,6 @@ final class InventoryOpeningImportType implements ImportType
         [$first, $firstRow] = $this->cutoffs[$branchId] ??= [$day, $row->number];
         if ($first !== $day) {
             $row->fail('cutoff', 'cutoff_mismatch', "La sucursal ya tiene fecha de corte {$first} (fila {$firstRow}): debe ser una sola por sucursal.");
-        }
-    }
-
-    private function checkConversion(ImportRow $row, int $productId, int $baseUnitId, int $unitId, string $code, string $unitName, string $quantity): void
-    {
-        $entered = Quantity::units($quantity);
-        if ($entered > Quantity::MAX) {
-            $row->fail('quantity', 'quantity_too_large', 'La cantidad supera 10.000.000.');
-
-            return;
-        }
-        if ($unitId === $baseUnitId) {
-            return;
-        }
-        $equivalence = $this->lookup->equivalences($productId)[$unitId] ?? null;
-        if ($equivalence === null) {
-            $row->fail('unit', 'no_equivalence', "El producto {$code} no tiene equivalencia para «{$unitName}». Defínela en Inventario → Unidades o con la plantilla «Unidades y equivalencias».");
-
-            return;
-        }
-        try {
-            if (Quantity::convert($entered, $equivalence->factor_num, $equivalence->factor_den) > Quantity::MAX) {
-                $row->fail('quantity', 'quantity_too_large', 'La cantidad convertida a la unidad base supera 10.000.000.');
-            }
-        } catch (OverflowException) {
-            $row->fail('quantity', 'quantity_too_large', 'La cantidad convertida a la unidad base es demasiado grande.');
         }
     }
 

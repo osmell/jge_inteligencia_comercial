@@ -88,3 +88,13 @@ Dos tipos nuevos en Importaciones (con plantilla descargable, vista previa, erro
 - Orden recomendado de carga: **Productos → Unidades y equivalencias → Inventario inicial**.
 
 Las columnas de ambas plantillas se ajustan en `backend/config/imports.php` (`inventory_opening` y `product_units`) si el responsable cambia los nombres.
+
+## Paso 4 — Importación de entradas (hecho)
+Tipo «Entradas de inventario» en Importaciones (`imports.manage`). Columnas: `Fecha`, `Documento`, `Proveedor`, `Sucursal`, `Compañia`, `Codigo Producto`, `Unidad Medida`, `Cantidad`, `Costo`, `Descuento`, `Sub Total`, `Iva`, `Total`, `Observaciones` (Descuento, Iva y Observaciones son opcionales; vacíos = 0).
+- **Documento** = compañía + proveedor + número (el mismo número de dos proveedores son documentos distintos). Una fila por producto y unidad; repetir el mismo producto en la misma unidad dentro de un documento es un error.
+- **Importes por línea, validados y nunca corregidos en silencio:** `Sub Total = Cantidad × Costo − Descuento` y `Total = Sub Total + Iva`. Una diferencia (más allá del redondeo configurable) es un error; no se aceptan importes ni cantidades negativos. **El IVA no entra al costo**: el valor que entra al inventario es el `Sub Total`; el costo promedio ponderado se actualiza con él.
+- Cada línea es un movimiento de entrada del libro, convertido a la unidad base del producto, ligado a un documento inmutable (`inventory_receipts`: proveedor, fecha, sucursal y totales de IVA, descuento y total).
+- **Repeticiones:** otro archivo con un documento ya cargado y el mismo contenido lo omite; con contenido distinto se rechaza (una corrección es una reversa de sus movimientos, no una edición).
+- **Frente al inventario inicial:** un documento fechado en o antes de la fecha de corte de su sucursal ya está contado y se **omite con aviso** (no se cuenta dos veces). Una sucursal sin inventario inicial acepta la entrada pero se avisa que la existencia será parcial. A la inversa, el inventario inicial se rechaza si la sucursal ya tiene movimientos fechados hasta su fecha de corte.
+- Cantidad cero se omite con aviso; productos, unidades y equivalencias se validan igual que en el inventario inicial.
+- Orden recomendado: Productos → Unidades y equivalencias → Inventario inicial → Entradas.

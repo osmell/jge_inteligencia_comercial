@@ -294,6 +294,21 @@ describe('importaciones', () => {
     expect(await screen.findByRole('dialog', { name: 'Confirmar importación' })).toHaveTextContent('Se fijarán 2 unidades base, se crearán 3 equivalencias y se actualizarán 1')
   })
 
+  it('un lote de entradas de inventario resume documentos, líneas y sucursales sin inventario inicial', async () => {
+    route('GET /admin/imports/7', json({ data: batch({
+      type: 'inventory_entries', type_label: 'Entradas de inventario', documents_total: 4, documents_new: 3, documents_duplicate: 1,
+      summary: { rows_invalid: 0, preview_columns: [], preview: [], entries: { new: 3, unchanged: 1, lines: 9, skipped_before_cutoff: 2, branches_without_opening: ['Norte'] } },
+    }) }))
+    renderAt('/importaciones/7')
+
+    expect(await screen.findByText('Omitidos por el corte')).toBeInTheDocument()
+    expect(screen.getByText(/Sin inventario inicial en/)).toHaveTextContent('Norte')
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar importación' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Confirmar importación' })
+    expect(dialog).toHaveTextContent('Se cargarán 3 documentos de entrada')
+    expect(dialog).toHaveTextContent('el IVA no entra al costo')
+  })
+
   it('actualiza solo mientras el lote se procesa', async () => {
     route('GET /admin/imports/7', json({ data: batch({ status: 'validating', status_label: 'Validando', can_confirm: false }) }), json({ data: batch() }))
     renderAt('/importaciones/7')

@@ -27,8 +27,9 @@ use Illuminate\Support\Carbon;
  * @property int|null $user_id
  * @property int|null $reverses_id
  * @property string|null $source_key
+ * @property int|null $receipt_id
  */
-#[Fillable(['company_id', 'branch_id', 'product_id', 'type', 'quantity', 'value', 'occurred_on', 'unit_id', 'entered_quantity', 'reference', 'note', 'user_id', 'reverses_id', 'source_key', 'import_batch_id', 'created_at'])]
+#[Fillable(['company_id', 'branch_id', 'product_id', 'type', 'quantity', 'value', 'occurred_on', 'unit_id', 'entered_quantity', 'reference', 'note', 'user_id', 'reverses_id', 'source_key', 'import_batch_id', 'receipt_id', 'created_at'])]
 class InventoryMovement extends Model
 {
     use Immutable, ScopedByOrganization;

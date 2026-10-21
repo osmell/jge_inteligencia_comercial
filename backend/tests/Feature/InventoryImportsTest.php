@@ -183,6 +183,17 @@ class InventoryImportsTest extends TestCase
         $this->assertEqualsCanonicalizing(['no_base_unit', 'cutoff_mismatch'], $this->codes($batch));
     }
 
+    public function test_a_cutoff_that_would_count_earlier_movements_twice_is_rejected(): void
+    {
+        app(InventoryLedger::class)->record($this->alfa->id, $this->central->id, $this->filter, InventoryMovement::ENTRY, '5', null, Carbon::parse('2026-09-20'), $this->admin, '50');
+
+        $batch = $this->validate('inventory_opening', self::OPENING, [$this->opening()]);          // corte 2026-09-30 ≥ 2026-09-20
+        $this->assertSame(['movements_before_cutoff'], $this->codes($batch));
+
+        $ok = $this->validate('inventory_opening', self::OPENING, [$this->opening(['Fecha Corte' => '2026-09-19'])]);
+        $this->assertSame(ImportStatus::Validated, $ok->status);
+    }
+
     public function test_zero_quantities_are_skipped_with_a_warning(): void
     {
         $batch = $this->imported('inventory_opening', self::OPENING, [$this->opening(), $this->opening(['Codigo Producto' => '200', 'Unidad de Medida' => 'Unidad', 'Cantidad' => 0])]);
