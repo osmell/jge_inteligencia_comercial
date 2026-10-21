@@ -6,6 +6,7 @@ import { BrandEmblem, BrandPlate } from './Brand'
 import { onConversationEvent, startRealtime } from '../lib/realtime'
 import { playMessageSound } from '../lib/sound'
 import { useUnreadConversations } from '../lib/useUnread'
+import CommandBar from './CommandBar'
 import NotificationBell from './NotificationBell'
 import { NAV_GROUPS, NAV_ITEMS } from './navigation'
 
@@ -138,9 +139,10 @@ export default function Layout() {
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
           <BrandEmblem className="h-8 w-8 md:hidden" />
-          <p className="truncate text-sm font-medium text-ink-muted">{current?.label ?? ''}</p>
+          <p className="hidden shrink-0 truncate text-sm font-medium text-ink-muted lg:block">{current?.label ?? ''}</p>
+          <CommandBar />
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex shrink-0 items-center gap-3">
             <NotificationBell />
             <div className="flex items-center gap-2.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-jge-blue-50 text-xs font-semibold text-jge-blue" aria-hidden="true">

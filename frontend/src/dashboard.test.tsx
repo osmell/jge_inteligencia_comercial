@@ -136,10 +136,11 @@ describe('dashboard de inicio', () => {
     expect(await screen.findByText(/todavía no está vinculado a un vendedor/)).toBeInTheDocument()
   })
 
-  it('sin secciones lo explica y deja los accesos rápidos', async () => {
+  it('sin secciones lo explica, apunta a la barra de comandos y ya no muestra accesos rápidos', async () => {
     sections = []
     renderHome()
     expect(await screen.findByText(/no tiene indicadores asignados/)).toBeInTheDocument()
+    expect(screen.queryByText('Accesos rápidos')).not.toBeInTheDocument()
   })
 
   it('el supervisor ve su equipo y los clientes por recuperar con enlace a la ficha', async () => {

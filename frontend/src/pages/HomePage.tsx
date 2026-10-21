@@ -1,9 +1,7 @@
-import { ArrowRight, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { type BlockProps, CompaniesBlock, ConversationsBlock, CreditBlock, FollowupBlock, GoalsBlock, InsightsBlock, InventoryBlock, QuotationsBlock, RankingsBlock, SalesBlock } from '../components/DashboardSections'
-import { NAV_ITEMS } from '../components/navigation'
 import { Alert, Button, PageHeader, SelectField } from '../components/ui'
 import { type DashboardMeta, PERIOD_LABEL } from '../lib/dashboard'
 import { formatDateTime } from '../lib/format'
@@ -25,12 +23,11 @@ const SCOPE_TEXT = { company: 'Todo tu ámbito de compañías.', team: 'Lo de lo
 
 /** Pantalla de inicio: indicadores y gráficos según el rol, cada sección con su propia carga. */
 export default function HomePage() {
-  const { user, can } = useAuth()
+  const { user } = useAuth()
   const meta = useLoad<{ data: DashboardMeta }>('/dashboard')
   const [period, setPeriod] = useState('month')
   const [companyId, setCompanyId] = useState('')
   const [refresh, setRefresh] = useState(0)
-  const shortcuts = NAV_ITEMS.filter((i) => i.to !== '/' && can(i.permission))
   const m = meta.data?.data
   const query = new URLSearchParams({ period, ...(companyId ? { company_id: companyId } : {}) }).toString()
 
@@ -67,26 +64,7 @@ export default function HomePage() {
           </div>
         </>
       )}
-      {m && m.sections.length === 0 && <Alert tone="info">Tu rol todavía no tiene indicadores asignados. Usa los accesos rápidos o pide a administración los permisos que necesites.</Alert>}
-
-      {shortcuts.length > 0 && (
-        <div className="mt-8">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-muted">Accesos rápidos</h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {shortcuts.map((s) => (
-              <Link
-                key={s.to}
-                to={s.to}
-                className="group flex min-h-16 items-center gap-3 rounded-[var(--radius-card)] border border-line bg-surface p-4 shadow-[var(--shadow-card)] transition-colors duration-150 hover:border-jge-blue"
-              >
-                <s.icon className="h-5 w-5 text-jge-blue" aria-hidden="true" />
-                <span className="flex-1 text-sm font-medium">{s.label}</span>
-                <ArrowRight className="h-4 w-4 text-ink-subtle transition-transform duration-150 group-hover:translate-x-0.5" aria-hidden="true" />
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      {m && m.sections.length === 0 && <Alert tone="info">Tu rol todavía no tiene indicadores asignados. Usa la barra del encabezado (tecla /) para ir a las pantallas o pide a administración los permisos que necesites.</Alert>}
     </section>
   )
 }
