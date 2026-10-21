@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\CustomerInteraction;
 use App\Models\ImportBatch;
 use App\Models\Operator;
+use App\Models\PaymentPromise;
 use App\Models\Quotation;
 use App\Models\Role;
 use App\Models\Seller;
@@ -177,6 +178,7 @@ class DashboardTest extends TestCase
         $this->assertEquals([7000, 3500, 3500, 50.0, 2], [$admin->json('data.totals.goal'), $admin->json('data.totals.actual'), $admin->json('data.totals.remaining'), $admin->json('data.totals.compliance_pct'), $admin->json('data.totals.sellers_with_goal')]);
         $this->assertSame(['2026-10', 'current'], [$admin->json('data.month'), $admin->json('data.state')]);
         $this->assertNotNull($admin->json('data.totals.projected'));
+        $this->assertEquals([11, round(3500 / 11, 2)], [$admin->json('data.totals.days_left'), $admin->json('data.totals.needed_per_day')]);           // del 21 al 31 de octubre
 
         $vera = $this->section($this->vera, 'goals');
         $this->assertSame(['Vera'], array_column($vera->json('data.rows'), 'seller'));
@@ -194,6 +196,13 @@ class DashboardTest extends TestCase
         $this->assertEquals([1000, 1], [$this->section($this->vera, 'credit')->json('data.total'), $this->section($this->vera, 'credit')->json('data.invoices')]);
         $this->assertEquals(1000, $this->section($this->supervisor, 'credit')->json('data.total'));
         $this->assertEquals(500, $this->section($this->beto, 'credit')->json('data.total'));
+
+        PaymentPromise::create(['company_id' => $this->a->id, 'customer_code' => 'CV', 'customer_name' => 'Cliente CV', 'made_on' => '2026-10-20', 'promised_on' => '2026-10-25', 'amount' => 300, 'user_id' => $this->admin->id]);
+        PaymentPromise::create(['company_id' => $this->a->id, 'customer_code' => 'CB', 'customer_name' => 'Cliente CB', 'made_on' => '2026-10-10', 'promised_on' => '2026-10-15', 'amount' => 100, 'user_id' => $this->admin->id]);
+        $promises = $this->section($this->vera, 'credit')->json('data.promises');
+        $this->assertEquals([1, 300, 0], [$promises['due_next_7_days'], $promises['due_amount'], $promises['broken_30_days']]);
+        $this->assertSame(['Cliente CV'], array_column($promises['attention'], 'name'));                       // la de Beto no es de sus clientes
+        $this->assertSame(['broken', 'open'], array_column($this->section($this->admin, 'credit')->json('data.promises.attention'), 'status'));
     }
 
     public function test_quotations_follow_the_scope_of_each_role(): void
@@ -244,5 +253,7 @@ class DashboardTest extends TestCase
         $this->assertEquals([1, 1], [$this->section($this->vera, 'followup')->json('data.overdue'), $this->section($this->vera, 'followup')->json('data.today')]);
         $this->assertEquals(1, $this->section($this->supervisor, 'followup')->json('data.overdue'));                 // solo la de su equipo
         $this->assertIsArray($all->json('data.no_contact.top'));
+        $this->assertSame(['Cliente CB', 'Cliente CV', 'Cliente CV'], array_column(array_column($all->json('data.actions'), 'customer'), 'name'));       // vencidas primero y luego las de hoy
+        $this->assertSame(['Cliente CV', 'Cliente CV'], array_column(array_column($this->section($this->vera, 'followup')->json('data.actions'), 'customer'), 'name'));
     }
 }

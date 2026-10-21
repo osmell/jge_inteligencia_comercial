@@ -59,3 +59,10 @@ Todos son `role="img"` con descripción; sin datos no fallan. Probados en `chart
 - Mismo dashboard, con el alcance del supervisor: solo los vendedores que supervisa (los vinculados con «supervisor» en su ficha de vendedor). Se muestra «Tu equipo: …» con sus nombres y, si no tiene vendedores asignados, un aviso en vez de cifras engañosas (todo en cero).
 - Metas y ranking de vendedores salen del equipo; la cartera, las cotizaciones y la venta, de los clientes y facturas de esos vendedores. Sin inventario ni recomendaciones salvo que se le concedan esos permisos.
 - **Seguimiento** ahora trae, para todos los perfiles, el indicador de **clientes inactivos o perdidos sin contacto en 30 días** (que aceptan comunicaciones) y los 5 primeros con enlace a su ficha, además de las acciones vencidas y de hoy. La API de equipo se expone en `GET /dashboard` como `team`.
+
+## Paso 6 — Dashboard de vendedor (hecho)
+- Mismo dashboard, solo con lo del vendedor (sus ventas, clientes, facturas de crédito y cotizaciones), con **títulos y orden propios**: primero **Tu agenda** (acciones vencidas y de hoy con enlace al cliente, y los clientes por recuperar), luego **Tu meta del mes**, **Tus ventas**, **Tus clientes por cobrar**, **Tus cotizaciones** y las recomendaciones de sus clientes. No ve el ranking de vendedores ni el desglose por vendedor de las metas.
+- **Meta:** barra de avance con la proyección al cierre y cuánto necesita vender **por día** en los días que quedan del mes (falta ÷ días restantes, hoy incluido; solo en el mes en curso).
+- **Cobranza:** además del saldo y los tramos, **promesas de pago por atender** (las que vencen en 7 días y las incumplidas de los últimos 30), con enlace al cliente; para los demás perfiles se calcula con su mismo alcance.
+- API: `goals.totals.days_left` y `needed_per_day`, `followup.actions` (hasta 5, vencidas primero) y `credit.promises.attention`.
+- Con esto los tres perfiles están cubiertos; falta el paso 7 (pulido: filtros, rendimiento y documentación) y que el responsable confirme el cuestionario `19`.

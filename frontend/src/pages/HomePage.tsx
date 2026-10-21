@@ -2,7 +2,7 @@ import { ArrowRight, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { CompaniesBlock, CreditBlock, FollowupBlock, GoalsBlock, InsightsBlock, InventoryBlock, QuotationsBlock, RankingsBlock, SalesBlock } from '../components/DashboardSections'
+import { type BlockProps, CompaniesBlock, CreditBlock, FollowupBlock, GoalsBlock, InsightsBlock, InventoryBlock, QuotationsBlock, RankingsBlock, SalesBlock } from '../components/DashboardSections'
 import { NAV_ITEMS } from '../components/navigation'
 import { Alert, Button, PageHeader, SelectField } from '../components/ui'
 import { type DashboardMeta, PERIOD_LABEL } from '../lib/dashboard'
@@ -10,10 +10,13 @@ import { formatDateTime } from '../lib/format'
 import { formatDay } from '../lib/quotations'
 import { useLoad } from '../lib/useLoad'
 
-const BLOCKS: Record<string, (props: { query: string }) => React.ReactNode> = {
+const BLOCKS: Record<string, (props: BlockProps) => React.ReactNode> = {
   sales: SalesBlock, goals: GoalsBlock, rankings: RankingsBlock, companies: CompaniesBlock, credit: CreditBlock,
   quotations: QuotationsBlock, followup: FollowupBlock, inventory: InventoryBlock, insights: InsightsBlock,
 }
+
+/** Lo primero que necesita un vendedor es su agenda y su meta; el resto de los perfiles conserva el orden de la API. */
+const SELLER_ORDER = ['followup', 'goals', 'sales', 'credit', 'quotations', 'insights', 'rankings', 'inventory']
 
 /** Secciones que ocupan todo el ancho; las demás se acomodan en dos columnas. */
 const WIDE = new Set(['sales', 'rankings', 'companies'])
@@ -57,9 +60,9 @@ export default function HomePage() {
             <Button variant="secondary" icon={<RefreshCw className="h-4 w-4" aria-hidden="true" />} onClick={() => setRefresh((n) => n + 1)}>Actualizar</Button>
           </div>
           <div key={`${query}-${refresh}`} className="grid gap-6 lg:grid-cols-2">
-            {m.sections.map((key) => {
+            {(m.profile === 'seller' ? [...m.sections].sort((a, b) => SELLER_ORDER.indexOf(a) - SELLER_ORDER.indexOf(b)) : m.sections).map((key) => {
               const Block = BLOCKS[key]
-              return Block ? <div key={key} className={WIDE.has(key) ? 'lg:col-span-2' : ''}><Block query={query} /></div> : null
+              return Block ? <div key={key} className={WIDE.has(key) ? 'lg:col-span-2' : ''}><Block query={query} profile={m.profile} /></div> : null
             })}
           </div>
         </>

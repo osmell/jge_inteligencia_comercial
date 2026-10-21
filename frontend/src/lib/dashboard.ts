@@ -49,7 +49,7 @@ export interface GoalRow {
 export interface GoalsSection {
   month: string
   state: 'future' | 'current' | 'closed'
-  totals: { goal: number; actual: number; remaining: number; compliance_pct: number | null; projected: number | null; projected_pct: number | null; sellers_with_goal: number; met: number }
+  totals: { goal: number; actual: number; remaining: number; compliance_pct: number | null; projected: number | null; projected_pct: number | null; days_left: number; needed_per_day: number | null; sellers_with_goal: number; met: number }
   rows: GoalRow[]
 }
 
@@ -78,7 +78,7 @@ export interface CreditSection {
   customers: number
   buckets: { bucket: string; amount: string }[]
   top_debtors: { company_id: number; code: string; name: string; total: string; oldest_days: number }[]
-  promises: { due_next_7_days: number; due_amount: string; broken_30_days: number }
+  promises: { due_next_7_days: number; due_amount: string; broken_30_days: number; attention: { company_id: number; code: string; name: string; promised_on: string; amount: string; status: 'open' | 'broken'; days_overdue: number }[] }
 }
 
 export interface QuotationsSection {
@@ -92,6 +92,7 @@ export interface QuotationsSection {
 export interface FollowupSection {
   overdue: number
   today: number
+  actions: { customer: { company_id: number; code: string; name: string }; next_action: string; next_action_at: string; days_overdue: number }[]
   no_contact: { count: number; days: number; top: { code: string; company_id: number; name: string; status: 'inactive' | 'lost'; days_since_last_purchase: number; seller: string | null }[] }
 }
 
@@ -131,3 +132,6 @@ export function formatChange(pct: number | null): string {
   const abs = Math.abs(pct).toLocaleString('es', { maximumFractionDigits: 1 })
   return `${pct > 0 ? '+' : pct < 0 ? '−' : ''}${abs} %`
 }
+
+/** Ruta de la ficha de un cliente. */
+export const customerLink = (companyId: number, code: string) => `/clientes/ficha?codigo=${encodeURIComponent(code)}&compania=${companyId}`

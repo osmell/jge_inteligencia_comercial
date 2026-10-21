@@ -184,12 +184,15 @@ class DashboardService
         $goal = array_sum(array_column($withGoal, 'effective_goal'));
         $actual = array_sum(array_column($withGoal, 'actual'));
         $projected = array_sum(array_map(fn (array $r) => $r['projected'] ?? $r['actual'], $withGoal));
+        // Días que quedan del mes (hoy incluido) y lo que habría que vender por día para llegar a la meta.
+        $daysLeft = $progress['state'] === 'current' ? $today->daysInMonth - $today->day + 1 : 0;
+        $remaining = max(0, $goal - $actual);
 
         return [
             'month' => $progress['month'], 'state' => $progress['state'],
             'totals' => ['goal' => round($goal, 2), 'actual' => round($actual, 2), 'remaining' => round(max(0, $goal - $actual), 2), 'compliance_pct' => $goal > 0 ? round($actual / $goal * 100, 2) : null,
                 'projected' => $progress['state'] === 'current' ? round($projected, 2) : null, 'projected_pct' => $progress['state'] === 'current' && $goal > 0 ? round($projected / $goal * 100, 2) : null,
-                'sellers_with_goal' => count($withGoal), 'met' => count(array_filter($withGoal, fn (array $r) => $r['status'] === 'met'))],
+                'days_left' => $daysLeft, 'needed_per_day' => $daysLeft > 0 && $remaining > 0 ? round($remaining / $daysLeft, 2) : null, 'sellers_with_goal' => count($withGoal), 'met' => count(array_filter($withGoal, fn (array $r) => $r['status'] === 'met'))],
             'rows' => array_map(fn (array $r) => array_intersect_key($r, array_flip(['seller_id', 'seller', 'effective_goal', 'actual', 'compliance_pct', 'projected', 'projected_pct', 'status', 'behind_pace'])), $rows),
         ];
     }
@@ -241,12 +244,14 @@ class DashboardService
         $soon = $today->addDays(7)->toDateString();
         $open = array_filter($rows, fn (array $p) => $p['status'] === PaymentPromises::OPEN && $p['promised_on'] <= $soon);
         $broken = array_filter($rows, fn (array $p) => $p['status'] === PaymentPromises::BROKEN && $p['days_overdue'] <= 30);
+        $attention = array_map(fn (array $p) => ['company_id' => $p['company_id'], 'code' => $p['customer']['code'], 'name' => $p['customer']['name'], 'promised_on' => $p['promised_on'], 'amount' => $p['amount'], 'status' => $p['status'], 'days_overdue' => $p['days_overdue']],
+            array_slice(array_merge($broken, $open), 0, 5));
 
         return [
             'total' => $aging['totals']['total'], 'overdue' => number_format($total - $current, 2, '.', ''), 'overdue_pct' => $total > 0 ? round(($total - $current) / $total * 100, 1) : null,
             'invoices' => $invoices, 'customers' => count($aging['customers']), 'buckets' => $buckets,
             'top_debtors' => array_map(fn (array $c) => ['company_id' => $c['company_id'], 'code' => $c['code'], 'name' => $c['name'], 'total' => $c['total'], 'oldest_days' => $c['oldest_days']], array_slice($aging['customers'], 0, 5)),
-            'promises' => ['due_next_7_days' => count($open), 'due_amount' => number_format(array_sum(array_map(fn (array $p) => (float) $p['amount'], $open)), 2, '.', ''), 'broken_30_days' => count($broken)],
+            'promises' => ['due_next_7_days' => count($open), 'due_amount' => number_format(array_sum(array_map(fn (array $p) => (float) $p['amount'], $open)), 2, '.', ''), 'broken_30_days' => count($broken), 'attention' => $attention],
         ];
     }
 
@@ -281,6 +286,8 @@ class DashboardService
 
         return [
             'overdue' => $a['meta']['overdue_total'], 'today' => $a['meta']['upcoming_total'], 'date' => $today->toDateString(),
+            'actions' => array_map(fn (array $x) => ['customer' => ['company_id' => $x['customer']['company_id'], 'code' => $x['customer']['code'], 'name' => $x['customer']['name']], 'next_action' => $x['next_action'], 'next_action_at' => $x['next_action_at'], 'days_overdue' => $x['days_overdue']],
+                array_slice(array_merge($a['overdue'], $a['upcoming']), 0, 5)),
             'no_contact' => [
                 'count' => $a['meta']['reactivate_total'], 'days' => $days,
                 'top' => array_map(fn (array $r) => ['code' => $r['code'], 'company_id' => $r['company_id'], 'name' => $r['name'], 'status' => $r['status'], 'days_since_last_purchase' => $r['days_since_last_purchase'], 'seller' => $r['seller']], array_slice($a['reactivate'], 0, 5)),

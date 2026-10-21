@@ -41,9 +41,9 @@ beforeEach(() => {
     else if (path === '/dashboard') body = { data: { profile, team, linked_sellers: linked, sections, periods: ['month', 'prev_month', 'quarter', 'year'], companies: [{ id: 1, name: 'Alfa' }, { id: 2, name: 'Beta' }], last_sale: '2026-10-20', last_import: '2026-10-21T12:00:00Z' } }
     else if (failing && path.startsWith(`/dashboard/${failing}`)) { status = 500; body = { message: 'Error interno.' } }
     else if (path.startsWith('/dashboard/sales')) body = { data: sales }
-    else if (path.startsWith('/dashboard/goals')) body = { data: { month: '2026-10', state: 'current', totals: { goal: 7000, actual: 3500, remaining: 3500, compliance_pct: 50, projected: 5000, projected_pct: 71.4, sellers_with_goal: 2, met: 0 }, rows: [{ seller_id: 1, seller: 'Vera', effective_goal: 3000, actual: 1500, compliance_pct: 50, projected: 2000, projected_pct: 66.7, status: 'danger', behind_pace: true }] } }
-    else if (path.startsWith('/dashboard/credit')) body = { data: { total: '1500.0000', overdue: '1500.00', overdue_pct: 100, invoices: 2, customers: 2, buckets: [{ bucket: 'current', amount: '0.0000' }, { bucket: '31-60', amount: '1000.0000' }, { bucket: '121+', amount: '500.0000' }], top_debtors: [{ company_id: 1, code: 'CV', name: 'Cliente CV', total: '1000.0000', oldest_days: 40 }], promises: { due_next_7_days: 1, due_amount: '300.00', broken_30_days: 0 } } }
-    else if (path.startsWith('/dashboard/followup')) body = { data: { overdue: 2, today: 1, date: '2026-10-21', no_contact: { count: 3, days: 30, top: [{ code: 'CV', company_id: 1, name: 'Cliente CV', status: 'lost', days_since_last_purchase: 120, seller: 'Vera' }] } } }
+    else if (path.startsWith('/dashboard/goals')) body = { data: { month: '2026-10', state: 'current', totals: { goal: 7000, actual: 3500, remaining: 3500, compliance_pct: 50, projected: 5000, projected_pct: 71.4, days_left: 11, needed_per_day: 318.18, sellers_with_goal: 2, met: 0 }, rows: [{ seller_id: 1, seller: 'Vera', effective_goal: 3000, actual: 1500, compliance_pct: 50, projected: 2000, projected_pct: 66.7, status: 'danger', behind_pace: true }] } }
+    else if (path.startsWith('/dashboard/credit')) body = { data: { total: '1500.0000', overdue: '1500.00', overdue_pct: 100, invoices: 2, customers: 2, buckets: [{ bucket: 'current', amount: '0.0000' }, { bucket: '31-60', amount: '1000.0000' }, { bucket: '121+', amount: '500.0000' }], top_debtors: [{ company_id: 1, code: 'CV', name: 'Cliente CV', total: '1000.0000', oldest_days: 40 }], promises: { due_next_7_days: 1, due_amount: '300.00', broken_30_days: 1, attention: [{ company_id: 1, code: 'CV', name: 'Cliente CV', promised_on: '2026-10-25', amount: '300.00', status: 'open', days_overdue: 0 }, { company_id: 1, code: 'CB', name: 'Cliente CB', promised_on: '2026-10-15', amount: '100.00', status: 'broken', days_overdue: 6 }] } } }
+    else if (path.startsWith('/dashboard/followup')) body = { data: { overdue: 2, today: 1, date: '2026-10-21', actions: [{ customer: { company_id: 1, code: 'CV', name: 'Cliente CV' }, next_action: 'Llamar', next_action_at: '2026-10-19T10:00:00Z', days_overdue: 2 }, { customer: { company_id: 1, code: 'CB', name: 'Cliente CB' }, next_action: 'Visitar', next_action_at: '2026-10-21T15:00:00Z', days_overdue: 0 }], no_contact: { count: 3, days: 30, top: [{ code: 'CV', company_id: 1, name: 'Cliente CV', status: 'lost', days_since_last_purchase: 120, seller: 'Vera' }] } } }
     else if (path.startsWith('/dashboard/quotations')) body = { data: { open: { count: 2, amount: '600.00' }, expiring: { count: 1, amount: '300.00' }, expired_unclosed: 0, issued: { count: 2, amount: '600.00' }, converted: { count: 0, amount: '0.00' } } }
     return new Response(JSON.stringify(body), { status })
   }))
@@ -119,7 +119,7 @@ describe('dashboard de inicio', () => {
     linked = 1
     renderHome()
 
-    await screen.findByRole('region', { name: 'Cotizaciones' })
+    await screen.findByRole('region', { name: 'Tus cotizaciones' })
     expect(screen.queryByRole('region', { name: 'Cartera' })).not.toBeInTheDocument()
     expect(calls.some((c) => c.startsWith('/dashboard/credit'))).toBe(false)
     expect(screen.getByText(/Solo lo tuyo/)).toBeInTheDocument()
@@ -150,7 +150,7 @@ describe('dashboard de inicio', () => {
     expect(screen.getByText(/Lo de los vendedores que supervisas/)).toBeInTheDocument()
     const follow = await screen.findByRole('region', { name: 'Seguimiento' })
     expect(await within(follow).findByText('Sin contacto en 30 días')).toBeInTheDocument()
-    expect(within(follow).getByRole('link', { name: 'Cliente CV' })).toHaveAttribute('href', '/clientes/ficha?codigo=CV&compania=1')
+    expect(within(within(follow).getByRole('list', { name: 'Clientes sin contacto reciente' })).getByRole('link', { name: 'Cliente CV' })).toHaveAttribute('href', '/clientes/ficha?codigo=CV&compania=1')
     expect(within(follow).getByText(/Perdido · 120 días sin comprar · Vera/)).toBeInTheDocument()
   })
 
@@ -161,5 +161,35 @@ describe('dashboard de inicio', () => {
     renderHome()
 
     expect(await screen.findByText(/Todavía no tienes vendedores asignados/)).toBeInTheDocument()
+  })
+
+  it('el vendedor ve su agenda primero, su meta con lo que necesita por día y sus promesas, sin ranking de otros', async () => {
+    profile = 'seller'
+    sections = ['sales', 'credit', 'goals', 'followup']
+    linked = 1
+    team = ['Vera']
+    renderHome()
+
+    const regions = await screen.findAllByRole('region')
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Tu agenda' })).toBeInTheDocument())
+    expect(screen.getAllByRole('region').map((r) => r.getAttribute('aria-labelledby'))).toEqual(['dash-tu-agenda', 'dash-tu-meta-del-mes', 'dash-tus-ventas', 'dash-tus-clientes-por-cobrar'])
+    expect(regions.length).toBe(4)
+
+    const agenda = screen.getByRole('region', { name: 'Tu agenda' })
+    const list = await within(agenda).findByRole('list', { name: 'Acciones pendientes' })
+    expect(within(list).getByRole('link', { name: 'Cliente CV' })).toHaveAttribute('href', '/clientes/ficha?codigo=CV&compania=1')
+    expect(within(list).getByText('Vencida hace 2 días')).toBeInTheDocument()
+    expect(within(list).getByText('Para hoy')).toBeInTheDocument()
+    expect(within(agenda).getByText('Lo que tienes pendiente')).toBeInTheDocument()
+
+    const goals = screen.getByRole('region', { name: 'Tu meta del mes' })
+    expect(await within(goals).findByRole('progressbar', { name: 'Tu avance 2026-10' })).toBeInTheDocument()
+    expect(within(goals).getByText(/necesitas vender 318,18 por día en los 11 días que quedan/)).toBeInTheDocument()
+    expect(within(goals).queryByRole('progressbar', { name: 'Vera' })).not.toBeInTheDocument()            // sin desglose por vendedor
+
+    const credit = screen.getByRole('region', { name: 'Tus clientes por cobrar' })
+    const promises = await within(credit).findByRole('list', { name: 'Promesas de pago por atender' })
+    expect(within(promises).getByText(/incumplida hace 6 días/)).toBeInTheDocument()
+    expect(within(promises).getByText(/para el 25 oct 2026/)).toBeInTheDocument()
   })
 })
