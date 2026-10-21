@@ -1,11 +1,15 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
+import InventoryKardexPage from './pages/InventoryKardexPage'
+import InventoryStockPage from './pages/InventoryStockPage'
 import InventoryUnitsPage from './pages/InventoryUnitsPage'
 
 let permissions: string[]
+let costsVisible: boolean
+let urls: string[]
 let puts: { path: string; body: Record<string, unknown> }[]
 
 const units = [
@@ -17,6 +21,8 @@ const units = [
 beforeEach(() => {
   permissions = ['inventory.view', 'inventory.manage']
   puts = []
+  urls = []
+  costsVisible = false
   document.cookie = 'XSRF-TOKEN=x'
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     const path = url.replace('http://localhost:8000/api/v1', '')
@@ -24,8 +30,32 @@ beforeEach(() => {
       puts.push({ path, body: JSON.parse(String(init.body)) })
       return new Response(JSON.stringify({ data: {} }), { status: 200 })
     }
+    urls.push(path)
     let body: unknown = { data: [] }
+    if (path.startsWith('/inventory/stock')) {
+      body = {
+        data: [
+          { company_id: 1, company: 'Alfa', branch_id: 2, branch: 'Central', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, unit: 'Galón', quantity: '6.5', reconciled: true, ...(costsVisible ? { value: '65.0000', average_cost: '10.0000' } : {}) },
+          { company_id: 1, company: 'Alfa', branch_id: 3, branch: 'Norte', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, unit: 'Galón', quantity: '3', reconciled: false, ...(costsVisible ? { value: '45.0000', average_cost: '15.0000' } : {}) },
+        ],
+        meta: { page: 1, has_more: false, costs_visible: costsVisible, totals: { products: 2, ...(costsVisible ? { value: '110.00' } : {}) } },
+      }
+    } else if (path.startsWith('/inventory/kardex')) {
+      body = {
+        data: {
+          opening: { quantity: '0', ...(costsVisible ? { value: '0.0000' } : {}) }, truncated: false, reconciled: true,
+          closing: { quantity: '6', ...(costsVisible ? { value: '60.0000' } : {}) },
+          rows: [
+            { id: 1, date: '2026-09-01', type: 'opening', quantity: '10', entered: '2', entered_unit: 'Cubeta', reference: 'DEMO', note: 'Toma de prueba', user: 'Ana', reverses_id: null, reversed: false, balance: '10', ...(costsVisible ? { value: '100.0000', balance_value: '100.0000' } : {}) },
+            { id: 2, date: '2026-09-10', type: 'sale', quantity: '-4', entered: '4', entered_unit: null, reference: null, note: null, user: null, reverses_id: null, reversed: true, balance: '6', ...(costsVisible ? { value: '-40.0000', balance_value: '60.0000' } : {}) },
+          ],
+        },
+        meta: { product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50', unit: 'Galón' }, branch: 'Central', costs_visible: costsVisible },
+      }
+    }
     if (path === '/auth/me') body = { data: { id: 1, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
+    else if (path === '/companies') body = { data: [{ id: 1, code: 'A', name: 'Alfa', is_active: true }] }
+    else if (path === '/branches') body = { data: [{ id: 2, company_id: 1, code: 'C', name: 'Central', is_active: true }] }
     else if (path === '/inventory/units') body = { data: units }
     else if (path === '/inventory/products/7/units') body = { data: { id: 7, company_id: 1, code: 'ACE-1', name: 'Aceite 20W50', base_unit: { id: 1, code: 'galon', name: 'Galón' }, equivalences: [{ unit_id: 2, unit: 'Cubeta', factor: '5' }] } }
     else if (path.startsWith('/inventory/products')) {
@@ -78,5 +108,62 @@ describe('unidades y equivalencias', () => {
     expect(screen.queryByRole('button', { name: 'Agregar equivalencia' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Guardar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Agregar unidad' })).not.toBeInTheDocument()
+  })
+
+  it('las existencias no muestran costos sin el permiso y avisan de sucursales sin inventario inicial', async () => {
+    render(<AuthProvider><MemoryRouter><InventoryStockPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Existencias por sucursal' })
+    await waitFor(() => expect(table).toHaveTextContent('Aceite 20W50'))
+    expect(table).toHaveTextContent('6,5')
+    expect(table).toHaveTextContent('Sin inventario inicial')
+    expect(table).not.toHaveTextContent('Costo promedio')
+    expect(screen.queryByText('Valor del inventario')).not.toBeInTheDocument()
+    expect(screen.getByText(/Hay sucursales sin inventario inicial/)).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'Kárdex de Aceite 20W50 en Central' })).toHaveAttribute('href', '/inventario/kardex?company_id=1&branch_id=2&product_id=7')
+  })
+
+  it('con el permiso de costos muestra costo promedio y valor del inventario', async () => {
+    costsVisible = true
+    render(<AuthProvider><MemoryRouter><InventoryStockPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Existencias por sucursal' })
+    await waitFor(() => expect(table).toHaveTextContent('Costo promedio'))
+    expect(table).toHaveTextContent('65,00')
+    expect(screen.getByText('Valor del inventario').closest('div')).toHaveTextContent('110,00')
+  })
+
+  it('envía los filtros de existencias al servidor', async () => {
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InventoryStockPage /></MemoryRouter></AuthProvider>)
+
+    await screen.findByRole('table', { name: 'Existencias por sucursal' })
+    await u.selectOptions(screen.getByLabelText('Compañía'), '1')
+    await u.selectOptions(screen.getByLabelText('Estado'), 'all')
+    await u.type(screen.getByLabelText('Buscar producto'), 'aceite')
+    await waitFor(() => {
+      const last = urls.filter((x) => x.startsWith('/inventory/stock')).at(-1) ?? ''
+      expect(last).toContain('company_id=1')
+      expect(last).toContain('status=all')
+      expect(last).toContain('q=aceite')
+    })
+  })
+
+  it('el kárdex muestra el saldo corrido, lo capturado en su unidad y lo revertido', async () => {
+    render(<AuthProvider><MemoryRouter initialEntries={['/inventario/kardex?company_id=1&branch_id=2&product_id=7']}><Routes><Route path="/inventario/kardex" element={<InventoryKardexPage />} /></Routes></MemoryRouter></AuthProvider>)
+
+    expect(await screen.findByRole('heading', { name: 'Kárdex: Aceite 20W50' })).toBeInTheDocument()
+    const table = await screen.findByRole('table', { name: 'Movimientos del producto' })
+    await waitFor(() => expect(table).toHaveTextContent('Inventario inicial'))
+    expect(table).toHaveTextContent('2 Cubeta')
+    expect(table).toHaveTextContent('Revertido')
+    expect(table).toHaveTextContent('Toma de prueba')
+    expect(table).not.toHaveTextContent('Valor del saldo')
+  })
+
+  it('el kárdex pide elegir un producto si falta el filtro', async () => {
+    render(<AuthProvider><MemoryRouter initialEntries={['/inventario/kardex']}><InventoryKardexPage /></MemoryRouter></AuthProvider>)
+
+    expect(await screen.findByText(/Elige un producto desde la pantalla de existencias/)).toBeInTheDocument()
   })
 })

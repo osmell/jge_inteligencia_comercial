@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
+use App\Http\Controllers\Api\V1\InventoryStockController;
 use App\Http\Controllers\Api\V1\InventoryUnitController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\PaymentPromiseController;
@@ -90,6 +91,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
 
     // Inventario: unidades, equivalencias por producto y (en pasos siguientes) existencias y movimientos.
     Route::middleware('permission:inventory.view')->prefix('inventory')->group(function () {
+        Route::get('stock', [InventoryStockController::class, 'index']);
+        Route::get('kardex', [InventoryStockController::class, 'kardex']);
         Route::get('units', [InventoryUnitController::class, 'units']);
         Route::get('products', [InventoryUnitController::class, 'products']);
         Route::get('products/{product}/units', [InventoryUnitController::class, 'productUnits'])->whereNumber('product');

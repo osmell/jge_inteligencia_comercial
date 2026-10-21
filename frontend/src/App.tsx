@@ -13,6 +13,8 @@ import BranchesPage from './pages/BranchesPage'
 import CompaniesPage from './pages/CompaniesPage'
 import CreditAgingPage from './pages/CreditAgingPage'
 import CreditDetailPage from './pages/CreditDetailPage'
+import InventoryKardexPage from './pages/InventoryKardexPage'
+import InventoryStockPage from './pages/InventoryStockPage'
 import InventoryUnitsPage from './pages/InventoryUnitsPage'
 import CreditPage from './pages/CreditPage'
 import CustomerProfilePage from './pages/CustomerProfilePage'
@@ -57,6 +59,8 @@ export default function App() {
                 </Route>
               </Route>
               <Route element={<RequirePermission permission="inventory.view" />}>
+                <Route path="inventario" element={<InventoryStockPage />} />
+                <Route path="inventario/kardex" element={<InventoryKardexPage />} />
                 <Route path="inventario/unidades" element={<InventoryUnitsPage />} />
               </Route>
               <Route element={<RequirePermission permission="credit.view" />}>

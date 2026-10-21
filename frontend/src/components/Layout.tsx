@@ -41,7 +41,7 @@ export default function Layout() {
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
-                    end={item.to === '/'}
+                    end={item.to === '/' || item.to === '/inventario'}
                     onClick={() => setOpen(false)}
                     className={({ isActive }) =>
                       `group relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150 ${

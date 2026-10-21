@@ -62,3 +62,11 @@ Los pasos 1 y 2 no dependen de las plantillas y pueden avanzar ya; del 3 en adel
 - **Reversas** enlazadas (no se borra historia), con motivo, una sola vez, y rechazadas si dejarían existencias negativas.
 - Permisos nuevos (no se dan solos): `inventory.view` (consultar), `inventory.manage` (unidades, equivalencias y movimientos), `inventory.costs` (ver costos y valuación; solo administrador).
 - Un producto sin unidad base no admite movimientos; la unidad base no se cambia cuando ya tiene movimientos.
+
+## Paso 2 — Existencias, kárdex y toma de prueba (hecho)
+- **Existencias** (`/inventario`, permiso `inventory.view`): saldo por producto y sucursal en la unidad base, con filtros de compañía, sucursal, texto y estado (con existencias, agotados, todos). Respeta el ámbito de compañías y sucursales del usuario.
+- **Kárdex** (`/inventario/kardex`): movimientos de un producto en una sucursal con saldo corrido, lo capturado en su unidad original (p. ej. «2 cubetas» = 10 galones), reversas marcadas y rango de fechas con saldo inicial (hasta 500 movimientos por consulta).
+- **Costos solo con `inventory.costs`** (el administrador): sin ese permiso la respuesta del servidor no incluye ningún importe, no solo la pantalla. Con él se ven costo promedio, valor de cada movimiento, valor del saldo y valor total del inventario.
+- **Sin inventario inicial no es una existencia real:** las sucursales sin inventario inicial muestran sus saldos con la marca «Sin inventario inicial» y un aviso, porque se calculan con movimientos parciales.
+- **Toma de prueba para la demo:** `docker compose exec -u $(id -u) backend php artisan db:seed --class=DemoInventorySeeder` (después de `DemoSalesSeeder`; tarda unos minutos). Crea los productos de la demo con su unidad base (galón para lubricantes y limpieza, con barril, cubeta, litro, octavo, 1/16, 1/32 y 1/64; unidad para el resto), un inventario inicial el día anterior a la primera venta, entradas al inicio de cada mes (los líquidos en cubetas, convertidas a galones, con costos que varían ±5 %) y las salidas de cada línea vendida. No deja existencias negativas, marca todo con la referencia «DEMO», es repetible y no corre en producción.
+- Las salidas de la demo usan la misma clave de origen que usará el paso 5 para las ventas reales (`sale:<id de la línea>`), así que no se duplican.
