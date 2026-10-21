@@ -197,3 +197,10 @@ Puntos a tener presentes al comparar:
 - [ ] Un cliente que siempre paga a tiempo: riesgo bajo. Uno con saldo de más de 120 días: riesgo alto.
 - [ ] Cada factor muestra su razón y los factores «Sin datos» no cambian la puntuación.
 - [ ] Revisar con el equipo de cobranza que los pesos (40/25/25/10) y los cortes (75 y 50) reflejan su criterio; ajustar en `config/credit.php`.
+
+### Inventario: unidades e inventario inicial (Fase 7, pasos 1 a 3)
+- [ ] Asignar `inventory.view`, `inventory.manage` (quien administra) e `inventory.costs` (solo administrador).
+- [ ] Cargar el catálogo de productos, luego «Unidades y equivalencias» (galón como base y barril, cubeta, litro, octavo, 1/16, 1/32, 1/64) y revisar un producto en Inventario → Unidades.
+- [ ] Cargar el «Inventario inicial» de una sucursal con su fecha de corte; en Existencias el saldo coincide con el conteo y no aparece la marca «Sin inventario inicial».
+- [ ] Un producto contado en cubetas queda en galones; el kárdex muestra «2 Cubeta» y 10 en el saldo.
+- [ ] Un usuario sin `inventory.costs` no ve ningún costo en Existencias ni en el kárdex.

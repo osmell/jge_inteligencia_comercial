@@ -267,6 +267,33 @@ describe('importaciones', () => {
     expect(dialog).toHaveTextContent('abre su saldo en el libro de movimientos')
   })
 
+  it('un lote de inventario inicial muestra el resumen por sucursal y su confirmación lo explica', async () => {
+    route('GET /admin/imports/7', json({ data: batch({
+      type: 'inventory_opening', type_label: 'Inventario inicial', documents_total: 3, documents_new: 3, documents_duplicate: 1,
+      summary: { rows_invalid: 0, preview_columns: [], preview: [], inventory: { new: 3, unchanged: 1, conflicts: 0, branches: [{ id: 2, name: 'Central', products: 3, cutoff: '2026-09-30' }] } },
+    }) }))
+    renderAt('/importaciones/7')
+
+    expect(await screen.findByText('Con conflicto')).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Resumen por sucursal' })).toHaveTextContent('2026-09-30')
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar importación' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Confirmar importación' })
+    expect(dialog).toHaveTextContent('Se cargarán 3 filas de inventario inicial')
+    expect(dialog).toHaveTextContent('un cambio posterior se registra como ajuste')
+  })
+
+  it('un lote de unidades y equivalencias resume lo que fija y actualiza', async () => {
+    route('GET /admin/imports/7', json({ data: batch({
+      type: 'product_units', type_label: 'Unidades y equivalencias', documents_total: 5, documents_new: 5, documents_duplicate: 0,
+      summary: { rows_invalid: 0, preview_columns: [], preview: [], units: { bases_set: 2, new: 3, updated: 1, unchanged: 0 } },
+    }) }))
+    renderAt('/importaciones/7')
+
+    expect(await screen.findByText('Equivalencias nuevas')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar importación' }))
+    expect(await screen.findByRole('dialog', { name: 'Confirmar importación' })).toHaveTextContent('Se fijarán 2 unidades base, se crearán 3 equivalencias y se actualizarán 1')
+  })
+
   it('actualiza solo mientras el lote se procesa', async () => {
     route('GET /admin/imports/7', json({ data: batch({ status: 'validating', status_label: 'Validando', can_confirm: false }) }), json({ data: batch() }))
     renderAt('/importaciones/7')

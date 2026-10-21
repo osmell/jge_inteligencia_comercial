@@ -68,6 +68,21 @@ final class Quantity
     }
 
     /**
+     * Valor (4 decimales) de una cantidad (8 decimales) a un costo unitario (4 decimales), sin pasar por float ni desbordar
+     * el entero de 64 bits: descompone ambos en partes de 4 dígitos. Redondeo de mitad hacia arriba. Solo valores positivos.
+     */
+    public static function extend(int $qtyUnits, int $costUnits): int
+    {
+        [$a1, $a0] = [intdiv($qtyUnits, 10_000), $qtyUnits % 10_000];
+        [$b1, $b0] = [intdiv($costUnits, 10_000), $costUnits % 10_000];
+        $mid = $a1 * $b0 + $a0 * $b1;
+        [$m1, $m0] = [intdiv($mid, 10_000), $mid % 10_000];
+        $rest = $m0 * 10_000 + $a0 * $b0;                    // menor que 2 × 10^8
+
+        return $a1 * $b1 + $m1 + intdiv($rest, 100_000_000) + (2 * ($rest % 100_000_000) >= 100_000_000 ? 1 : 0);
+    }
+
+    /**
      * Factor decimal positivo (hasta 6 decimales) como fracción reducida.
      *
      * @return array{0: int, 1: int} [numerador, denominador]

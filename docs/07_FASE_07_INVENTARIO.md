@@ -70,3 +70,21 @@ Los pasos 1 y 2 no dependen de las plantillas y pueden avanzar ya; del 3 en adel
 - **Sin inventario inicial no es una existencia real:** las sucursales sin inventario inicial muestran sus saldos con la marca «Sin inventario inicial» y un aviso, porque se calculan con movimientos parciales.
 - **Toma de prueba para la demo:** `docker compose exec -u $(id -u) backend php artisan db:seed --class=DemoInventorySeeder` (después de `DemoSalesSeeder`; tarda unos minutos). Crea los productos de la demo con su unidad base (galón para lubricantes y limpieza, con barril, cubeta, litro, octavo, 1/16, 1/32 y 1/64; unidad para el resto), un inventario inicial el día anterior a la primera venta, entradas al inicio de cada mes (los líquidos en cubetas, convertidas a galones, con costos que varían ±5 %) y las salidas de cada línea vendida. No deja existencias negativas, marca todo con la referencia «DEMO», es repetible y no corre en producción.
 - Las salidas de la demo usan la misma clave de origen que usará el paso 5 para las ventas reales (`sale:<id de la línea>`), así que no se duplican.
+
+## Paso 3 — Importación del inventario inicial y del catálogo de unidades (hecho)
+Dos tipos nuevos en Importaciones (con plantilla descargable, vista previa, errores por fila y columna y confirmación), con el permiso `imports.manage`.
+
+**Inventario inicial** — columnas: `Fecha Corte`, `Codigo Producto`, `Unidad de Medida`, `Cantidad`, `Costo`, `Sucursal`, `Compañia`.
+- Una fila por producto, unidad y sucursal. `Costo` es el costo de **una unidad de la unidad indicada**; el valor del movimiento es cantidad × costo (aritmética exacta). Cada fila queda como un movimiento «inicial» del libro, convertido a la unidad base del producto.
+- **Fecha de corte única por sucursal** y no futura. Esa fecha será la que use el paso 5 para ignorar las ventas anteriores.
+- El producto debe existir en el catálogo y tener unidad base; si la unidad no es la base, debe tener equivalencia. Cantidades negativas y costos negativos se rechazan (no hay existencias en negativo); **cantidad cero se omite con aviso**; máximo 10.000.000 por fila.
+- **Sin duplicados:** cada fila tiene clave de origen propia. Otro archivo que repite una fila ya cargada la omite; un producto que ya tiene inventario inicial con otros datos se rechaza («un cambio se registra como ajuste», no se sobrescribe). El mismo archivo no se puede subir dos veces (regla general de Importaciones).
+- Un mismo producto puede venir en dos unidades en la misma sucursal (p. ej. 10 galones y 8 de 1/16); se suman en la unidad base. Repetir la misma unidad en el mismo archivo es un error.
+
+**Unidades y equivalencias** — columnas: `Compañia`, `Codigo Producto`, `Unidad Base`, `Unidad`, `Factor` (las dos últimas opcionales).
+- Una fila por equivalencia: «1 `Unidad` = `Factor` unidades base» (hasta 6 decimales; cubeta = 5, 1/16 = 0,0625). Una fila sin `Unidad` fija solo la unidad base.
+- **Agrega y actualiza, no borra** las equivalencias que el archivo no menciona. Repetirlas sin cambios se omite.
+- La unidad base debe ser la misma en todas las filas del producto y **no se puede cambiar si el producto ya tiene movimientos**. Las unidades se buscan por nombre o código, sin distinguir mayúsculas ni acentos («Galón», «galon»); si no existe, se crea antes en Inventario → Unidades.
+- Orden recomendado de carga: **Productos → Unidades y equivalencias → Inventario inicial**.
+
+Las columnas de ambas plantillas se ajustan en `backend/config/imports.php` (`inventory_opening` y `product_units`) si el responsable cambia los nombres.

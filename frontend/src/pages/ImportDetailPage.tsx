@@ -166,9 +166,52 @@ function CreditSummary({ batch }: { batch: ImportBatch }) {
   )
 }
 
+function InventorySummary({ batch }: { batch: ImportBatch }) {
+  const i = batch.summary?.inventory
+  if (!i) return null
+
+  return (
+    <section>
+      <PageHeader level={2} title="Resumen" description="Inventario inicial: cada fila es un movimiento «inicial» en la unidad base del producto, con su costo." />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label="Se cargarán" value={i.new} hint="Productos por unidad y sucursal" />
+        <Stat label="Ya cargados" value={i.unchanged} hint="Se omiten: mismo contenido" />
+        <Stat label="Con conflicto" value={i.conflicts} hint="Ya tienen inventario inicial distinto" />
+      </div>
+      {i.branches.length > 0 && (
+        <div className="mt-4">
+          <DataTable label="Resumen por sucursal">
+            <thead><tr><th className={th}>Sucursal</th><th className={th}>Fecha de corte</th><th className={th}>Filas</th></tr></thead>
+            <tbody>{i.branches.map((b) => <tr key={b.id} className={tr}><td className={`${td} font-medium`}>{b.name}</td><td className={td}>{b.cutoff ?? '—'}</td><td className={`${td} tabular`}>{b.products}</td></tr>)}</tbody>
+          </DataTable>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function UnitsSummary({ batch }: { batch: ImportBatch }) {
+  const u = batch.summary?.units
+  if (!u) return null
+
+  return (
+    <section>
+      <PageHeader level={2} title="Resumen" description="Unidad base y equivalencias por producto. Se agregan y actualizan; no se borra lo que el archivo no menciona." />
+      <div className="grid gap-4 sm:grid-cols-4">
+        <Stat label="Unidades base a fijar" value={u.bases_set} />
+        <Stat label="Equivalencias nuevas" value={u.new} />
+        <Stat label="Se actualizarán" value={u.updated} />
+        <Stat label="Sin cambios" value={u.unchanged} />
+      </div>
+    </section>
+  )
+}
+
 function SummarySection({ batch }: { batch: ImportBatch }) {
   const s = batch.summary
   if (s?.credit) return <CreditSummary batch={batch} />
+  if (s?.inventory) return <InventorySummary batch={batch} />
+  if (s?.units) return <UnitsSummary batch={batch} />
   if (s?.customers || s?.products) return <MasterSummary batch={batch} />
   if (!s?.totals) return null
 
@@ -318,7 +361,17 @@ export default function ImportDetailPage() {
 
       {dialog === 'confirm' && (
         <ConfirmDialog title="Confirmar importación" confirmLabel="Importar" busy={busy} onConfirm={() => void act('confirm')} onCancel={() => setDialog(null)}>
-          {isMaster(batch.type) ? (
+          {batch.type === 'inventory_opening' ? (
+            <>
+              <p>Se cargarán <strong>{batch.documents_new}</strong> filas de inventario inicial{batch.documents_duplicate > 0 && <> (las {batch.documents_duplicate} ya cargadas se omitirán)</>}.</p>
+              <p className="mt-2">Cada fila queda como un movimiento inicial en el libro de inventario, con la fecha de corte de su sucursal. No se pueden modificar: un cambio posterior se registra como ajuste. Si algo falla no se escribe nada.</p>
+            </>
+          ) : batch.type === 'product_units' ? (
+            <>
+              <p>Se fijarán <strong>{batch.summary?.units?.bases_set ?? 0}</strong> unidades base, se crearán <strong>{batch.summary?.units?.new ?? 0}</strong> equivalencias y se actualizarán <strong>{batch.summary?.units?.updated ?? 0}</strong>.</p>
+              <p className="mt-2">No se borra ninguna equivalencia que el archivo no mencione. Si algo falla no se escribe nada.</p>
+            </>
+          ) : isMaster(batch.type) ? (
             <>
               <p>Se crearán <strong>{(batch.summary?.customers ?? batch.summary?.products)?.new ?? batch.documents_new}</strong> {MASTER_LABEL[batch.type].plural} y se actualizarán <strong>{(batch.summary?.customers ?? batch.summary?.products)?.updated ?? 0}</strong> con los datos del archivo.</p>
               <p className="mt-2">Si algo falla durante la importación no se escribe nada.</p>

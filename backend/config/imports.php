@@ -2,6 +2,8 @@
 
 use App\Imports\Credit\CreditInvoicesImportType;
 use App\Imports\Customers\CustomersImportType;
+use App\Imports\Inventory\InventoryOpeningImportType;
+use App\Imports\Inventory\ProductUnitsImportType;
 use App\Imports\Products\ProductsImportType;
 use App\Imports\Sales\SalesImportType;
 
@@ -32,10 +34,12 @@ return [
         'customers' => CustomersImportType::class,
         'products' => ProductsImportType::class,
         'credit_invoices' => CreditInvoicesImportType::class,
+        'inventory_opening' => InventoryOpeningImportType::class,
+        'product_units' => ProductUnitsImportType::class,
     ],
 
     // Nombre visible de cada tipo.
-    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes', 'products' => 'Productos', 'credit_invoices' => 'Facturas de crédito'],
+    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes', 'products' => 'Productos', 'credit_invoices' => 'Facturas de crédito', 'inventory_opening' => 'Inventario inicial', 'product_units' => 'Unidades y equivalencias'],
 
     // Filas mostradas en la vista previa.
     'preview_rows' => 20,
@@ -155,5 +159,36 @@ return [
 
         // Descuento vacío = 0.
         'optional' => ['discount_total'],
+    ],
+
+    // Inventario inicial: una fila por producto, unidad y sucursal. La fecha de corte es única por sucursal. «Costo» es el costo
+    // unitario en la unidad indicada. Los productos deben existir en el catálogo y tener unidad base (y equivalencia si la unidad no es la base).
+    'inventory_opening' => [
+        'sheet' => null,
+
+        'columns' => [
+            'cutoff' => ['Fecha Corte', 'Fecha de Corte'],
+            'product_code' => ['Código Producto', 'Codigo Producto'],
+            'unit' => ['Unidad de Medida', 'Unidad Medida'],
+            'quantity' => ['Cantidad'],
+            'unit_cost' => ['Costo', 'Costo Unitario'],
+            'branch' => ['Sucursal', 'Código Sucursal'],
+            'company' => ['Compañía', 'Compania', 'Código Compañía'],
+        ],
+    ],
+
+    // Unidad base y equivalencias de cada producto: una fila por equivalencia (o una fila sin «Unidad» para fijar solo la base).
+    'product_units' => [
+        'sheet' => null,
+
+        'columns' => [
+            'company' => ['Compañía', 'Compania', 'Código Compañía'],
+            'product_code' => ['Código Producto', 'Codigo Producto'],
+            'base_unit' => ['Unidad Base'],
+            'unit' => ['Unidad', 'Unidad Equivalente'],
+            'factor' => ['Factor', 'Equivale a'],
+        ],
+
+        'optional' => ['unit', 'factor'],
     ],
 ];

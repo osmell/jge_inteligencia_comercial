@@ -112,6 +112,8 @@ export interface ImportSummary {
     companies: { id: number; name: string; documents: number }[]
     new_sellers: string[]; new_operators: string[]
   }
+  inventory?: { new: number; unchanged: number; conflicts: number; branches: { id: number; name: string; products: number; cutoff: string | null }[] }
+  units?: { bases_set: number; new: number; updated: number; unchanged: number }
   new_sellers?: string[]
   new_operators?: string[]
 }
