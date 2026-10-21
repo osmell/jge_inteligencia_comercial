@@ -210,3 +210,9 @@ Puntos a tener presentes al comparar:
 - [ ] Un Sub Total o Total que no cuadra se rechaza con el importe esperado en el mensaje.
 - [ ] Subir otro archivo con el mismo documento: se omite; con otra cantidad: se rechaza.
 - [ ] Un documento anterior a la fecha de corte de su sucursal se omite con aviso.
+
+### Inventario: ventas y faltantes (Fase 7, paso 5)
+- [ ] Con inventario inicial cargado, importar ventas posteriores: las existencias bajan la cantidad vendida y el kárdex muestra «Venta» con su documento.
+- [ ] Reimportar el mismo día de ventas o correr `inventory:sync-sales` otra vez no cambia las existencias.
+- [ ] Una venta mayor a la existencia deja la existencia en cero y aparece en Faltantes; al cargar la entrada y pulsar Conciliar, se descuenta y desaparece.
+- [ ] Ventas anteriores a la fecha de corte no descuentan.

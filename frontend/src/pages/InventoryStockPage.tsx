@@ -72,6 +72,11 @@ export default function InventoryStockPage() {
       </Card>
 
       <FormError message={stock.error} />
+      {(meta?.open_shortfalls ?? 0) > 0 && (
+        <div className="mb-3">
+          <Alert tone="warning">Hay <strong>{meta?.open_shortfalls}</strong> ventas con faltante por conciliar (no alcanzó la existencia). <Link className="underline" to="/inventario/faltantes">Ver faltantes</Link></Alert>
+        </div>
+      )}
       {rows.some((r) => !r.reconciled) && (
         <div className="mb-3"><Alert tone="warning">Hay sucursales sin inventario inicial cargado: sus saldos se calculan solo con movimientos parciales y no son existencias reales hasta conciliarlas.</Alert></div>
       )}

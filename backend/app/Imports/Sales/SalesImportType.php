@@ -10,6 +10,7 @@ use App\Imports\ImportContext;
 use App\Imports\ImportRow;
 use App\Imports\LocationResolver;
 use App\Imports\ParsedRow;
+use App\Jobs\SyncSalesInventoryJob;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\ImportBatch;
@@ -204,6 +205,11 @@ final class SalesImportType implements ImportType
 
         // Facturas de crédito que se cargaron antes que su venta quedan enlazadas ahora.
         CreditInvoicesImportType::linkPendingToSales(collect($context->groups)->map(fn ($g) => (int) $g->fields['company'])->unique()->values()->all());
+
+        // Las salidas de inventario se generan en segundo plano, ya confirmada la importación.
+        foreach (collect($context->groups)->map(fn ($g) => (int) $g->fields['company'])->unique() as $companyId) {
+            SyncSalesInventoryJob::dispatch($companyId)->afterCommit();
+        }
     }
 
     /** @return array{0: Company|null, 1: Branch|null} */

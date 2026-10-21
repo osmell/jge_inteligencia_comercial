@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import InventoryKardexPage from './pages/InventoryKardexPage'
+import InventoryShortfallsPage from './pages/InventoryShortfallsPage'
 import InventoryStockPage from './pages/InventoryStockPage'
 import InventoryUnitsPage from './pages/InventoryUnitsPage'
 
@@ -26,19 +27,25 @@ beforeEach(() => {
   document.cookie = 'XSRF-TOKEN=x'
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     const path = url.replace('http://localhost:8000/api/v1', '')
+    if (init?.method === 'POST') {
+      puts.push({ path, body: {} })
+      return new Response(JSON.stringify({ data: { applied: '2', missing: '1', resolved: false } }), { status: 200 })
+    }
     if (init?.method === 'PUT') {
       puts.push({ path, body: JSON.parse(String(init.body)) })
       return new Response(JSON.stringify({ data: {} }), { status: 200 })
     }
     urls.push(path)
     let body: unknown = { data: [] }
-    if (path.startsWith('/inventory/stock')) {
+    if (path.startsWith('/inventory/shortfalls')) {
+      body = { data: [{ id: 5, company_id: 1, branch_id: 2, branch: 'Central', issued_on: '2026-10-05', document: 'F-1', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, requested: '4', applied: '1', missing: '3', reason: 'insufficient', resolved: false }], meta: { page: 1, has_more: false, open_total: 1 } }
+    } else if (path.startsWith('/inventory/stock')) {
       body = {
         data: [
           { company_id: 1, company: 'Alfa', branch_id: 2, branch: 'Central', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, unit: 'Galón', quantity: '6.5', reconciled: true, ...(costsVisible ? { value: '65.0000', average_cost: '10.0000' } : {}) },
           { company_id: 1, company: 'Alfa', branch_id: 3, branch: 'Norte', product: { id: 7, code: 'ACE-1', name: 'Aceite 20W50' }, unit: 'Galón', quantity: '3', reconciled: false, ...(costsVisible ? { value: '45.0000', average_cost: '15.0000' } : {}) },
         ],
-        meta: { page: 1, has_more: false, costs_visible: costsVisible, totals: { products: 2, ...(costsVisible ? { value: '110.00' } : {}) } },
+        meta: { page: 1, has_more: false, costs_visible: costsVisible, open_shortfalls: 2, totals: { products: 2, ...(costsVisible ? { value: '110.00' } : {}) } },
       }
     } else if (path.startsWith('/inventory/kardex')) {
       body = {
@@ -165,5 +172,34 @@ describe('unidades y equivalencias', () => {
     render(<AuthProvider><MemoryRouter initialEntries={['/inventario/kardex']}><InventoryKardexPage /></MemoryRouter></AuthProvider>)
 
     expect(await screen.findByText(/Elige un producto desde la pantalla de existencias/)).toBeInTheDocument()
+  })
+
+  it('las existencias avisan de los faltantes por conciliar', async () => {
+    render(<AuthProvider><MemoryRouter><InventoryStockPage /></MemoryRouter></AuthProvider>)
+
+    expect(await screen.findByText(/ventas con faltante por conciliar/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ver faltantes' })).toHaveAttribute('href', '/inventario/faltantes')
+  })
+
+  it('lista los faltantes y permite conciliar con el permiso de gestión', async () => {
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InventoryShortfallsPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Faltantes por conciliar' })
+    await waitFor(() => expect(table).toHaveTextContent('F-1'))
+    expect(table).toHaveTextContent('Existencias insuficientes')
+    await u.click(screen.getByRole('button', { name: /Conciliar faltante de Aceite 20W50/ }))
+
+    await waitFor(() => expect(puts).toEqual([{ path: '/inventory/shortfalls/5/reconcile', body: {} }]))
+  })
+
+  it('sin permiso de gestión los faltantes son de solo consulta', async () => {
+    permissions = ['inventory.view']
+    render(<AuthProvider><MemoryRouter><InventoryShortfallsPage /></MemoryRouter></AuthProvider>)
+
+    await screen.findByRole('table', { name: 'Faltantes por conciliar' })
+    await waitFor(() => expect(screen.getByRole('table', { name: 'Faltantes por conciliar' })).toHaveTextContent('F-1'))
+    expect(screen.queryByRole('button', { name: /Conciliar/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Revisar ventas pendientes' })).not.toBeInTheDocument()
   })
 })

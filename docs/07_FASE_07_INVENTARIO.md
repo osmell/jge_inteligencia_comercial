@@ -98,3 +98,13 @@ Tipo «Entradas de inventario» en Importaciones (`imports.manage`). Columnas: `
 - **Frente al inventario inicial:** un documento fechado en o antes de la fecha de corte de su sucursal ya está contado y se **omite con aviso** (no se cuenta dos veces). Una sucursal sin inventario inicial acepta la entrada pero se avisa que la existencia será parcial. A la inversa, el inventario inicial se rechaza si la sucursal ya tiene movimientos fechados hasta su fecha de corte.
 - Cantidad cero se omite con aviso; productos, unidades y equivalencias se validan igual que en el inventario inicial.
 - Orden recomendado: Productos → Unidades y equivalencias → Inventario inicial → Entradas.
+
+## Paso 5 — Salidas desde las ventas y faltantes por conciliar (hecho)
+- **Cada línea de venta descuenta existencias** de la sucursal de su factura (las `Und.Vendidas` ya vienen en la unidad base). Se genera en segundo plano al confirmar una importación de ventas y también al cargar un inventario inicial (descuenta las ventas ya cargadas posteriores al corte). Comando manual y seguro de repetir: `php artisan inventory:sync-sales [--company=] [--branch=]`; también hay un botón «Revisar ventas pendientes» en Faltantes.
+- **Solo ventas posteriores a la fecha de corte** de sucursales con inventario inicial. Antes del corte, o sin inventario inicial, no se descuenta nada (no se calculan existencias con movimientos parciales).
+- **Sin duplicados:** cada línea tiene la clave de origen `sale:<id de la línea>`; reimportar o volver a sincronizar no repite salidas.
+- **Sin existencias negativas:** si la existencia no alcanza, se descuenta lo disponible y lo que falta queda como **faltante por conciliar** (la venta ya ocurrió y no se toca). Un producto fuera del catálogo o sin unidad base también queda como faltante hasta corregirlo.
+- **Faltantes por conciliar** (`/inventario/faltantes`): fecha, documento, producto, sucursal, vendido, descontado, lo que falta y el motivo. Quien tiene `inventory.manage` puede **Conciliar**: se descuenta lo que haya disponible ahora (con la fecha de hoy y la referencia de la venta) y el resto sigue pendiente; queda en Auditoría. Las Existencias avisan cuántos hay pendientes.
+- Las salidas se valoran a costo promedio ponderado, igual que cualquier salida del libro.
+- Simplificación conocida: las ventas se procesan de la más antigua a la más reciente contra las existencias de ese momento; una venta anterior a una entrada puede descontar mercancía que llegó después si ambas se cargan juntas.
+- La toma de prueba de demostración ahora se confirma por día (una sola transacción agotaba la memoria compartida de PostgreSQL con 17 000 líneas).

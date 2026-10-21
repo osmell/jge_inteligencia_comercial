@@ -10,6 +10,7 @@ use App\Imports\ImportRow;
 use App\Imports\LocationResolver;
 use App\Imports\ParsedRow;
 use App\Inventory\Quantity;
+use App\Jobs\SyncSalesInventoryJob;
 use App\Models\Branch;
 use App\Models\ImportBatch;
 use App\Models\InventoryMovement;
@@ -164,6 +165,11 @@ final class InventoryOpeningImportType implements ImportType
                 (int) $f['company'], (int) $f['branch'], $product, InventoryMovement::OPENING, $f['quantity'], (int) $f['unit_id'], CarbonImmutable::parse($f['cutoff']), $context->batch->user,
                 value: Decimal::format($this->value($f)), reference: 'Inventario inicial', sourceKey: $this->sourceKey($f), batchId: $context->batch->id, audit: false,
             );
+        }
+
+        // Las ventas posteriores a la fecha de corte que ya estaban cargadas descuentan ahora, en segundo plano.
+        foreach (collect($context->groups)->map(fn ($g) => (int) $g->fields['branch'])->unique() as $branchId) {
+            SyncSalesInventoryJob::dispatch(null, $branchId)->afterCommit();
         }
     }
 

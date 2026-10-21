@@ -38,8 +38,10 @@ class DemoInventorySeeder extends Seeder
             ?? throw new RuntimeException('No hay ventas de demostración: ejecuta antes DemoSalesSeeder.');
         $admin = User::where('username', 'admin')->first();
 
-        DB::transaction(function () use ($ledger, $batch, $admin) {
-            $this->purge();
+        // Sin una transacción única para todo: miles de movimientos en una sola agotan la memoria compartida de PostgreSQL.
+        // Cada día se confirma por separado; si se interrumpe, se vuelve a ejecutar (borra lo marcado «DEMO» y regenera).
+        DB::transaction(fn () => $this->purge());
+        (function () use ($ledger, $batch, $admin) {
             $lines = DB::table('sales_lines as l')->join('sales_documents as d', 'd.id', '=', 'l.sales_document_id')->where('d.import_batch_id', $batch)
                 ->orderBy('l.issued_on')->orderBy('l.id')->get(['l.id', 'l.company_id', 'l.branch_id', 'l.issued_on', 'l.product_code', 'l.product_name', 'l.category_name', 'l.units', 'l.unit_cost']);
             if ($lines->isEmpty()) {
@@ -63,28 +65,29 @@ class DemoInventorySeeder extends Seeder
             $seenMonth = [];
 
             foreach ($byDay as $day => $dayLines) {
-                $month = substr($day, 0, 7);
-                if (! isset($seenMonth[$month])) {
-                    $seenMonth[$month] = true;
-                    // Inventario inicial (día anterior a la primera venta) o entradas del mes, solo donde habrá salidas.
-                    foreach ($demand as $key => $perMonth) {
-                        if (! isset($perMonth[$month])) {
-                            continue;
+                DB::transaction(function () use ($ledger, $admin, $units, $demand, $cost, $products, $first, $firstMonth, &$seenMonth, $day, $dayLines) {
+                    $month = substr($day, 0, 7);
+                    if (! isset($seenMonth[$month])) {
+                        $seenMonth[$month] = true;
+                        // Inventario inicial (día anterior a la primera venta) o entradas del mes, solo donde habrá salidas.
+                        foreach ($demand as $key => $perMonth) {
+                            if (! isset($perMonth[$month])) {
+                                continue;
+                            }
+                            [$companyId, $branchId, $code] = explode('|', $key, 3);
+                            $product = $products[$companyId.'|'.$code];
+                            $isOpening = $month === $firstMonth;
+                            $on = $isOpening ? $first->subDay() : CarbonImmutable::parse($day);
+                            $this->stock($ledger, $admin, $units, (int) $companyId, (int) $branchId, $product, $perMonth[$month], $isOpening, $on, $month, $cost[$code]);
                         }
-                        [$companyId, $branchId, $code] = explode('|', $key, 3);
-                        $product = $products[$companyId.'|'.$code];
-                        $isOpening = $month === $firstMonth;
-                        $on = $isOpening ? $first->subDay() : CarbonImmutable::parse($day);
-                        $this->stock($ledger, $admin, $units, (int) $companyId, (int) $branchId, $product, $perMonth[$month], $isOpening, $on, $month, $cost[$code]);
                     }
-                }
-                foreach ($dayLines as $l) {
-                    $ledger->record($l->company_id, $l->branch_id, $products[$l->company_id.'|'.$l->product_code], InventoryMovement::SALE, (string) $l->units, null, CarbonImmutable::parse($day), null,
-                        reference: self::REFERENCE, sourceKey: 'sale:'.$l->id, audit: false);
-                }
+                    foreach ($dayLines as $l) {
+                        $ledger->record($l->company_id, $l->branch_id, $products[$l->company_id.'|'.$l->product_code], InventoryMovement::SALE, (string) $l->units, null, CarbonImmutable::parse($day), null,
+                            reference: self::REFERENCE, sourceKey: 'sale:'.$l->id, audit: false);
+                    }
+                });
             }
-
-        });
+        })();
     }
 
     /** Inventario inicial o entrada mensual que cubre la demanda del mes (no registra nada si ya alcanza). */

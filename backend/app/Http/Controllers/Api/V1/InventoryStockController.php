@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InventoryStockRequest;
 use App\Models\Branch;
+use App\Models\InventoryShortfall;
 use App\Models\Product;
 use App\Services\InventoryStock;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +21,7 @@ class InventoryStockController extends Controller
 
         return response()->json([
             'data' => $result['rows'],
-            'meta' => ['page' => $request->page(), 'has_more' => $result['has_more'], 'totals' => $result['totals'], 'costs_visible' => $this->stock->canSeeCosts($request->user())],
+            'meta' => ['page' => $request->page(), 'has_more' => $result['has_more'], 'totals' => $result['totals'], 'costs_visible' => $this->stock->canSeeCosts($request->user()), 'open_shortfalls' => InventoryShortfall::query()->whereNull('resolved_at')->count()],
         ]);
     }
 

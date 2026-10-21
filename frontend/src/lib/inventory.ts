@@ -38,7 +38,7 @@ export interface StockRow {
 
 export interface StockList {
   data: StockRow[]
-  meta: { page: number; has_more: boolean; costs_visible: boolean; totals: { products: number; value?: string } }
+  meta: { page: number; has_more: boolean; costs_visible: boolean; open_shortfalls?: number; totals: { products: number; value?: string } }
 }
 
 export type InventoryMovementType = 'opening' | 'entry' | 'return_in' | 'transfer_in' | 'adjustment_in' | 'sale' | 'supplier_return' | 'transfer_out' | 'adjustment_out' | 'reversal'
@@ -82,4 +82,32 @@ export interface Kardex {
     reconciled: boolean
   }
   meta: { product: { id: number; code: string; name: string; unit: string | null }; branch: string; costs_visible: boolean }
+}
+
+export type ShortfallReason = 'insufficient' | 'no_product' | 'no_base_unit'
+
+export const SHORTFALL_REASON: Record<ShortfallReason, string> = {
+  insufficient: 'Existencias insuficientes',
+  no_product: 'Producto fuera del catálogo',
+  no_base_unit: 'Producto sin unidad base',
+}
+
+export interface ShortfallRow {
+  id: number
+  company_id: number
+  branch_id: number
+  branch: string
+  issued_on: string
+  document: string | null
+  product: { id: number | null; code: string; name: string | null }
+  requested: string
+  applied: string
+  missing: string
+  reason: ShortfallReason
+  resolved: boolean
+}
+
+export interface ShortfallList {
+  data: ShortfallRow[]
+  meta: { page: number; has_more: boolean; open_total: number }
 }
