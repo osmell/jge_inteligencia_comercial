@@ -20,6 +20,7 @@ import InsightsPage from './pages/InsightsPage'
 import InsightsSeasonalityPage from './pages/InsightsSeasonalityPage'
 import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
 import DigestDetailPage from './pages/DigestDetailPage'
+import WhatsappSettingsPage from './pages/WhatsappSettingsPage'
 import MailSettingsPage from './pages/MailSettingsPage'
 import DigestsPage from './pages/DigestsPage'
 import AutomationsPage from './pages/AutomationsPage'
@@ -76,6 +77,9 @@ export default function App() {
               <Route element={<RequirePermission permission="digests.view" />}>
                 <Route path="resumenes" element={<DigestsPage />} />
                 <Route path="resumenes/:id" element={<DigestDetailPage />} />
+              </Route>
+              <Route element={<RequirePermission permission="whatsapp.manage" />}>
+                <Route path="admin/whatsapp" element={<WhatsappSettingsPage />} />
               </Route>
               <Route element={<RequirePermission permission="mail.manage" />}>
                 <Route path="admin/correo" element={<MailSettingsPage />} />

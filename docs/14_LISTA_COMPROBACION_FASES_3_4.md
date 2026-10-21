@@ -296,3 +296,9 @@ Puntos a tener presentes al comparar:
 - [ ] Verificar que la contraseña no se vuelve a ver al reabrir la pantalla.
 - [ ] Un usuario con correo y el resumen diario: llega el correo con cifras y enlace, una sola vez.
 - [ ] Apagar el servidor/credencial falsa: el registro muestra el reintento y luego «Falló».
+
+### WhatsApp (Fase 9, paso 6)
+- [ ] Capturar los datos reales de la cuenta, guardar y usar «Probar conexión».
+- [ ] Registrar una plantilla aprobada en Meta, marcarla «Aprobada» y enviarla a un cliente de prueba con consentimiento: llega y pasa a «Entregado/Leído».
+- [ ] Comprobar que a un cliente «no contactar», sin consentimiento o sin número no sale nada y queda el motivo.
+- [ ] Configurar el webhook en Meta con la URL y el token de verificación.

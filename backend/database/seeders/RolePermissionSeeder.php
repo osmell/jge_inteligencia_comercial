@@ -32,6 +32,7 @@ class RolePermissionSeeder extends Seeder
         'insights.manage' => 'Inteligencia comercial (cambiar parámetros)',
         'digests.view' => 'Resúmenes para gerencia (diario y semanal)',
         'mail.manage' => 'Correo (configurar el servidor y consultar los envíos)',
+        'whatsapp.manage' => 'WhatsApp (configurar la cuenta, plantillas y consultar los mensajes)',
         'automations.manage' => 'Automatizaciones (configurar, pausar y consultar el registro)',
     ];
 

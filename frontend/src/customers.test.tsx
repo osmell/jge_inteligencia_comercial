@@ -80,6 +80,7 @@ beforeEach(() => {
     if (path === '/customers/types') return { data: [{ id: 1, name: 'Taller', active: true }, { id: 2, name: 'Mayorista', active: false }] }
     if (path.startsWith('/customers/types/') || path === '/customers/type') return { data: {} }
     if (path.startsWith('/companies')) return { data: [{ id: 1, code: 'A', name: 'Compañía Alfa', is_active: true }] }
+    if (/^\/customers\/\d+\/whatsapp$/.test(path)) return { data: { number: null, consent: null, blockers: [], ready: false, consents: [], templates: [], messages: [] } }
     if (path.startsWith('/customers/interactions')) return { data: interactions, meta: { page: 1, has_more: false, contact_preference: preference } }
     if (path.endsWith('/complete')) return { data: interactions[0] }
     if (path === '/customers/contact-preference') return { data: preference }

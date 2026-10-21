@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
 import { BarChart } from '../components/charts'
 import CustomerCredit from '../components/CustomerCredit'
+import CustomerWhatsapp from '../components/CustomerWhatsapp'
 import CustomerAlerts from '../components/CustomerAlerts'
 import CustomerCrossSell from '../components/CustomerCrossSell'
 import CustomerSegment from '../components/CustomerSegment'
@@ -250,6 +251,7 @@ export default function CustomerProfilePage() {
           </Card>
 
           <CustomerInteractions companyId={companyId} code={code} />
+          {can('interactions.manage') && <CustomerWhatsapp customerId={p.customer.id} />}
           <CustomerQuotations companyId={companyId} code={code} name={p.customer.name} />
           {can('insights.view') && <CustomerAlerts companyId={companyId} code={code} />}
           {can('insights.view') && <CustomerSegment companyId={companyId} code={code} />}

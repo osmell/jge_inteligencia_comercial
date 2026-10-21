@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\V1\QuotationController;
 use App\Http\Controllers\Api\V1\Sales\ProductController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
+use App\Http\Controllers\Api\V1\WhatsappController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -139,6 +140,17 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('log', [MailController::class, 'log']);
     });
 
+    // WhatsApp: cuenta, plantillas y registro (credenciales: solo administración).
+    Route::middleware('permission:whatsapp.manage')->prefix('whatsapp')->group(function () {
+        Route::get('settings', [WhatsappController::class, 'show']);
+        Route::put('settings', [WhatsappController::class, 'update']);
+        Route::post('test', [WhatsappController::class, 'test']);
+        Route::get('templates', [WhatsappController::class, 'templates']);
+        Route::post('templates', [WhatsappController::class, 'storeTemplate']);
+        Route::put('templates/{template}', [WhatsappController::class, 'updateTemplate'])->whereNumber('template');
+        Route::get('messages', [WhatsappController::class, 'messages']);
+    });
+
     // Administración de las automatizaciones (catálogo, parámetros, interruptor general, ejecución manual y registro).
     Route::middleware('permission:automations.manage')->prefix('automations')->group(function () {
         Route::get('/', [AutomationController::class, 'index']);
@@ -209,6 +221,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::put('interactions/{interaction}/complete', [CustomerInteractionController::class, 'complete'])->whereNumber('interaction');
         Route::put('interactions/{interaction}', [CustomerInteractionController::class, 'update'])->whereNumber('interaction');
         Route::put('contact-preference', [CustomerInteractionController::class, 'updatePreference']);
+        Route::get('{customer}/whatsapp', [WhatsappController::class, 'customer'])->whereNumber('customer');
+        Route::post('{customer}/whatsapp/consent', [WhatsappController::class, 'consent'])->whereNumber('customer');
+        Route::post('{customer}/whatsapp/send', [WhatsappController::class, 'send'])->whereNumber('customer');
     });
 
     // Tipos de cliente y su asignación: permiso de gestión de clientes.
@@ -254,4 +269,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::apiResource('users', UserController::class)->except('destroy');
         });
     });
+});
+
+// Webhook de Meta (sin sesión): se verifica con el token de verificación y se acepta solo con firma válida.
+Route::prefix('webhooks')->middleware('throttle:120,1')->group(function () {
+    Route::get('whatsapp', [WhatsappController::class, 'verify']);
+    Route::post('whatsapp', [WhatsappController::class, 'webhook']);
 });

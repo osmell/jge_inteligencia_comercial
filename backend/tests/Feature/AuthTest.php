@@ -39,7 +39,7 @@ class AuthTest extends TestCase
             ->assertJsonPath('data.username', 'jperez')
             ->assertJsonPath('data.role.slug', 'administrador')
             ->assertJsonPath('data.companies.0.code', $company->code)
-            ->assertJsonCount(23, 'data.permissions');
+            ->assertJsonCount(24, 'data.permissions');
 
         $this->getJson('/api/v1/auth/me')->assertOk()->assertJsonPath('data.username', 'jperez');
         $this->assertNotNull($user->fresh()->last_login_at);

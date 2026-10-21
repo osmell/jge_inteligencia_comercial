@@ -85,3 +85,12 @@ Pantalla **Resúmenes** (`/resumenes`, permiso nuevo `digests.view`; no se otorg
 - **Sin duplicados:** cada correo tiene clave (aviso + destinatario); una repetición no lo manda dos veces. Los resúmenes salen con sus cifras en el cuerpo y un enlace.
 - **Envío y reintentos:** automatización «Envío de correos» (cada hora, ventana de avisos); si falla se reintenta a los 10 y 60 minutos y luego queda como **Falló** con el motivo. Un envío sin confirmar tras 30 min no se reenvía solo.
 - Pendiente de confirmar: dirección remitente definitiva y los datos reales del servidor (se capturan en la pantalla).
+
+## Paso 6 — WhatsApp (hecho)
+- **Pantalla «WhatsApp»** (`/admin/whatsapp`, permiso nuevo `whatsapp.manage`, solo administración): identificador del número y de la cuenta, versión de la API, token de acceso, secreto de la aplicación y token de verificación del webhook (los tres **cifrados**, nunca devueltos ni auditados; vacío al guardar = se conserva), **prueba de conexión** contra Meta, plantillas y registro de mensajes.
+- **Plantillas:** se crean y aprueban en Meta; aquí se registran con el mismo nombre/texto (`{{1}}`, `{{2}}`…) y su estado (borrador, en revisión, aprobada, rechazada). **Solo las aprobadas se envían.**
+- **Consentimiento** por cliente (ficha → WhatsApp): cada cambio queda como un registro que no se edita (aceptó / retiró, con cómo se obtuvo o por qué se retiró); vale el último.
+- **Envío desde la ficha** (permiso de seguimiento): se bloquea y queda registrado como **No enviado**, con el motivo, si el cliente está «no contactar», no tiene número, no tiene consentimiento vigente, la plantilla no está aprobada, faltan valores o WhatsApp no está activo. El mismo mensaje al mismo cliente el mismo día no se repite.
+- **Estados:** webhook firmado (`/api/v1/webhooks/whatsapp`, verificación con token y firma `X-Hub-Signature-256`) actualiza enviado → entregado → leído o fallido; un estado no retrocede.
+- Los contactos por WhatsApp hechos a mano siguen registrándose en Seguimiento; el envío del sistema no crea interacciones ni cuenta en los indicadores de seguimiento.
+- Envío automático de avisos por WhatsApp (cobro, cotizaciones) **no está hecho**: requiere plantillas aprobadas y decisión de negocio (cuestionario, preguntas 12 a 14).
