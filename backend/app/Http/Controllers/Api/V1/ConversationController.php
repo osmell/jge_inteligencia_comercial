@@ -9,7 +9,10 @@ use App\Models\User;
 use App\Models\WhatsappAttachment;
 use App\Models\WhatsappConversation;
 use App\Models\WhatsappMessage;
+use App\Models\WhatsappTemplate;
 use App\Services\ConversationAccess;
+use App\Services\ConversationSender;
+use App\Services\WhatsappService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,7 +31,7 @@ class ConversationController extends Controller
     /** Tipos que el navegador puede mostrar en línea; el resto siempre se descarga. */
     private const INLINE = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/aac', 'application/pdf'];
 
-    public function __construct(private readonly ConversationAccess $access) {}
+    public function __construct(private readonly ConversationAccess $access, private readonly ConversationSender $sender, private readonly WhatsappService $wa) {}
 
     public function index(Request $request): JsonResponse
     {
@@ -78,6 +81,53 @@ class ConversationController extends Controller
         ]);
     }
 
+    /** Envía un mensaje libre (texto y/o un archivo, con cita opcional); queda guardado y en cola de envío. */
+    public function reply(Request $request, int $conversation): JsonResponse
+    {
+        $c = $this->find($request, $conversation);
+        abort_unless($this->access->canReply($request->user(), $c), 403, 'No puedes escribir en esta conversación.');
+        $data = $request->validate([
+            'body' => ['nullable', 'string', 'max:4096'], 'file' => ['nullable', 'file', 'max:102400'], 'reply_to_id' => ['nullable', 'integer', 'min:1'],
+            'client_key' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{8,64}$/'],
+        ]);
+        $m = $this->sender->send($request->user(), $c, $data['body'] ?? null, $request->file('file'), isset($data['reply_to_id']) ? (int) $data['reply_to_id'] : null, $data['client_key'] ?? null);
+
+        return response()->json(['data' => $this->presentOne($m)], 201);
+    }
+
+    /** Reenvía un mensaje libre que había fallado. */
+    public function retry(Request $request, int $message): JsonResponse
+    {
+        $m = WhatsappMessage::query()->findOrFail($message);
+        $c = $this->find($request, (int) $m->conversation_id);
+        abort_unless($this->access->canReply($request->user(), $c), 403, 'No puedes escribir en esta conversación.');
+
+        return response()->json(['data' => $this->presentOne($this->sender->retry($request->user(), $m))]);
+    }
+
+    /** Plantillas aprobadas, para escribir al cliente cuando la ventana de 24 horas está cerrada. */
+    public function templates(): JsonResponse
+    {
+        return response()->json(['data' => WhatsappTemplate::query()->where('status', 'approved')->orderBy('name')->get()->map(fn (WhatsappTemplate $t) => ['id' => $t->id, 'name' => $t->name, 'body' => $t->body, 'variables' => $t->variableCount()])->all()]);
+    }
+
+    public function sendTemplate(Request $request, int $conversation): JsonResponse
+    {
+        $c = $this->find($request, $conversation);
+        abort_unless($this->access->canReply($request->user(), $c), 403, 'No puedes escribir en esta conversación.');
+        $data = $request->validate(['template_id' => ['required', 'integer'], 'params' => ['nullable', 'array', 'max:10'], 'params.*' => ['string', 'max:300']]);
+        $customer = Customer::withoutGlobalScopes()->findOrFail($c->customer_id);
+        if ($this->wa->number($customer->whatsapp) !== $c->wa_number) {
+            return response()->json(['message' => 'El número de esta conversación ya no es el que tiene el cliente.'], 422);
+        }
+        $m = $this->wa->send($request->user(), $customer, WhatsappTemplate::query()->findOrFail($data['template_id']), $data['params'] ?? []);
+        if ($m->status === WhatsappMessage::NOT_SENT) {
+            return response()->json(['message' => (string) $m->error], 422);
+        }
+
+        return response()->json(['data' => $this->presentOne($m)], 201);
+    }
+
     /** Marca como leída la conversación (hasta su último mensaje) para quien la abre. */
     public function read(Request $request, int $conversation): JsonResponse
     {
@@ -122,6 +172,15 @@ class ConversationController extends Controller
         return Storage::disk('conversations')->response($file->path, $file->original_name ?? basename($file->path), [
             'Content-Type' => $file->mime, 'X-Content-Type-Options' => 'nosniff', 'Content-Security-Policy' => "default-src 'none'; sandbox", 'Cache-Control' => 'private, max-age=3600',
         ], $inline ? 'inline' : 'attachment');
+    }
+
+    /** @return array<string, mixed> */
+    private function presentOne(WhatsappMessage $m): array
+    {
+        $m = $m->fresh() ?? $m;                            // con cola síncrona el envío ya pudo cambiar su estado
+        $reply = $m->reply_to_id === null ? null : WhatsappMessage::query()->find($m->reply_to_id);
+
+        return $this->message($m, WhatsappAttachment::query()->where('message_id', $m->id)->get(), $reply, $m->user_id === null ? null : DB::table('users')->where('id', $m->user_id)->value('name'));
     }
 
     private function find(Request $request, int $id): WhatsappConversation

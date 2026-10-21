@@ -77,3 +77,18 @@ Cuenta de WhatsApp Business configurable (credenciales cifradas, prueba de conex
 - **Tipos:** texto, imagen, video, audio y nota de voz, documento, sticker (como imagen), ubicación, reacción (ligada al mensaje reaccionado), respuesta citando un mensaje, respuesta de botón o lista; contactos y cualquier otro tipo se guardan como «mensaje no compatible» (nunca se descartan).
 - **Archivos:** el mensaje se guarda de inmediato con el adjunto **pendiente** y un trabajo en cola lo descarga (Meta da enlaces que caducan en minutos; reintentos a los 10, 30 y 90 s). Solo se aceptan los tipos y tamaños de WhatsApp (imagen 5 MB; audio y video 16 MB; documento 100 MB), se verifica la firma `sha256` que da Meta y que las imágenes y los PDF sean realmente lo que dicen ser; se guardan en la carpeta privada con nombre generado (`compañía/año/mes/uuid.ext`). Un archivo rechazado o que falla queda marcado «fallido» con su motivo y el mensaje se conserva.
 - **Aún no hay** aviso en la campana ni tiempo real (paso 5) ni respuesta desde el sistema (paso 4).
+
+## Paso 4 — Envío de mensajes y archivos desde el sistema
+
+**Interfaz (API).** `POST /conversations/{id}/messages` (texto y/o un archivo, `reply_to_id` para citar, `client_key` para no duplicar), `POST /conversations/{id}/template` (plantilla aprobada), `GET /conversations/templates` y `POST /conversations/messages/{id}/retry` (reenviar uno que falló). Todo exige `conversations.reply`, ser vendedor o supervisor con la conversación en su alcance y un cliente asignado (administración y gerencia nunca escriben). Límite de 60 envíos por minuto por persona.
+
+**Reglas.**
+- Con la ventana de 24 h abierta: texto o archivo libre. Cerrada: solo plantillas aprobadas (con consentimiento vigente, como ya estaba).
+- Nunca a un cliente «no contactar», ni con WhatsApp desactivado, ni a una conversación sin cliente.
+- Decisión: el mensaje libre **no exige consentimiento previo** porque responde a un cliente que escribió primero (si no, ningún vendedor podría contestar). Las plantillas sí lo exigen.
+- Archivos: se validan por su contenido real (no por la extensión ni el tipo que declara el navegador). Permitidos: JPG/PNG, MP4/3GP, audio (AAC, M4A, MP3, AMR, OGG), PDF, Word, Excel, PowerPoint y texto `.txt`. Límites de WhatsApp: imagen 5 MB, audio/video 16 MB, documento 100 MB. Un audio no lleva texto.
+- El archivo se guarda en la carpeta privada con nombre generado; el nombre original se limpia y solo se usa para mostrarlo.
+
+**Garantías.** El mensaje se guarda antes de enviarse (estado `queued`) y una cola lo entrega a Meta (reintentos a los 10/30/90 s ante fallo de red, 429 o 5xx). Un mensaje que ya salió nunca se reenvía; `client_key` evita duplicar si la petición se repite; el identificador del archivo subido a Meta se anota para no volver a subirlo. Si Meta lo rechaza (4xx) o se agotan los intentos queda `failed` con su motivo y se puede reenviar a mano. Los acuses de Meta (entregado/leído) siguen actualizando las palomitas. Auditoría guarda el evento sin el contenido del mensaje.
+
+**Pendiente / límites.** Si Meta aceptó el mensaje pero la respuesta se pierde por red, el reintento podría duplicarlo (limitación de la API; se mitiga con tiempos de espera cortos). El límite de subida de PHP/nginx debe permitir los archivos grandes (ver nota de reconstruir la imagen). Validar con el número de prueba de Meta, con el worker de colas corriendo.

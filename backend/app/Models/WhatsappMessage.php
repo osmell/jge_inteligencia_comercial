@@ -18,6 +18,8 @@ use Illuminate\Support\Carbon;
  * @property string $kind
  * @property string $status
  * @property string|null $wa_message_id
+ * @property int|null $user_id
+ * @property string|null $client_key
  * @property string|null $error
  * @property Carbon $created_at
  * @property Carbon|null $sent_at
@@ -37,6 +39,9 @@ class WhatsappMessage extends Model
     public const NOT_SENT = 'not_sent';
 
     public const RECEIVED = 'received';
+
+    /** Saliente guardado, pendiente de entregar a Meta (la cola lo envía y lo reintenta). */
+    public const QUEUED = 'queued';
 
     public $timestamps = false;
 

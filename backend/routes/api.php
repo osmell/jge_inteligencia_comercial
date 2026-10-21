@@ -155,6 +155,12 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('{conversation}/read', [ConversationController::class, 'read'])->whereNumber('conversation');
         Route::get('{conversation}/notes', [ConversationController::class, 'notes'])->whereNumber('conversation');
         Route::post('{conversation}/notes', [ConversationController::class, 'storeNote'])->whereNumber('conversation');
+        Route::get('templates', [ConversationController::class, 'templates']);
+        Route::middleware(['permission:conversations.reply', 'throttle:60,1'])->group(function () {
+            Route::post('{conversation}/messages', [ConversationController::class, 'reply'])->whereNumber('conversation');
+            Route::post('{conversation}/template', [ConversationController::class, 'sendTemplate'])->whereNumber('conversation');
+            Route::post('messages/{message}/retry', [ConversationController::class, 'retry'])->whereNumber('message');
+        });
     });
 
     // WhatsApp: cuenta, plantillas y registro (credenciales: solo administración).
