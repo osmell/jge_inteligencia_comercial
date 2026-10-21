@@ -37,3 +37,13 @@ Supuestos tomados de las propuestas del cuestionario `19` (pendientes de confirm
 - **Secciones y permiso (el mismo de su pantalla de origen):** `sales` (venta neta, facturas, clientes, ticket promedio; contra el tramo anterior y el del año anterior; serie diaria y de 12 meses), `goals` (meta, avance, falta, proyección al cierre y filas por vendedor), `rankings` (5 principales clientes y productos; vendedores, salvo para el vendedor), `companies` (comparativo, solo si ve más de una compañía), `credit` (saldo, vencido, tramos, principales deudores, promesas de los próximos 7 días e incumplidas de 30), `quotations` (abiertas, por vencer en 3 días, vencidas sin cerrar, emitidas y convertidas en el periodo), `followup` (acciones vencidas y de hoy), `inventory` (agotados, bajo mínimo, sin rotación, sobre máximo) e `insights` (recomendaciones abiertas por gravedad, clientes en riesgo, caídas de venta).
 - Reutiliza los servicios existentes (`SalesStatistics`, `SellerGoals`, `CreditPortfolio`, `PaymentPromises`, `FollowUpAgenda`, `InventoryRotation`); `SalesStatistics` acepta `seller_ids` y `CreditPortfolio::aging` un filtro de vendedores. No hay cálculos nuevos de negocio.
 - Pendiente: valor del inventario (solo con permiso de costos) y clientes sin contacto reciente; se añaden si el responsable los confirma en el cuestionario.
+
+## Paso 3 — Componentes de gráficos (hecho)
+Se amplía `frontend/src/components/charts.tsx` (el `BarChart` y la `InlineBar` existentes no cambian) con componentes sin librerías externas, en SVG, que usan los colores del sistema de diseño:
+- **`LineChart`:** hasta 3 series comparadas por posición (día 1 del periodo contra día 1 del anterior). La primera lleva área y trazo continuo; las demás, trazos distintos (guiones) para no depender solo del color; leyenda con el nombre de cada serie; cada punto trae su valor como texto (`<title>`).
+- **`Sparkline`:** mini-tendencia para tarjetas de indicador; el valor y el cambio se escriben al lado.
+- **`ProgressBar`:** avance contra una meta, con marca de referencia opcional (esperado a la fecha o proyección), `role="progressbar"` y el estado dicho con **texto** (Cumplida / Cerca / Lejos) además del color; nunca se dibuja por encima del 100 %.
+- **`DonutChart`:** reparto de un total (p. ej. cartera por tramos) con leyenda que da valor y porcentaje de cada parte; sin total, muestra solo el fondo.
+- **`ChartData`:** tabla alterna plegada («Ver los datos en tabla») que acompaña a cada gráfico con las cifras exactas.
+- **`goalTone`** (`lib/tone.ts`): los umbrales ya usados en Metas (≥100 % cumplida, ≥75 % cerca, menos: lejos).
+Todos son `role="img"` con descripción; sin datos no fallan. Probados en `charts.test.tsx`.
