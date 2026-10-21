@@ -278,3 +278,9 @@ Puntos a tener presentes al comparar:
 - [ ] En «Automatizaciones»: pausar el recálculo, esperar su hora y comprobar que no corre; reanudarlo y usar «Ejecutar ahora»: aparece en el registro como correcta.
 - [ ] El interruptor general detiene todo, incluida la ejecución manual.
 - [ ] Revisar la ventana de avisos (lunes a sábado, 7 a 19) con gerencia.
+
+### Avisos operativos (Fase 9, paso 3)
+- [ ] Crear una acción de seguimiento para hoy y otra vencida: a la hora de la automatización el vendedor recibe un solo aviso con ambas cifras; no recibe avisos de clientes que no son suyos.
+- [ ] Una cotización que vence en 3 días y otra vencida generan un aviso cada una, una sola vez aunque la automatización se ejecute otra vez.
+- [ ] Una promesa de pago incumplida avisa a quien la registró y al vendedor de la factura; una cumplida no avisa.
+- [ ] Con «Ejecutar ahora» de una automatización de avisos, la campana muestra el resultado y el registro dice cuántos avisos nuevos se enviaron.

@@ -1,7 +1,13 @@
 <?php
 
+use App\Automations\CreditBucketHandler;
+use App\Automations\FollowupDueHandler;
+use App\Automations\InsightHighHandler;
 use App\Automations\InsightsRefreshHandler;
+use App\Automations\InventoryLowHandler;
+use App\Automations\PromiseDueHandler;
 use App\Automations\PruneNotificationsHandler;
+use App\Automations\QuotationExpiringHandler;
 
 /*
  * Catálogo de automatizaciones. Cada una tiene su frecuencia, la hora a la que se ejecuta, parámetros editables (con rango), un
@@ -32,12 +38,12 @@ return [
         ],
         'followup_due' => [
             'label' => 'Acciones de seguimiento del día y vencidas', 'description' => 'Avisa a cada vendedor y supervisor de las acciones de su agenda que vencen hoy o ya vencieron.',
-            'frequency' => 'daily', 'respect_window' => true, 'handler' => null, 'default_enabled' => true,
+            'frequency' => 'daily', 'respect_window' => true, 'handler' => FollowupDueHandler::class, 'default_enabled' => true,
             'params' => ['hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 7, 'min' => 0, 'max' => 23, 'help' => 'Hora del día a la que corre (dentro de la ventana de avisos).']],
         ],
         'quotation_expiring' => [
             'label' => 'Cotizaciones por vencer y vencidas', 'description' => 'Avisa de las cotizaciones que vencen pronto o ya vencieron.',
-            'frequency' => 'daily', 'respect_window' => true, 'handler' => null, 'default_enabled' => true,
+            'frequency' => 'daily', 'respect_window' => true, 'handler' => QuotationExpiringHandler::class, 'default_enabled' => true,
             'params' => [
                 'hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 7, 'min' => 0, 'max' => 23, 'help' => 'Hora del día a la que corre.'],
                 'days_before' => ['label' => 'Anticipación', 'unit' => 'días antes del vencimiento', 'default' => 3, 'min' => 0, 'max' => 30, 'help' => 'Con cuántos días de anticipación avisar (también se avisa el día del vencimiento).'],
@@ -45,12 +51,12 @@ return [
         ],
         'promise_due' => [
             'label' => 'Promesas de pago del día e incumplidas', 'description' => 'Avisa a quien registró la promesa y al vendedor de la factura.',
-            'frequency' => 'daily', 'respect_window' => true, 'handler' => null, 'default_enabled' => true,
+            'frequency' => 'daily', 'respect_window' => true, 'handler' => PromiseDueHandler::class, 'default_enabled' => true,
             'params' => ['hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 7, 'min' => 0, 'max' => 23, 'help' => 'Hora del día a la que corre.']],
         ],
         'credit_bucket' => [
             'label' => 'Facturas que pasan a otro tramo de cartera', 'description' => 'Avisa cuando una factura con saldo cambia de tramo de antigüedad.',
-            'frequency' => 'daily', 'respect_window' => true, 'handler' => null, 'default_enabled' => true,
+            'frequency' => 'daily', 'respect_window' => true, 'handler' => CreditBucketHandler::class, 'default_enabled' => true,
             'params' => [
                 'hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 7, 'min' => 0, 'max' => 23, 'help' => 'Hora del día a la que corre.'],
                 'min_balance' => ['label' => 'Saldo mínimo para avisar', 'unit' => 'córdobas', 'default' => 0, 'min' => 0, 'max' => 100000000, 'help' => 'No se avisa de facturas con un saldo menor a este.'],
@@ -58,12 +64,12 @@ return [
         ],
         'inventory_low' => [
             'label' => 'Productos bajo el mínimo o agotados', 'description' => 'Avisa a quien consulta el inventario de los productos que necesitan reposición.',
-            'frequency' => 'daily', 'respect_window' => true, 'handler' => null, 'default_enabled' => true,
+            'frequency' => 'daily', 'respect_window' => true, 'handler' => InventoryLowHandler::class, 'default_enabled' => true,
             'params' => ['hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 7, 'min' => 0, 'max' => 23, 'help' => 'Hora del día a la que corre.']],
         ],
         'insight_high' => [
             'label' => 'Recomendaciones de gravedad alta', 'description' => 'Avisa de las recomendaciones nuevas de gravedad alta de los clientes de cada persona.',
-            'frequency' => 'daily', 'respect_window' => true, 'handler' => null, 'default_enabled' => true,
+            'frequency' => 'daily', 'respect_window' => true, 'handler' => InsightHighHandler::class, 'default_enabled' => true,
             'params' => ['hour' => ['label' => 'Hora de ejecución', 'unit' => 'hora (0 a 23)', 'default' => 7, 'min' => 0, 'max' => 23, 'help' => 'Hora del día a la que corre.']],
         ],
     ],

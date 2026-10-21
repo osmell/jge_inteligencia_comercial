@@ -123,7 +123,7 @@ export default function AutomationsPage() {
 
   return (
     <section>
-      <PageHeader title="Automatizaciones" description="Tareas que el sistema hace solo: recalcular la inteligencia comercial, limpiar avisos y, próximamente, enviar recordatorios. Se pueden pausar, cambiar de hora y revisar lo que pasó en cada ejecución." />
+      <PageHeader title="Automatizaciones" description="Tareas que el sistema hace solo: recalcular la inteligencia comercial, limpiar avisos viejos y enviar recordatorios y avisos a cada persona. Se pueden pausar, cambiar de hora y revisar lo que pasó en cada ejecución." />
       <FormError message={list.error ?? error} />
       {list.data && <Settings key={`${list.data.meta.master_enabled}-${list.data.meta.window.start}-${list.data.meta.window.end}`} meta={list.data.meta} onChanged={reload} onError={setError} />}
 

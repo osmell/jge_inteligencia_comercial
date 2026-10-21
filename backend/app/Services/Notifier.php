@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\UserNotification;
+use Closure;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -81,5 +84,40 @@ class Notifier
     public function prune(): int
     {
         return UserNotification::query()->where('status', '!=', UserNotification::NEW)->where('created_at', '<', now()->subDays((int) config('notifications.retention_days')))->delete();
+    }
+
+    /**
+     * Usuarios activos que tienen el permiso (o todos los activos si no se pide ninguno).
+     *
+     * @return Collection<int, User>
+     */
+    public function usersWith(?string $permission): Collection
+    {
+        return User::query()->where('is_active', true)->with('role.permissions')->get()->filter(fn (User $u) => $permission === null || $u->hasPermission($permission))->values();
+    }
+
+    /**
+     * Ejecuta algo con el alcance de un usuario (compañías, sucursales y, para un vendedor, sus clientes), como si hubiera iniciado sesión.
+     * Las automatizaciones corren sin sesión, pero lo que se avisa a cada persona debe ser lo que ella podría ver.
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $callback
+     * @return T
+     */
+    public function scopedAs(User $user, Closure $callback): mixed
+    {
+        $guard = Auth::guard();
+        $previous = $guard->user();
+        $guard->setUser($user);
+        try {
+            return $callback();
+        } finally {
+            if ($previous !== null) {
+                $guard->setUser($previous);
+            } elseif (method_exists($guard, 'forgetUser')) {
+                $guard->forgetUser();
+            }
+        }
     }
 }

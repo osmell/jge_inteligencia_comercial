@@ -49,6 +49,18 @@ class FollowUpAgenda
     }
 
     /**
+     * Cuántas acciones pendientes de la persona (en su alcance) están vencidas y cuántas son para hoy.
+     *
+     * @return array{overdue: int, today: int}
+     */
+    public function dueCounts(User $user, CarbonImmutable $now): array
+    {
+        $pending = $this->pending($user, ['horizon_days' => 0, 'no_contact_days' => 30], $now);
+
+        return ['overdue' => $pending->filter(fn (CustomerInteraction $i) => $i->next_action_at < $now)->count(), 'today' => $pending->filter(fn (CustomerInteraction $i) => $i->next_action_at >= $now)->count()];
+    }
+
+    /**
      * @param  array<string, mixed>  $opts
      * @return Collection<int, CustomerInteraction>
      */

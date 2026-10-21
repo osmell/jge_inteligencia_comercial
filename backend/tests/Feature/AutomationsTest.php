@@ -226,13 +226,13 @@ class AutomationsTest extends TestCase
         $this->getJson('/api/v1/automations/runs')->assertForbidden();
     }
 
-    public function test_the_real_catalog_ships_maintenance_handlers_that_work(): void
+    public function test_the_real_catalog_has_a_working_handler_for_every_automation(): void
     {
         $catalog = require base_path('config/automations.php');
         config(['automations.automations' => $catalog['automations']]);
 
         $this->assertSame(
-            ['insights_refresh' => true, 'notifications_prune' => true, 'followup_due' => false, 'quotation_expiring' => false, 'promise_due' => false, 'credit_bucket' => false, 'inventory_low' => false, 'insight_high' => false],
+            ['insights_refresh' => true, 'notifications_prune' => true, 'followup_due' => true, 'quotation_expiring' => true, 'promise_due' => true, 'credit_bucket' => true, 'inventory_low' => true, 'insight_high' => true],
             collect(app(AutomationCatalog::class)->describe())->pluck('available', 'key')->all(),
         );
         $this->assertSame(['deleted' => 0], app(PruneNotificationsHandler::class)->run([]));
