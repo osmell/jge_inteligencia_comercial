@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
 use App\Http\Controllers\Api\V1\InsightController;
+use App\Http\Controllers\Api\V1\InsightRfmController;
 use App\Http\Controllers\Api\V1\InventoryMovementController;
 use App\Http\Controllers\Api\V1\InventoryRotationController;
 use App\Http\Controllers\Api\V1\InventoryShortfallController;
@@ -121,6 +122,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('status', [InsightController::class, 'status']);
         Route::get('parameters', [InsightController::class, 'parameters']);
         Route::get('runs', [InsightController::class, 'runs']);
+        Route::get('rfm', [InsightRfmController::class, 'index']);
+        Route::get('rfm/export', [InsightRfmController::class, 'export']);
+        Route::get('rfm/customer', [InsightRfmController::class, 'customer']);
+        Route::post('rfm/recalculate', [InsightRfmController::class, 'recalculate'])->middleware('permission:insights.manage');
         Route::put('parameters', [InsightController::class, 'updateParameters'])->middleware('permission:insights.manage');
     });
 

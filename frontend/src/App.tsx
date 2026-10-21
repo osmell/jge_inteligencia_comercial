@@ -14,6 +14,7 @@ import CompaniesPage from './pages/CompaniesPage'
 import CreditAgingPage from './pages/CreditAgingPage'
 import CreditDetailPage from './pages/CreditDetailPage'
 import InsightsPage from './pages/InsightsPage'
+import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
 import InventoryKardexPage from './pages/InventoryKardexPage'
 import InventoryMovementsPage from './pages/InventoryMovementsPage'
 import InventoryRotationPage from './pages/InventoryRotationPage'
@@ -64,6 +65,7 @@ export default function App() {
               </Route>
               <Route element={<RequirePermission permission="insights.view" />}>
                 <Route path="inteligencia" element={<InsightsPage />} />
+                <Route path="inteligencia/segmentos" element={<InsightsSegmentsPage />} />
               </Route>
               <Route element={<RequirePermission permission="inventory.view" />}>
                 <Route path="inventario" element={<InventoryStockPage />} />

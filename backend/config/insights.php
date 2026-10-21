@@ -22,6 +22,8 @@ return [
 
     'parameters' => [
         'rfm.period_months' => ['group' => 'RFM', 'label' => 'Periodo de análisis', 'unit' => 'meses', 'default' => 12, 'min' => 3, 'max' => 36, 'help' => 'Meses de ventas que se miden para recencia, frecuencia y valor.'],
+        'rfm.min_customers' => ['group' => 'RFM', 'label' => 'Clientes mínimos con compras', 'unit' => 'clientes', 'default' => 20, 'min' => 5, 'max' => 10000, 'help' => 'Con menos clientes con compras en el periodo los quintiles no significan nada y no se calcula.'],
+        'rfm.new_customer_days' => ['group' => 'RFM', 'label' => 'Cliente nuevo', 'unit' => 'días desde su primera compra', 'default' => 90, 'min' => 15, 'max' => 365, 'help' => 'Un cliente cuya primera compra es más reciente y que ha comprado pocas veces se clasifica como Nuevo.'],
         'rfm.min_history_months' => ['group' => 'RFM', 'label' => 'Historial mínimo', 'unit' => 'meses', 'default' => 6, 'min' => 1, 'max' => 36, 'help' => 'Sin este historial la segmentación no se activa.'],
 
         'concentration.min_history_months' => ['group' => 'Concentración', 'label' => 'Historial mínimo', 'unit' => 'meses', 'default' => 3, 'min' => 1, 'max' => 36, 'help' => 'Meses de ventas para calcular la concentración.'],

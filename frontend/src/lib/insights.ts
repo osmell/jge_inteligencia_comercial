@@ -43,3 +43,45 @@ export interface InsightRunRow {
   computed_at: string
   note: string | null
 }
+
+export type RfmSegment = 'new' | 'champion' | 'loyal' | 'promising' | 'at_risk' | 'dormant' | 'lost'
+
+export interface RfmRow {
+  code: string
+  name: string
+  segment: RfmSegment
+  segment_label: string
+  first_purchase: string
+  last_purchase: string
+  recency_days: number
+  frequency: number
+  gross: string
+  returns: string
+  monetary: string
+  r: number
+  f: number
+  m: number
+  explanation: string
+}
+
+export interface RfmRun {
+  id: number
+  status: 'ok' | 'insufficient'
+  computed_at: string
+  period_from: string | null
+  period_to: string | null
+  note: string | null
+  customers: number | null
+  parameters: Record<string, number>
+}
+
+export interface RfmList {
+  data: RfmRow[]
+  meta: {
+    page: number
+    has_more: boolean
+    counts: Record<RfmSegment, number>
+    run: RfmRun | null
+    segments: { key: RfmSegment; label: string; rule: string }[]
+  }
+}

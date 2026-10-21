@@ -233,3 +233,9 @@ Puntos a tener presentes al comparar:
 - [ ] Asignar `insights.view` a gerencia y supervisores, y `insights.manage` solo a quien deba cambiar umbrales.
 - [ ] En «Inteligencia», cada compañía muestra sus meses de historial reales y los análisis sin historial suficiente explican qué falta.
 - [ ] Cambiar un parámetro (p. ej. el historial mínimo de RFM) cambia la disponibilidad y queda en Auditoría.
+
+### Inteligencia comercial: segmentación RFM (Fase 8, paso 2)
+- [ ] Recalcular una compañía con historial real: el resumen por segmento suma todos sus clientes con compras del periodo.
+- [ ] Revisar con gerencia tres clientes conocidos (uno estrella, uno que se enfrió, uno nuevo): el segmento y la explicación coinciden con su criterio.
+- [ ] Un cliente con una devolución grande baja su valor neto y puede cambiar de segmento.
+- [ ] Un vendedor solo ve los segmentos de sus clientes; la ficha muestra el segmento y la fecha de cálculo.

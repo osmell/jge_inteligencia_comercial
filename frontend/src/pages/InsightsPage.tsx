@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
 import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, TextField, td, th, tr, type FieldErrors } from '../components/ui'
@@ -100,6 +101,7 @@ export default function InsightsPage() {
       <PageHeader title="Inteligencia comercial" description="Qué análisis avanzados se pueden activar con el historial de ventas disponible, con qué reglas se calculan y cuándo se calcularon por última vez." />
       <div className="mb-4"><Alert tone="info">Un análisis solo se activa con historial suficiente: si faltan datos, aquí se explica qué falta. Las recomendaciones son sugerencias, no decisiones automáticas, y son distintas del scoring de crédito.</Alert></div>
       <FormError message={status.error} />
+      <p className="mb-3 text-sm"><Link className="text-jge-blue hover:underline" to="/inteligencia/segmentos">Segmentación de clientes (RFM) →</Link></p>
 
       <div className="grid gap-4 lg:grid-cols-2" aria-busy={status.loading}>
         {companies.map((c) => <CompanyStatus key={c.company_id} c={c} />)}
