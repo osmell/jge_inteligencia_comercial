@@ -28,6 +28,8 @@ class RolePermissionSeeder extends Seeder
         'inventory.view' => 'Inventario (consultar existencias y kárdex)',
         'inventory.manage' => 'Inventario (unidades, equivalencias y movimientos)',
         'inventory.costs' => 'Inventario (ver costos y valuación)',
+        'insights.view' => 'Inteligencia comercial (consultar análisis y recomendaciones)',
+        'insights.manage' => 'Inteligencia comercial (cambiar parámetros)',
     ];
 
     public function run(): void

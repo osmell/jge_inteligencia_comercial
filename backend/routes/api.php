@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
+use App\Http\Controllers\Api\V1\InsightController;
 use App\Http\Controllers\Api\V1\InventoryMovementController;
 use App\Http\Controllers\Api\V1\InventoryRotationController;
 use App\Http\Controllers\Api\V1\InventoryShortfallController;
@@ -113,6 +114,14 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::put('units/{unit}', [InventoryUnitController::class, 'updateUnit'])->whereNumber('unit');
             Route::put('products/{product}/units', [InventoryUnitController::class, 'updateProductUnits'])->whereNumber('product');
         });
+    });
+
+    // Inteligencia comercial avanzada: estado de los análisis, parámetros (solo insights.manage los cambia) y registro de cálculos.
+    Route::middleware('permission:insights.view')->prefix('insights')->group(function () {
+        Route::get('status', [InsightController::class, 'status']);
+        Route::get('parameters', [InsightController::class, 'parameters']);
+        Route::get('runs', [InsightController::class, 'runs']);
+        Route::put('parameters', [InsightController::class, 'updateParameters'])->middleware('permission:insights.manage');
     });
 
     // Cotizaciones: consulta con permiso de clientes; alta y cambios con el permiso de seguimiento.

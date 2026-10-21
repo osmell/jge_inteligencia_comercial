@@ -21,7 +21,7 @@ class SchemaTest extends TestCase
 
         $this->assertSame(4, Role::count());
         $admin = Role::where('slug', Role::ADMINISTRADOR)->first();
-        $this->assertSame(18, $admin->permissions()->count());
+        $this->assertSame(20, $admin->permissions()->count());
         $this->assertSame(0, Role::where('slug', Role::VENDEDOR)->first()->permissions()->count());
     }
 

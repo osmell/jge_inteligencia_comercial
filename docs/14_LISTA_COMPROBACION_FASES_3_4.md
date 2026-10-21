@@ -228,3 +228,8 @@ Puntos a tener presentes al comparar:
 - [ ] Un producto que vende 1 por día con 10 en existencia aparece «Bajo el mínimo» con cobertura de 10 días y reposición sugerida hasta el máximo.
 - [ ] Un producto con existencia y sin ventas en 60 días aparece «Sin rotación».
 - [ ] El CSV coincide con la pantalla y solo el administrador ve el valor.
+
+### Inteligencia comercial: base (Fase 8, paso 1)
+- [ ] Asignar `insights.view` a gerencia y supervisores, y `insights.manage` solo a quien deba cambiar umbrales.
+- [ ] En «Inteligencia», cada compañía muestra sus meses de historial reales y los análisis sin historial suficiente explican qué falta.
+- [ ] Cambiar un parámetro (p. ej. el historial mínimo de RFM) cambia la disponibilidad y queda en Auditoría.
