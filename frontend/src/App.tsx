@@ -13,6 +13,7 @@ import BranchesPage from './pages/BranchesPage'
 import CompaniesPage from './pages/CompaniesPage'
 import CreditAgingPage from './pages/CreditAgingPage'
 import CreditDetailPage from './pages/CreditDetailPage'
+import InventoryUnitsPage from './pages/InventoryUnitsPage'
 import CreditPage from './pages/CreditPage'
 import CustomerProfilePage from './pages/CustomerProfilePage'
 import CustomerSalesReportPage from './pages/CustomerSalesReportPage'
@@ -54,6 +55,9 @@ export default function App() {
                   <Route path="agenda" element={<AgendaPage />} />
                   <Route path="seguimiento" element={<FollowUpKpisPage />} />
                 </Route>
+              </Route>
+              <Route element={<RequirePermission permission="inventory.view" />}>
+                <Route path="inventario/unidades" element={<InventoryUnitsPage />} />
               </Route>
               <Route element={<RequirePermission permission="credit.view" />}>
                 <Route path="credito" element={<CreditPage />} />

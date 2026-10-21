@@ -25,6 +25,9 @@ class RolePermissionSeeder extends Seeder
         'credit.payments' => 'Crédito y cobranzas (registrar abonos)',
         'credit.promises' => 'Crédito y cobranzas (registrar promesas de pago)',
         'credit.notes' => 'Crédito y cobranzas (registrar notas de crédito)',
+        'inventory.view' => 'Inventario (consultar existencias y kárdex)',
+        'inventory.manage' => 'Inventario (unidades, equivalencias y movimientos)',
+        'inventory.costs' => 'Inventario (ver costos y valuación)',
     ];
 
     public function run(): void

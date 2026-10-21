@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CustomerController;
 use App\Http\Controllers\Api\V1\CustomerInteractionController;
 use App\Http\Controllers\Api\V1\CustomerSalesReportController;
 use App\Http\Controllers\Api\V1\CustomerTypeController;
+use App\Http\Controllers\Api\V1\InventoryUnitController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\PaymentPromiseController;
 use App\Http\Controllers\Api\V1\QuotationController;
@@ -85,6 +86,18 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('payments', [CreditSettlementController::class, 'payment'])->middleware('permission:credit.payments');
         Route::post('credit-notes', [CreditSettlementController::class, 'creditNote'])->middleware('permission:credit.notes');
         Route::post('movements/{movement}/reverse', [CreditSettlementController::class, 'reverse'])->whereNumber('movement');
+    });
+
+    // Inventario: unidades, equivalencias por producto y (en pasos siguientes) existencias y movimientos.
+    Route::middleware('permission:inventory.view')->prefix('inventory')->group(function () {
+        Route::get('units', [InventoryUnitController::class, 'units']);
+        Route::get('products', [InventoryUnitController::class, 'products']);
+        Route::get('products/{product}/units', [InventoryUnitController::class, 'productUnits'])->whereNumber('product');
+        Route::middleware('permission:inventory.manage')->group(function () {
+            Route::post('units', [InventoryUnitController::class, 'storeUnit']);
+            Route::put('units/{unit}', [InventoryUnitController::class, 'updateUnit'])->whereNumber('unit');
+            Route::put('products/{product}/units', [InventoryUnitController::class, 'updateProductUnits'])->whereNumber('product');
+        });
     });
 
     // Cotizaciones: consulta con permiso de clientes; alta y cambios con el permiso de seguimiento.

@@ -44,3 +44,21 @@ Los pasos 1 y 2 no dependen de las plantillas y pueden avanzar ya; del 3 en adel
 - **No se permiten existencias negativas.** Valuación por **costo promedio ponderado**. **Los costos los ve el administrador.**
 - Rotación, máximos y mínimos: los propone el sistema (ver propuesta).
 - No hay inventario real: se hará una **toma de prueba** (datos de demostración) para validar y presentar la demo.
+
+## Decisiones tomadas (con el responsable)
+- Se agrega la columna **Cantidad** a la plantilla de entradas (`Costo` = costo unitario en la unidad indicada; `Sub Total` = cantidad × costo − descuento).
+- El inventario inicial lleva columna **Costo**.
+- **Faltantes:** traslados, ajustes y devoluciones a proveedor se rechazan si dejarían saldo negativo. Una venta sin existencia suficiente se importa igual (ya ocurrió): la existencia se muestra en cero y la venta queda en una lista de «faltantes por conciliar».
+- **Rotación, mínimos y máximos** (propuesta aceptada): demanda diaria = salidas de 90 días ÷ 90; rotación = salidas del periodo ÷ existencia promedio; cobertura = existencia ÷ demanda diaria; sin rotación = 60 días sin salidas; mínimo = demanda × 22 días (15 de reposición + 7 de seguridad); máximo = demanda × 52 días; todo configurable.
+- **Las `Und.Vendidas` ya vienen en la unidad base del producto** (fracciones del galón ya convertidas: 1/4 = 0,25, 3/8 = 0,375…); los productos sin equivalencia se venden en su propia unidad base.
+
+## Paso 1 — Unidades, equivalencias y libro de movimientos (hecho)
+- Catálogo de **unidades** (galón, barril, cubeta, litro, octavo, 1/16, 1/32, 1/64 y unidad; se agregan más y se desactivan, no se borran). Cada producto tiene su **unidad base** y sus **equivalencias** (1 unidad = N unidades base; factor decimal de hasta 6 decimales guardado como fracción exacta). Pantalla «Unidades» (`/inventario/unidades`).
+- Cantidades con **8 decimales como enteros** (sin float): una fracción como 0,00097656 se conserva exacta; más de 8 decimales se redondean. Máximo 10.000.000 por movimiento.
+- **Libro de movimientos inmutable** (`inventory_movements`): inicial, entrada, devolución de cliente, traslado, ajuste, venta, devolución a proveedor y reversa. Cantidad y valor con signo, siempre en la unidad base (se guarda también lo capturado y su unidad).
+- **El saldo (cantidad y valor) es la suma de los movimientos**: lo escribe solo el libro, en la misma transacción y con el producto bloqueado.
+- **Sin existencias negativas:** una salida mayor al saldo se rechaza. Las salidas se valoran a **costo promedio ponderado**; una salida total deja el valor exactamente en cero.
+- **Idempotencia:** con una clave de origen, repetir el mismo movimiento no lo duplica.
+- **Reversas** enlazadas (no se borra historia), con motivo, una sola vez, y rechazadas si dejarían existencias negativas.
+- Permisos nuevos (no se dan solos): `inventory.view` (consultar), `inventory.manage` (unidades, equivalencias y movimientos), `inventory.costs` (ver costos y valuación; solo administrador).
+- Un producto sin unidad base no admite movimientos; la unidad base no se cambia cuando ya tiene movimientos.
