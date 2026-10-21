@@ -289,6 +289,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('audit-logs', [AuditLogController::class, 'index'])->middleware('permission:audit.view');
 
         Route::apiResource('companies', CompanyController::class)->except('destroy')->middleware('permission:companies.manage');
+        Route::get('branches/{branch}/relocation', [BranchController::class, 'relocation'])->whereNumber('branch')->middleware('permission:branches.manage');
         Route::apiResource('branches', BranchController::class)->except('destroy')->middleware('permission:branches.manage');
 
         Route::middleware('permission:imports.manage')->prefix('imports')->group(function () {

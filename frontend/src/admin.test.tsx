@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -108,16 +108,44 @@ describe('pantallas administrativas', () => {
     expect(calls.some((c) => c.url === '/admin/companies')).toBe(false)
   })
 
-  it('al editar una sucursal la compañía no se puede cambiar ni se envía', async () => {
+  it('si la sucursal tiene datos relacionados la compañía no se puede cambiar y se explica por qué', async () => {
+    overrides['GET /admin/branches/10/relocation'] = () => new Response(JSON.stringify({ data: { can_move: false, blockers: [{ label: 'clientes', count: 12 }, { label: 'documentos de venta', count: 340 }] } }))
     renderPage(<BranchesPage />)
 
     await userEvent.click(await screen.findByRole('button', { name: 'Editar sucursal Alfa Central' }))
+    expect(await screen.findByText(/12 clientes, 340 documentos de venta/)).toBeInTheDocument()
     expect(screen.getByLabelText('Compañía')).toBeDisabled()
     await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
 
     const put = calls.find((c) => c.method === 'PUT')
     expect(put?.url).toBe('/admin/branches/10')
     expect(put?.body).not.toHaveProperty('company_id')
+  })
+
+  it('una sucursal sin datos se puede mover a otra compañía y se envía la nueva', async () => {
+    overrides['GET /admin/branches/10/relocation'] = () => new Response(JSON.stringify({ data: { can_move: true, blockers: [] } }))
+    renderPage(<BranchesPage />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar sucursal Alfa Central' }))
+    expect(await screen.findByText(/no tiene datos relacionados: puedes moverla/)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByLabelText('Compañía')).toBeEnabled())
+    await userEvent.selectOptions(screen.getByLabelText('Compañía'), 'Beta')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ company_id: 2, code: 'CEN' }))
+  })
+
+  it('si el servidor rechaza el cambio de compañía muestra su mensaje', async () => {
+    overrides['GET /admin/branches/10/relocation'] = () => new Response(JSON.stringify({ data: { can_move: true, blockers: [] } }))
+    overrides['PUT /admin/branches/10'] = () => new Response(JSON.stringify({ message: 'x', errors: { company_id: ['No se puede mover la sucursal a otra compañía porque tiene datos relacionados: 1 cliente.'] } }), { status: 422 })
+    renderPage(<BranchesPage />)
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Editar sucursal Alfa Central' }))
+    await waitFor(() => expect(screen.getByLabelText('Compañía')).toBeEnabled())
+    await userEvent.selectOptions(screen.getByLabelText('Compañía'), 'Beta')
+    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }))
+
+    expect(await screen.findByText(/porque tiene datos relacionados: 1 cliente/)).toBeInTheDocument()
   })
 
   it('la matriz de permisos bloquea al Administrador y el permiso solo-administrador', async () => {

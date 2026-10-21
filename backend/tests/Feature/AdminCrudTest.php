@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\Customer;
 use App\Models\Role;
+use App\Models\Seller;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -83,8 +85,59 @@ class AdminCrudTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('code');
 
         $this->putJson("/api/v1/admin/branches/{$id}", ['code' => 'S01', 'name' => 'Central 2'])->assertOk();
+        // Mover a otra compañía donde ya existe el mismo código: rechazado por código duplicado.
         $this->putJson("/api/v1/admin/branches/{$id}", ['company_id' => $b->id, 'code' => 'S01', 'name' => 'x'])
-            ->assertUnprocessable()->assertJsonValidationErrors('company_id');
+            ->assertUnprocessable()->assertJsonValidationErrors('code');
+    }
+
+    public function test_a_branch_without_data_moves_to_another_company_with_its_store_seller(): void
+    {
+        $this->actingAs($this->admin, 'sanctum');
+        [$a, $b] = Company::factory()->count(2)->create();
+        $id = $this->postJson('/api/v1/admin/branches', ['company_id' => $a->id, 'code' => 'S9', 'name' => 'Norte'])->assertCreated()->json('data.id');
+        $this->getJson("/api/v1/admin/branches/{$id}/relocation")->assertOk()->assertJsonPath('data.can_move', true)->assertJsonPath('data.blockers', []);
+
+        $this->putJson("/api/v1/admin/branches/{$id}", ['company_id' => $b->id, 'code' => 'S9', 'name' => 'Norte'])->assertOk()->assertJsonPath('data.company_id', $b->id);
+
+        $this->assertSame($b->id, Branch::findOrFail($id)->company_id);
+        $this->assertSame(['Tienda Norte'], Seller::query()->where(['branch_id' => $id, 'company_id' => $b->id, 'is_default' => true, 'is_active' => true])->pluck('name')->all());
+        $old = Seller::query()->where(['company_id' => $a->id, 'name' => 'Tienda Norte'])->first();
+        $this->assertSame([false, null], [(bool) $old->is_active, $old->branch_id]);                                  // el de la compañía anterior queda inactivo y sin sucursal
+        $this->assertDatabaseHas('audit_logs', ['event' => 'branch.updated', 'company_id' => $b->id]);
+        $this->putJson("/api/v1/admin/branches/{$id}", ['code' => 'S9', 'name' => 'Norte 2'])->assertOk();           // editar sin tocar la compañía sigue igual
+    }
+
+    public function test_a_branch_with_related_data_cannot_move_and_the_message_says_why(): void
+    {
+        $this->actingAs($this->admin, 'sanctum');
+        [$a, $b] = Company::factory()->count(2)->create();
+        $branch = Branch::factory()->create(['company_id' => $a->id, 'code' => 'X1']);
+        Customer::create(['company_id' => $a->id, 'branch_id' => $branch->id, 'code' => 'C1', 'name' => 'Cliente', 'source' => 'sales']);
+        Customer::create(['company_id' => $a->id, 'branch_id' => $branch->id, 'code' => 'C2', 'name' => 'Otro', 'source' => 'sales']);
+        $branchUser = User::factory()->create();
+        $branchUser->branches()->withoutGlobalScopes()->attach($branch->id);
+
+        $r = $this->getJson("/api/v1/admin/branches/{$branch->id}/relocation")->assertOk()->assertJsonPath('data.can_move', false);
+        $this->assertSame([['label' => 'clientes', 'count' => 2], ['label' => 'usuario con acceso a la sucursal', 'count' => 1]], $r->json('data.blockers'));
+
+        $put = $this->putJson("/api/v1/admin/branches/{$branch->id}", ['company_id' => $b->id, 'code' => 'X1', 'name' => $branch->name])->assertUnprocessable()->assertJsonValidationErrors('company_id');
+        $this->assertStringContainsString('2 clientes, 1 usuario con acceso a la sucursal', $put->json('errors.company_id.0'));
+        $this->assertSame($a->id, $branch->fresh()->company_id);                                                     // no se movió nada
+    }
+
+    public function test_a_store_seller_with_activity_blocks_the_move_and_other_roles_cannot_ask(): void
+    {
+        $this->actingAs($this->admin, 'sanctum');
+        [$a, $b] = Company::factory()->count(2)->create();
+        $id = $this->postJson('/api/v1/admin/branches', ['company_id' => $a->id, 'code' => 'S8', 'name' => 'Sur'])->assertCreated()->json('data.id');
+        $store = Seller::query()->where('branch_id', $id)->firstOrFail();
+        Customer::create(['company_id' => $a->id, 'code' => 'C9', 'name' => 'Con vendedor', 'source' => 'sales', 'seller_id' => $store->id]);
+
+        $this->getJson("/api/v1/admin/branches/{$id}/relocation")->assertJsonPath('data.can_move', false);
+        $this->putJson("/api/v1/admin/branches/{$id}", ['company_id' => $b->id, 'code' => 'S8', 'name' => 'Sur'])->assertUnprocessable()->assertJsonValidationErrors('company_id');
+
+        $seller = User::factory()->role(Role::VENDEDOR)->create();
+        $this->actingAs($seller, 'sanctum')->getJson("/api/v1/admin/branches/{$id}/relocation")->assertForbidden();
     }
 
     public function test_user_create_normalizes_username_hashes_password_and_syncs_scope(): void

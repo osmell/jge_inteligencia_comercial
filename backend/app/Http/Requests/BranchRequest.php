@@ -12,11 +12,11 @@ class BranchRequest extends FormRequest
     public function rules(): array
     {
         $branch = $this->route('branch');
-        $companyId = $branch instanceof Branch ? $branch->company_id : $this->input('company_id');
+        $companyId = $this->input('company_id', $branch instanceof Branch ? $branch->company_id : null);
 
         return [
-            // La compañía no se puede cambiar una vez creada la sucursal.
-            'company_id' => $branch ? ['prohibited'] : ['required', 'integer', Rule::exists('companies', 'id'), $this->companyInScope(...)],
+            // Al editar, la compañía es opcional; cambiarla se permite solo si la sucursal no tiene datos (lo comprueba el controlador).
+            'company_id' => [$branch ? 'sometimes' : 'required', 'integer', Rule::exists('companies', 'id'), $this->companyInScope(...)],
             'code' => ['required', 'string', 'max:20', Rule::unique('branches', 'code')->where('company_id', $companyId)->ignore($branch)],
             'name' => ['required', 'string', 'max:255'],
             'is_active' => ['sometimes', 'boolean'],

@@ -5,9 +5,11 @@ import { submitForm } from '../lib/saveForm'
 import type { Branch, Company } from '../lib/types'
 import { useToast } from '../components/toast'
 import {
-  Button, CheckField, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, StatusBadge,
+  Alert, Button, CheckField, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, StatusBadge,
   TableSkeleton, TextField, td, th, tr, type FieldErrors,
 } from '../components/ui'
+
+type Relocation = { can_move: boolean; blockers: { label: string; count: number }[] }
 
 function BranchForm({ branch, companies, onClose, onSaved }: { branch: Branch | null; companies: Company[]; onClose: () => void; onSaved: () => void }) {
   const [companyId, setCompanyId] = useState(String(branch?.company_id ?? companies[0]?.id ?? ''))
@@ -17,11 +19,16 @@ function BranchForm({ branch, companies, onClose, onSaved }: { branch: Branch | 
   const [errors, setErrors] = useState<FieldErrors>({})
   const [message, setMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  // Al editar se averigua si la sucursal tiene datos relacionados: sin ellos se puede mover de compañía.
+  const relocation = useLoad<{ data: Relocation }>(`/admin/branches/${branch?.id ?? 0}/relocation`, { enabled: !!branch })
+  const reloc = relocation.data?.data
+  const canMove = reloc?.can_move === true
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setSaving(true)
-    const body = { code, name, is_active: active, ...(branch ? {} : { company_id: Number(companyId) }) }
+    const moved = branch !== null && companyId !== String(branch.company_id)
+    const body = { code, name, is_active: active, ...(branch === null || moved ? { company_id: Number(companyId) } : {}) }
     const r = await submitForm(branch ? 'PUT' : 'POST', branch ? `/admin/branches/${branch.id}` : '/admin/branches', body)
     setSaving(false)
     if (r.ok) return onSaved()
@@ -38,12 +45,19 @@ function BranchForm({ branch, companies, onClose, onSaved }: { branch: Branch | 
           label="Compañía"
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value)}
-          disabled={!!branch}
-          hint={branch ? 'La compañía de una sucursal no se puede cambiar.' : undefined}
+          disabled={!!branch && !canMove}
+          hint={branch && canMove ? 'Esta sucursal no tiene datos relacionados: puedes moverla a otra compañía.' : undefined}
           errors={errors.company_id}
         >
           {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </SelectField>
+        {branch && reloc && !canMove && (
+          <Alert tone="warning">
+            {reloc.blockers.length > 0
+              ? <>No se puede mover a otra compañía porque tiene datos relacionados: {reloc.blockers.map((b) => `${b.count} ${b.label}`).join(', ')}. Para cambiarla de compañía, desactívala y crea una nueva en la otra.</>
+              : 'No tienes acceso completo a la compañía actual de esta sucursal, por eso no puedes moverla.'}
+          </Alert>
+        )}
         <TextField id="branch-code" label="Código" value={code} onChange={(e) => setCode(e.target.value)} errors={errors.code} />
         <TextField id="branch-name" label="Nombre" value={name} onChange={(e) => setName(e.target.value)} errors={errors.name} />
         <CheckField label="Activa" checked={active} onChange={(e) => setActive(e.target.checked)} />
