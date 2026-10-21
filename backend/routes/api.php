@@ -77,6 +77,7 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('aging', [CreditPortfolioController::class, 'aging']);
         Route::get('aging/export', [CreditPortfolioController::class, 'export']);
         Route::get('customer', [CreditPortfolioController::class, 'customer']);
+        Route::get('score', [CreditPortfolioController::class, 'score']);
         Route::get('promises', [PaymentPromiseController::class, 'index']);
         Route::post('promises', [PaymentPromiseController::class, 'store'])->middleware('permission:credit.promises');
         Route::post('promises/{promise}/cancel', [PaymentPromiseController::class, 'cancel'])->middleware('permission:credit.promises')->whereNumber('promise');

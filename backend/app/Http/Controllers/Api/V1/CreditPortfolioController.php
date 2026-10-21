@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogger;
 use App\Services\CreditPortfolio;
+use App\Services\CreditScore;
 use App\Services\SalesReportExporter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class CreditPortfolioController extends Controller
 {
     private const ON_SCREEN = 300;
 
-    public function __construct(private readonly CreditPortfolio $portfolio, private readonly AuditLogger $audit) {}
+    public function __construct(private readonly CreditPortfolio $portfolio, private readonly CreditScore $score, private readonly AuditLogger $audit) {}
 
     public function aging(Request $request): JsonResponse
     {
@@ -55,6 +56,14 @@ class CreditPortfolioController extends Controller
             'buckets' => $aging['buckets'], 'totals' => $aging['totals'], 'open_invoices' => $aging['customers'][0]['invoices'] ?? 0,
             'oldest_days' => $aging['customers'][0]['oldest_days'] ?? 0, 'returns' => $this->portfolio->returns($data['company_id'], $data['code']),
         ]]);
+    }
+
+    /** Calificación de crédito explicable del cliente (orientativa). */
+    public function score(Request $request): JsonResponse
+    {
+        $data = $request->validate(['company_id' => ['required', 'integer', 'min:1'], 'code' => ['required', 'string', 'max:255']]);
+
+        return response()->json(['data' => $this->score->forCustomer($request->user(), $data['company_id'], $data['code'])]);
     }
 
     private function companyId(Request $request): ?int

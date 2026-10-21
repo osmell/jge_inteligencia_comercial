@@ -48,6 +48,11 @@ beforeEach(() => {
     if (path === '/auth/me') body = { data: { id: 3, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
     else if (path.startsWith('/credit/aging')) body = { data: { buckets: ['current', '1-30', '121+'], totals: { current: '100.0000', '1-30': '0.0000', '121+': '700.0000', total: '800.0000' }, customers: [{ company_id: 1, company: 'Compañía Alfa', code: '3892', name: 'LYDIA LUDIC', buckets: { current: '100.0000', '1-30': '0.0000', '121+': '700.0000' }, total: '800.0000', invoices: 2, oldest_days: 172 }] }, meta: { customers_total: 1, truncated: false } }
     else if (path.startsWith('/credit/promises')) body = { data: [{ id: 9, company_id: 1, customer: { code: '3892', name: 'LYDIA LUDIC' }, made_on: '2026-10-20', promised_on: '2026-10-25', amount: '400.0000', paid: '150.0000', status: 'open', note: 'Pasa el viernes', days_overdue: 0, user: 'Ana', cancel_reason: null }, { id: 8, company_id: 1, customer: { code: '3892', name: 'LYDIA LUDIC' }, made_on: '2026-10-01', promised_on: '2026-10-05', amount: '100.0000', paid: '0.0000', status: 'broken', note: null, days_overdue: 15, user: 'Ana', cancel_reason: null }] }
+    else if (path.startsWith('/credit/score')) body = { data: { score: 72, band: 'medium', window_days: 365, disclaimer: 'Calificación orientativa. No aprueba ni modifica límites de crédito y no es la clasificación ABC.', factors: [
+      { key: 'punctuality', label: 'Puntualidad de abonos', weight: 40, effective_weight: 61.5, score: 80, detail: '1 de 2 facturas con más de 30 días no estaban saldadas a los 30 días.' },
+      { key: 'promises', label: 'Promesas de pago cumplidas', weight: 25, effective_weight: 0, score: null, detail: 'Sin promesas de pago resueltas en los últimos 365 días.' },
+      { key: 'aging', label: 'Antigüedad del saldo', weight: 25, effective_weight: 38.5, score: 60, detail: 'Saldo por cobrar 1000.0000.' },
+    ] } }
     else if (path.startsWith('/credit/customer')) body = { data: { buckets: ['current', '121+'], totals: { current: '100.0000', '121+': '700.0000', total: '800.0000' }, open_invoices: 2, oldest_days: 172, returns: { count: 1, subtotal: '200.0000', tax_total: '30.0000', total: '230.0000' } } }
     else if (path.startsWith('/credit/open-invoices')) body = { data: [{ id: 1, document: 'FC-D-3088', issued_on: '2026-09-10', total: '1035.00', balance: '785.00' }, { id: 5, document: 'FC-D-3095', issued_on: '2026-10-01', total: '500.00', balance: '500.00' }] }
     else if (path.startsWith('/credit/invoices/1')) body = { data: detail }
@@ -243,5 +248,16 @@ describe('crédito y cobranzas', () => {
     await screen.findByRole('list', { name: 'Promesas de pago del cliente' })
     expect(screen.queryByRole('button', { name: 'Registrar promesa' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Cancelar promesa/ })).not.toBeInTheDocument()
+  })
+
+  it('la ficha explica la calificación de crédito factor por factor', async () => {
+    render(<AuthProvider><MemoryRouter><CustomerCredit companyId="1" code="3892" name="LYDIA LUDIC" netTotal="5000.00" /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Factores de la calificación' })
+    expect(screen.getByText('Riesgo medio')).toBeInTheDocument()
+    expect(table).toHaveTextContent('Puntualidad de abonos')
+    expect(table).toHaveTextContent('61,5 %')
+    expect(within(table).getByText('Promesas de pago cumplidas').closest('tr')).toHaveTextContent('Sin datos')
+    expect(screen.getByText(/No aprueba ni modifica límites de crédito/)).toBeInTheDocument()
   })
 })

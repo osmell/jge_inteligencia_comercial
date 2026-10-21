@@ -6,6 +6,7 @@ import { PROMISE_LABEL, bucketLabel, type CustomerCreditSummary, type PaymentPro
 import { formatMoney } from '../lib/format'
 import { formatDay } from '../lib/quotations'
 import { useLoad } from '../lib/useLoad'
+import CustomerCreditScore from './CustomerCreditScore'
 import PromiseModal from './PromiseModal'
 import { useToast } from './toast'
 import { Button, Card, FormActions, FormError, Modal, TextAreaField } from './ui'
@@ -72,6 +73,8 @@ export default function CustomerCredit({ companyId, code, name, netTotal }: { co
             {returns && returns.count > 0 && <> Venta neta menos devoluciones: <span className="tabular font-semibold">{formatMoney(Number(netTotal) - Number(returns.subtotal))}</span>.</>}
           </p>
           <p className="mt-1 text-xs text-ink-muted">Las devoluciones se muestran aparte: no modifican las ventas importadas ni los rankings.</p>
+
+          <CustomerCreditScore companyId={companyId} code={code} />
 
           <div className="mt-3 border-t border-line pt-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

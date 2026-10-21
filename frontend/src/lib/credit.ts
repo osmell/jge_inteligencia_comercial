@@ -131,3 +131,22 @@ export interface PaymentPromiseRow {
   user: string | null
   cancel_reason: string | null
 }
+
+export interface ScoreFactor {
+  key: 'punctuality' | 'promises' | 'aging' | 'frequency'
+  label: string
+  weight: number
+  effective_weight: number
+  score: number | null
+  detail: string
+}
+
+export interface CreditScore {
+  score: number | null
+  band: 'low' | 'medium' | 'high' | null
+  factors: ScoreFactor[]
+  window_days: number
+  disclaimer: string
+}
+
+export const BAND_LABEL = { low: 'Riesgo bajo', medium: 'Riesgo medio', high: 'Riesgo alto' } as const

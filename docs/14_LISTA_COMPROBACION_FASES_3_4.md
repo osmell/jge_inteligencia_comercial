@@ -192,3 +192,8 @@ Puntos a tener presentes al comparar:
 - [ ] Registrar abonos por el monto hasta la fecha prometida: pasa a «Cumplida». Anular el abono: vuelve a pendiente.
 - [ ] Pasada la fecha sin abonos suficientes: «Incumplida» en la Agenda durante 30 días.
 - [ ] Cancelar una promesa con motivo: queda «Cancelada» y sale de la Agenda.
+
+### Crédito: calificación (Fase 6, paso 6)
+- [ ] Un cliente que siempre paga a tiempo: riesgo bajo. Uno con saldo de más de 120 días: riesgo alto.
+- [ ] Cada factor muestra su razón y los factores «Sin datos» no cambian la puntuación.
+- [ ] Revisar con el equipo de cobranza que los pesos (40/25/25/10) y los cortes (75 y 50) reflejan su criterio; ajustar en `config/credit.php`.

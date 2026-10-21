@@ -65,5 +65,16 @@ Decisiones tomadas con esas respuestas: la nota de crédito se **captura en pant
 - La **Agenda de seguimiento** incluye «Promesas de pago» (para quien tenga `credit.view`): las pendientes dentro del plazo elegido y las incumplidas de los últimos 30 días, con los mismos filtros de compañía y «lo que yo registré».
 - Una promesa que cambia de fecha se cancela y se registra otra; el historial queda en la ficha y en Auditoría (`credit.promise_created`, `credit.promise_cancelled`).
 
-### Pendiente
-6. Scoring.
+### Paso 6 — Calificación de crédito explicable (hecho)
+- En la ficha del cliente («Crédito y devoluciones» → «Calificación de crédito»), visible con `credit.view`. Puntuación de 0 a 100 y banda: **riesgo bajo** (75 o más), **medio** (50 a 74) y **alto** (menos de 50).
+- **Es orientativa**: no aprueba ni modifica límites de crédito y no es la clasificación ABC. No dispara ninguna acción.
+- Cuatro factores, cada uno con su puntuación, su peso y la razón escrita (se miden en los últimos 365 días):
+  - **Puntualidad de abonos (40 %):** parte del importe facturado que no estaba saldado (con abonos o notas de crédito vigentes) al cumplirse 30 días de la factura. Lo que aún no cumple 30 días no cuenta como atraso.
+  - **Promesas cumplidas (25 %):** cumplidas frente a cumplidas más incumplidas; las pendientes y canceladas no cuentan.
+  - **Antigüedad del saldo (25 %):** el saldo abierto se castiga más cuanto más antiguo es (del tramo «Al día», sin castigo, al de más de 120 días, castigo total). Sin saldo: 100.
+  - **Frecuencia de compra (10 %):** según el estado de actividad (activo 100, recuperado 80, nuevo 70, inactivo 40, perdido 0).
+- **Factor sin datos** (p. ej. sin promesas resueltas): no suma ni resta; su peso se reparte entre los demás y la pantalla lo dice («Sin datos»). Sin ningún dato: «Sin datos suficientes para calificar».
+- Pesos, ventana y cortes de banda se cambian en `config/credit.php` (`scoring`).
+- Pendiente de decidir: mostrar la calificación como columna en la antigüedad de cartera (hoy solo en la ficha, porque calcularla para todos los clientes es más pesado).
+
+### Fase 6 completa en código; falta validarla con datos reales
