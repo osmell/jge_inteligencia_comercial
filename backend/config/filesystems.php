@@ -39,6 +39,15 @@ return [
             'report' => false,
         ],
 
+        // Archivos de las conversaciones de WhatsApp: privados, nunca públicos; solo se sirven a quien tiene acceso a la conversación.
+        'conversations' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/conversations'),
+            'serve' => false,
+            'throw' => true,
+            'report' => false,
+        ],
+
         // Adjuntos de cotizaciones: privados, solo se descargan con autorización.
         'quotations' => [
             'driver' => 'local',

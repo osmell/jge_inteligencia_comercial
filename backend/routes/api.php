@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AutomationController;
+use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\CreditInvoiceController;
 use App\Http\Controllers\Api\V1\CreditPortfolioController;
 use App\Http\Controllers\Api\V1\CreditSettlementController;
@@ -144,6 +145,16 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::put('settings', [MailController::class, 'update']);
         Route::post('test', [MailController::class, 'test']);
         Route::get('log', [MailController::class, 'log']);
+    });
+
+    // Conversaciones de WhatsApp: el alcance de cada persona lo resuelve ConversationAccess.
+    Route::middleware('permission:conversations.view')->prefix('conversations')->group(function () {
+        Route::get('/', [ConversationController::class, 'index']);
+        Route::get('attachments/{attachment}', [ConversationController::class, 'attachment'])->whereNumber('attachment');
+        Route::get('{conversation}/messages', [ConversationController::class, 'messages'])->whereNumber('conversation');
+        Route::post('{conversation}/read', [ConversationController::class, 'read'])->whereNumber('conversation');
+        Route::get('{conversation}/notes', [ConversationController::class, 'notes'])->whereNumber('conversation');
+        Route::post('{conversation}/notes', [ConversationController::class, 'storeNote'])->whereNumber('conversation');
     });
 
     // WhatsApp: cuenta, plantillas y registro (credenciales: solo administración).

@@ -51,3 +51,20 @@ Cuenta de WhatsApp Business configurable (credenciales cifradas, prueba de conex
 - Fuera de la ventana de 24 h solo se envían plantillas aprobadas; nunca se escribe a «no contactar».
 - Toda lectura ajena por supervisión o administración queda en Auditoría.
 - Pruebas automáticas de alcance, dedupe, validación de archivos y tiempo real; revisión con la cuenta real de WhatsApp Business.
+
+## Paso 1 — Decisiones del responsable (hecho)
+- Se aplican **todas las propuestas de mejora** (bandeja sin asignar, notas internas, respuestas rápidas y plantillas, panel del cliente y envío de cotización/estado de cuenta, registro en Seguimiento, indicadores de atención, transferencia, ausencia/horario, búsqueda y etiquetas, no leídos con aviso y sonido, copia de seguridad de adjuntos) y las respuestas propuestas del cuestionario `21`.
+- **Vía oficial (Cloud API)** con el número de la empresa ya asignado y aprobado por Meta; además hay un **número de prueba** para validar el webhook antes de pasar al real.
+- **Supervisor:** ve y escribe solo en conversaciones de clientes **de su equipo** (vendedores que supervisa).
+- **Administrador y gerencia:** **solo lectura**; nunca escriben.
+- **Ventana de 24 horas:** se trabaja con ella (fuera de ella, solo plantillas aprobadas).
+- **Las conversaciones nunca se borran** (ni se eliminan mensajes ni adjuntos). Las conversaciones largas se muestran **paginadas** (los más recientes primero, cargando hacia atrás).
+
+## Paso 2 — Modelo de datos, almacenamiento y permisos (hecho)
+- **Tablas:** `whatsapp_conversations` (una por compañía y número de WhatsApp; sin cliente = bandeja «sin asignar»; estados abierta/archivada; `last_inbound_at` define la ventana de 24 h), `whatsapp_attachments` (archivo de un mensaje: ruta generada, tipo, tamaño, hash y id de Meta; inmutable), `conversation_notes` (notas internas, inmutables) y `conversation_reads` (qué leyó cada persona, para los no leídos). Los mensajes son el mismo registro `whatsapp_messages` de las plantillas, ampliado con conversación, dirección (entrante/saliente), tipo de mensaje y mensaje citado; el id de mensaje de Meta es único (un mensaje no se guarda dos veces).
+- **Nada se borra:** conversaciones y mensajes no se pueden eliminar desde la aplicación (se archivan), los adjuntos y las notas son inmutables.
+- **Archivos:** disco privado `conversations` (`storage/app/private/conversations`, no público); nombre generado, nunca el del cliente; se sirven solo a quien ve la conversación, con `nosniff`, `Content-Security-Policy: sandbox` y en línea solo imágenes, video, audio y PDF (todo lo demás, como descarga).
+- **Permisos nuevos:** `conversations.view` y `conversations.reply` (no se otorgan solos). **Escribir** exige además ser vendedor o supervisor, tener la conversación en su alcance y un cliente asignado: administración y gerencia **nunca escriben**, ni con el permiso.
+- **Alcance** (`ConversationAccess`): el vendedor, las de sus clientes; el supervisor, las de clientes de los vendedores que supervisa y la bandeja «sin asignar» de sus compañías; administración y gerencia, todo su ámbito en solo lectura. Abrir una conversación ajena queda en Auditoría (`conversations.viewed`, una vez por hora y conversación).
+- **API (lectura):** `GET /conversations` (búsqueda, «sin asignar», no leídos, ventana abierta, si puede responder), `GET /conversations/{id}/messages?before=` (50 por página hacia atrás; `has_more`, `oldest_id`), `POST /conversations/{id}/read`, notas (`GET`/`POST`) y `GET /conversations/attachments/{id}`. Las plantillas enviadas desde la ficha ya abren la conversación del cliente.
+- Pendiente: recepción de entrantes (paso 3), envío de texto y archivos (paso 4), tiempo real (paso 5) y la ventana (paso 6).

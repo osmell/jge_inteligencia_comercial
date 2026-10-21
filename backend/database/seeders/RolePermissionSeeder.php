@@ -33,6 +33,8 @@ class RolePermissionSeeder extends Seeder
         'digests.view' => 'Resúmenes para gerencia (diario y semanal)',
         'mail.manage' => 'Correo (configurar el servidor y consultar los envíos)',
         'whatsapp.manage' => 'WhatsApp (configurar la cuenta, plantillas y consultar los mensajes)',
+        'conversations.view' => 'Conversaciones de WhatsApp (ver las de su alcance)',
+        'conversations.reply' => 'Conversaciones de WhatsApp (escribir a clientes de su alcance)',
         'webhooks.manage' => 'Webhook de salida (configurar el destino y consultar los envíos)',
         'automations.manage' => 'Automatizaciones (configurar, pausar y consultar el registro)',
     ];

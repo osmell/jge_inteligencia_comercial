@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\WhatsappConsent;
+use App\Models\WhatsappConversation;
 use App\Models\WhatsappMessage;
 use App\Models\WhatsappSetting;
 use App\Models\WhatsappTemplate;
@@ -136,15 +137,35 @@ class WhatsappService
         }
 
         $log = $existing ?? new WhatsappMessage;
-        $log->forceFill(['customer_id' => $customer->id, 'template_id' => $template->id, 'user_id' => $user->id, 'to_number' => $this->number($customer->whatsapp), 'body' => $body, 'kind' => 'template', 'dedupe_key' => $key, 'created_at' => now()]);
+        $conversation = $this->conversationFor($customer);
+        $log->forceFill([
+            'customer_id' => $customer->id, 'template_id' => $template->id, 'user_id' => $user->id, 'to_number' => $this->number($customer->whatsapp), 'body' => $body, 'kind' => 'template', 'dedupe_key' => $key,
+            'conversation_id' => $conversation?->id, 'direction' => 'out', 'message_type' => 'template', 'created_at' => $log->created_at ?? now(),
+        ]);
         if ($reasons !== []) {
             $log->forceFill(['status' => WhatsappMessage::NOT_SENT, 'error' => implode(' ', $reasons)])->save();
         } else {
             $this->deliver($log, $s, $template, $params);
         }
         $this->audit->record('whatsapp.message_'.$log->status, $user, auditable: $customer, new: ['template' => $template->name], companyId: $customer->company_id);
+        $conversation?->forceFill(['last_message_at' => $log->created_at, 'last_message_preview' => mb_substr($body, 0, 200)])->save();
 
         return $log;
+    }
+
+    /** Conversación del cliente con la empresa (se crea al primer mensaje); null si el cliente no tiene número de WhatsApp. */
+    public function conversationFor(Customer $customer): ?WhatsappConversation
+    {
+        $number = $this->number($customer->whatsapp);
+        if ($number === '') {
+            return null;
+        }
+        $conversation = WhatsappConversation::query()->firstOrCreate(['company_id' => $customer->company_id, 'wa_number' => $number], ['customer_id' => $customer->id, 'created_at' => now()]);
+        if ($conversation->customer_id === null) {
+            $conversation->forceFill(['customer_id' => $customer->id])->save();      // un número que era desconocido y ya es de un cliente
+        }
+
+        return $conversation;
     }
 
     /** @param list<string> $params */

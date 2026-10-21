@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\WhatsappConversation;
 use App\Models\WhatsappMessage;
 use App\Models\WhatsappSetting;
 use App\Models\WhatsappTemplate;
@@ -89,6 +90,11 @@ class WhatsappTest extends TestCase
 
         $this->postJson("$url/send", ['template_id' => $t->id, 'params' => ['Ana', '$50']])->assertCreated();
         $this->assertSame(1, WhatsappMessage::count());                       // el mismo mensaje el mismo día no se repite
+
+        $conversation = WhatsappConversation::sole();            // el envío abre (una sola vez) la conversación del cliente
+        $this->assertSame([$this->customer->id, '50370001234', 'Hola Ana, tu saldo es $50.'], [$conversation->customer_id, $conversation->wa_number, $conversation->last_message_preview]);
+        $message = WhatsappMessage::sole();
+        $this->assertSame([$conversation->id, 'out', 'template'], [$message->conversation_id, $message->direction, $message->message_type]);
     }
 
     public function test_nothing_is_sent_without_consent_to_do_not_contact_or_with_unapproved_templates(): void

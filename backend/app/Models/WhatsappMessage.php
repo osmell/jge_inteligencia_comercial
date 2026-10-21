@@ -9,6 +9,10 @@ use Illuminate\Support\Carbon;
  * @property int $id
  * @property int|null $customer_id
  * @property int|null $template_id
+ * @property int|null $conversation_id
+ * @property string $direction
+ * @property string $message_type
+ * @property int|null $reply_to_id
  * @property string|null $to_number
  * @property string $body
  * @property string $kind
@@ -32,9 +36,17 @@ class WhatsappMessage extends Model
 
     public const NOT_SENT = 'not_sent';
 
+    public const RECEIVED = 'received';
+
     public $timestamps = false;
 
     protected $guarded = [];
+
+    /** Los mensajes se conservan siempre: solo cambian sus estados de entrega. */
+    protected static function booted(): void
+    {
+        static::deleting(fn () => throw new \LogicException('Los mensajes de WhatsApp no se eliminan.'));
+    }
 
     protected function casts(): array
     {
