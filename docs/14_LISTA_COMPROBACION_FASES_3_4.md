@@ -179,3 +179,9 @@ Puntos a tener presentes al comparar:
 - [ ] Intentar un abono mayor al saldo: se rechaza y no queda ningún movimiento.
 - [ ] Registrar una nota de crédito (total = suma de lo aplicado) y repetir la misma serie/documento: se rechaza.
 - [ ] Anular un abono y una nota de crédito: los saldos vuelven y el original queda marcado como «Anulado».
+
+### Crédito: cartera y devoluciones (Fase 6, paso 4)
+- [ ] «Antigüedad de cartera»: el total por tramo coincide con el saldo por cobrar de «Crédito».
+- [ ] Exportar el CSV y comparar un cliente contra su ficha.
+- [ ] En la ficha de un cliente con nota de crédito: «Devoluciones» muestra el subtotal; tras anular la nota, vuelve a cero.
+- [ ] Un vendedor solo ve la cartera de sus facturas.

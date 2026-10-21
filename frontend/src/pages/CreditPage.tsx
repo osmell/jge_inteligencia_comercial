@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
 import { bucketLabel, type CreditList } from '../lib/credit'
 import { formatMoney } from '../lib/format'
@@ -20,9 +20,10 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 }
 
 export default function CreditPage() {
-  const [text, setText] = useState('')
-  const [term, setTerm] = useState('')
-  const [companyId, setCompanyId] = useState('')
+  const [params] = useSearchParams()
+  const [text, setText] = useState(params.get('q') ?? '')
+  const [term, setTerm] = useState((params.get('q') ?? '').trim())
+  const [companyId, setCompanyId] = useState(params.get('company_id') ?? '')
   const [status, setStatus] = useState<'open' | 'paid' | 'all'>('open')
   const [bucket, setBucket] = useState('')
   const [page, setPage] = useState(1)
@@ -43,7 +44,7 @@ export default function CreditPage() {
 
   return (
     <section>
-      <PageHeader title="Crédito y cobranzas" description="Facturas de crédito y su saldo. El saldo se calcula desde los movimientos; la antigüedad se cuenta desde la fecha de la factura." />
+      <PageHeader title="Crédito y cobranzas" description="Facturas de crédito y su saldo. El saldo se calcula desde los movimientos; la antigüedad se cuenta desde la fecha de la factura." action={<Link className="text-sm text-jge-blue hover:underline" to="/cartera">Antigüedad de cartera por cliente →</Link>} />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2" aria-busy={list.loading}>
         <Stat label="Saldo por cobrar" value={meta ? formatMoney(meta.open_balance) : '—'} hint="Facturas con saldo, según la compañía y la búsqueda elegidas" />

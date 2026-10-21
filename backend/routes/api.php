@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CreditInvoiceController;
+use App\Http\Controllers\Api\V1\CreditPortfolioController;
 use App\Http\Controllers\Api\V1\CreditSettlementController;
 use App\Http\Controllers\Api\V1\CustomerAssignmentController;
 use App\Http\Controllers\Api\V1\CustomerController;
@@ -72,6 +73,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::middleware('permission:credit.view')->prefix('credit')->group(function () {
         Route::get('invoices', [CreditInvoiceController::class, 'index']);
         Route::get('invoices/{invoice}', [CreditInvoiceController::class, 'show'])->whereNumber('invoice');
+        Route::get('aging', [CreditPortfolioController::class, 'aging']);
+        Route::get('aging/export', [CreditPortfolioController::class, 'export']);
+        Route::get('customer', [CreditPortfolioController::class, 'customer']);
         Route::get('open-invoices', [CreditSettlementController::class, 'openInvoices']);
         Route::post('payments', [CreditSettlementController::class, 'payment'])->middleware('permission:credit.payments');
         Route::post('credit-notes', [CreditSettlementController::class, 'creditNote'])->middleware('permission:credit.notes');

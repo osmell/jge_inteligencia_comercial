@@ -4,7 +4,9 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
 import CreditDetailPage from './pages/CreditDetailPage'
+import CreditAgingPage from './pages/CreditAgingPage'
 import CreditPage from './pages/CreditPage'
+import CustomerCredit from './components/CustomerCredit'
 import { allocateOldestFirst, bucketLabel, type CreditInvoiceDetail, type CreditInvoiceRow, type CreditList } from './lib/credit'
 
 const row = (o: Partial<CreditInvoiceRow> = {}): CreditInvoiceRow => ({
@@ -44,6 +46,8 @@ beforeEach(() => {
     }
     let body: unknown = { data: [] }
     if (path === '/auth/me') body = { data: { id: 3, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
+    else if (path.startsWith('/credit/aging')) body = { data: { buckets: ['current', '1-30', '121+'], totals: { current: '100.0000', '1-30': '0.0000', '121+': '700.0000', total: '800.0000' }, customers: [{ company_id: 1, company: 'Compañía Alfa', code: '3892', name: 'LYDIA LUDIC', buckets: { current: '100.0000', '1-30': '0.0000', '121+': '700.0000' }, total: '800.0000', invoices: 2, oldest_days: 172 }] }, meta: { customers_total: 1, truncated: false } }
+    else if (path.startsWith('/credit/customer')) body = { data: { buckets: ['current', '121+'], totals: { current: '100.0000', '121+': '700.0000', total: '800.0000' }, open_invoices: 2, oldest_days: 172, returns: { count: 1, subtotal: '200.0000', tax_total: '30.0000', total: '230.0000' } } }
     else if (path.startsWith('/credit/open-invoices')) body = { data: [{ id: 1, document: 'FC-D-3088', issued_on: '2026-09-10', total: '1035.00', balance: '785.00' }, { id: 5, document: 'FC-D-3095', issued_on: '2026-10-01', total: '500.00', balance: '500.00' }] }
     else if (path.startsWith('/credit/invoices/1')) body = { data: detail }
     else if (path.startsWith('/credit/invoices')) body = list
@@ -190,5 +194,25 @@ describe('crédito y cobranzas', () => {
     await u.click(within(dialog).getByRole('button', { name: 'Guardar' }))
 
     await waitFor(() => expect(posts).toEqual([{ path: '/credit/movements/2/reverse', body: { note: 'Error de captura' } }]))
+  })
+
+  it('la antigüedad de cartera muestra los tramos y el saldo por cliente', async () => {
+    render(<AuthProvider><MemoryRouter><CreditAgingPage /></MemoryRouter></AuthProvider>)
+
+    const table = await screen.findByRole('table', { name: 'Antigüedad por cliente' })
+    expect(table).toHaveTextContent('LYDIA LUDIC')
+    expect(table).toHaveTextContent('la más antigua, 172 días')
+    expect(table).toHaveTextContent('Más de 120 días')
+    expect(table).toHaveTextContent('700,00')
+    expect(screen.getByLabelText('Saldo por tramo')).toHaveTextContent('800,00')
+    expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeInTheDocument()
+  })
+
+  it('la ficha del cliente muestra el saldo por tramo y las devoluciones aparte de las ventas', async () => {
+    render(<AuthProvider><MemoryRouter><CustomerCredit companyId="1" code="3892" netTotal="5000.00" /></MemoryRouter></AuthProvider>)
+
+    expect(await screen.findByText(/Saldo por cobrar/)).toHaveTextContent('800,00')
+    expect(screen.getByText(/Devoluciones \(notas de crédito vigentes\)/)).toHaveTextContent('200,00')
+    expect(screen.getByText(/Venta neta menos devoluciones/)).toHaveTextContent('4800,00')
   })
 })

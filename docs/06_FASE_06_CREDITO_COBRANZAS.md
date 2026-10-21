@@ -50,7 +50,13 @@ Decisiones tomadas con esas respuestas: la nota de crédito se **captura en pant
 - **Nota de crédito:** fecha, serie, documento, subtotal, impuesto, total y observaciones. Subtotal + impuesto = total, y **lo aplicado a las facturas debe ser igual al total**: un excedente no se acepta como saldo. Se guarda en `credit_notes` (inmutable, única por compañía + serie + documento).
 - **Todo o nada:** si una parte supera el saldo de su factura (sobrepago) no se registra ninguna. Cada movimiento y cada nota quedan en Auditoría.
 - **Anulación:** un abono se anula solo (con motivo); una nota de crédito se anula completa en todas las facturas que tocó. El original se conserva marcado como «Anulado». Los ajustes no se anulan por pantalla.
-- **Pendiente de decidir:** que la nota de crédito descuente también de las ventas del cliente (tablero, rankings) no está hecho: la nota no trae líneas por producto, así que habría que definir cómo se muestra (p. ej. un renglón aparte «Devoluciones» por cliente y compañía).
+- **Devoluciones frente a las ventas (decidido):** la nota no trae líneas por producto, así que no se mezcla con las ventas importadas ni con los rankings: se muestra aparte, por cliente y compañía, en la ficha del cliente («Crédito y devoluciones»), con «Venta neta menos devoluciones» (subtotal de las notas vigentes, sin impuesto).
+
+### Paso 4 — Antigüedad de cartera, exportación y crédito en la ficha (hecho)
+- Pantalla **Antigüedad de cartera** (`/cartera`, permiso `credit.view`): saldo por cliente en los tramos 1-30, 31-60, 61-90, 91-120 y más de 120 días (más «Al día»), totales por tramo, filtro por compañía, y exportación a **CSV** con todos los clientes (queda en Auditoría, `credit.aging_exported`). En pantalla se ven los 300 clientes con mayor saldo.
+- Respeta el ámbito del usuario: un vendedor solo ve la cartera de sus facturas.
+- Ficha del cliente: sección «Crédito y devoluciones» (visible con `credit.view`) con saldo por tramo, factura más antigua y devoluciones vigentes (las notas anuladas no cuentan).
+- No incluye todavía exportación a Excel/PDF de la cartera ni filtro por vendedor.
 
 ### Pendiente
-4. Antigüedad de cartera y reportes. 5. Promesas de pago. 6. Scoring.
+5. Promesas de pago. 6. Scoring.

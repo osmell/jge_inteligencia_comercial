@@ -83,3 +83,27 @@ export function allocateOldestFirst(invoices: OpenInvoice[], amount: number): Re
   }
   return result
 }
+
+export interface AgingCustomer {
+  company_id: number
+  company: string
+  code: string
+  name: string
+  buckets: Record<string, string>
+  total: string
+  invoices: number
+  oldest_days: number
+}
+
+export interface AgingReport {
+  data: { buckets: string[]; totals: Record<string, string>; customers: AgingCustomer[] }
+  meta: { customers_total: number; truncated: boolean }
+}
+
+export interface CustomerCreditSummary {
+  buckets: string[]
+  totals: Record<string, string>
+  open_invoices: number
+  oldest_days: number
+  returns: { count: number; subtotal: string; tax_total: string; total: string }
+}
