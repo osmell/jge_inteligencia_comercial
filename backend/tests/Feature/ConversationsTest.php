@@ -134,6 +134,19 @@ class ConversationsTest extends TestCase
         $this->getJson("/api/v1/conversations/{$this->other->id}/messages")->assertNotFound();
     }
 
+    public function test_the_menu_badge_counts_conversations_with_unread_messages_per_person(): void
+    {
+        $this->message($this->cVera, 'in', 'Hola');
+        $this->message($this->cVera, 'in', 'Otra');
+        $this->message($this->unknown, 'in', 'Número nuevo');
+        $this->assertSame(1, $this->actingAs($this->vera, 'sanctum')->getJson('/api/v1/conversations/unread')->assertOk()->json('data.conversations'));      // dos mensajes, una conversación
+        $this->assertSame(0, $this->actingAs($this->beto, 'sanctum')->getJson('/api/v1/conversations/unread')->json('data.conversations'));
+        $this->assertSame(2, $this->actingAs($this->supervisor, 'sanctum')->getJson('/api/v1/conversations/unread')->json('data.conversations'));
+        $this->actingAs($this->vera, 'sanctum')->postJson("/api/v1/conversations/{$this->cVera->id}/read")->assertOk();
+        $this->assertSame(0, $this->getJson('/api/v1/conversations/unread')->json('data.conversations'));
+        $this->assertSame(2, $this->actingAs($this->supervisor, 'sanctum')->getJson('/api/v1/conversations/unread')->json('data.conversations'));         // cada persona lee por su cuenta
+    }
+
     public function test_unread_counts_per_person_and_clears_when_read(): void
     {
         $this->message($this->cVera, 'in', 'Hola');

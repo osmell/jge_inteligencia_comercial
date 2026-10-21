@@ -38,8 +38,7 @@ class ConversationController extends Controller
         $data = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'unassigned' => ['nullable', 'boolean'], 'status' => ['nullable', 'in:open,archived'], 'page' => ['nullable', 'integer', 'min:1', 'max:10000']]);
         $user = $request->user();
         $page = max(1, (int) ($data['page'] ?? 1));
-        $unread = DB::table('whatsapp_messages as m')->selectRaw('count(*)')->whereColumn('m.conversation_id', 'whatsapp_conversations.id')->where('m.direction', 'in')
-            ->whereRaw('m.id > coalesce((select r.last_read_message_id from conversation_reads r where r.conversation_id = whatsapp_conversations.id and r.user_id = ?), 0)', [$user->id]);
+        $unread = $this->unreadQuery($user);
 
         $rows = $this->access->visible($user)->select('whatsapp_conversations.*')->selectSub($unread, 'unread')
             ->where('whatsapp_conversations.status', $data['status'] ?? WhatsappConversation::OPEN)
@@ -57,6 +56,22 @@ class ConversationController extends Controller
             'data' => $rows->take(self::PAGE_SIZE)->map(fn (WhatsappConversation $c) => $this->present($c, $customers->get($c->customer_id), (int) $c->getAttribute('unread'), $user))->values()->all(),
             'meta' => ['page' => $page, 'has_more' => $rows->count() > self::PAGE_SIZE],
         ]);
+    }
+
+    /** Cuántas conversaciones abiertas tienen mensajes del cliente sin leer (para la insignia del menú). */
+    public function unread(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $count = $this->access->visible($user)->where('whatsapp_conversations.status', WhatsappConversation::OPEN)->whereRaw('('.$this->unreadQuery($user)->toSql().') > 0', $this->unreadQuery($user)->getBindings())->count();
+
+        return response()->json(['data' => ['conversations' => $count]]);
+    }
+
+    /** Subconsulta: mensajes del cliente que esta persona aún no leyó en cada conversación. */
+    private function unreadQuery(User $user): \Illuminate\Database\Query\Builder
+    {
+        return DB::table('whatsapp_messages as m')->selectRaw('count(*)')->whereColumn('m.conversation_id', 'whatsapp_conversations.id')->where('m.direction', 'in')
+            ->whereRaw('m.id > coalesce((select r.last_read_message_id from conversation_reads r where r.conversation_id = whatsapp_conversations.id and r.user_id = ?), 0)', [$user->id]);
     }
 
     /** Mensajes de una conversación, de a 50, del más reciente hacia atrás (`before` = id del más antiguo ya cargado). */

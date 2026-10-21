@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import { BrandEmblem, BrandPlate } from './Brand'
 import { onConversationEvent, startRealtime } from '../lib/realtime'
 import { playMessageSound } from '../lib/sound'
+import { useUnreadConversations } from '../lib/useUnread'
 import NotificationBell from './NotificationBell'
 import { NAV_GROUPS, NAV_ITEMS } from './navigation'
 
@@ -22,6 +23,7 @@ export default function Layout() {
   // Tiempo real: la campana y las conversaciones se actualizan al instante; sin servidor de tiempo real, la aplicación sigue con consultas periódicas.
   const userId = user?.id
   const watchesConversations = can('conversations.view')
+  const unreadChats = useUnreadConversations(watchesConversations)
   useEffect(() => {
     if (userId === undefined) return
     let stop: (() => void) | undefined
@@ -78,6 +80,9 @@ export default function Layout() {
                         {isActive && <span className="absolute left-0 top-2 h-7 w-1 rounded-r bg-jge-red" aria-hidden="true" />}
                         <item.icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
                         {item.label}
+                        {item.to === '/conversaciones' && unreadChats > 0 && (
+                          <span className="tabular ml-auto flex min-w-5 items-center justify-center rounded-full bg-jge-red px-1.5 text-[11px] font-semibold leading-5 text-white" aria-label={`${unreadChats} conversaciones sin leer`}>{unreadChats > 99 ? '99+' : unreadChats}</span>
+                        )}
                       </>
                     )}
                   </NavLink>

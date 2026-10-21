@@ -32,6 +32,7 @@ import InventoryRotationPage from './pages/InventoryRotationPage'
 import InventoryShortfallsPage from './pages/InventoryShortfallsPage'
 import InventoryStockPage from './pages/InventoryStockPage'
 import InventoryUnitsPage from './pages/InventoryUnitsPage'
+import ConversationsPage from './pages/ConversationsPage'
 import CreditPage from './pages/CreditPage'
 import CustomerProfilePage from './pages/CustomerProfilePage'
 import CustomerSalesReportPage from './pages/CustomerSalesReportPage'
@@ -74,6 +75,9 @@ export default function App() {
                   <Route path="agenda" element={<AgendaPage />} />
                   <Route path="seguimiento" element={<FollowUpKpisPage />} />
                 </Route>
+              </Route>
+              <Route element={<RequirePermission permission="conversations.view" />}>
+                <Route path="conversaciones" element={<ConversationsPage />} />
               </Route>
               <Route element={<RequirePermission permission="digests.view" />}>
                 <Route path="resumenes" element={<DigestsPage />} />

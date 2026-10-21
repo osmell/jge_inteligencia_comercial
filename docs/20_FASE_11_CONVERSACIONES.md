@@ -104,3 +104,15 @@ Cuenta de WhatsApp Business configurable (credenciales cifradas, prueba de conex
 **Avisos en la campana.** Mensaje nuevo de cliente → al vendedor responsable (los de números desconocidos, a supervisores de la compañía); un solo aviso sin ver por conversación. Cliente esperando respuesta: el comando `conversations:alert-waiting` (cada 5 min, solo en la ventana de avisos, lunes a sábado 7–19 h) avisa a quien supervisa a su vendedor cuando el último mensaje es del cliente y pasaron `CONVERSATION_WAITING_MINUTES` (15 por omisión); un aviso por mensaje sin atender. Ambos tipos se pueden apagar en las preferencias de avisos. Sonido opcional (casilla en la campana, se recuerda en el navegador).
 
 **Pendiente.** La ventana de conversación (paso 6) consumirá estos eventos. Validar de punta a punta con el número de prueba de Meta (webhook → cola → Reverb → navegador).
+
+## Paso 6 — Ventana de conversación (pantalla `/conversaciones`)
+
+**Estructura.** Tres zonas, como WhatsApp Web: lista de chats (con pestañas Abiertas / Sin asignar / Archivadas, búsqueda por cliente o número, contador de no leídos, «cargar más»), conversación (burbujas con hora, palomitas con su texto para lectores de pantalla, citas, imágenes/video/audio en línea y documentos descargables, separadores por día) y panel del cliente (datos, ventana de 24 h, enlace a la ficha y notas internas). En pantallas chicas se ve una zona a la vez. El menú muestra una insignia con las conversaciones sin leer (`GET /conversations/unread`).
+
+**Envío.** Enter envía, Shift+Enter salta de línea; botón de adjuntar (se valida el tamaño de WhatsApp antes de subir; el servidor valida de nuevo por contenido); responder citando desde cada burbuja; cada envío lleva una clave contra duplicados que se conserva si hay que reintentar; los mensajes fallidos muestran el motivo y «Reintentar». Con la ventana cerrada el cuadro se reemplaza por el selector de plantillas aprobadas con vista previa (las variables son obligatorias). Sin permiso de escribir (administración, gerencia, número sin cliente) no hay cuadro de envío y se explica por qué.
+
+**Historial largo.** Se cargan los 50 más recientes y «Cargar mensajes anteriores» agrega de a 50 hacia atrás sin perder la posición de lectura. Abrir la conversación la marca como leída por esa persona; abrir una ajena queda en Auditoría (ya del paso 2).
+
+**Tiempo real.** Mensajes nuevos, palomitas y archivos descargados llegan por Reverb; si la conexión cae, la lista se consulta cada 15 s y la conversación abierta cada 10 s.
+
+**Decisión / límite.** La grabación de notas de voz desde el navegador no se incluyó: Chrome/Firefox graban WebM, que WhatsApp no admite (exige OGG/Opus, AAC, MP3, AMR…); se pueden adjuntar archivos de audio ya grabados. Convertir en el servidor requiere `ffmpeg` y queda como mejora (paso 7). La asignación de números desconocidos a un cliente está en el paso 7.
