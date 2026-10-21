@@ -5,7 +5,7 @@ import { api } from '../lib/api'
 import { formatDateTime } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
 
-interface WaConfig { enabled: boolean; phone_number_id: string | null; business_account_id: string | null; api_version: string; has_access_token: boolean; has_app_secret: boolean; has_verify_token: boolean; ready: boolean }
+interface WaConfig { unassigned_company_id: number | null; enabled: boolean; phone_number_id: string | null; business_account_id: string | null; api_version: string; has_access_token: boolean; has_app_secret: boolean; has_verify_token: boolean; ready: boolean }
 interface Template { id: number; name: string; language: string; category: string; body: string; status: 'draft' | 'pending' | 'approved' | 'rejected'; variables: number }
 interface Message { id: number; customer: string | null; to: string | null; body: string; status: 'sent' | 'delivered' | 'read' | 'failed' | 'not_sent'; error: string | null; created_at: string }
 
@@ -14,10 +14,11 @@ const TEMPLATE_STATUS = { draft: 'Borrador', pending: 'En revisión', approved: 
 
 function ConfigForm({ config, onSaved }: { config: WaConfig; onSaved: () => void }) {
   const toast = useToast()
-  const [form, setForm] = useState({ enabled: config.enabled, phone_number_id: config.phone_number_id ?? '', business_account_id: config.business_account_id ?? '', api_version: config.api_version, access_token: '', app_secret: '', verify_token: '' })
+  const [form, setForm] = useState({ enabled: config.enabled, phone_number_id: config.phone_number_id ?? '', business_account_id: config.business_account_id ?? '', api_version: config.api_version, unassigned_company_id: config.unassigned_company_id === null ? '' : String(config.unassigned_company_id), access_token: '', app_secret: '', verify_token: '' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null)
+  const companies = useLoad<{ data: { id: number; name: string }[] }>('/companies')
   const set = (k: keyof typeof form, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }))
   const kept = (has: boolean) => (has ? 'Hay un valor guardado (cifrado). Déjalo vacío para conservarlo.' : 'Se guarda cifrado y no se vuelve a mostrar.')
 
@@ -26,7 +27,7 @@ function ConfigForm({ config, onSaved }: { config: WaConfig; onSaved: () => void
     setBusy(true)
     setError(null)
     try {
-      await api('/whatsapp/settings', { method: 'PUT', body: form })
+      await api('/whatsapp/settings', { method: 'PUT', body: { ...form, unassigned_company_id: form.unassigned_company_id === '' ? null : Number(form.unassigned_company_id) } })
       toast.success('Configuración de WhatsApp guardada.')
       onSaved()
     } catch (err) { setError(err instanceof Error ? err.message : 'No se pudo guardar.') } finally { setBusy(false) }
@@ -44,6 +45,10 @@ function ConfigForm({ config, onSaved }: { config: WaConfig; onSaved: () => void
         <TextField id="wa-phone-id" label="Identificador del número (Phone number ID)" value={form.phone_number_id} onChange={(e) => set('phone_number_id', e.target.value)} />
         <TextField id="wa-waba" label="Identificador de la cuenta de WhatsApp Business" value={form.business_account_id} onChange={(e) => set('business_account_id', e.target.value)} />
         <TextField id="wa-version" label="Versión de la API" value={form.api_version} onChange={(e) => set('api_version', e.target.value)} />
+        <SelectField id="wa-unassigned" label="Compañía donde caen los números desconocidos" value={form.unassigned_company_id} onChange={(e) => set('unassigned_company_id', e.target.value)} hint="Los mensajes de un número que no es de ningún cliente llegan a la bandeja «sin asignar» de esta compañía.">
+          <option value="">La primera compañía activa</option>
+          {(companies.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </SelectField>
         <TextField id="wa-token" label="Token de acceso" type="password" autoComplete="new-password" value={form.access_token} onChange={(e) => set('access_token', e.target.value)} hint={kept(config.has_access_token)} />
         <TextField id="wa-secret" label="Secreto de la aplicación (firma del webhook)" type="password" autoComplete="new-password" value={form.app_secret} onChange={(e) => set('app_secret', e.target.value)} hint={kept(config.has_app_secret)} />
         <TextField id="wa-verify" label="Token de verificación del webhook" type="password" autoComplete="new-password" value={form.verify_token} onChange={(e) => set('verify_token', e.target.value)} hint={kept(config.has_verify_token)} />

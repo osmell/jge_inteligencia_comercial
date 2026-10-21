@@ -2,27 +2,45 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\Immutable;
 use Illuminate\Database\Eloquent\Model;
+use LogicException;
 
 /**
- * Archivo de un mensaje, guardado en el disco privado «conversations». No se modifica ni se elimina.
+ * Archivo de un mensaje, guardado en el disco privado «conversations». Se crea «pendiente» y se completa una sola vez al
+ * descargarlo; después no se modifica ni se elimina.
  *
  * @property int $id
  * @property int $message_id
  * @property string $kind
- * @property string $path
+ * @property string|null $path
  * @property string|null $original_name
- * @property string $mime
- * @property int $size
+ * @property string|null $mime
+ * @property int|null $size
+ * @property string $status
+ * @property string|null $media_id
+ * @property string|null $error
  */
 class WhatsappAttachment extends Model
 {
-    use Immutable;
+    public const PENDING = 'pending';
+
+    public const STORED = 'stored';
+
+    public const FAILED = 'failed';
 
     public $timestamps = false;
 
     protected $guarded = [];
+
+    protected static function booted(): void
+    {
+        static::updating(function (self $a) {
+            if ($a->getOriginal('status') !== self::PENDING) {
+                throw new LogicException('El adjunto ya está definido y no se modifica.');
+            }
+        });
+        static::deleting(fn () => throw new LogicException('Los adjuntos no se eliminan.'));
+    }
 
     protected function casts(): array
     {

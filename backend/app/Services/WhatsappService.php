@@ -31,7 +31,7 @@ class WhatsappService
 
         return [
             'enabled' => $s->enabled, 'phone_number_id' => $s->phone_number_id, 'business_account_id' => $s->business_account_id, 'api_version' => $s->api_version,
-            'has_access_token' => ! empty($s->access_token), 'has_app_secret' => ! empty($s->app_secret), 'has_verify_token' => ! empty($s->verify_token),
+            'unassigned_company_id' => $s->unassigned_company_id, 'has_access_token' => ! empty($s->access_token), 'has_app_secret' => ! empty($s->app_secret), 'has_verify_token' => ! empty($s->verify_token),
             'ready' => $s->ready(), 'updated_at' => $s->updated_at?->toIso8601String(),
         ];
     }
@@ -47,7 +47,7 @@ class WhatsappService
         $keep = fn (string $key) => ($data[$key] ?? '') !== '' ? (string) $data[$key] : $current->{$key};
         $setting = $current->exists ? $current : new WhatsappSetting(['id' => 1]);
         $setting->forceFill([
-            'id' => 1, 'enabled' => (bool) $data['enabled'], 'phone_number_id' => $data['phone_number_id'] ?? null, 'business_account_id' => $data['business_account_id'] ?? null, 'api_version' => $data['api_version'],
+            'id' => 1, 'enabled' => (bool) $data['enabled'], 'phone_number_id' => $data['phone_number_id'] ?? null, 'business_account_id' => $data['business_account_id'] ?? null, 'api_version' => $data['api_version'], 'unassigned_company_id' => $data['unassigned_company_id'] ?? null,
             'access_token' => $keep('access_token'), 'app_secret' => $keep('app_secret'), 'verify_token' => $keep('verify_token'), 'updated_by' => $user->id, 'updated_at' => now(),
         ])->save();
 

@@ -9,6 +9,7 @@ use App\Models\WhatsappMessage;
 use App\Models\WhatsappSetting;
 use App\Models\WhatsappTemplate;
 use App\Services\AuditLogger;
+use App\Services\WhatsappInbound;
 use App\Services\WhatsappService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -30,7 +31,7 @@ class WhatsappController extends Controller
     {
         $data = $request->validate([
             'enabled' => ['required', 'boolean'], 'phone_number_id' => ['nullable', 'string', 'max:100'], 'business_account_id' => ['nullable', 'string', 'max:100'], 'api_version' => ['required', 'regex:/^v\d+\.\d+$/'],
-            'access_token' => ['nullable', 'string', 'max:1000'], 'app_secret' => ['nullable', 'string', 'max:300'], 'verify_token' => ['nullable', 'string', 'max:200'],
+            'unassigned_company_id' => ['nullable', 'integer', 'exists:companies,id'], 'access_token' => ['nullable', 'string', 'max:1000'], 'app_secret' => ['nullable', 'string', 'max:300'], 'verify_token' => ['nullable', 'string', 'max:200'],
         ]);
         $this->wa->save($request->user(), $data);
 
@@ -121,7 +122,9 @@ class WhatsappController extends Controller
     {
         abort_unless($this->wa->validSignature($request->getContent(), $request->header('X-Hub-Signature-256')), 403, 'Firma no válida.');
 
-        return response()->json(['applied' => $this->wa->applyStatuses((array) $request->json()->all())]);
+        $payload = (array) $request->json()->all();
+
+        return response()->json(['applied' => $this->wa->applyStatuses($payload), 'received' => app(WhatsappInbound::class)->process($payload)]);
     }
 
     /** @return array<string, mixed> */
