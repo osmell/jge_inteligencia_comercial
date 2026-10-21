@@ -12,8 +12,8 @@ export default function CustomerAlerts({ companyId, code }: { companyId: string;
   return (
     <section aria-labelledby="alerts-title" className="mb-6">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h2 id="alerts-title" className="text-sm font-semibold text-ink">Alertas del cliente</h2>
-        <Link className="text-sm text-jge-blue hover:underline" to="/inteligencia/alertas">Ver todas las alertas</Link>
+        <h2 id="alerts-title" className="text-sm font-semibold text-ink">Recomendaciones del cliente</h2>
+        <Link className="text-sm text-jge-blue hover:underline" to="/inteligencia/alertas">Ver todas las recomendaciones</Link>
       </div>
       <Card className="p-4 text-sm">
         <ul className="space-y-3" aria-label="Alertas abiertas del cliente">

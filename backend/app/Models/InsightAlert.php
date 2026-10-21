@@ -27,6 +27,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $closed_at
  * @property string|null $close_reason
  * @property string|null $close_note
+ * @property int|null $closed_by
+ * @property int|null $follow_up_interaction_id
  */
 class InsightAlert extends Model
 {
@@ -40,7 +42,14 @@ class InsightAlert extends Model
 
     public const ABANDONED_LINE = 'abandoned_line';
 
-    public const TYPES = [self::INACTIVITY_RISK, self::SALES_DROP, self::SALES_RISE, self::ABANDONED_LINE];
+    public const CROSS_SELL = 'cross_sell';
+
+    public const RFM_AT_RISK = 'rfm_at_risk';
+
+    public const TYPES = [self::INACTIVITY_RISK, self::SALES_DROP, self::SALES_RISE, self::ABANDONED_LINE, self::CROSS_SELL, self::RFM_AT_RISK];
+
+    /** Motivos para cerrar una alerta; con «other» la nota es obligatoria. */
+    public const CLOSE_REASONS = ['contacted', 'not_applicable', 'do_not_contact', 'resolved', 'other'];
 
     public const OPEN = 'open';
 

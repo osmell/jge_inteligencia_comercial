@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Imports\Decimal;
 use App\Models\Company;
+use App\Models\InsightAlert;
 use App\Models\InsightRun;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -31,7 +32,7 @@ class RfmSegmentation
         'lost' => ['label' => 'Perdidos', 'rule' => 'Poco valor y entre los que más tiempo llevan sin comprar (recencia 1 y frecuencia/valor < 3).'],
     ];
 
-    public function __construct(private readonly InsightParameters $parameters, private readonly InsightAvailability $availability, private readonly InsightRunLogger $runs) {}
+    public function __construct(private readonly InsightParameters $parameters, private readonly InsightAvailability $availability, private readonly InsightRunLogger $runs, private readonly InsightAlertSync $alerts) {}
 
     /**
      * Calcula y guarda la segmentación de una compañía. Devuelve el registro del cálculo (con estado «insufficient» si no hay datos suficientes).
@@ -71,8 +72,33 @@ class RfmSegmentation
                 ], $chunk));
             }
 
+            $this->alerts->sync($run, [InsightAlert::RFM_AT_RISK], $this->atRiskAlerts($scored));
+
             return $run;
         });
+    }
+
+    /**
+     * Los clientes «En riesgo» (buenos clientes que se enfriaron) también son una recomendación del panel.
+     *
+     * @param  list<array<string, mixed>>  $scored
+     * @return list<array<string, mixed>>
+     */
+    private function atRiskAlerts(array $scored): array
+    {
+        $out = [];
+        foreach ($scored as $c) {
+            if ($c['segment'] !== 'at_risk') {
+                continue;
+            }
+            $out[] = [
+                'customer_code' => $c['code'], 'customer_name' => $c['name'], 'type' => InsightAlert::RFM_AT_RISK, 'severity' => $c['m'] >= 4 ? 'high' : 'medium', 'dedupe_key' => "rfm_at_risk:{$c['code']}",
+                'facts' => ['r' => $c['r'], 'f' => $c['f'], 'm' => $c['m'], 'recency_days' => $c['recency'], 'frequency' => $c['frequency'], 'last_purchase' => $c['last']],
+                'explanation' => 'Segmento «En riesgo»: era un buen cliente y lleva tiempo sin comprar. '.self::explain(['recency_days' => $c['recency'], 'frequency' => $c['frequency'], 'monetary' => Decimal::format($c['monetary']), 'r' => $c['r'], 'f' => $c['f'], 'm' => $c['m'], 'segment' => 'at_risk']),
+            ];
+        }
+
+        return $out;
     }
 
     /**

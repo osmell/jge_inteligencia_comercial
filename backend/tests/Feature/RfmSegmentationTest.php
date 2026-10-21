@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\CreditNote;
 use App\Models\Customer;
 use App\Models\ImportBatch;
+use App\Models\InsightAlert;
 use App\Models\InsightRun;
 use App\Models\Operator;
 use App\Models\Role;
@@ -145,6 +146,9 @@ class RfmSegmentationTest extends TestCase
         $this->assertSame(['lost', 1, 1, 1], [DB::table('rfm_scores')->where('customer_code', 'C01')->value('segment'), ...array_map(fn ($c) => (int) DB::table('rfm_scores')->where('customer_code', 'C01')->value($c), ['r', 'f', 'm'])]);
         $this->assertSame('new', DB::table('rfm_scores')->where('customer_code', 'NUEVO')->value('segment'));
         $this->assertSame(array_sum($run->summary['segments']), 26);
+
+        // Los clientes «En riesgo» también son recomendaciones del panel.
+        $this->assertSame($run->summary['segments']['at_risk'], InsightAlert::withoutGlobalScopes()->where('type', 'rfm_at_risk')->count());
     }
 
     public function test_recalculating_replaces_the_scores_but_keeps_every_run(): void

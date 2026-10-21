@@ -15,6 +15,7 @@ import InsightsSegmentsPage from './pages/InsightsSegmentsPage'
 let permissions: string[]
 let puts: { path: string; body: { values: Record<string, string> } }[]
 let posts: string[]
+let bodies: Record<string, unknown>[]
 let run: unknown
 let urls: string[]
 let crossRun: unknown
@@ -25,6 +26,7 @@ beforeEach(() => {
   permissions = ['insights.view']
   puts = []
   posts = []
+  bodies = []
   urls = []
   const block = (entity: string) => ({
     count: 5, total: '10000.0000', top1_pct: 80, top10_pct: 100, n80: 1, n80_pct: 20, hhi: 6538,
@@ -46,6 +48,7 @@ beforeEach(() => {
     const path = url.replace('http://localhost:8000/api/v1', '')
     if (init?.method === 'POST') {
       posts.push(path)
+      bodies.push(init.body ? JSON.parse(String(init.body)) : {})
       return new Response(JSON.stringify({ data: {} }), { status: 200 })
     }
     if (init?.method === 'PUT') {
@@ -56,14 +59,14 @@ beforeEach(() => {
     let body: unknown = { data: [] }
     if (path === '/auth/me') body = { data: { id: 1, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Administrador' }, permissions, companies: [], branches: [] } }
     else if (path.startsWith('/insights/alerts/customer')) {
-      body = { data: path.includes('C05') ? [] : [{ id: 1, code: 'R1', name: 'Cliente R1', type: 'inactivity_risk', severity: 'high', status: 'open', explanation: 'Suele comprar cada 7 días y lleva 38 días sin comprar.', facts: {}, first_detected_at: '2026-10-20T02:00:00Z', last_detected_at: '2026-10-20T02:00:00Z', run_id: 3 }] }
+      body = { data: path.includes('C05') ? [] : [{ id: 1, code: 'R1', name: 'Cliente R1', type: 'inactivity_risk', severity: 'high', status: 'open', explanation: 'Suele comprar cada 7 días y lleva 38 días sin comprar.', facts: {}, first_detected_at: '2026-10-20T02:00:00Z', last_detected_at: '2026-10-20T02:00:00Z', run_id: 3, follow_up: false, closed: null }] }
     } else if (path.startsWith('/insights/alerts')) {
       body = {
         data: [
-          { id: 1, code: 'R1', name: 'Cliente R1', type: 'inactivity_risk', severity: 'high', status: 'open', explanation: 'Suele comprar cada 7 días y lleva 38 días sin comprar.', facts: {}, first_detected_at: '2026-10-20T02:00:00Z', last_detected_at: '2026-10-20T02:00:00Z', run_id: 3 },
-          { id: 2, code: 'D1', name: 'Cliente D1', type: 'sales_drop', severity: 'medium', status: 'open', explanation: 'En 2026-09 compró 400,00, un 60 % menos que su promedio.', facts: {}, first_detected_at: '2026-10-20T02:00:00Z', last_detected_at: '2026-10-20T02:00:00Z', run_id: 4 },
+          { id: 1, code: 'R1', name: 'Cliente R1', type: 'inactivity_risk', severity: 'high', status: 'open', explanation: 'Suele comprar cada 7 días y lleva 38 días sin comprar.', facts: {}, first_detected_at: '2026-10-20T02:00:00Z', last_detected_at: '2026-10-20T02:00:00Z', run_id: 3, follow_up: false, closed: null },
+          { id: 2, code: 'D1', name: 'Cliente D1', type: 'sales_drop', severity: 'medium', status: 'open', explanation: 'En 2026-09 compró 400,00, un 60 % menos que su promedio.', facts: {}, first_detected_at: '2026-10-20T02:00:00Z', last_detected_at: '2026-10-20T02:00:00Z', run_id: 4, follow_up: true, closed: null },
         ],
-        meta: { page: 1, has_more: false, counts: { inactivity_risk: 1, sales_drop: 1, sales_rise: 0, abandoned_line: 0 } },
+        meta: { page: 1, has_more: false, counts: { inactivity_risk: 1, sales_drop: 1, sales_rise: 0, abandoned_line: 0, cross_sell: 0, rfm_at_risk: 0 } },
       }
     } else if (path.startsWith('/insights/cross-sell/opportunities')) {
       body = { data: [{ code: 'C21', name: 'Cliente C21', suggestion: 'Frenos', because: 'Filtros', confidence_pct: 66.7, support: 20, lift: 1.33, explanation: 'Compra «Filtros» y todavía no «Frenos». 20 de 30 clientes que compran «Filtros» (66,7 %) también compran «Frenos».' }], meta: { has_more: false, total: 10, run: crossRun } }
@@ -287,18 +290,57 @@ describe('inteligencia comercial', () => {
     await waitFor(() => expect(posts).toEqual(['/insights/cross-sell/recalculate']))
   })
 
-  it('las alertas muestran cada aviso con su explicación y filtran por tipo', async () => {
+  it('el panel muestra cada recomendación con su explicación y filtra por tipo', async () => {
     const u = userEvent.setup()
     render(<AuthProvider><MemoryRouter><InsightsAlertsPage /></MemoryRouter></AuthProvider>)
 
-    const table = await screen.findByRole('table', { name: 'Alertas de clientes' })
+    const table = await screen.findByRole('table', { name: 'Recomendaciones' })
     await waitFor(() => expect(table).toHaveTextContent('Cliente R1'))
     expect(table).toHaveTextContent('Suele comprar cada 7 días y lleva 38 días sin comprar')
     expect(table).toHaveTextContent('Riesgo de inactividad')
-    expect(within(screen.getByLabelText('Alertas por tipo')).getByRole('button', { name: /Caída de venta/ })).toHaveTextContent('1')
-    expect(screen.getByText(/Son recomendaciones, no decisiones automáticas/)).toBeInTheDocument()
-    await u.click(within(screen.getByLabelText('Alertas por tipo')).getByRole('button', { name: /Caída de venta/ }))
+    expect(within(screen.getByLabelText('Recomendaciones por tipo')).getByRole('button', { name: /Caída de venta/ })).toHaveTextContent('1')
+    expect(screen.getByText(/Son sugerencias, no decisiones automáticas/)).toBeInTheDocument()
+    await u.click(within(screen.getByLabelText('Recomendaciones por tipo')).getByRole('button', { name: /Caída de venta/ }))
     await waitFor(() => expect(urls.filter((x) => x.startsWith('/insights/alerts')).at(-1)).toContain('type=sales_drop'))
+  })
+
+  it('sin permiso de seguimiento el panel es de consulta', async () => {
+    render(<AuthProvider><MemoryRouter><InsightsAlertsPage /></MemoryRouter></AuthProvider>)
+
+    await waitFor(() => expect(screen.getByRole('table', { name: 'Recomendaciones' })).toHaveTextContent('Cliente R1'))
+    expect(screen.queryByRole('button', { name: /^Cerrar recomendación/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Crear acción/ })).not.toBeInTheDocument()
+  })
+
+  it('cierra una recomendación con su motivo y exige la nota con «Otro»', async () => {
+    permissions = ['insights.view', 'interactions.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InsightsAlertsPage /></MemoryRouter></AuthProvider>)
+
+    await u.click(await screen.findByRole('button', { name: /Cerrar recomendación de Cliente R1/ }))
+    const dialog = await screen.findByRole('dialog')
+    await u.selectOptions(within(dialog).getByLabelText('Motivo'), 'contacted')
+    await u.type(within(dialog).getByLabelText('Nota (opcional)'), 'Hablé con él')
+    await u.click(within(dialog).getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(posts).toEqual(['/insights/alerts/1/close']))
+    expect(bodies[0]).toEqual({ reason: 'contacted', note: 'Hablé con él' })
+  })
+
+  it('crea una acción en la agenda con un texto sugerido y no la ofrece si ya existe', async () => {
+    permissions = ['insights.view', 'interactions.manage']
+    const u = userEvent.setup()
+    render(<AuthProvider><MemoryRouter><InsightsAlertsPage /></MemoryRouter></AuthProvider>)
+
+    await u.click(await screen.findByRole('button', { name: /Crear acción para Cliente R1/ }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByLabelText('Qué hacer')).toHaveValue('Llamar para saber si necesita reposición')
+    await u.click(within(dialog).getByRole('button', { name: 'Guardar' }))
+
+    await waitFor(() => expect(posts).toEqual(['/insights/alerts/1/follow-up']))
+    expect(bodies[0]).toMatchObject({ next_action: 'Llamar para saber si necesita reposición' })
+    expect(screen.getByText('Acción en la agenda')).toBeInTheDocument()       // la segunda ya tenía su acción
+    expect(screen.queryByRole('button', { name: /Crear acción para Cliente D1/ })).not.toBeInTheDocument()
   })
 
   it('la ficha muestra las alertas abiertas y se oculta si no hay', async () => {
@@ -310,6 +352,6 @@ describe('inteligencia comercial', () => {
 
     render(<AuthProvider><MemoryRouter><CustomerAlerts companyId="1" code="C05" /></MemoryRouter></AuthProvider>)
     await waitFor(() => expect(urls.some((x) => x.includes('code=C05'))).toBe(true))
-    expect(screen.queryByText('Alertas del cliente')).not.toBeInTheDocument()
+    expect(screen.queryByText('Recomendaciones del cliente')).not.toBeInTheDocument()
   })
 })

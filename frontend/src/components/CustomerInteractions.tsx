@@ -126,7 +126,7 @@ export default function CustomerInteractions({ companyId, code }: { companyId: s
                 {Object.entries(DIRECTION_LABEL).map(([k, v]) => <option key={k} value={k} disabled={blocked && k === 'outbound'}>{v}</option>)}
               </SelectField>
               <SelectField id="int-outcome" label="Resultado" value={draft.outcome} errors={errors.outcome} onChange={(e) => set('outcome', e.target.value as InteractionOutcome)}>
-                {Object.entries(OUTCOME_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {Object.entries(OUTCOME_LABEL).filter(([k]) => k !== 'planned').map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </SelectField>
               <TextField id="int-occurred" label="Fecha y hora" type="datetime-local" value={draft.occurred_at} errors={errors.occurred_at} onChange={(e) => set('occurred_at', e.target.value)} />
             </div>

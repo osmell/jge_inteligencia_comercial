@@ -256,3 +256,9 @@ Puntos a tener presentes al comparar:
 - [ ] Revisar 3 caídas de venta: ¿el cliente realmente compró menos o es un cambio de facturación (otra compañía, otra sucursal)?
 - [ ] Un cliente que vuelve a comprar deja de aparecer en alertas al día siguiente (queda «resuelta»).
 - [ ] Un vendedor ve solo las alertas de sus clientes; la ficha las muestra con la explicación.
+
+### Inteligencia comercial: panel de recomendaciones (Fase 8, paso 7)
+- [ ] Cerrar una recomendación con cada motivo; «Otro» exige nota; queda quién y cuándo, y no vuelve a aparecer al recalcular.
+- [ ] Crear una acción desde una recomendación: aparece en la Agenda como próxima acción y NO aumenta los contactos en Seguimiento (indicadores).
+- [ ] Un cliente «no contactar» no permite crear la acción.
+- [ ] Un vendedor ve y cierra solo las recomendaciones de sus clientes; un supervisor, las de su ámbito.

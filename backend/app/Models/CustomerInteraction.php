@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $next_action_at
  * @property Carbon|null $next_action_done_at
  */
-#[Fillable(['company_id', 'customer_id', 'user_id', 'channel', 'direction', 'outcome', 'occurred_at', 'response', 'next_action', 'next_action_at', 'next_action_done_at', 'next_action_done_by'])]
+#[Fillable(['company_id', 'customer_id', 'user_id', 'channel', 'direction', 'outcome', 'occurred_at', 'response', 'next_action', 'next_action_at', 'next_action_done_at', 'next_action_done_by', 'insight_alert_id'])]
 class CustomerInteraction extends Model
 {
     public const CHANNELS = ['call', 'email', 'whatsapp', 'visit', 'meeting', 'other'];
@@ -32,6 +32,9 @@ class CustomerInteraction extends Model
 
     /** Resultados: no incluyen «venta»; una venta solo existe cuando hay documento de venta. */
     public const OUTCOMES = ['spoke', 'no_answer', 'interested', 'quote_requested', 'callback_requested', 'not_interested', 'wrong_contact'];
+
+    /** Acción planeada desde una recomendación: aún no es un contacto con el cliente y no cuenta en los indicadores de contactos. */
+    public const PLANNED = 'planned';
 
     protected function casts(): array
     {

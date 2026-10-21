@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\ImportBatch;
+use App\Models\InsightAlert;
 use App\Models\InsightRun;
 use App\Models\Operator;
 use App\Models\Role;
@@ -122,6 +123,14 @@ class CrossSellTest extends TestCase
         $this->assertSame(['Frenos'], $codes->pluck('consequent')->unique()->values()->all());
         $this->assertSame(['Filtros'], $codes->pluck('antecedent')->unique()->values()->all());
         $this->assertEqualsCanonicalizing(range(21, 30), $codes->map(fn ($c) => (int) substr($c->customer_code, 1))->all());   // solo Filtros
+
+        // Cada oportunidad es también una recomendación del panel, con su explicación.
+        $alerts = InsightAlert::withoutGlobalScopes()->where('type', 'cross_sell')->get();
+        $this->assertCount(10, $alerts);
+        $this->assertSame(['medium', 'open'], [$alerts->first()->severity, $alerts->first()->status]);
+        $this->assertStringContainsString('Compra «Filtros» y todavía no «Frenos»', $alerts->first()->explanation);
+        $this->compute();
+        $this->assertSame(10, InsightAlert::withoutGlobalScopes()->where('type', 'cross_sell')->count());      // no se duplican
     }
 
     public function test_it_applies_the_thresholds_and_the_per_customer_cap(): void

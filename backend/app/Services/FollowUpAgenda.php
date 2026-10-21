@@ -104,7 +104,7 @@ class FollowUpAgenda
 
         $lastContact = [];
         foreach (array_chunk(array_keys($candidates), 500) as $ids) {
-            foreach (DB::table('customer_interactions')->whereIn('customer_id', $ids)->groupBy('customer_id')->selectRaw('customer_id, max(occurred_at) as last_contact')->get() as $r) {
+            foreach (DB::table('customer_interactions')->whereIn('customer_id', $ids)->where('outcome', '!=', CustomerInteraction::PLANNED)->groupBy('customer_id')->selectRaw('customer_id, max(occurred_at) as last_contact')->get() as $r) {
                 $lastContact[(int) $r->customer_id] = CarbonImmutable::parse($r->last_contact);
             }
         }

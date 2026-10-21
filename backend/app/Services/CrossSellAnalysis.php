@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Company;
+use App\Models\CrossSellRule;
+use App\Models\InsightAlert;
 use App\Models\InsightRun;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -19,7 +21,7 @@ class CrossSellAnalysis
 {
     public const UNCLASSIFIED = 'Sin clasificar';
 
-    public function __construct(private readonly InsightParameters $parameters, private readonly InsightAvailability $availability, private readonly InsightRunLogger $runs) {}
+    public function __construct(private readonly InsightParameters $parameters, private readonly InsightAvailability $availability, private readonly InsightRunLogger $runs, private readonly InsightAlertSync $alerts) {}
 
     public function compute(Company $company, ?User $user = null, ?CarbonImmutable $today = null): InsightRun
     {
@@ -51,6 +53,7 @@ class CrossSellAnalysis
                     'both_customers' => $r['both'], 'total_customers' => $r['n'], 'confidence' => round($r['confidence'], 4), 'lift' => round($r['lift'], 4),
                 ]);
             }
+            $this->alerts->sync($run, [InsightAlert::CROSS_SELL], $this->alertCandidates($opportunities, $rules));
             foreach (array_chunk($opportunities, 500) as $chunk) {
                 DB::table('cross_sell_opportunities')->insert(array_map(fn (array $o) => [
                     'insight_run_id' => $run->id, 'rule_id' => $ids[$o['rule']], 'company_id' => $company->id, 'customer_code' => $o['code'], 'customer_name' => $o['name'],
@@ -59,6 +62,30 @@ class CrossSellAnalysis
 
             return $run;
         });
+    }
+
+    /**
+     * Cada oportunidad es también una recomendación del panel (se puede cerrar con motivo o convertir en una acción de seguimiento).
+     *
+     * @param  list<array{code: string, name: string, rule: string}>  $opportunities
+     * @param  array<string, array<string, mixed>>  $rules
+     * @return list<array<string, mixed>>
+     */
+    private function alertCandidates(array $opportunities, array $rules): array
+    {
+        $out = [];
+        foreach ($opportunities as $o) {
+            $r = $rules[$o['rule']];
+            $rule = new CrossSellRule(['antecedent' => $r['a'], 'consequent' => $r['b'], 'antecedent_customers' => $r['na'], 'consequent_customers' => $r['nb'], 'both_customers' => $r['both'], 'total_customers' => $r['n'], 'confidence' => round($r['confidence'], 4), 'lift' => round($r['lift'], 4)]);
+            $out[] = [
+                'customer_code' => $o['code'], 'customer_name' => $o['name'], 'type' => InsightAlert::CROSS_SELL, 'severity' => $r['confidence'] >= 0.6 ? 'medium' : 'low',
+                'dedupe_key' => "cross_sell:{$o['code']}:".md5($r['b']),
+                'facts' => ['antecedent' => $r['a'], 'consequent' => $r['b'], 'confidence_pct' => round($r['confidence'] * 100, 1), 'support' => $r['both'], 'antecedent_customers' => $r['na'], 'lift' => round($r['lift'], 2)],
+                'explanation' => "Compra «{$r['a']}» y todavía no «{$r['b']}». ".$rule->explain(),
+            ];
+        }
+
+        return $out;
     }
 
     /**

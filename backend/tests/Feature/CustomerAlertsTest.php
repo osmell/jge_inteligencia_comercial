@@ -223,7 +223,7 @@ class CustomerAlertsTest extends TestCase
         $url = '/api/v1/insights/alerts?company_id='.$this->a->id;
 
         $r = $this->actingAs($this->viewer, 'sanctum')->getJson($url)->assertOk();
-        $this->assertSame(['inactivity_risk' => 2, 'sales_drop' => 2, 'sales_rise' => 0, 'abandoned_line' => 0], $r->json('meta.counts'));
+        $this->assertSame(['inactivity_risk' => 2, 'sales_drop' => 2, 'sales_rise' => 0, 'abandoned_line' => 0, 'cross_sell' => 0, 'rfm_at_risk' => 0], $r->json('meta.counts'));
         $this->assertSame('high', $r->json('data.0.severity'));                                   // lo más grave primero
         $this->assertSame(['sales_drop'], array_unique(array_column($this->getJson($url.'&type=sales_drop')->json('data'), 'type')));
         $this->assertSame(['D1'], array_column($this->getJson($url.'&type=sales_drop&severity=medium')->json('data'), 'code'));

@@ -78,3 +78,15 @@ Pantalla `/inteligencia/alertas` (`insights.view`) y sección «Alertas del clie
 - **Historial suficiente:** 6 meses (`anomaly.min_history_months`). Sin él, el cálculo queda registrado como «insuficiente».
 - **Alcance:** cada usuario ve las alertas de los clientes que puede ver (un vendedor, los suyos).
 - Pendiente para el paso 7: cerrar alertas con motivo, crear una acción en la agenda a partir de una alerta y el panel unificado.
+
+## Paso 7 — Panel de recomendaciones (hecho)
+Pantalla **Recomendaciones** (`/inteligencia/alertas`, `insights.view`) y sección «Recomendaciones del cliente» en la ficha. Reúne en una sola lista, con el mismo ciclo de vida, lo que producen los análisis:
+- **Tipos:** riesgo de inactividad, caída y alza de venta, categoría abandonada, **oportunidad de venta cruzada** (cada oportunidad es ahora también una recomendación) y **cliente en riesgo (RFM)** (los clientes del segmento «En riesgo»). Se recalculan cada noche con `insights:refresh`.
+- **Cada una trae su explicación en palabras, su gravedad, cuándo se detectó y de qué cálculo salió** (periodo, parámetros y fecha en el registro de cálculos). Un contador por tipo filtra la lista; también hay filtros de estado (abiertas o cerradas), gravedad, **vendedor** y búsqueda de cliente.
+- **Cerrar con motivo** (quien tiene `interactions.manage`, sobre los clientes que puede ver): *ya contacté al cliente*, *no aplica*, *el cliente no desea ser contactado*, *resuelto* u *otro* (la nota es obligatoria). Queda registrado quién y cuándo (y en Auditoría). **Una recomendación cerrada no se reabre por el mismo hecho** aunque se recalcule. Las que dejan de cumplirse se marcan «resueltas» solas.
+- **Crear una acción en la agenda de seguimiento**, solo a petición de una persona (nunca automática): propone un texto según el tipo y pide la fecha. La acción queda en la agenda como próxima acción **«planeada»**: **no es un contacto**, así que no cuenta en los indicadores de contactos ni como «último contacto» al buscar clientes por reactivar. Una recomendación tiene como máximo una acción, y no se crea para clientes marcados como «no contactar».
+- **Alcance:** cada usuario ve y gestiona las recomendaciones de los clientes que puede ver (un vendedor, las suyas).
+- Los parámetros y las reglas de cada análisis se consultan en Inteligencia; los análisis sin historial suficiente no generan recomendaciones.
+
+## Fase 8 completa en código
+Falta el paso 4 (estacionalidad), que se activa por sí solo cuando haya 24 meses de historial, y validar todo con datos reales y las respuestas del cuestionario (`16_PREGUNTAS_FASE_08_INTELIGENCIA.md`).

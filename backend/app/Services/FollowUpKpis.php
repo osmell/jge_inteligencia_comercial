@@ -52,7 +52,7 @@ class FollowUpKpis
     /** @param  array<string, mixed>  $opts @return \Illuminate\Support\Collection<int, CustomerInteraction> */
     private function contactRows(User $user, array $opts, CarbonImmutable $start, CarbonImmutable $end)
     {
-        $query = CustomerInteraction::query()->whereBetween('occurred_at', [$start, $end]);
+        $query = CustomerInteraction::query()->where('outcome', '!=', CustomerInteraction::PLANNED)->whereBetween('occurred_at', [$start, $end]);
         $this->scope->restrict($query, $user, $opts);
 
         return $query->get(['id', 'user_id', 'customer_id', 'channel', 'direction', 'outcome', 'occurred_at']);

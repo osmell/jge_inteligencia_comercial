@@ -223,7 +223,7 @@ export interface ProductLevels {
 
 export type InteractionChannel = 'call' | 'email' | 'whatsapp' | 'visit' | 'meeting' | 'other'
 export type InteractionDirection = 'outbound' | 'inbound'
-export type InteractionOutcome = 'spoke' | 'no_answer' | 'interested' | 'quote_requested' | 'callback_requested' | 'not_interested' | 'wrong_contact'
+export type InteractionOutcome = 'spoke' | 'no_answer' | 'interested' | 'quote_requested' | 'callback_requested' | 'not_interested' | 'wrong_contact' | 'planned'
 
 export const CHANNEL_LABEL: Record<InteractionChannel, string> = {
   call: 'Llamada', email: 'Correo', whatsapp: 'WhatsApp (manual)', visit: 'Visita', meeting: 'Reunión', other: 'Otro',
@@ -231,7 +231,7 @@ export const CHANNEL_LABEL: Record<InteractionChannel, string> = {
 export const DIRECTION_LABEL: Record<InteractionDirection, string> = { outbound: 'Contacté yo al cliente', inbound: 'El cliente me contactó' }
 export const OUTCOME_LABEL: Record<InteractionOutcome, string> = {
   spoke: 'Se habló con el cliente', no_answer: 'Sin respuesta', interested: 'Interesado', quote_requested: 'Pidió cotización',
-  callback_requested: 'Pidió que se le vuelva a contactar', not_interested: 'No interesado', wrong_contact: 'Contacto incorrecto',
+  callback_requested: 'Pidió que se le vuelva a contactar', not_interested: 'No interesado', wrong_contact: 'Contacto incorrecto', planned: 'Acción planeada (sin contacto todavía)',
 }
 
 export interface ContactPreference {

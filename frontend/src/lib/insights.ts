@@ -177,14 +177,26 @@ export interface CrossSellOpportunity {
   explanation: string
 }
 
-export type AlertType = 'inactivity_risk' | 'sales_drop' | 'sales_rise' | 'abandoned_line'
+export type AlertType = 'inactivity_risk' | 'sales_drop' | 'sales_rise' | 'abandoned_line' | 'cross_sell' | 'rfm_at_risk'
 
 export const ALERT_LABEL: Record<AlertType, string> = {
   inactivity_risk: 'Riesgo de inactividad',
   sales_drop: 'Caída de venta',
   sales_rise: 'Alza de venta',
   abandoned_line: 'Categoría abandonada',
+  cross_sell: 'Oportunidad de venta cruzada',
+  rfm_at_risk: 'Cliente en riesgo (RFM)',
 }
+
+export const CLOSE_REASON_LABEL = {
+  contacted: 'Ya contacté al cliente',
+  not_applicable: 'No aplica',
+  do_not_contact: 'El cliente no desea ser contactado',
+  resolved: 'Resuelto',
+  other: 'Otro (con nota)',
+} as const
+
+export type CloseReason = keyof typeof CLOSE_REASON_LABEL
 
 export const SEVERITY_LABEL = { high: 'Alta', medium: 'Media', low: 'Baja' } as const
 
@@ -200,6 +212,8 @@ export interface InsightAlertRow {
   first_detected_at: string
   last_detected_at: string
   run_id: number
+  follow_up: boolean
+  closed: { at: string | null; reason: CloseReason | null; note: string | null; by: string | null } | null
 }
 
 export interface InsightAlertList {

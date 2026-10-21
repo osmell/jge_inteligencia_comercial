@@ -130,6 +130,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('{analysis}/recalculate', [InsightAnalysisController::class, 'recalculate'])->whereIn('analysis', ['concentration', 'cohorts'])->middleware('permission:insights.manage');
         Route::get('alerts', [InsightAlertController::class, 'index']);
         Route::get('alerts/customer', [InsightAlertController::class, 'customer']);
+        Route::post('alerts/{alert}/close', [InsightAlertController::class, 'close'])->middleware('permission:interactions.manage')->whereNumber('alert');
+        Route::post('alerts/{alert}/follow-up', [InsightAlertController::class, 'followUp'])->middleware('permission:interactions.manage')->whereNumber('alert');
         Route::get('cross-sell', [InsightCrossSellController::class, 'index']);
         Route::get('cross-sell/opportunities', [InsightCrossSellController::class, 'opportunities']);
         Route::get('cross-sell/customer', [InsightCrossSellController::class, 'customer']);
