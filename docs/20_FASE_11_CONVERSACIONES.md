@@ -141,3 +141,9 @@ Cuenta de WhatsApp Business configurable (credenciales cifradas, prueba de conex
 - Criterios de aceptación de este documento: cumplidos en código y pruebas (backend 568, frontend 233); falta validarlos con el número de prueba/aprobado de Meta (ver `docs/14`, «Conversaciones»).
 - Servicios que deben estar corriendo: `backend`, `queue` (envíos, descargas, eventos), `reverb` (tiempo real) y el programador (`schedule:work` o cron) para el aviso de clientes esperando.
 - Pendientes que decide el responsable: política de conservación (hoy nada se borra), notas de voz grabadas en el navegador (requieren `ffmpeg`), estado de cuenta en PDF, etiquetas configurables, crear clientes desde la conversación.
+
+## Decisiones del responsable al cierre de la fase
+1. Las conversaciones no se borran: los mensajes quedan en PostgreSQL (los archivos adjuntos, en la carpeta privada `conversations`, que se respalda junto con la base).
+2. No se registran notas de voz desde el navegador.
+3. El estado de cuenta en PDF no se necesita por ahora.
+4. Etiquetas configurables: el responsable las inspecciona y decide después; mientras tanto rige la lista fija.
