@@ -66,3 +66,10 @@ Todos son `role="img"` con descripción; sin datos no fallan. Probados en `chart
 - **Cobranza:** además del saldo y los tramos, **promesas de pago por atender** (las que vencen en 7 días y las incumplidas de los últimos 30), con enlace al cliente; para los demás perfiles se calcula con su mismo alcance.
 - API: `goals.totals.days_left` y `needed_per_day`, `followup.actions` (hasta 5, vencidas primero) y `credit.promises.attention`.
 - Con esto los tres perfiles están cubiertos; falta el paso 7 (pulido: filtros, rendimiento y documentación) y que el responsable confirme el cuestionario `19`.
+
+## Paso 7 — Pulido, coherencia y rendimiento (hecho)
+- **Coherencia con el detalle:** una prueba automática compara el dashboard contra las pantallas de origen (`/sales/summary`, `/sales/goals`, `/credit/aging`): venta neta, facturas, ticket, cambio contra el tramo anterior, meta, avance, cumplimiento, saldo, tramos y principales deudores son idénticos.
+- **Rendimiento medido** en la base de desarrollo (≈17.400 líneas de venta, 291 clientes, administrador): cada sección tarda entre 4 y 150 ms (ventas ≈120–150 ms con 8–11 consultas; la más pesada, el ranking del año, ≈110 ms); las nueve secciones se piden por separado y en paralelo desde el navegador. Con el volumen real (años de historial y más clientes) conviene volver a medirlo; si hiciera falta, el siguiente paso sería guardar el cálculo del mes cerrado.
+- **Estados vacíos y de error:** sin ventas en el periodo se explica (y desde cuándo hay historial); una sección que falla muestra su error con «Reintentar» sin afectar a las demás.
+- **Teléfono:** tarjetas en una columna, selectores que se acomodan en filas, gráficos que escalan al ancho y tablas alternas plegadas.
+- **Pendiente de negocio:** respuestas al cuestionario `19` y validación con datos reales (lista de comprobación en `docs/14`). Fuera de alcance por ahora: exportar el dashboard, reordenar o personalizar secciones, valor del inventario (requiere permiso de costos).

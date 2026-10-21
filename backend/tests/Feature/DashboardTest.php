@@ -256,4 +256,25 @@ class DashboardTest extends TestCase
         $this->assertSame(['Cliente CB', 'Cliente CV', 'Cliente CV'], array_column(array_column($all->json('data.actions'), 'customer'), 'name'));       // vencidas primero y luego las de hoy
         $this->assertSame(['Cliente CV', 'Cliente CV'], array_column(array_column($this->section($this->vera, 'followup')->json('data.actions'), 'customer'), 'name'));
     }
+
+    public function test_dashboard_figures_match_the_detail_screens(): void
+    {
+        $this->seedBusiness();
+        $this->actingAs($this->admin, 'sanctum');
+
+        $dash = $this->getJson('/api/v1/dashboard/sales')->json('data');
+        $detail = $this->getJson('/api/v1/sales/summary?from=2026-10-01&to=2026-10-21&compare_from=2026-09-01&compare_to=2026-09-21')->assertOk()->json('data');
+        $this->assertEquals([$detail['current']['net_total'], $detail['current']['documents'], $detail['current']['average_ticket'], $detail['previous']['net_total'], $detail['change_pct']['net_total']],
+            [$dash['current']['net_total'], $dash['current']['documents'], $dash['current']['average_ticket'], $dash['previous']['net_total'], $dash['previous']['change_pct']]);
+
+        $goals = $this->getJson('/api/v1/dashboard/goals')->json('data');
+        $meta = $this->getJson('/api/v1/sales/goals?month=2026-10')->assertOk()->json('meta');
+        $this->assertEquals([$meta['totals']['effective_goal'], $meta['totals']['actual'], $meta['totals']['compliance_pct']], [$goals['totals']['goal'], $goals['totals']['actual'], $goals['totals']['compliance_pct']]);
+
+        $credit = $this->getJson('/api/v1/dashboard/credit')->json('data');
+        $aging = $this->getJson('/api/v1/credit/aging')->assertOk()->json('data');
+        $this->assertEquals($aging['totals']['total'], $credit['total']);
+        $this->assertEquals(array_map(fn (string $b) => $aging['totals'][$b], $aging['buckets']), array_column($credit['buckets'], 'amount'));
+        $this->assertSame(array_slice(array_column($aging['customers'], 'name'), 0, 2), array_column($credit['top_debtors'], 'name'));
+    }
 }

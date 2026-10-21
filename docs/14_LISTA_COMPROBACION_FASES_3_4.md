@@ -307,3 +307,11 @@ Puntos a tener presentes al comparar:
 - [ ] Configurar el receptor (por ejemplo un flujo de n8n), guardar URL y secreto, y usar «Enviar prueba»: llega y la firma se verifica.
 - [ ] Elegir un evento (p. ej. resúmenes) y confirmar que llega una sola vez cuando se genera.
 - [ ] Con el receptor apagado, el registro muestra los reintentos y luego «Falló».
+
+### Dashboard de inicio (Fase 10)
+- [ ] Entrar como administrador, como supervisor y como vendedor: cada uno ve su alcance (compañías, equipo, solo lo suyo) y los títulos correspondientes.
+- [ ] Con datos reales, comparar contra las pantallas de detalle: venta neta y comparativos (Ventas), cumplimiento (Metas), saldo y tramos (Cartera), abiertas y por vencer (Cotizaciones), vencidas y de hoy (Agenda), agotados y bajo mínimo (Rotación), abiertas y graves (Recomendaciones).
+- [ ] Probar los cuatro periodos y el selector de compañía.
+- [ ] Un vendedor sin vendedor vinculado y un supervisor sin equipo ven el aviso, no cifras en cero sin explicación.
+- [ ] Revisar en teléfono: tarjetas en una columna, gráficos legibles y tablas alternas plegadas.
+- [ ] Confirmar con gerencia las respuestas de `docs/19` (qué indicadores, periodo por omisión, umbrales).

@@ -13,6 +13,7 @@ let failing: string | null
 let linked: number | null
 let team: string[]
 
+let emptySales = false
 const sales = {
   period: { from: '2026-10-01', to: '2026-10-03', label: 'Mes en curso' },
   current: { net_total: '3500.00', documents: 3, customers: 2, average_ticket: '1166.67' },
@@ -30,6 +31,7 @@ beforeEach(() => {
   profile = 'company'
   sections = ['sales', 'goals', 'credit', 'quotations']
   failing = null
+  emptySales = false
   linked = null
   team = []
   vi.stubGlobal('fetch', vi.fn(async (url: string) => {
@@ -40,7 +42,7 @@ beforeEach(() => {
     if (path === '/auth/me') body = { data: { id: 1, username: 'a', name: 'Ana', role: { slug: 'administrador', name: 'Admin' }, permissions: [], companies: [], branches: [] } }
     else if (path === '/dashboard') body = { data: { profile, team, linked_sellers: linked, sections, periods: ['month', 'prev_month', 'quarter', 'year'], companies: [{ id: 1, name: 'Alfa' }, { id: 2, name: 'Beta' }], last_sale: '2026-10-20', last_import: '2026-10-21T12:00:00Z' } }
     else if (failing && path.startsWith(`/dashboard/${failing}`)) { status = 500; body = { message: 'Error interno.' } }
-    else if (path.startsWith('/dashboard/sales')) body = { data: sales }
+    else if (path.startsWith('/dashboard/sales')) body = { data: emptySales ? { ...sales, current: { net_total: '0.00', documents: 0, customers: 0, average_ticket: null }, daily: [], daily_previous: [], monthly: [] } : sales }
     else if (path.startsWith('/dashboard/goals')) body = { data: { month: '2026-10', state: 'current', totals: { goal: 7000, actual: 3500, remaining: 3500, compliance_pct: 50, projected: 5000, projected_pct: 71.4, days_left: 11, needed_per_day: 318.18, sellers_with_goal: 2, met: 0 }, rows: [{ seller_id: 1, seller: 'Vera', effective_goal: 3000, actual: 1500, compliance_pct: 50, projected: 2000, projected_pct: 66.7, status: 'danger', behind_pace: true }] } }
     else if (path.startsWith('/dashboard/credit')) body = { data: { total: '1500.0000', overdue: '1500.00', overdue_pct: 100, invoices: 2, customers: 2, buckets: [{ bucket: 'current', amount: '0.0000' }, { bucket: '31-60', amount: '1000.0000' }, { bucket: '121+', amount: '500.0000' }], top_debtors: [{ company_id: 1, code: 'CV', name: 'Cliente CV', total: '1000.0000', oldest_days: 40 }], promises: { due_next_7_days: 1, due_amount: '300.00', broken_30_days: 1, attention: [{ company_id: 1, code: 'CV', name: 'Cliente CV', promised_on: '2026-10-25', amount: '300.00', status: 'open', days_overdue: 0 }, { company_id: 1, code: 'CB', name: 'Cliente CB', promised_on: '2026-10-15', amount: '100.00', status: 'broken', days_overdue: 6 }] } } }
     else if (path.startsWith('/dashboard/followup')) body = { data: { overdue: 2, today: 1, date: '2026-10-21', actions: [{ customer: { company_id: 1, code: 'CV', name: 'Cliente CV' }, next_action: 'Llamar', next_action_at: '2026-10-19T10:00:00Z', days_overdue: 2 }, { customer: { company_id: 1, code: 'CB', name: 'Cliente CB' }, next_action: 'Visitar', next_action_at: '2026-10-21T15:00:00Z', days_overdue: 0 }], no_contact: { count: 3, days: 30, top: [{ code: 'CV', company_id: 1, name: 'Cliente CV', status: 'lost', days_since_last_purchase: 120, seller: 'Vera' }] } } }
@@ -191,5 +193,12 @@ describe('dashboard de inicio', () => {
     const promises = await within(credit).findByRole('list', { name: 'Promesas de pago por atender' })
     expect(within(promises).getByText(/incumplida hace 6 días/)).toBeInTheDocument()
     expect(within(promises).getByText(/para el 25 oct 2026/)).toBeInTheDocument()
+  })
+
+  it('sin ventas en el periodo lo explica en vez de mostrar cifras mudas', async () => {
+    emptySales = true
+    renderHome()
+
+    expect(await screen.findByText(/No hay ventas en este periodo \(el historial cargado empieza el 8 oct 2025\)/)).toBeInTheDocument()
   })
 })

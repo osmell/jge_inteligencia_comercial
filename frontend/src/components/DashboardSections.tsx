@@ -66,6 +66,9 @@ export function SalesBlock({ query, profile }: BlockProps) {
         const before = dailyPoints(s.daily_previous, s.previous.from, s.previous.to).slice(0, now.length)
         return (
           <>
+            {s.current.documents === 0 && (
+              <div className="mb-3"><Alert tone="info">No hay ventas en este periodo{s.history_since ? ` (el historial cargado empieza el ${formatDay(s.history_since)})` : ': todavía no se han cargado ventas'}. Las comparaciones se muestran contra lo que haya en el tramo anterior.</Alert></div>
+            )}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Stat
                 label="Venta neta"
