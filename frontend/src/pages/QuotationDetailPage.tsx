@@ -2,8 +2,8 @@ import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TextAreaField, TextField, td, th, tr, type FieldErrors } from '../components/ui'
-import { ApiError, api, download } from '../lib/api'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TextAreaField, TextField, td, th, tr } from '../components/ui'
+import { api, download } from '../lib/api'
 import { formatBytes, formatMoney } from '../lib/format'
 import { formatDateTime } from '../lib/customers'
 import {
@@ -11,6 +11,7 @@ import {
   type CandidateDocument, type LossReason, type QuotationDetail, type StoredStatus,
 } from '../lib/quotations'
 import { useLoad } from '../lib/useLoad'
+import { useSubmit } from '../lib/useSubmit'
 
 const profileLink = (q: QuotationDetail) => `/clientes/ficha?codigo=${encodeURIComponent(q.customer.code)}&compania=${q.customer.company_id}`
 
@@ -25,18 +26,19 @@ export default function QuotationDetailPage() {
   const closed = q ? ['converted', 'rejected', 'cancelled'].includes(q.status) : true
 
   const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
+  const [running, setRunning] = useState(false)
   const [edit, setEdit] = useState<Record<string, string> | null>(null)
-  const [editErrors, setEditErrors] = useState<FieldErrors>({})
+  const editForm = useSubmit()
   const [closing, setClosing] = useState<'rejected' | 'cancelled' | null>(null)
   const [loss, setLoss] = useState<{ reason: string; note: string }>({ reason: '', note: '' })
-  const [lossErrors, setLossErrors] = useState<FieldErrors>({})
+  const closeForm = useSubmit()
   const [linking, setLinking] = useState(false)
   const [documentId, setDocumentId] = useState('')
+  const working = running || editForm.saving || closeForm.saving
   const candidates = useLoad<{ data: CandidateDocument[] }>(`/quotations/${id}/documents`, { enabled: linking })
 
   async function run(action: () => Promise<unknown>, success: string) {
-    setBusy(true)
+    setRunning(true)
     setError(null)
     try {
       await action()
@@ -47,14 +49,14 @@ export default function QuotationDetailPage() {
       setError(e instanceof Error ? e.message : 'No se pudo completar la acción.')
       return false
     } finally {
-      setBusy(false)
+      setRunning(false)
     }
   }
 
   function changeStatus(to: StoredStatus) {
     if (to === 'rejected' || to === 'cancelled') {
       setLoss({ reason: '', note: '' })
-      setLossErrors({})
+      closeForm.setErrors({})
       setClosing(to)
       return
     }
@@ -63,41 +65,31 @@ export default function QuotationDetailPage() {
 
   async function confirmClose() {
     if (!closing) return
-    setLossErrors({})
-    setBusy(true)
-    try {
-      await api(`/quotations/${id}/status`, { method: 'PUT', body: { status: closing, loss_reason: loss.reason || null, loss_note: loss.note.trim() || null } })
+    const ok = await closeForm.run(async () => { await api(`/quotations/${id}/status`, { method: 'PUT', body: { status: closing, loss_reason: loss.reason || null, loss_note: loss.note.trim() || null } }) }, 'loss_reason')
+    if (ok) {
       toast.success('Estado actualizado.')
       setClosing(null)
       detail.reload()
-    } catch (e) {
-      setLossErrors(e instanceof ApiError ? e.errors : { loss_reason: [e instanceof Error ? e.message : 'No se pudo guardar.'] })
-    } finally {
-      setBusy(false)
     }
   }
 
   function startEdit(c: QuotationDetail) {
-    setEditErrors({})
+    editForm.setErrors({})
     setEdit({ amount: c.amount, valid_until: c.valid_until ?? '', description: c.description ?? '', external_reference: c.external_reference ?? '' })
   }
 
   async function saveEdit() {
     if (!edit) return
-    setBusy(true)
-    setEditErrors({})
-    try {
+    const ok = await editForm.run(async () => {
       await api(`/quotations/${id}`, {
         method: 'PUT',
         body: { amount: edit.amount === '' ? null : edit.amount.replace(',', '.'), valid_until: edit.valid_until || null, description: edit.description.trim() || null, external_reference: edit.external_reference.trim() || null },
       })
+    }, 'amount')
+    if (ok) {
       toast.success('Cotización actualizada.')
       setEdit(null)
       detail.reload()
-    } catch (e) {
-      setEditErrors(e instanceof ApiError ? e.errors : { amount: [e instanceof Error ? e.message : 'No se pudo guardar.'] })
-    } finally {
-      setBusy(false)
     }
   }
 
@@ -159,29 +151,29 @@ export default function QuotationDetailPage() {
               <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-3">
                 <Button variant="secondary" small onClick={() => startEdit(q)}>Editar</Button>
                 {q.transitions.filter((t) => t !== 'rejected' && t !== 'cancelled').map((t) => (
-                  <Button key={t} small disabled={busy} onClick={() => changeStatus(t)}>{TRANSITION_LABEL[t]}</Button>
+                  <Button key={t} small disabled={working} onClick={() => changeStatus(t)}>{TRANSITION_LABEL[t]}</Button>
                 ))}
-                {['issued', 'sent', 'following', 'accepted'].includes(q.status) && <Button small variant="secondary" disabled={busy} onClick={() => setLinking(true)}>Vincular factura</Button>}
-                {q.transitions.includes('rejected') && <Button small variant="secondary" disabled={busy} onClick={() => changeStatus('rejected')}>{TRANSITION_LABEL.rejected}</Button>}
-                {q.transitions.includes('cancelled') && <Button small variant="danger" disabled={busy} onClick={() => changeStatus('cancelled')}>{TRANSITION_LABEL.cancelled}</Button>}
+                {['issued', 'sent', 'following', 'accepted'].includes(q.status) && <Button small variant="secondary" disabled={working} onClick={() => setLinking(true)}>Vincular factura</Button>}
+                {q.transitions.includes('rejected') && <Button small variant="secondary" disabled={working} onClick={() => changeStatus('rejected')}>{TRANSITION_LABEL.rejected}</Button>}
+                {q.transitions.includes('cancelled') && <Button small variant="danger" disabled={working} onClick={() => changeStatus('cancelled')}>{TRANSITION_LABEL.cancelled}</Button>}
               </div>
             )}
             {can('customers.manage') && q.status === 'converted' && (
               <div className="mt-4 border-t border-line pt-3">
-                <Button small variant="secondary" disabled={busy} onClick={() => void run(() => api(`/quotations/${id}/link`, { method: 'DELETE' }), 'Vínculo retirado: la cotización vuelve a «Aceptada».')}>Quitar vínculo con la factura</Button>
+                <Button small variant="secondary" disabled={working} onClick={() => void run(() => api(`/quotations/${id}/link`, { method: 'DELETE' }), 'Vínculo retirado: la cotización vuelve a «Aceptada».')}>Quitar vínculo con la factura</Button>
               </div>
             )}
 
             {edit !== null && (
               <form onSubmit={(e) => { e.preventDefault(); void saveEdit() }} className="mt-4 space-y-3 border-t border-line pt-3">
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <TextField id="e-amount" label="Importe" inputMode="decimal" value={edit.amount} errors={editErrors.amount} onChange={(e) => setEdit({ ...edit, amount: e.target.value })} />
-                  <TextField id="e-valid" label="Válida hasta" type="date" value={edit.valid_until} errors={editErrors.valid_until} onChange={(e) => setEdit({ ...edit, valid_until: e.target.value })} />
-                  <TextField id="e-ref" label="Referencia externa" value={edit.external_reference} errors={editErrors.external_reference} maxLength={100} onChange={(e) => setEdit({ ...edit, external_reference: e.target.value })} />
+                  <TextField id="e-amount" label="Importe" inputMode="decimal" value={edit.amount} errors={editForm.errors.amount} onChange={(e) => setEdit({ ...edit, amount: e.target.value })} />
+                  <TextField id="e-valid" label="Válida hasta" type="date" value={edit.valid_until} errors={editForm.errors.valid_until} onChange={(e) => setEdit({ ...edit, valid_until: e.target.value })} />
+                  <TextField id="e-ref" label="Referencia externa" value={edit.external_reference} errors={editForm.errors.external_reference} maxLength={100} onChange={(e) => setEdit({ ...edit, external_reference: e.target.value })} />
                 </div>
-                <TextAreaField id="e-desc" label="Descripción" value={edit.description} errors={editErrors.description} maxLength={2000} onChange={(e) => setEdit({ ...edit, description: e.target.value })} />
+                <TextAreaField id="e-desc" label="Descripción" value={edit.description} errors={editForm.errors.description} maxLength={2000} onChange={(e) => setEdit({ ...edit, description: e.target.value })} />
                 <div className="flex gap-2">
-                  <Button type="submit" loading={busy}>Guardar cambios</Button>
+                  <Button type="submit" loading={editForm.saving}>Guardar cambios</Button>
                   <Button type="button" variant="secondary" onClick={() => setEdit(null)}>Cancelar</Button>
                 </div>
               </form>
@@ -191,15 +183,15 @@ export default function QuotationDetailPage() {
               <form onSubmit={(e) => { e.preventDefault(); void confirmClose() }} className="mt-4 space-y-3 border-t border-line pt-3">
                 <h3 className="text-sm font-semibold">{closing === 'rejected' ? 'Registrar la cotización como perdida' : 'Cancelar la cotización'}</h3>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <SelectField id="l-reason" label={closing === 'rejected' ? 'Motivo (obligatorio)' : 'Motivo (opcional)'} value={loss.reason} errors={lossErrors.loss_reason} onChange={(e) => setLoss({ ...loss, reason: e.target.value })}>
+                  <SelectField id="l-reason" label={closing === 'rejected' ? 'Motivo (obligatorio)' : 'Motivo (opcional)'} value={loss.reason} errors={closeForm.errors.loss_reason} onChange={(e) => setLoss({ ...loss, reason: e.target.value })}>
                     <option value="">Elige un motivo</option>
                     {(Object.keys(LOSS_REASON_LABEL) as LossReason[]).map((r) => <option key={r} value={r}>{LOSS_REASON_LABEL[r]}</option>)}
                   </SelectField>
-                  <TextField id="l-note" label="Detalle (opcional)" value={loss.note} errors={lossErrors.loss_note} maxLength={500} onChange={(e) => setLoss({ ...loss, note: e.target.value })} />
+                  <TextField id="l-note" label="Detalle (opcional)" value={loss.note} errors={closeForm.errors.loss_note} maxLength={500} onChange={(e) => setLoss({ ...loss, note: e.target.value })} />
                 </div>
-                <FormError message={lossErrors.status?.[0] ?? null} />
+                <FormError message={closeForm.errors.status?.[0] ?? null} />
                 <div className="flex gap-2">
-                  <Button type="submit" variant={closing === 'cancelled' ? 'danger' : 'primary'} loading={busy}>{closing === 'rejected' ? 'Marcar como perdida' : 'Cancelar cotización'}</Button>
+                  <Button type="submit" variant={closing === 'cancelled' ? 'danger' : 'primary'} loading={closeForm.saving}>{closing === 'rejected' ? 'Marcar como perdida' : 'Cancelar cotización'}</Button>
                   <Button type="button" variant="secondary" onClick={() => setClosing(null)}>Volver</Button>
                 </div>
               </form>
@@ -217,7 +209,7 @@ export default function QuotationDetailPage() {
                   {(candidates.data?.data ?? []).map((d) => <option key={d.id} value={d.id}>{d.document} · {formatDay(d.issued_on)} · {formatMoney(d.net_total)}</option>)}
                 </SelectField>
                 <div className="flex gap-2">
-                  <Button type="submit" loading={busy} disabled={documentId === ''}>Vincular</Button>
+                  <Button type="submit" loading={running} disabled={documentId === ''}>Vincular</Button>
                   <Button type="button" variant="secondary" onClick={() => { setLinking(false); setDocumentId('') }}>Cancelar</Button>
                 </div>
               </form>
@@ -238,8 +230,8 @@ export default function QuotationDetailPage() {
               {manage && !closed && (
                 <>
                   <input ref={fileInput} id="quotation-file" type="file" className="sr-only" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*" onChange={(e) => void upload(e.target.files?.[0])} />
-                  <Button small variant="secondary" disabled={busy} onClick={() => fileInput.current?.click()}>{q.attachment ? 'Reemplazar adjunto' : 'Subir adjunto'}</Button>
-                  {q.attachment && <Button small variant="ghost" disabled={busy} onClick={() => void run(() => api(`/quotations/${id}/attachment`, { method: 'DELETE' }), 'Adjunto eliminado.')}>Quitar adjunto</Button>}
+                  <Button small variant="secondary" disabled={working} onClick={() => fileInput.current?.click()}>{q.attachment ? 'Reemplazar adjunto' : 'Subir adjunto'}</Button>
+                  {q.attachment && <Button small variant="ghost" disabled={working} onClick={() => void run(() => api(`/quotations/${id}/attachment`, { method: 'DELETE' }), 'Adjunto eliminado.')}>Quitar adjunto</Button>}
                 </>
               )}
             </div>

@@ -1,6 +1,7 @@
 import { Pencil, Plus, Users } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/AuthContext'
+import { useFormValues } from '../lib/useFormValues'
 import { useLoad } from '../lib/useLoad'
 import { submitForm } from '../lib/saveForm'
 import type { AdminUser, Branch, Company, Role } from '../lib/types'
@@ -17,14 +18,11 @@ interface Catalogs {
 }
 
 function UserForm({ user, catalogs, isSelf, onClose, onSaved }: { user: AdminUser | null; catalogs: Catalogs; isSelf: boolean; onClose: () => void; onSaved: () => void }) {
-  const [username, setUsername] = useState(user?.username ?? '')
-  const [name, setName] = useState(user?.name ?? '')
-  const [email, setEmail] = useState(user?.email ?? '')
-  const [password, setPassword] = useState('')
-  const [roleId, setRoleId] = useState(String(user?.role.id ?? catalogs.roles.find((r) => r.slug === 'vendedor')?.id ?? ''))
-  const [active, setActive] = useState(user?.is_active ?? true)
-  const [companyIds, setCompanyIds] = useState<number[]>(user?.company_ids ?? [])
-  const [branchIds, setBranchIds] = useState<number[]>(user?.branch_ids ?? [])
+  const { values: v, set } = useFormValues({
+    username: user?.username ?? '', name: user?.name ?? '', email: user?.email ?? '', password: '',
+    roleId: String(user?.role.id ?? catalogs.roles.find((r) => r.slug === 'vendedor')?.id ?? ''), active: user?.is_active ?? true,
+    companyIds: user?.company_ids ?? [] as number[], branchIds: user?.branch_ids ?? [] as number[],
+  })
   const [errors, setErrors] = useState<FieldErrors>({})
   const [message, setMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -32,11 +30,11 @@ function UserForm({ user, catalogs, isSelf, onClose, onSaved }: { user: AdminUse
   const toggle = (list: number[], id: number) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id])
 
   function toggleCompany(company: Company) {
-    const removing = companyIds.includes(company.id)
-    setCompanyIds(toggle(companyIds, company.id))
+    const removing = v.companyIds.includes(company.id)
+    set('companyIds', toggle(v.companyIds, company.id))
     if (removing) {
       const own = catalogs.branches.filter((b) => b.company_id === company.id).map((b) => b.id)
-      setBranchIds(branchIds.filter((id) => !own.includes(id)))
+      set('branchIds', v.branchIds.filter((id) => !own.includes(id)))
     }
   }
 
@@ -44,9 +42,9 @@ function UserForm({ user, catalogs, isSelf, onClose, onSaved }: { user: AdminUse
     e.preventDefault()
     setSaving(true)
     const body = {
-      username, name, email: email || null, role_id: Number(roleId), is_active: active,
-      company_ids: companyIds, branch_ids: branchIds,
-      ...(password ? { password } : {}),
+      username: v.username, name: v.name, email: v.email || null, role_id: Number(v.roleId), is_active: v.active,
+      company_ids: v.companyIds, branch_ids: v.branchIds,
+      ...(v.password ? { password: v.password } : {}),
     }
     const r = await submitForm(user ? 'PUT' : 'POST', user ? `/admin/users/${user.id}` : '/admin/users', body)
     setSaving(false)
@@ -60,18 +58,18 @@ function UserForm({ user, catalogs, isSelf, onClose, onSaved }: { user: AdminUse
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <FormError message={message} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <TextField id="user-username" label="Nombre de usuario" value={username} onChange={(e) => setUsername(e.target.value)} autoCapitalize="none" autoComplete="off"
+          <TextField id="user-username" label="Nombre de usuario" value={v.username} onChange={(e) => set('username', e.target.value)} autoCapitalize="none" autoComplete="off"
             hint="Sin espacios ni correo. Se guarda en minúsculas." errors={errors.username} />
-          <TextField id="user-name" label="Nombre completo" value={name} onChange={(e) => setName(e.target.value)} errors={errors.name} />
-          <TextField id="user-email" label="Correo (opcional)" type="email" value={email} onChange={(e) => setEmail(e.target.value)} errors={errors.email} />
-          <TextField id="user-password" label={user ? 'Nueva contraseña (opcional)' : 'Contraseña'} type="password" autoComplete="new-password" value={password}
-            onChange={(e) => setPassword(e.target.value)} hint="Mínimo 10 caracteres, con letras y números." errors={errors.password} />
-          <SelectField id="user-role" label="Rol" value={roleId} onChange={(e) => setRoleId(e.target.value)} errors={errors.role_id}
+          <TextField id="user-name" label="Nombre completo" value={v.name} onChange={(e) => set('name', e.target.value)} errors={errors.name} />
+          <TextField id="user-email" label="Correo (opcional)" type="email" value={v.email} onChange={(e) => set('email', e.target.value)} errors={errors.email} />
+          <TextField id="user-password" label={user ? 'Nueva contraseña (opcional)' : 'Contraseña'} type="password" autoComplete="new-password" value={v.password}
+            onChange={(e) => set('password', e.target.value)} hint="Mínimo 10 caracteres, con letras y números." errors={errors.password} />
+          <SelectField id="user-role" label="Rol" value={v.roleId} onChange={(e) => set('roleId', e.target.value)} errors={errors.role_id}
             disabled={isSelf} hint={isSelf ? 'No puedes cambiar tu propio rol.' : undefined}>
             {catalogs.roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
           </SelectField>
           <div className="self-end pb-1">
-            <CheckField label="Usuario activo" checked={active} onChange={(e) => setActive(e.target.checked)} disabled={isSelf} />
+            <CheckField label="Usuario activo" checked={v.active} onChange={(e) => set('active', e.target.checked)} disabled={isSelf} />
             {isSelf && <p className="text-xs text-ink-muted">No puedes desactivar tu propia cuenta.</p>}
           </div>
         </div>
@@ -84,11 +82,11 @@ function UserForm({ user, catalogs, isSelf, onClose, onSaved }: { user: AdminUse
           <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
             {catalogs.companies.map((c) => (
               <div key={c.id}>
-                <CheckField label={c.name} checked={companyIds.includes(c.id)} onChange={() => toggleCompany(c)} />
-                {companyIds.includes(c.id) && (
+                <CheckField label={c.name} checked={v.companyIds.includes(c.id)} onChange={() => toggleCompany(c)} />
+                {v.companyIds.includes(c.id) && (
                   <div className="ml-6 border-l-2 border-line pl-3">
                     {catalogs.branches.filter((b) => b.company_id === c.id).map((b) => (
-                      <CheckField key={b.id} label={`Sucursal ${b.name}`} checked={branchIds.includes(b.id)} onChange={() => setBranchIds(toggle(branchIds, b.id))} />
+                      <CheckField key={b.id} label={`Sucursal ${b.name}`} checked={v.branchIds.includes(b.id)} onChange={() => set('branchIds', toggle(v.branchIds, b.id))} />
                     ))}
                   </div>
                 )}

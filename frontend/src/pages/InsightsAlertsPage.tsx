@@ -2,13 +2,15 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, TableSkeleton, TextAreaField, TextField, td, th, tr, type FieldErrors } from '../components/ui'
-import { ApiError, api } from '../lib/api'
+import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, TableSkeleton, TextAreaField, TextField, td, th, tr } from '../components/ui'
+import { api } from '../lib/api'
 import type { SellerRow } from '../lib/customers'
 import { formatDateTime } from '../lib/format'
 import { ALERT_LABEL, CLOSE_REASON_LABEL, SEVERITY_LABEL, type AlertType, type CloseReason, type InsightAlertList, type InsightAlertRow } from '../lib/insights'
 import type { Company } from '../lib/types'
+import { useFilters } from '../lib/useFilters'
 import { useLoad } from '../lib/useLoad'
+import { useSubmit } from '../lib/useSubmit'
 
 const TYPES: AlertType[] = ['inactivity_risk', 'sales_drop', 'sales_rise', 'abandoned_line', 'cross_sell', 'rfm_at_risk']
 
@@ -35,20 +37,13 @@ function CloseModal({ alert, onClose, onDone }: { alert: InsightAlertRow; onClos
   const toast = useToast()
   const [reason, setReason] = useState<CloseReason>('contacted')
   const [note, setNote] = useState('')
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [saving, setSaving] = useState(false)
+  const { errors, saving, run } = useSubmit()
 
   async function save() {
-    setSaving(true)
-    setErrors({})
-    try {
-      await api(`/insights/alerts/${alert.id}/close`, { method: 'POST', body: { reason, note: note.trim() || null } })
+    const ok = await run(async () => { await api(`/insights/alerts/${alert.id}/close`, { method: 'POST', body: { reason, note: note.trim() || null } }) }, 'reason')
+    if (ok) {
       toast.success('Recomendación cerrada.')
       onDone()
-    } catch (e) {
-      setErrors(e instanceof ApiError ? e.errors : { reason: [e instanceof Error ? e.message : 'No se pudo cerrar.'] })
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -70,20 +65,13 @@ function FollowUpModal({ alert, onClose, onDone }: { alert: InsightAlertRow; onC
   const toast = useToast()
   const [action, setAction] = useState(suggestedAction(alert))
   const [at, setAt] = useState(localInput(1))
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [saving, setSaving] = useState(false)
+  const { errors, saving, run } = useSubmit()
 
   async function save() {
-    setSaving(true)
-    setErrors({})
-    try {
-      await api(`/insights/alerts/${alert.id}/follow-up`, { method: 'POST', body: { next_action: action.trim(), next_action_at: at } })
+    const ok = await run(async () => { await api(`/insights/alerts/${alert.id}/follow-up`, { method: 'POST', body: { next_action: action.trim(), next_action_at: at } }) }, 'next_action')
+    if (ok) {
       toast.success('Acción agregada a la agenda de seguimiento.')
       onDone()
-    } catch (e) {
-      setErrors(e instanceof ApiError ? { ...e.errors, ...(e.errors.next_action ? {} : { next_action: [e.message] }) } : { next_action: [e instanceof Error ? e.message : 'No se pudo crear la acción.'] })
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -103,29 +91,21 @@ function FollowUpModal({ alert, onClose, onDone }: { alert: InsightAlertRow; onC
 export default function InsightsAlertsPage() {
   const { can } = useAuth()
   const manage = can('interactions.manage')
-  const [companyId, setCompanyId] = useState('')
-  const [status, setStatus] = useState<'open' | 'closed'>('open')
-  const [type, setType] = useState<'' | AlertType>('')
-  const [severity, setSeverity] = useState('')
-  const [sellerId, setSellerId] = useState('')
-  const [text, setText] = useState('')
-  const [page, setPage] = useState(1)
-  const [closing, setClosing] = useState<InsightAlertRow | null>(null)
-  const [planning, setPlanning] = useState<InsightAlertRow | null>(null)
+  const { filters: f, page, set, setPage } = useFilters({ companyId: '', status: 'open' as 'open' | 'closed', type: '' as '' | AlertType, severity: '', sellerId: '', text: '' })
+  const [dialog, setDialog] = useState<{ kind: 'close' | 'plan'; alert: InsightAlertRow } | null>(null)
 
   const companies = useLoad<{ data: Company[] }>('/companies')
-  const selected = companyId || String(companies.data?.data[0]?.id ?? '')
+  const selected = f.companyId || String(companies.data?.data[0]?.id ?? '')
   const sellers = useLoad<{ data: SellerRow[] }>(`/customers/sellers?company_id=${selected}`, { enabled: selected !== '' && can('customers.view') })
-  const query = new URLSearchParams({ company_id: selected, page: String(page), status })
-  if (type) query.set('type', type)
-  if (severity) query.set('severity', severity)
-  if (sellerId) query.set('seller_id', sellerId)
-  if (text.trim()) query.set('q', text.trim())
+  const query = new URLSearchParams({ company_id: selected, page: String(page), status: f.status })
+  if (f.type) query.set('type', f.type)
+  if (f.severity) query.set('severity', f.severity)
+  if (f.sellerId) query.set('seller_id', f.sellerId)
+  if (f.text.trim()) query.set('q', f.text.trim())
   const alerts = useLoad<InsightAlertList>(`/insights/alerts?${query}`, { enabled: selected !== '' })
   const rows = alerts.data?.data ?? []
   const counts = alerts.data?.meta.counts
-  const cols = manage && status === 'open' ? 5 : 4
-  const reset = () => setPage(1)
+  const cols = manage && f.status === 'open' ? 5 : 4
 
   return (
     <section>
@@ -136,29 +116,29 @@ export default function InsightsAlertsPage() {
       />
       <Card className="mb-4 p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <SelectField id="al-company" label="Compañía" value={selected} onChange={(e) => { setCompanyId(e.target.value); setSellerId(''); reset() }}>
+          <SelectField id="al-company" label="Compañía" value={selected} onChange={(e) => set({ companyId: e.target.value, sellerId: '' })}>
             {(companies.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </SelectField>
-          <SelectField id="al-status" label="Estado" value={status} onChange={(e) => { setStatus(e.target.value as typeof status); reset() }}>
+          <SelectField id="al-status" label="Estado" value={f.status} onChange={(e) => set({ status: e.target.value as typeof f.status })}>
             <option value="open">Abiertas</option><option value="closed">Cerradas</option>
           </SelectField>
-          <SelectField id="al-severity" label="Gravedad" value={severity} onChange={(e) => { setSeverity(e.target.value); reset() }}>
+          <SelectField id="al-severity" label="Gravedad" value={f.severity} onChange={(e) => set({ severity: e.target.value })}>
             <option value="">Todas</option><option value="high">Alta</option><option value="medium">Media</option><option value="low">Baja</option>
           </SelectField>
           {can('customers.view') && (
-            <SelectField id="al-seller" label="Vendedor" value={sellerId} onChange={(e) => { setSellerId(e.target.value); reset() }}>
+            <SelectField id="al-seller" label="Vendedor" value={f.sellerId} onChange={(e) => set({ sellerId: e.target.value })}>
               <option value="">Todos</option>
               {(sellers.data?.data ?? []).filter((s) => s.is_active).map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </SelectField>
           )}
-          <SearchInput label="Buscar cliente" value={text} onChange={(v) => { setText(v); reset() }} placeholder="Nombre o código" />
+          <SearchInput label="Buscar cliente" value={f.text} onChange={(v) => set({ text: v })} placeholder="Nombre o código" />
         </div>
       </Card>
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-6" aria-label="Recomendaciones por tipo">
         {TYPES.map((t) => (
-          <button key={t} type="button" aria-pressed={type === t} onClick={() => { setType(type === t ? '' : t); reset() }}
-            className={`rounded-xl border p-3 text-left transition-colors ${type === t ? 'border-jge-blue bg-surface-muted' : 'border-line bg-surface hover:bg-surface-muted'}`}>
+          <button key={t} type="button" aria-pressed={f.type === t} onClick={() => set({ type: f.type === t ? '' : t })}
+            className={`rounded-xl border p-3 text-left transition-colors ${f.type === t ? 'border-jge-blue bg-surface-muted' : 'border-line bg-surface hover:bg-surface-muted'}`}>
             <p className="text-xs text-ink-muted">{ALERT_LABEL[t]}</p>
             <p className="tabular mt-0.5 text-xl font-semibold">{counts ? counts[t].toLocaleString('es') : '—'}</p>
           </button>
@@ -166,10 +146,10 @@ export default function InsightsAlertsPage() {
       </div>
 
       <FormError message={alerts.error} />
-      {alerts.data && rows.length === 0 && status === 'open' && !type && !severity && !text && !sellerId && <div className="mb-3"><Alert tone="info">No hay recomendaciones abiertas. Se calculan cada noche con el historial de ventas; si una compañía no tiene historial suficiente, aparece como «Falta historial» en Inteligencia.</Alert></div>}
+      {alerts.data && rows.length === 0 && f.status === 'open' && !f.type && !f.severity && !f.text && !f.sellerId && <div className="mb-3"><Alert tone="info">No hay recomendaciones abiertas. Se calculan cada noche con el historial de ventas; si una compañía no tiene historial suficiente, aparece como «Falta historial» en Inteligencia.</Alert></div>}
 
       <DataTable label="Recomendaciones">
-        <thead><tr><th className={th}>Cliente</th><th className={th}>Recomendación</th><th className={th}>Gravedad</th><th className={th}>{status === 'open' ? 'Detectada' : 'Cierre'}</th>{cols === 5 && <th className={th}><span className="sr-only">Acciones</span></th>}</tr></thead>
+        <thead><tr><th className={th}>Cliente</th><th className={th}>Recomendación</th><th className={th}>Gravedad</th><th className={th}>{f.status === 'open' ? 'Detectada' : 'Cierre'}</th>{cols === 5 && <th className={th}><span className="sr-only">Acciones</span></th>}</tr></thead>
         <tbody>
           {alerts.loading && !alerts.data ? <TableSkeleton cols={cols} /> : rows.length === 0 ? <EmptyRow cols={cols}>No hay recomendaciones con estos filtros.</EmptyRow> : rows.map((a) => (
             <tr key={a.id} className={tr}>
@@ -193,8 +173,8 @@ export default function InsightsAlertsPage() {
               {cols === 5 && (
                 <td className={td}>
                   <div className="flex flex-wrap gap-2">
-                    {a.follow_up ? <span className="text-xs text-ink-muted">Acción en la agenda</span> : <Button small variant="secondary" onClick={() => setPlanning(a)} aria-label={`Crear acción para ${a.name}: ${ALERT_LABEL[a.type]}`}>Crear acción</Button>}
-                    <Button small variant="secondary" onClick={() => setClosing(a)} aria-label={`Cerrar recomendación de ${a.name}: ${ALERT_LABEL[a.type]}`}>Cerrar</Button>
+                    {a.follow_up ? <span className="text-xs text-ink-muted">Acción en la agenda</span> : <Button small variant="secondary" onClick={() => setDialog({ kind: 'plan', alert: a })} aria-label={`Crear acción para ${a.name}: ${ALERT_LABEL[a.type]}`}>Crear acción</Button>}
+                    <Button small variant="secondary" onClick={() => setDialog({ kind: 'close', alert: a })} aria-label={`Cerrar recomendación de ${a.name}: ${ALERT_LABEL[a.type]}`}>Cerrar</Button>
                   </div>
                 </td>
               )}
@@ -208,8 +188,8 @@ export default function InsightsAlertsPage() {
         <button type="button" className="rounded border border-line px-3 py-1.5 disabled:opacity-50" disabled={!alerts.data?.meta.has_more} onClick={() => setPage(page + 1)}>Siguiente</button>
       </div>
 
-      {closing && <CloseModal alert={closing} onClose={() => setClosing(null)} onDone={() => { setClosing(null); alerts.reload() }} />}
-      {planning && <FollowUpModal alert={planning} onClose={() => setPlanning(null)} onDone={() => { setPlanning(null); alerts.reload() }} />}
+      {dialog?.kind === 'close' && <CloseModal alert={dialog.alert} onClose={() => setDialog(null)} onDone={() => { setDialog(null); alerts.reload() }} />}
+      {dialog?.kind === 'plan' && <FollowUpModal alert={dialog.alert} onClose={() => setDialog(null)} onDone={() => { setDialog(null); alerts.reload() }} />}
     </section>
   )
 }

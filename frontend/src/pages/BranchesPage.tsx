@@ -1,24 +1,20 @@
 import { GitBranch, Pencil, Plus } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useLoad } from '../lib/useLoad'
-import { submitForm } from '../lib/saveForm'
+import { useFormValues } from '../lib/useFormValues'
+import { useSaveForm } from '../lib/useSaveForm'
 import type { Branch, Company } from '../lib/types'
 import { useToast } from '../components/toast'
 import {
   Alert, Button, CheckField, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, StatusBadge,
-  TableSkeleton, TextField, td, th, tr, type FieldErrors,
+  TableSkeleton, TextField, td, th, tr,
 } from '../components/ui'
 
 type Relocation = { can_move: boolean; blockers: { label: string; count: number }[] }
 
 function BranchForm({ branch, companies, onClose, onSaved }: { branch: Branch | null; companies: Company[]; onClose: () => void; onSaved: () => void }) {
-  const [companyId, setCompanyId] = useState(String(branch?.company_id ?? companies[0]?.id ?? ''))
-  const [code, setCode] = useState(branch?.code ?? '')
-  const [name, setName] = useState(branch?.name ?? '')
-  const [active, setActive] = useState(branch?.is_active ?? true)
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [message, setMessage] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const { values: v, set } = useFormValues({ companyId: String(branch?.company_id ?? companies[0]?.id ?? ''), code: branch?.code ?? '', name: branch?.name ?? '', active: branch?.is_active ?? true })
+  const { errors, message, saving, submit } = useSaveForm()
   // Al editar se averigua si la sucursal tiene datos relacionados: sin ellos se puede mover de compañía.
   const relocation = useLoad<{ data: Relocation }>(`/admin/branches/${branch?.id ?? 0}/relocation`, { enabled: !!branch })
   const reloc = relocation.data?.data
@@ -26,14 +22,9 @@ function BranchForm({ branch, companies, onClose, onSaved }: { branch: Branch | 
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    setSaving(true)
-    const moved = branch !== null && companyId !== String(branch.company_id)
-    const body = { code, name, is_active: active, ...(branch === null || moved ? { company_id: Number(companyId) } : {}) }
-    const r = await submitForm(branch ? 'PUT' : 'POST', branch ? `/admin/branches/${branch.id}` : '/admin/branches', body)
-    setSaving(false)
-    if (r.ok) return onSaved()
-    setErrors(r.errors)
-    setMessage(r.message)
+    const moved = branch !== null && v.companyId !== String(branch.company_id)
+    const body = { code: v.code, name: v.name, is_active: v.active, ...(branch === null || moved ? { company_id: Number(v.companyId) } : {}) }
+    if (await submit(branch ? 'PUT' : 'POST', branch ? `/admin/branches/${branch.id}` : '/admin/branches', body)) onSaved()
   }
 
   return (
@@ -43,8 +34,8 @@ function BranchForm({ branch, companies, onClose, onSaved }: { branch: Branch | 
         <SelectField
           id="branch-company"
           label="Compañía"
-          value={companyId}
-          onChange={(e) => setCompanyId(e.target.value)}
+          value={v.companyId}
+          onChange={(e) => set('companyId', e.target.value)}
           disabled={!!branch && !canMove}
           hint={branch && canMove ? 'Esta sucursal no tiene datos relacionados: puedes moverla a otra compañía.' : undefined}
           errors={errors.company_id}
@@ -58,9 +49,9 @@ function BranchForm({ branch, companies, onClose, onSaved }: { branch: Branch | 
               : 'No tienes acceso completo a la compañía actual de esta sucursal, por eso no puedes moverla.'}
           </Alert>
         )}
-        <TextField id="branch-code" label="Código" value={code} onChange={(e) => setCode(e.target.value)} errors={errors.code} />
-        <TextField id="branch-name" label="Nombre" value={name} onChange={(e) => setName(e.target.value)} errors={errors.name} />
-        <CheckField label="Activa" checked={active} onChange={(e) => setActive(e.target.checked)} />
+        <TextField id="branch-code" label="Código" value={v.code} onChange={(e) => set('code', e.target.value)} errors={errors.code} />
+        <TextField id="branch-name" label="Nombre" value={v.name} onChange={(e) => set('name', e.target.value)} errors={errors.name} />
+        <CheckField label="Activa" checked={v.active} onChange={(e) => set('active', e.target.checked)} />
         <FormActions saving={saving} onCancel={onClose} />
       </form>
     </Modal>

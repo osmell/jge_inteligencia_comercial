@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
 import type { MissingProductRow, ProductCoverage, ProductLevels, ProductRow } from '../lib/customers'
 import { formatMoney } from '../lib/format'
 import type { Company } from '../lib/types'
+import { useDebounced } from '../lib/useDebounced'
+import { useFilters } from '../lib/useFilters'
 import { useLoad } from '../lib/useLoad'
 
 type Tab = 'catalog' | 'missing'
@@ -25,13 +26,13 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
   )
 }
 
-function Pager({ page, setPage, hasMore, loading }: { page: number; setPage: (fn: (p: number) => number) => void; hasMore: boolean; loading: boolean }) {
+function Pager({ page, setPage, hasMore, loading }: { page: number; setPage: (page: number) => void; hasMore: boolean; loading: boolean }) {
   return (
     <div className="mt-3 flex items-center justify-between text-sm text-ink-muted">
       <span>Página {page}</span>
       <div className="flex gap-2">
-        <Button variant="secondary" disabled={page === 1 || loading} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
-        <Button variant="secondary" disabled={!hasMore || loading} onClick={() => setPage((p) => p + 1)}>Siguiente</Button>
+        <Button variant="secondary" disabled={page === 1 || loading} onClick={() => setPage(page - 1)}>Anterior</Button>
+        <Button variant="secondary" disabled={!hasMore || loading} onClick={() => setPage(page + 1)}>Siguiente</Button>
       </div>
     </div>
   )
@@ -39,23 +40,9 @@ function Pager({ page, setPage, hasMore, loading }: { page: number; setPage: (fn
 
 export default function ProductsPage() {
   const { can } = useAuth()
-  const [tab, setTab] = useState<Tab>('catalog')
-  const [text, setText] = useState('')
-  const [term, setTerm] = useState('')
-  const [companyId, setCompanyId] = useState('')
-  const [level1, setLevel1] = useState('')
-  const [level2, setLevel2] = useState('')
-  const [level3, setLevel3] = useState('')
-  const [sort, setSort] = useState<Sort>('name')
-  const [page, setPage] = useState(1)
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setTerm(text.trim())
-      setPage(1)
-    }, 300)
-    return () => clearTimeout(t)
-  }, [text])
+  const { filters: f, page, set, setPage } = useFilters({ tab: 'catalog' as Tab, text: '', companyId: '', level1: '', level2: '', level3: '', sort: 'name' as Sort })
+  const { tab, companyId, level1, level2, level3, sort } = f
+  const term = useDebounced(f.text.trim())
 
   const companies = useLoad<{ data: Company[] }>('/companies')
   const coverage = useLoad<{ data: ProductCoverage }>('/sales/products/coverage')
@@ -73,10 +60,6 @@ export default function ProductsPage() {
   const rows = list.data?.data ?? []
   const missingRows = missing.data?.data ?? []
   const lv = levels.data?.data
-  const reset = (set: (v: string) => void) => (v: string) => {
-    set(v)
-    setPage(1)
-  }
   const options = (values: string[] | undefined) => (
     <>
       <option value="">Todos</option>
@@ -114,7 +97,7 @@ export default function ProductsPage() {
         {([['catalog', 'Catálogo'], ['missing', 'Vendidos sin catálogo']] as const).map(([key, label]) => (
           <button
             key={key} type="button" role="tab" aria-selected={tab === key} id={`tab-${key}`}
-            onClick={() => { setTab(key); setPage(1) }}
+            onClick={() => set({ tab: key })}
             className={`min-h-9 cursor-pointer rounded-lg px-3 text-sm font-medium transition-colors ${tab === key ? 'bg-jge-blue text-white' : 'text-ink-muted hover:bg-jge-blue-50 hover:text-jge-blue'}`}
           >
             {label}
@@ -125,15 +108,15 @@ export default function ProductsPage() {
       {tab === 'catalog' && (
         <>
           <div className="mb-4 flex flex-wrap items-end gap-3">
-            <div className="w-full sm:w-64"><TextField id="product-search" label="Buscar por código o nombre" type="search" value={text} onChange={(e) => setText(e.target.value)} /></div>
-            <SelectField id="product-company" label="Compañía" value={companyId} onChange={(e) => { reset(setCompanyId)(e.target.value); setLevel1(''); setLevel2(''); setLevel3('') }}>
+            <div className="w-full sm:w-64"><TextField id="product-search" label="Buscar por código o nombre" type="search" value={f.text} onChange={(e) => set({ text: e.target.value })} /></div>
+            <SelectField id="product-company" label="Compañía" value={companyId} onChange={(e) => set({ companyId: e.target.value, level1: '', level2: '', level3: '' })}>
               <option value="">Todas</option>
               {(companies.data?.data ?? []).map((co) => <option key={co.id} value={co.id}>{co.name}</option>)}
             </SelectField>
-            <SelectField id="product-level1" label="Grupo (Nivel 1)" value={level1} onChange={(e) => { reset(setLevel1)(e.target.value); setLevel2(''); setLevel3('') }}>{options(lv?.level1)}</SelectField>
-            <SelectField id="product-level2" label="Línea (Nivel 2)" value={level2} onChange={(e) => { reset(setLevel2)(e.target.value); setLevel3('') }}>{options(lv?.level2)}</SelectField>
-            <SelectField id="product-level3" label="Categoría (Nivel 3)" value={level3} onChange={(e) => reset(setLevel3)(e.target.value)}>{options(lv?.level3)}</SelectField>
-            <SelectField id="product-sort" label="Ordenar por" value={sort} onChange={(e) => { setSort(e.target.value as Sort); setPage(1) }}>
+            <SelectField id="product-level1" label="Grupo (Nivel 1)" value={level1} onChange={(e) => set({ level1: e.target.value, level2: '', level3: '' })}>{options(lv?.level1)}</SelectField>
+            <SelectField id="product-level2" label="Línea (Nivel 2)" value={level2} onChange={(e) => set({ level2: e.target.value, level3: '' })}>{options(lv?.level2)}</SelectField>
+            <SelectField id="product-level3" label="Categoría (Nivel 3)" value={level3} onChange={(e) => set({ level3: e.target.value })}>{options(lv?.level3)}</SelectField>
+            <SelectField id="product-sort" label="Ordenar por" value={sort} onChange={(e) => set({ sort: e.target.value as Sort })}>
               {(Object.keys(SORTS) as Sort[]).map((k) => <option key={k} value={k}>{SORTS[k]}</option>)}
             </SelectField>
           </div>

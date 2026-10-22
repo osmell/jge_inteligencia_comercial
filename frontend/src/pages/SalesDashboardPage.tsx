@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Download, Minus, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { BarChart, InlineBar } from '../components/charts'
 import RankingsPanel from '../components/RankingsPanel'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
@@ -22,6 +22,8 @@ import {
   type SalesSummary,
 } from '../lib/sales'
 import type { Branch, Company } from '../lib/types'
+import { useExport } from '../lib/useExport'
+import { useFormValues } from '../lib/useFormValues'
 import { useLoad } from '../lib/useLoad'
 
 const MAX_DAYS = 1096
@@ -73,16 +75,12 @@ function Kpi({ label, value, change, hint, versus }: { label: string; value: str
 }
 
 export default function SalesDashboardPage() {
-  const [preset, setPreset] = useState<Preset>('month')
-  const [custom, setCustom] = useState(() => presetRange('month'))
-  const [compare, setCompare] = useState<Compare>('previous')
-  const [compareCustom, setCompareCustom] = useState({ from: '', to: '' })
-  const [companyId, setCompanyId] = useState('')
-  const [branchId, setBranchId] = useState('')
-  const [chips, setChips] = useState<Chip[]>([])
-  const [dimension, setDimension] = useState<Dimension>('seller')
-  const [exporting, setExporting] = useState<'xlsx' | 'csv' | 'pdf' | null>(null)
-  const [exportError, setExportError] = useState<string | null>(null)
+  const { values: v, set, update, setValues } = useFormValues(() => ({
+    preset: 'month' as Preset, custom: presetRange('month'), compare: 'previous' as Compare, compareCustom: { from: '', to: '' },
+    companyId: '', branchId: '', chips: [] as Chip[], dimension: 'seller' as Dimension,
+  }))
+  const { preset, custom, compare, compareCustom, companyId, branchId, chips, dimension } = v
+  const exporter = useExport<'xlsx' | 'csv' | 'pdf'>()
 
   const range = preset === 'custom' ? custom : presetRange(preset)
   const days = daysBetween(range.from, range.to)
@@ -130,26 +128,17 @@ export default function SalesDashboardPage() {
   function applyRow(row: BreakdownRow, picked: Dimension = dimension) {
     const param = DIMENSION_FILTER[picked]
     if (param === 'company_id') return selectCompany(row.key)
-    if (param === 'branch_id') return setBranchId(row.key)
-    setChips((prev) => [...prev.filter((c) => c.param !== param), { param, value: row.key, label: `${DIMENSION_LABEL[picked]}: ${row.label}` }])
+    if (param === 'branch_id') return set('branchId', row.key)
+    update('chips', (prev) => [...prev.filter((c) => c.param !== param), { param, value: row.key, label: `${DIMENSION_LABEL[picked]}: ${row.label}` }])
   }
 
-  async function exportReport(format: 'xlsx' | 'csv' | 'pdf') {
-    setExporting(format)
-    setExportError(null)
-    try {
-      const extra = format === 'csv' ? `&dimension=${dimension}` : ''
-      await download(`/sales/export?${filterQuery}&format=${format}${extra}`, `ventas.${format}`)
-    } catch (e) {
-      setExportError(e instanceof Error ? e.message : 'No se pudo exportar el reporte.')
-    } finally {
-      setExporting(null)
-    }
+  function exportReport(format: 'xlsx' | 'csv' | 'pdf') {
+    const extra = format === 'csv' ? `&dimension=${dimension}` : ''
+    return exporter.run(format, () => download(`/sales/export?${filterQuery}&format=${format}${extra}`, `ventas.${format}`), 'No se pudo exportar el reporte.')
   }
 
   function selectCompany(id: string) {
-    setCompanyId(id)
-    setBranchId('')
+    setValues((cur) => ({ ...cur, companyId: id, branchId: '' }))
   }
 
   const hasFilters = !!companyId || !!branchId || chips.length > 0
@@ -161,13 +150,13 @@ export default function SalesDashboardPage() {
         description="Venta neta, impuestos y total por periodo, comparados con el periodo equivalente anterior."
         action={
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'xlsx'} disabled={!enabled || exporting !== null} onClick={() => void exportReport('xlsx')}>
+            <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporter.exporting === 'xlsx'} disabled={!enabled || exporter.exporting !== null} onClick={() => void exportReport('xlsx')}>
               Exportar a Excel
             </Button>
-            <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'pdf'} disabled={!enabled || exporting !== null} onClick={() => void exportReport('pdf')}>
+            <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporter.exporting === 'pdf'} disabled={!enabled || exporter.exporting !== null} onClick={() => void exportReport('pdf')}>
               Exportar a PDF
             </Button>
-            <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporting === 'csv'} disabled={!enabled || exporting !== null} onClick={() => void exportReport('csv')}>
+            <Button variant="secondary" icon={<Download className="h-4 w-4" aria-hidden="true" />} loading={exporter.exporting === 'csv'} disabled={!enabled || exporter.exporting !== null} onClick={() => void exportReport('csv')}>
               {`CSV por ${DIMENSION_LABEL[dimension].toLowerCase()}`}
             </Button>
           </div>
@@ -176,30 +165,30 @@ export default function SalesDashboardPage() {
 
       <Card className="space-y-4 p-4">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <SelectField id="sales-preset" label="Periodo" value={preset} onChange={(e) => setPreset(e.target.value as Preset)}>
+          <SelectField id="sales-preset" label="Periodo" value={preset} onChange={(e) => set('preset', e.target.value as Preset)}>
             {(Object.keys(PRESET_LABEL) as Preset[]).map((p) => <option key={p} value={p}>{PRESET_LABEL[p]}</option>)}
           </SelectField>
           <SelectField id="sales-company" label="Compañía" value={companyId} onChange={(e) => selectCompany(e.target.value)}>
             <option value="">Todas</option>
             {(companies.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </SelectField>
-          <SelectField id="sales-branch" label="Sucursal" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+          <SelectField id="sales-branch" label="Sucursal" value={branchId} onChange={(e) => set('branchId', e.target.value)}>
             <option value="">Todas</option>
             {branchOptions.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </SelectField>
-          <SelectField id="sales-compare" label="Comparar con" value={compare} onChange={(e) => setCompare(e.target.value as Compare)}>
+          <SelectField id="sales-compare" label="Comparar con" value={compare} onChange={(e) => set('compare', e.target.value as Compare)}>
             {(Object.keys(COMPARE_LABEL) as Compare[]).map((c) => <option key={c} value={c}>{COMPARE_LABEL[c]}</option>)}
           </SelectField>
           {preset === 'custom' && (
             <div className="grid grid-cols-2 gap-2 sm:col-span-2 lg:col-span-1">
-              <TextField id="sales-from" label="Desde" type="date" value={custom.from} onChange={(e) => setCustom({ ...custom, from: e.target.value })} />
-              <TextField id="sales-to" label="Hasta" type="date" value={custom.to} onChange={(e) => setCustom({ ...custom, to: e.target.value })} />
+              <TextField id="sales-from" label="Desde" type="date" value={custom.from} onChange={(e) => set('custom', { ...custom, from: e.target.value })} />
+              <TextField id="sales-to" label="Hasta" type="date" value={custom.to} onChange={(e) => set('custom', { ...custom, to: e.target.value })} />
             </div>
           )}
           {compare === 'custom' && (
             <div className="grid grid-cols-2 gap-2 sm:col-span-2 lg:col-span-2">
-              <TextField id="sales-compare-from" label="Comparar desde" type="date" value={compareCustom.from} onChange={(e) => setCompareCustom({ ...compareCustom, from: e.target.value })} />
-              <TextField id="sales-compare-to" label="Comparar hasta" type="date" value={compareCustom.to} onChange={(e) => setCompareCustom({ ...compareCustom, to: e.target.value })} />
+              <TextField id="sales-compare-from" label="Comparar desde" type="date" value={compareCustom.from} onChange={(e) => set('compareCustom', { ...compareCustom, from: e.target.value })} />
+              <TextField id="sales-compare-to" label="Comparar hasta" type="date" value={compareCustom.to} onChange={(e) => set('compareCustom', { ...compareCustom, to: e.target.value })} />
             </div>
           )}
         </div>
@@ -210,7 +199,7 @@ export default function SalesDashboardPage() {
               <li key={c.param}>
                 <button
                   type="button"
-                  onClick={() => setChips((prev) => prev.filter((x) => x.param !== c.param))}
+                  onClick={() => update('chips', (prev) => prev.filter((x) => x.param !== c.param))}
                   className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-full border border-jge-blue/30 bg-jge-blue-50 px-3 text-sm text-jge-blue hover:bg-jge-blue-100"
                   aria-label={`Quitar filtro ${c.label}`}
                 >
@@ -223,7 +212,7 @@ export default function SalesDashboardPage() {
               <button
                 type="button"
                 className="min-h-9 cursor-pointer rounded-lg px-2 text-sm font-medium text-jge-blue hover:bg-jge-blue-50"
-                onClick={() => { setCompanyId(''); setBranchId(''); setChips([]) }}
+                onClick={() => setValues((cur) => ({ ...cur, companyId: '', branchId: '', chips: [] }))}
               >
                 Limpiar filtros
               </button>
@@ -233,7 +222,7 @@ export default function SalesDashboardPage() {
         <FormError message={inputError} />
       </Card>
 
-      {(error ?? exportError) && <Alert tone="danger">{error ?? exportError}</Alert>}
+      {(error ?? exporter.error) && <Alert tone="danger">{error ?? exporter.error}</Alert>}
       {s?.warnings.includes('previous_period_incomplete') && (
         <Alert tone="warning">
           El historial cargado empieza el {s.first_sale_date}, después del inicio del periodo anterior ({s.previous_period.from}). La comparación es parcial.
@@ -304,7 +293,7 @@ export default function SalesDashboardPage() {
               aria-selected={dimension === d}
               aria-controls="breakdown-panel"
               type="button"
-              onClick={() => setDimension(d)}
+              onClick={() => set('dimension', d)}
               className={`min-h-9 cursor-pointer rounded-lg px-3 text-sm font-medium transition-colors ${dimension === d ? 'bg-jge-blue text-white' : 'text-ink-muted hover:bg-jge-blue-50 hover:text-jge-blue'}`}
             >
               {DIMENSION_LABEL[d]}

@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { Alert, Button, Card, CheckField, DataTable, EmptyRow, FormError, Modal, PageHeader, SearchInput, SelectField, TableSkeleton, TextAreaField, TextField, td, th, tr, type FieldErrors } from '../components/ui'
-import { ApiError, api } from '../lib/api'
+import { Alert, Button, Card, CheckField, DataTable, EmptyRow, FormError, Modal, PageHeader, SearchInput, SelectField, TableSkeleton, TextAreaField, TextField, td, th, tr } from '../components/ui'
+import { api } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { STATUS_LABEL, formatDay, type QuotationDetail, type QuotationList, type QuotationStatus } from '../lib/quotations'
 import type { Company } from '../lib/types'
+import { useDebounced } from '../lib/useDebounced'
+import { useFilters } from '../lib/useFilters'
 import { useLoad } from '../lib/useLoad'
+import { useSubmit } from '../lib/useSubmit'
 
 interface CustomerHit {
   company_id: number
@@ -17,25 +20,17 @@ interface CustomerHit {
 function NewQuotation({ preset, onClose }: { preset: CustomerHit | null; onClose: () => void }) {
   const navigate = useNavigate()
   const [term, setTerm] = useState('')
-  const [debounced, setDebounced] = useState('')
   const [picked, setPicked] = useState(preset ? `${preset.company_id}|${preset.code}` : '')
   const [form, setForm] = useState({ amount: '', valid_until: '', description: '', external_reference: '', issue: false })
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [saving, setSaving] = useState(false)
-
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced(term.trim()), 300)
-    return () => clearTimeout(t)
-  }, [term])
+  const { errors, saving, run } = useSubmit()
+  const debounced = useDebounced(term.trim())
 
   const hits = useLoad<{ data: CustomerHit[] }>(`/customers?q=${encodeURIComponent(debounced)}`, { enabled: !preset && debounced.length >= 2 })
   const options = preset ? [preset] : hits.data?.data ?? []
 
   async function save() {
     const [companyId, code] = picked.split('|')
-    setSaving(true)
-    setErrors({})
-    try {
+    await run(async () => {
       const res = await api<{ data: QuotationDetail }>('/quotations', {
         method: 'POST',
         body: {
@@ -45,10 +40,7 @@ function NewQuotation({ preset, onClose }: { preset: CustomerHit | null; onClose
         },
       })
       navigate(`/cotizaciones/${res.data.id}`)
-    } catch (e) {
-      setErrors(e instanceof ApiError ? e.errors : { code: [e instanceof Error ? e.message : 'No se pudo guardar.'] })
-      setSaving(false)
-    }
+    }, 'code')
   }
 
   return (
@@ -85,25 +77,16 @@ function NewQuotation({ preset, onClose }: { preset: CustomerHit | null; onClose
 export default function QuotationsPage() {
   const { can } = useAuth()
   const [params, setParams] = useSearchParams()
-  const [text, setText] = useState('')
-  const [term, setTerm] = useState('')
-  const [companyId, setCompanyId] = useState('')
-  const [status, setStatus] = useState<QuotationStatus | ''>('')
-  const [mine, setMine] = useState(false)
-  const [page, setPage] = useState(1)
+  const { filters: f, page, set, setPage } = useFilters({ text: '', companyId: '', status: '' as QuotationStatus | '', mine: false })
   const [creating, setCreating] = useState(params.get('nueva') === '1')
-
-  useEffect(() => {
-    const t = setTimeout(() => { setTerm(text.trim()); setPage(1) }, 300)
-    return () => clearTimeout(t)
-  }, [text])
+  const term = useDebounced(f.text.trim())
 
   const companies = useLoad<{ data: Company[] }>('/companies')
   const query = new URLSearchParams({ page: String(page) })
   if (term) query.set('q', term)
-  if (companyId) query.set('company_id', companyId)
-  if (status) query.set('status', status)
-  if (mine) query.set('mine', '1')
+  if (f.companyId) query.set('company_id', f.companyId)
+  if (f.status) query.set('status', f.status)
+  if (f.mine) query.set('mine', '1')
   const list = useLoad<QuotationList>(`/quotations?${query}`)
   const counts = list.data?.meta.counts ?? {}
   const total = Object.values(counts).reduce((n, c) => n + (c?.count ?? 0), 0)
@@ -129,21 +112,21 @@ export default function QuotationsPage() {
 
       <Card className="mb-4 p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <SearchInput label="Buscar por número, referencia o cliente" value={text} onChange={setText} placeholder="Número, referencia o cliente" />
-          <SelectField id="quot-company" label="Compañía" value={companyId} onChange={(e) => { setCompanyId(e.target.value); setPage(1) }}>
+          <SearchInput label="Buscar por número, referencia o cliente" value={f.text} onChange={(v) => set({ text: v })} placeholder="Número, referencia o cliente" />
+          <SelectField id="quot-company" label="Compañía" value={f.companyId} onChange={(e) => set({ companyId: e.target.value })}>
             <option value="">Todas</option>
             {(companies.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </SelectField>
-          <div className="self-end"><CheckField label="Solo las que yo registré" checked={mine} onChange={(e) => { setMine(e.target.checked); setPage(1) }} /></div>
+          <div className="self-end"><CheckField label="Solo las que yo registré" checked={f.mine} onChange={(e) => set({ mine: e.target.checked })} /></div>
         </div>
         <div role="group" aria-label="Estado" className="mt-3 flex flex-wrap gap-1">
           {tabs.map(([key, label, n]) => (
             <button
               key={key || 'all'}
               type="button"
-              aria-pressed={status === key}
-              onClick={() => { setStatus(key); setPage(1) }}
-              className={`min-h-9 cursor-pointer rounded-lg px-3 text-sm font-medium transition-colors ${status === key ? 'bg-jge-blue text-white' : 'text-ink-muted hover:bg-jge-blue-50 hover:text-jge-blue'}`}
+              aria-pressed={f.status === key}
+              onClick={() => set({ status: key })}
+              className={`min-h-9 cursor-pointer rounded-lg px-3 text-sm font-medium transition-colors ${f.status === key ? 'bg-jge-blue text-white' : 'text-ink-muted hover:bg-jge-blue-50 hover:text-jge-blue'}`}
             >
               {label} ({n})
             </button>
@@ -152,7 +135,7 @@ export default function QuotationsPage() {
       </Card>
 
       <FormError message={list.error} />
-      {status === 'accepted' && <div className="mb-3"><Alert tone="info">Una cotización aceptada todavía no es una venta: pasa a «Convertida en venta» cuando se vincula su factura.</Alert></div>}
+      {f.status === 'accepted' && <div className="mb-3"><Alert tone="info">Una cotización aceptada todavía no es una venta: pasa a «Convertida en venta» cuando se vincula su factura.</Alert></div>}
 
       <DataTable label="Cotizaciones">
         <thead>

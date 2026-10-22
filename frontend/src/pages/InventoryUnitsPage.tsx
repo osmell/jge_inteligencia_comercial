@@ -1,10 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Button, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, StatusBadge, TextField, td, th, tr, type FieldErrors } from '../components/ui'
-import { ApiError, api } from '../lib/api'
+import { Alert, Button, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, StatusBadge, TextField, td, th, tr } from '../components/ui'
+import { api } from '../lib/api'
 import type { InventoryProductRow, PageMeta, ProductUnits, Unit } from '../lib/inventory'
+import { useDebounced } from '../lib/useDebounced'
+import { useFilters } from '../lib/useFilters'
+import { useFitRows } from '../lib/useFitRows'
 import { useLoad } from '../lib/useLoad'
+import { useSubmit } from '../lib/useSubmit'
 
 interface Row {
   unit_id: string
@@ -14,22 +18,15 @@ interface Row {
 function UnitsCatalog({ units, manage, onChanged }: { units: Unit[]; manage: boolean; onChanged: () => void }) {
   const toast = useToast()
   const [form, setForm] = useState({ code: '', name: '' })
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [saving, setSaving] = useState(false)
+  const { errors, saving, run } = useSubmit()
   const [toggleError, setToggleError] = useState<string | null>(null)
 
   async function add() {
-    setSaving(true)
-    setErrors({})
-    try {
-      await api('/inventory/units', { method: 'POST', body: form })
+    const ok = await run(async () => { await api('/inventory/units', { method: 'POST', body: form }) }, 'code')
+    if (ok) {
       toast.success('Unidad creada.')
       setForm({ code: '', name: '' })
       onChanged()
-    } catch (e) {
-      setErrors(e instanceof ApiError ? e.errors : { code: [e instanceof Error ? e.message : 'No se pudo crear.'] })
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -82,20 +79,13 @@ function ProductForm({ d, units, manage, onSaved, onClose }: { d: ProductUnits; 
   const toast = useToast()
   const [base, setBase] = useState(d.base_unit ? String(d.base_unit.id) : '')
   const [rows, setRows] = useState<Row[]>(d.equivalences.map((e) => ({ unit_id: String(e.unit_id), factor: e.factor })))
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [saving, setSaving] = useState(false)
+  const { errors, saving, run } = useSubmit()
 
   async function save() {
-    setSaving(true)
-    setErrors({})
-    try {
-      await api(`/inventory/products/${d.id}/units`, { method: 'PUT', body: { base_unit_id: Number(base), equivalences: rows.map((r) => ({ unit_id: Number(r.unit_id), factor: r.factor.trim() })) } })
+    const ok = await run(async () => { await api(`/inventory/products/${d.id}/units`, { method: 'PUT', body: { base_unit_id: Number(base), equivalences: rows.map((r) => ({ unit_id: Number(r.unit_id), factor: r.factor.trim() })) } }) }, 'base_unit_id')
+    if (ok) {
       toast.success('Unidades del producto guardadas.')
       onSaved()
-    } catch (e) {
-      setErrors(e instanceof ApiError ? e.errors : { base_unit_id: [e instanceof Error ? e.message : 'No se pudo guardar.'] })
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -142,44 +132,16 @@ function rowsThatFit(height: number): number {
 export default function InventoryUnitsPage() {
   const { can } = useAuth()
   const manage = can('inventory.manage')
-  const [text, setText] = useState('')
-  const [term, setTerm] = useState('')
-  const [onlyMissing, setOnlyMissing] = useState(false)
+  const { filters: f, page, set, setPage } = useFilters({ text: '', onlyMissing: false })
   const [selected, setSelected] = useState<InventoryProductRow | null>(null)
-  const [page, setPage] = useState(1)
-  const [perPage, setPerPage] = useState(() => rowsThatFit(window.innerHeight))
-  const perPageRef = useRef(perPage)
-
-  useEffect(() => {
-    const t = setTimeout(() => { setTerm(text.trim()); setPage(1) }, 300)
-    return () => clearTimeout(t)
-  }, [text])
-
+  const term = useDebounced(f.text.trim())
   // La cantidad de filas sigue a la altura de la ventana; al cambiarla se vuelve a la primera página.
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const onResize = () => {
-      clearTimeout(timer)
-      timer = setTimeout(() => {
-        const next = rowsThatFit(window.innerHeight)
-        if (next !== perPageRef.current) {
-          perPageRef.current = next
-          setPerPage(next)
-          setPage(1)
-        }
-      }, 200)
-    }
-    window.addEventListener('resize', onResize)
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('resize', onResize)
-    }
-  }, [])
+  const perPage = useFitRows(rowsThatFit, () => setPage(1))
 
   const units = useLoad<{ data: Unit[] }>('/inventory/units')
   const query = new URLSearchParams({ page: String(page), per_page: String(perPage) })
   if (term) query.set('q', term)
-  if (onlyMissing) query.set('missing_base', '1')
+  if (f.onlyMissing) query.set('missing_base', '1')
   const products = useLoad<{ data: InventoryProductRow[]; meta?: PageMeta }>(`/inventory/products?${query}`)
   const list = units.data?.data ?? []
   const meta = products.data?.meta
@@ -197,8 +159,8 @@ export default function InventoryUnitsPage() {
         <section aria-labelledby="products-title">
           <h2 id="products-title" className="mb-2 text-sm font-semibold text-ink">Productos</h2>
           <div className="mb-2 grid gap-3 sm:grid-cols-2 sm:items-end">
-            <SearchInput label="Buscar producto" value={text} onChange={setText} placeholder="Código o nombre" />
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={onlyMissing} onChange={(e) => { setOnlyMissing(e.target.checked); setPage(1) }} /> Solo sin unidad base</label>
+            <SearchInput label="Buscar producto" value={f.text} onChange={(v) => set({ text: v })} placeholder="Código o nombre" />
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={f.onlyMissing} onChange={(e) => set({ onlyMissing: e.target.checked })} /> Solo sin unidad base</label>
           </div>
           <DataTable label="Productos y unidad base">
             <thead><tr><th className={th}>Producto</th><th className={th}>Unidad base</th><th className={th}>Equivalencias</th></tr></thead>

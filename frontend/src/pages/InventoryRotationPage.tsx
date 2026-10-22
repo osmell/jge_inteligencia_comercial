@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
 import { download } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { ROTATION_LABEL, type RotationReport, type RotationStatus } from '../lib/inventory'
 import type { Branch, Company } from '../lib/types'
+import { useDebounced } from '../lib/useDebounced'
+import { useExport } from '../lib/useExport'
+import { useFilters } from '../lib/useFilters'
 import { useLoad } from '../lib/useLoad'
 
 const STATUSES: RotationStatus[] = ['out_of_stock', 'below_min', 'no_rotation', 'above_max', 'ok']
@@ -12,19 +14,10 @@ const num = (v: string | null) => (v === null ? '—' : Number(v).toLocaleString
 
 /** Rotación, cobertura, mínimos y máximos por producto y sucursal, con alertas de reposición. */
 export default function InventoryRotationPage() {
-  const [text, setText] = useState('')
-  const [term, setTerm] = useState('')
-  const [companyId, setCompanyId] = useState('')
-  const [branchId, setBranchId] = useState('')
-  const [status, setStatus] = useState<'all' | RotationStatus>('all')
-  const [page, setPage] = useState(1)
-  const [exporting, setExporting] = useState(false)
-  const [exportError, setExportError] = useState<string | null>(null)
-
-  useEffect(() => {
-    const t = setTimeout(() => { setTerm(text.trim()); setPage(1) }, 300)
-    return () => clearTimeout(t)
-  }, [text])
+  const { filters: f, page, set, setPage } = useFilters({ text: '', companyId: '', branchId: '', status: 'all' as 'all' | RotationStatus })
+  const { companyId, branchId, status } = f
+  const term = useDebounced(f.text.trim())
+  const exporter = useExport()
 
   const companies = useLoad<{ data: Company[] }>('/companies')
   const branches = useLoad<{ data: Branch[] }>('/branches')
@@ -40,17 +33,7 @@ export default function InventoryRotationPage() {
   const p = meta?.params
   const branchOptions = (branches.data?.data ?? []).filter((b) => companyId === '' || String(b.company_id) === companyId)
 
-  async function exportCsv() {
-    setExporting(true)
-    setExportError(null)
-    try {
-      await download(`/inventory/rotation/export?${filters}`, 'rotacion-de-inventario.csv')
-    } catch (e) {
-      setExportError(e instanceof Error ? e.message : 'No se pudo exportar.')
-    } finally {
-      setExporting(false)
-    }
-  }
+  const exportCsv = () => exporter.run('csv', () => download(`/inventory/rotation/export?${filters}`, 'rotacion-de-inventario.csv'), 'No se pudo exportar.')
 
   return (
     <section>
@@ -62,7 +45,7 @@ export default function InventoryRotationPage() {
 
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-label="Resumen por estado" aria-busy={report.loading}>
         {STATUSES.map((s) => (
-          <button key={s} type="button" onClick={() => { setStatus(status === s ? 'all' : s); setPage(1) }} aria-pressed={status === s}
+          <button key={s} type="button" onClick={() => set({ status: status === s ? 'all' : s })} aria-pressed={status === s}
             className={`rounded-xl border p-4 text-left transition-colors ${status === s ? 'border-jge-blue bg-surface-muted' : 'border-line bg-surface hover:bg-surface-muted'}`}>
             <p className="text-sm text-ink-muted">{ROTATION_LABEL[s]}</p>
             <p className={`tabular mt-0.5 text-2xl font-semibold ${(s === 'out_of_stock' || s === 'below_min') && (meta?.counts[s] ?? 0) > 0 ? 'text-danger' : ''}`}>{meta ? meta.counts[s].toLocaleString('es') : '—'}</p>
@@ -72,16 +55,16 @@ export default function InventoryRotationPage() {
 
       <Card className="mb-4 p-4">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SearchInput label="Buscar producto" value={text} onChange={setText} placeholder="Código o nombre" />
-          <SelectField id="rot-company" label="Compañía" value={companyId} onChange={(e) => { setCompanyId(e.target.value); setBranchId(''); setPage(1) }}>
+          <SearchInput label="Buscar producto" value={f.text} onChange={(v) => set({ text: v })} placeholder="Código o nombre" />
+          <SelectField id="rot-company" label="Compañía" value={companyId} onChange={(e) => set({ companyId: e.target.value, branchId: '' })}>
             <option value="">Todas</option>
             {(companies.data?.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </SelectField>
-          <SelectField id="rot-branch" label="Sucursal" value={branchId} onChange={(e) => { setBranchId(e.target.value); setPage(1) }}>
+          <SelectField id="rot-branch" label="Sucursal" value={branchId} onChange={(e) => set({ branchId: e.target.value })}>
             <option value="">Todas</option>
             {branchOptions.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </SelectField>
-          <div className="flex items-end"><Button variant="secondary" loading={exporting} onClick={() => void exportCsv()}>Exportar CSV</Button></div>
+          <div className="flex items-end"><Button variant="secondary" loading={exporter.exporting !== null} onClick={() => void exportCsv()}>Exportar CSV</Button></div>
         </div>
       </Card>
 
@@ -93,7 +76,7 @@ export default function InventoryRotationPage() {
           </Alert>
         </div>
       )}
-      <FormError message={report.error ?? exportError} />
+      <FormError message={report.error ?? exporter.error} />
 
       <DataTable label="Rotación y reposición">
         <thead>

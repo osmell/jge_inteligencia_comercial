@@ -2,39 +2,31 @@ import { Building2, Pencil, Plus } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { useLoad } from '../lib/useLoad'
-import { submitForm } from '../lib/saveForm'
+import { useFormValues } from '../lib/useFormValues'
+import { useSaveForm } from '../lib/useSaveForm'
 import type { Company } from '../lib/types'
 import { useToast } from '../components/toast'
 import {
   Button, CheckField, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, StatusBadge,
-  TableSkeleton, TextField, td, th, tr, type FieldErrors,
+  TableSkeleton, TextField, td, th, tr,
 } from '../components/ui'
 
 function CompanyForm({ company, onClose, onSaved }: { company: Company | null; onClose: () => void; onSaved: () => void }) {
-  const [code, setCode] = useState(company?.code ?? '')
-  const [name, setName] = useState(company?.name ?? '')
-  const [active, setActive] = useState(company?.is_active ?? true)
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [message, setMessage] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
+  const { values: v, set } = useFormValues({ code: company?.code ?? '', name: company?.name ?? '', active: company?.is_active ?? true })
+  const { errors, message, saving, submit } = useSaveForm()
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
-    setSaving(true)
-    const r = await submitForm(company ? 'PUT' : 'POST', company ? `/admin/companies/${company.id}` : '/admin/companies', { code, name, is_active: active })
-    setSaving(false)
-    if (r.ok) return onSaved()
-    setErrors(r.errors)
-    setMessage(r.message)
+    if (await submit(company ? 'PUT' : 'POST', company ? `/admin/companies/${company.id}` : '/admin/companies', { code: v.code, name: v.name, is_active: v.active })) onSaved()
   }
 
   return (
     <Modal title={company ? 'Editar compañía' : 'Nueva compañía'} onClose={onClose}>
       <form onSubmit={onSubmit} className="space-y-4" noValidate>
         <FormError message={message} />
-        <TextField id="company-code" label="Código" value={code} onChange={(e) => setCode(e.target.value)} errors={errors.code} />
-        <TextField id="company-name" label="Nombre" value={name} onChange={(e) => setName(e.target.value)} errors={errors.name} />
-        <CheckField label="Activa" checked={active} onChange={(e) => setActive(e.target.checked)} />
+        <TextField id="company-code" label="Código" value={v.code} onChange={(e) => set('code', e.target.value)} errors={errors.code} />
+        <TextField id="company-name" label="Nombre" value={v.name} onChange={(e) => set('name', e.target.value)} errors={errors.name} />
+        <CheckField label="Activa" checked={v.active} onChange={(e) => set('active', e.target.checked)} />
         <FormActions saving={saving} onCancel={onClose} />
       </form>
     </Modal>
