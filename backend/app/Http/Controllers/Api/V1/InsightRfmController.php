@@ -9,8 +9,8 @@ use App\Models\Company;
 use App\Models\InsightRun;
 use App\Models\RfmScore;
 use App\Services\AuditLogger;
+use App\Services\Reports\CsvSafe;
 use App\Services\RfmSegmentation;
-use App\Services\SalesReportExporter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -77,7 +77,7 @@ class InsightRfmController extends Controller
             fputcsv($out, ['Compañía', 'Código cliente', 'Cliente', 'Segmento', 'Última compra', 'Recencia (días)', 'Días con compra', 'Venta bruta', 'Devoluciones', 'Venta neta', 'R', 'F', 'M', 'Explicación', 'Calculado', 'Periodo']);
             foreach ($rows as $s) {
                 fputcsv($out, [
-                    SalesReportExporter::csvSafe($company->name), SalesReportExporter::csvSafe($s->customer_code), SalesReportExporter::csvSafe($s->customer_name), RfmSegmentation::SEGMENTS[$s->segment]['label'],
+                    CsvSafe::value($company->name), CsvSafe::value($s->customer_code), CsvSafe::value($s->customer_name), RfmSegmentation::SEGMENTS[$s->segment]['label'],
                     $s->last_purchase->toDateString(), $s->recency_days, $s->frequency, $s->gross, $s->returns, $s->monetary, $s->r, $s->f, $s->m, RfmSegmentation::explain($this->present($s)),
                     $run?->computed_at->toDateTimeString(), $run ? $run->period_from?->toDateString().' a '.$run->period_to?->toDateString() : '',
                 ]);

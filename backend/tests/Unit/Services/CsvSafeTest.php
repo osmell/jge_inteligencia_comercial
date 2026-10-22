@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services;
 
-use App\Services\SalesReportExporter;
+use App\Services\Reports\CsvSafe;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +14,7 @@ final class CsvSafeTest extends TestCase
     #[DataProvider('dangerous')]
     public function test_formula_prefixes_are_neutralised(string $value): void
     {
-        $this->assertSame("'".$value, SalesReportExporter::csvSafe($value));
+        $this->assertSame("'".$value, CsvSafe::value($value));
     }
 
     /** @return array<string, array{string}> */
@@ -25,9 +25,9 @@ final class CsvSafeTest extends TestCase
 
     public function test_safe_values_are_untouched(): void
     {
-        $this->assertSame('Cliente Uno', SalesReportExporter::csvSafe('Cliente Uno'));
-        $this->assertSame('12=3', SalesReportExporter::csvSafe('12=3'));
-        $this->assertSame('', SalesReportExporter::csvSafe(''));
-        $this->assertNull(SalesReportExporter::csvSafe(null));
+        $this->assertSame('Cliente Uno', CsvSafe::value('Cliente Uno'));
+        $this->assertSame('12=3', CsvSafe::value('12=3'));
+        $this->assertSame('', CsvSafe::value(''));
+        $this->assertNull(CsvSafe::value(null));
     }
 }

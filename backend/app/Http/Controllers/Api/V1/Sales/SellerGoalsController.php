@@ -7,7 +7,8 @@ namespace App\Http\Controllers\Api\V1\Sales;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SellerGoalsRequest;
 use App\Services\AuditLogger;
-use App\Services\SalesReportExporter;
+use App\Services\Reports\SalesCsvExporter;
+use App\Services\Reports\SalesPdfExporter;
 use App\Services\SellerGoals;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 /** Metas mensuales por vendedor: avance (sales.view), sugerencias y captura (goals.manage). */
 class SellerGoalsController extends Controller
 {
-    public function __construct(private readonly SellerGoals $goals, private readonly SalesReportExporter $exporter, private readonly AuditLogger $audit) {}
+    public function __construct(private readonly SellerGoals $goals, private readonly SalesCsvExporter $csv, private readonly SalesPdfExporter $pdf, private readonly AuditLogger $audit) {}
 
     public function index(SellerGoalsRequest $request): JsonResponse
     {
@@ -63,7 +64,7 @@ class SellerGoalsController extends Controller
         $this->audit->record('goals.exported', $request->user(), new: ['month' => $month, 'format' => $format, 'company_id' => $companyId, 'rows' => count($rows)]);
 
         if ($format === 'pdf') {
-            return response($this->exporter->buildGoalsPdf($progress, $request->user()->name), 200, [
+            return response($this->pdf->buildGoalsPdf($progress, $request->user()->name), 200, [
                 'Content-Type' => 'application/pdf',
                 'Content-Disposition' => "attachment; filename=\"metas-{$month}.pdf\"",
             ]);
@@ -71,7 +72,7 @@ class SellerGoalsController extends Controller
 
         return response()->streamDownload(function () use ($rows) {
             $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
-            $this->exporter->writeGoalsCsv($out, $rows);
+            $this->csv->writeGoalsCsv($out, $rows);
             fclose($out);
         }, "metas-{$month}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
     }

@@ -9,7 +9,9 @@ use App\Http\Requests\SalesExportRequest;
 use App\Http\Requests\SalesRankingsRequest;
 use App\Http\Requests\SalesStatsRequest;
 use App\Services\AuditLogger;
-use App\Services\SalesReportExporter;
+use App\Services\Reports\SalesCsvExporter;
+use App\Services\Reports\SalesPdfExporter;
+use App\Services\Reports\SalesWorkbookExporter;
 use App\Services\SalesStatistics;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,7 +21,9 @@ class SalesStatsController extends Controller
 {
     public function __construct(
         private readonly SalesStatistics $stats,
-        private readonly SalesReportExporter $exporter,
+        private readonly SalesCsvExporter $csv,
+        private readonly SalesPdfExporter $pdf,
+        private readonly SalesWorkbookExporter $workbook,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -86,13 +90,13 @@ class SalesStatsController extends Controller
         if ($format === 'csv') {
             return response()->streamDownload(function () use ($dimension, $from, $to, $filters, $compare) {
                 $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
-                $this->exporter->writeCsv($out, $dimension, $from, $to, $filters, $compare);
+                $this->csv->writeCsv($out, $dimension, $from, $to, $filters, $compare);
                 fclose($out);
             }, "ventas-por-{$dimension}-{$range}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
         }
 
         if ($format === 'pdf') {
-            $content = $this->exporter->buildSalesPdf($from, $to, $filters, $request->user()->name, $compare);
+            $content = $this->pdf->buildSalesPdf($from, $to, $filters, $request->user()->name, $compare);
 
             return response($content, 200, [
                 'Content-Type' => 'application/pdf',
@@ -100,7 +104,7 @@ class SalesStatsController extends Controller
             ]);
         }
 
-        $path = $this->exporter->buildWorkbook($from, $to, $filters, $request->user()->name, $compare);
+        $path = $this->workbook->buildWorkbook($from, $to, $filters, $request->user()->name, $compare);
 
         return response()->download($path, "ventas-{$range}.xlsx")->deleteFileAfterSend();
     }

@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Services\AuditLogger;
 use App\Services\InventoryRotation;
-use App\Services\SalesReportExporter;
+use App\Services\Reports\CsvSafe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -45,7 +45,7 @@ class InventoryRotationController extends Controller
             fputcsv($out, ['Código', 'Producto', 'Sucursal', 'Existencia', 'Vendido (ventana)', 'Demanda diaria', 'Cobertura (días)', 'Rotación', 'Mínimo', 'Máximo', 'Sugerido a reponer', 'Última venta', 'Estado', ...($costs ? ['Valor'] : [])]);
             foreach ($result['rows'] as $r) {
                 fputcsv($out, [
-                    SalesReportExporter::csvSafe($r['product']['code']), SalesReportExporter::csvSafe($r['product']['name']), SalesReportExporter::csvSafe($r['branch']), $r['stock'], $r['sold'], $r['daily_demand'],
+                    CsvSafe::value($r['product']['code']), CsvSafe::value($r['product']['name']), CsvSafe::value($r['branch']), $r['stock'], $r['sold'], $r['daily_demand'],
                     $r['coverage_days'], $r['rotation'], $r['min'], $r['max'], $r['suggested'], $r['last_sale'], $labels[$r['status']], ...($costs ? [$r['value'] ?? ''] : []),
                 ]);
             }

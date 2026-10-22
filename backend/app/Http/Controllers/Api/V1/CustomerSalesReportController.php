@@ -8,14 +8,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerSalesReportRequest;
 use App\Services\AuditLogger;
 use App\Services\CustomerSalesReport;
-use App\Services\SalesReportExporter;
+use App\Services\Reports\FilterDescriber;
+use App\Services\Reports\SalesCsvExporter;
+use App\Services\Reports\SalesWorkbookExporter;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 
 /** Ventas por cliente en un periodo, con quién vendió y quién facturó. */
 class CustomerSalesReportController extends Controller
 {
-    public function __construct(private readonly CustomerSalesReport $report, private readonly SalesReportExporter $exporter, private readonly AuditLogger $audit) {}
+    public function __construct(private readonly CustomerSalesReport $report, private readonly SalesCsvExporter $csv, private readonly SalesWorkbookExporter $workbook, private readonly FilterDescriber $describer, private readonly AuditLogger $audit) {}
 
     public function index(CustomerSalesReportRequest $request): JsonResponse
     {
@@ -47,12 +49,12 @@ class CustomerSalesReportController extends Controller
         if ($format === 'csv') {
             return response()->streamDownload(function () use ($rows) {
                 $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
-                $this->exporter->writeCustomerSalesCsv($out, $rows);
+                $this->csv->writeCustomerSalesCsv($out, $rows);
                 fclose($out);
             }, "ventas-por-cliente-{$range}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
         }
 
-        $path = $this->exporter->buildCustomerSalesWorkbook($rows, $from, $to, $this->exporter->describeFilters($filters), $request->user()->name);
+        $path = $this->workbook->buildCustomerSalesWorkbook($rows, $from, $to, $this->describer->describe($filters), $request->user()->name);
 
         return response()->download($path, "ventas-por-cliente-{$range}.xlsx")->deleteFileAfterSend();
     }

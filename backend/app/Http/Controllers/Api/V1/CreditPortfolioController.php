@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Services\AuditLogger;
 use App\Services\CreditPortfolio;
 use App\Services\CreditScore;
-use App\Services\SalesReportExporter;
+use App\Services\Reports\CsvSafe;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -41,7 +41,7 @@ class CreditPortfolioController extends Controller
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Compañía', 'Código cliente', 'Cliente', ...array_map($this->bucketHeader(...), $aging['buckets']), 'Total', 'Facturas con saldo', 'Días de la más antigua']);
             foreach ($aging['customers'] as $c) {
-                fputcsv($out, [SalesReportExporter::csvSafe($c['company']), SalesReportExporter::csvSafe($c['code']), SalesReportExporter::csvSafe($c['name']), ...array_map(fn ($b) => $c['buckets'][$b], $aging['buckets']), $c['total'], $c['invoices'], $c['oldest_days']]);
+                fputcsv($out, [CsvSafe::value($c['company']), CsvSafe::value($c['code']), CsvSafe::value($c['name']), ...array_map(fn ($b) => $c['buckets'][$b], $aging['buckets']), $c['total'], $c['invoices'], $c['oldest_days']]);
             }
             fputcsv($out, ['Total', '', '', ...array_map(fn ($b) => $aging['totals'][$b], $aging['buckets']), $aging['totals']['total'], '', '']);
             fclose($out);
