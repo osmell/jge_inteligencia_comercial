@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Imports\Credit\CreditInvoicesImportType;
 use App\Imports\Customers\CustomersImportType;
 use App\Imports\Inventory\InventoryEntriesImportType;

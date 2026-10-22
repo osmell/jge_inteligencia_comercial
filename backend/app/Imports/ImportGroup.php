@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Imports;
 
 /** Un documento (factura) formado por una o más líneas del archivo. Guarda solo huellas, no las líneas. */

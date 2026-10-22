@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     // Criterios de rotación, cobertura, mínimos y máximos (propuesta aceptada por el responsable; se pueden ajustar aquí).
     'rotation' => [

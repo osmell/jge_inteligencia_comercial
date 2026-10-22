@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Parámetros de la inteligencia comercial avanzada (Fase 8). Estos son los valores por omisión propuestos; los valores vigentes
  * se guardan en la base de datos (AppSetting, claves «insights.*») y los cambia solo quien tenga el permiso insights.manage,

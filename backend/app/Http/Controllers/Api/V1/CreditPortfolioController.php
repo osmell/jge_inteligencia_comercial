@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
@@ -50,11 +52,11 @@ class CreditPortfolioController extends Controller
     public function customer(Request $request): JsonResponse
     {
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1'], 'code' => ['required', 'string', 'max:255']]);
-        $aging = $this->portfolio->aging($data['company_id'], $data['code']);
+        $aging = $this->portfolio->aging((int) $data['company_id'], $data['code']);
 
         return response()->json(['data' => [
             'buckets' => $aging['buckets'], 'totals' => $aging['totals'], 'open_invoices' => $aging['customers'][0]['invoices'] ?? 0,
-            'oldest_days' => $aging['customers'][0]['oldest_days'] ?? 0, 'returns' => $this->portfolio->returns($data['company_id'], $data['code']),
+            'oldest_days' => $aging['customers'][0]['oldest_days'] ?? 0, 'returns' => $this->portfolio->returns((int) $data['company_id'], $data['code']),
         ]]);
     }
 
@@ -63,7 +65,7 @@ class CreditPortfolioController extends Controller
     {
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1'], 'code' => ['required', 'string', 'max:255']]);
 
-        return response()->json(['data' => $this->score->forCustomer($request->user(), $data['company_id'], $data['code'])]);
+        return response()->json(['data' => $this->score->forCustomer($request->user(), (int) $data['company_id'], $data['code'])]);
     }
 
     private function companyId(Request $request): ?int

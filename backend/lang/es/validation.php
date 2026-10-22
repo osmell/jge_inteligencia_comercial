@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'array' => 'El campo :attribute debe ser una lista.',
     'boolean' => 'El campo :attribute debe ser verdadero o falso.',

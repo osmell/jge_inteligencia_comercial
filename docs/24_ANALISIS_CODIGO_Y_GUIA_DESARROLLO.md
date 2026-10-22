@@ -140,7 +140,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | Paso | Contenido | Esfuerzo | Riesgo |
 |---|---|---|---|
 | A ✅ | **CI en GitHub Actions** (Pint, PHPStan, pruebas, typecheck, lint, test, build, audits) + plantilla de PR + `CONTRIBUTING.md` + actualizar `README` | Bajo | Nulo |
-| B | `strict_types` en todos los archivos (automático con Pint `declare_strict_types`) y revisión de fallos | Bajo–medio | Bajo (las pruebas lo detectan) |
+| B ✅ | `strict_types` en todos los archivos (automático con Pint `declare_strict_types`) y revisión de fallos | Bajo–medio | Bajo (las pruebas lo detectan) |
 | C | PHPStan nivel 5 → 6 → 8, subiendo uno por vez sin *baseline* | Medio | Bajo |
 | D | Mover consultas de los 10 controladores con `DB::` a servicios/scopes (empezando por Conversaciones, Notificaciones, Cotizaciones) | Medio | Medio (cubierto por pruebas Feature) |
 | E | Crear `tests/Unit` con la lógica pura y empezar por RFM, aging, scoring, ventanas | Medio | Bajo |
@@ -179,3 +179,10 @@ Archivos: `.github/workflows/ci.yml`, `.github/PULL_REQUEST_TEMPLATE.md`, `.gith
 - **Dependabot** mensual y agrupado (Composer, npm, Actions).
 - **Pendiente por el responsable en GitHub** (no se puede hacer desde el repositorio): activar la protección de `main` — exigir PR, 1 revisión y los checks «Backend» y «Frontend» en verde. Hasta que se active, la CI avisa pero no impide fusionar.
 - **Verificación**: los YAML se validaron sintácticamente en local; la primera ejecución real ocurre al subir. Si la CI falla por diferencias de entorno (extensiones de PHP, versión de Node), se corrige en un commit aparte.
+
+### Paso B — `declare(strict_types=1)` en todo el backend (2026-10-21)
+- Se añadió la regla `declare_strict_types` a Pint (`backend/pint.json`, preset Laravel). Pint la aplica y la **exige** en `composer check` y en la CI, de modo que todo archivo nuevo debe llevarla.
+- 390 archivos PHP actualizados (app, config, database, routes, tests, bootstrap, lang, public). Cambio mecánico: una línea por archivo.
+- **Defectos reales descubiertos** (el motivo del paso): `CreditPortfolioController::customer` y `::score` pasaban `company_id` de la URL (texto) a servicios que piden entero; PHP lo convertía en silencio. Se corrigió con `(int)` explícito. Las pruebas existentes lo detectaron (6 fallos antes de la corrección).
+- Resultado: pint + PHPStan limpios, 572 pruebas pasan.
+- **Riesgo residual**: una conversión implícita en una ruta que ninguna prueba recorre (comandos de consola, trabajos en cola poco usados) fallaría con `TypeError` en vez de convertir. Por eso conviene la validación manual de QA y el paso E (pruebas unitarias).

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Tipos de aviso interno (con «email» => true, además llegan por correo por omisión; cada persona lo puede cambiar). Cada tipo dice qué permiso hace falta para recibirlo (el servidor nunca entrega un aviso a quien no podría
  * ver lo que describe) y si se entrega por omisión. Cada persona puede apagar los tipos que no quiera o pausar todos sus avisos.

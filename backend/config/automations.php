@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Automations\CreditBucketHandler;
 use App\Automations\DigestDailyHandler;
 use App\Automations\DigestWeeklyHandler;

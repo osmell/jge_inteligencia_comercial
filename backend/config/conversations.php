@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     // Minutos que un mensaje del cliente puede esperar respuesta antes de avisar a quien supervisa a su vendedor.
     'waiting_minutes' => (int) env('CONVERSATION_WAITING_MINUTES', 15),

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 /** Tramos de antigüedad de la cartera. La edad se cuenta desde la fecha de la factura (el archivo no trae vencimiento). */

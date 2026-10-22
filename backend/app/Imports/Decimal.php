@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Imports;
 
 /** Aritmética exacta con importes de 4 decimales usando enteros (sin float, sin bcmath). */

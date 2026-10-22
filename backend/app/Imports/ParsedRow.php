@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Imports;
 
 /** Fila validada y normalizada, lista para agruparse por documento. */

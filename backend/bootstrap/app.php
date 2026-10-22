@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Foundation\Application;
