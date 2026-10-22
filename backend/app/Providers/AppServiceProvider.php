@@ -11,6 +11,8 @@ use App\Integrations\GraphApiWhatsapp;
 use App\Integrations\HttpWebhookTransport;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Dashboard;
+use App\Services\DashboardService;
 use App\Services\DataScope;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;
@@ -24,6 +26,14 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(DataScope::class);
+
+        // Secciones del dashboard, en el orden en que se muestran. Para agregar una: crear la clase y añadirla aquí.
+        $this->app->tag([
+            Dashboard\SalesSection::class, Dashboard\GoalsSection::class, Dashboard\RankingsSection::class, Dashboard\CompaniesSection::class,
+            Dashboard\CreditSection::class, Dashboard\QuotationsSection::class, Dashboard\FollowupSection::class, Dashboard\ConversationsSection::class,
+            Dashboard\InventorySection::class, Dashboard\InsightsSection::class,
+        ], 'dashboard.sections');
+        $this->app->when(DashboardService::class)->needs('$sections')->giveTagged('dashboard.sections');
 
         // Puertos hacia sistemas externos: para cambiar de proveedor o simular en pruebas basta cambiar este enlace.
         $this->app->bind(WhatsappMessaging::class, GraphApiWhatsapp::class);
