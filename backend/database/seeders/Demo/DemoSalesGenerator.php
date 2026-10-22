@@ -197,7 +197,7 @@ final class DemoSalesGenerator
             }
         }
 
-        return array_key_last($weights);
+        return array_key_last($weights) ?? throw new \LogicException('Sin pesos para elegir.');
     }
 
     private function pickSeller(string $company, float $progress): string

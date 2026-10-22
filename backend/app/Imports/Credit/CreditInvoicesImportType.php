@@ -248,7 +248,7 @@ final class CreditInvoicesImportType implements ImportType
         return $linked;
     }
 
-    /** @param  array<string, string|null>  $amounts */
+    /** @param  array<string, mixed>  $amounts */
     private function checkAmounts(ImportRow $row, array $amounts): void
     {
         $negativeHint = 'No se esperan valores negativos: las devoluciones se registran como notas de crédito.';
@@ -293,7 +293,7 @@ final class CreditInvoicesImportType implements ImportType
         return $value;
     }
 
-    /** @param  array<string, string|null>  $amounts */
+    /** @param  array<string, mixed>  $amounts */
     private function collect(Company $company, DateTimeImmutable $issued, array $amounts): void
     {
         $day = $issued->format('Y-m-d');
@@ -305,7 +305,7 @@ final class CreditInvoicesImportType implements ImportType
         $this->perCompany[$company->id] = ($this->perCompany[$company->id] ?? 0) + 1;
     }
 
-    /** @param  array<string, string|null>  $fields */
+    /** @param  array<string, mixed>  $fields */
     private function hash(array $fields): string
     {
         return hash('sha256', json_encode($fields, JSON_THROW_ON_ERROR));

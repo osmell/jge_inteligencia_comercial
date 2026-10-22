@@ -38,7 +38,7 @@ class BranchRelocation
             }
         }
         $store = $this->storeSeller($branch);
-        $sellers = DB::table('sellers')->where('branch_id', $branch->id)->when($store !== null, fn ($q) => $q->where('id', '!=', $store->id))->count();
+        $sellers = DB::table('sellers')->where('branch_id', $branch->id)->when($store !== null, fn ($q) => $q->where('id', '!=', $store?->id))->count();
         if ($sellers > 0) {
             $out[] = ['label' => $sellers === 1 ? 'vendedor asignado a la sucursal' : 'vendedores asignados a la sucursal', 'count' => $sellers];
         }

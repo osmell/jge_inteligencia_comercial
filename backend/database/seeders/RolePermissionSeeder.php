@@ -71,6 +71,6 @@ class RolePermissionSeeder extends Seeder
         }
 
         Role::where('slug', Role::ADMINISTRADOR)->first()
-            ->permissions()->sync(Permission::pluck('id'));
+            ?->permissions()->sync(Permission::pluck('id'));
     }
 }

@@ -154,7 +154,7 @@ final class ProductsImportType implements ImportType
         return $found;
     }
 
-    /** @param  array<string, string|null>  $fields */
+    /** @param  array<string, mixed>  $fields */
     private function same(Product $product, array $fields): bool
     {
         foreach (self::DATA as $key) {

@@ -96,7 +96,7 @@ class CustomerSalesReport
             }
             $seller = $customer->seller ?? ($customer->branch_id ? $defaults[$customer->branch_id] ?? null : null);
             $rows[] = [
-                'company_id' => (int) $t->company_id, 'company' => $customer->company->name, 'code' => (string) $t->code, 'name' => $customer->name,
+                'company_id' => (int) $t->company_id, 'company' => $customer->company?->name, 'code' => (string) $t->code, 'name' => $customer->name,
                 'type' => $customer->type?->name,
                 'assigned_seller' => $seller?->name, 'assigned_seller_is_default' => $seller !== null && $customer->seller_id === null,
                 'supervisor' => $seller?->supervisor?->name,

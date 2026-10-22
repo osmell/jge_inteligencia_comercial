@@ -31,8 +31,8 @@ class CohortAnalysis
         $month = 'substr(cast(issued_on as varchar(10)), 1, 7)';
         $rows = DB::table('sales_documents')->where('company_id', $company->id)->groupBy('customer_code', DB::raw($month))->selectRaw("customer_code, {$month} as month")->get();
         $first = DB::table('sales_documents')->where('company_id', $company->id)->selectRaw('min(issued_on) as first_on, max(issued_on) as last_on')->first();
-        $firstMonth = CarbonImmutable::parse($first->first_on)->format('Y-m');
-        $lastMonth = CarbonImmutable::parse($first->last_on)->format('Y-m');
+        $firstMonth = CarbonImmutable::parse($first?->first_on)->format('Y-m');
+        $lastMonth = CarbonImmutable::parse($first?->last_on)->format('Y-m');
 
         /** @var array<string, array<string, true>> $byCustomer cliente → meses con compra */
         $byCustomer = [];
@@ -73,7 +73,7 @@ class CohortAnalysis
             $result[] = ['month' => $cohort, 'customers' => $c['customers'], 'prior' => $prior, 'retention' => $retention];
         }
 
-        return $this->runs->record($company->id, 'cohorts', InsightRun::OK, CarbonImmutable::parse($first->first_on), CarbonImmutable::parse($first->last_on), [
+        return $this->runs->record($company->id, 'cohorts', InsightRun::OK, CarbonImmutable::parse($first?->first_on), CarbonImmutable::parse($first?->last_on), [
             'depth' => $depth, 'first_month' => $firstMonth, 'last_month' => $lastMonth, 'cohorts' => $result,
             'average' => array_map(fn (int $kept, int $seen) => $seen > 0 ? round($kept / $seen * 100, 1) : null, $retained, $observed),
         ], null, $user);

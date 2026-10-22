@@ -116,9 +116,9 @@ class QuotationController extends Controller
         $query = SalesDocument::query()
             ->join('sales_lines as sl', 'sl.sales_document_id', '=', 'sales_documents.id')
             ->where('sales_documents.company_id', $record->company_id)
-            ->where('sales_documents.customer_code', $record->customer->code)
+            ->where('sales_documents.customer_code', $record->customer?->code)
             ->whereNotIn('sales_documents.id', Quotation::withoutGlobalScopes()->whereNotNull('sales_document_id')->select('sales_document_id'))
-            ->when($record->issued_at, fn (Builder $q) => $q->where('sales_documents.issued_on', '>=', $record->issued_at->toDateString()))
+            ->when($record->issued_at, fn (Builder $q) => $q->where('sales_documents.issued_on', '>=', $record->issued_at?->toDateString()))
             ->toBase()
             ->selectRaw('sales_documents.id as id, sales_documents.series as series, sales_documents.number as number, sales_documents.issued_on as issued_on, sum(sl.net_total) as net_total')
             ->groupBy('sales_documents.id', 'sales_documents.series', 'sales_documents.number', 'sales_documents.issued_on')
@@ -185,7 +185,7 @@ class QuotationController extends Controller
             'id' => $q->id, 'number' => $q->number, 'external_reference' => $q->external_reference,
             'status' => $q->status, 'effective_status' => $q->effectiveStatus($today), 'amount' => number_format((float) $q->amount, 2, '.', ''),
             'valid_until' => $q->valid_until?->toDateString(), 'issued_at' => $q->issued_at?->toIso8601String(),
-            'customer' => ['company_id' => $q->company_id, 'code' => $q->customer->code, 'name' => $q->customer->name, 'do_not_contact' => $q->customer->do_not_contact],
+            'customer' => ['company_id' => $q->company_id, 'code' => $q->customer?->code, 'name' => $q->customer?->name, 'do_not_contact' => $q->customer?->do_not_contact],
             'seller' => $q->seller?->name, 'user' => $q->user ? ['id' => $q->user->id, 'name' => $q->user->name] : null,
             'has_attachment' => $q->attachment_path !== null,
             'document' => $q->document ? ['id' => $q->document->id, 'number' => "{$q->document->series}-{$q->document->number}", 'issued_on' => $q->document->issued_on->toDateString()] : null,

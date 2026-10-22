@@ -63,9 +63,9 @@ class InventoryStock
         $rows = $balances->take(self::PAGE_SIZE)->map(function (InventoryBalance $b) use ($costs, $reconciled) {
             $qty = Quantity::units((string) $b->quantity);
             $row = [
-                'company_id' => $b->company_id, 'company' => $b->company->name, 'branch_id' => $b->branch_id, 'branch' => $b->branch->name,
-                'product' => ['id' => $b->product_id, 'code' => $b->product->code, 'name' => $b->product->name],
-                'unit' => $b->product->baseUnit?->name, 'quantity' => Quantity::display($qty), 'reconciled' => isset($reconciled[$b->branch_id]),
+                'company_id' => $b->company_id, 'company' => $b->company?->name, 'branch_id' => $b->branch_id, 'branch' => $b->branch?->name,
+                'product' => ['id' => $b->product_id, 'code' => $b->product?->code, 'name' => $b->product?->name],
+                'unit' => $b->product?->baseUnit?->name, 'quantity' => Quantity::display($qty), 'reconciled' => isset($reconciled[$b->branch_id]),
             ];
             if ($costs) {
                 $value = Decimal::units((string) $b->value);
@@ -100,8 +100,8 @@ class InventoryStock
         $opening = ['quantity' => Quantity::display($qty)] + ($costs ? ['value' => Decimal::format($value)] : []);
 
         $movements = (clone $base)->with(['user:id,name'])
-            ->when($from !== null, fn (Builder $q) => $q->where('occurred_on', '>=', $from->toDateString()))
-            ->when($to !== null, fn (Builder $q) => $q->where('occurred_on', '<=', $to->toDateString()))
+            ->when($from !== null, fn (Builder $q) => $q->where('occurred_on', '>=', $from?->toDateString()))
+            ->when($to !== null, fn (Builder $q) => $q->where('occurred_on', '<=', $to?->toDateString()))
             ->orderBy('occurred_on')->orderBy('id')->limit(self::KARDEX_LIMIT + 1)->get();
         $reversed = InventoryMovement::query()->whereIn('reverses_id', $movements->pluck('id'))->pluck('reverses_id')->all();
         $units = DB::table('units')->pluck('name', 'id');

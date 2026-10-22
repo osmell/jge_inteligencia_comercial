@@ -224,7 +224,7 @@ final class SalesImportType implements ImportType
     }
 
     /**
-     * @param  array<string, string|null>  $amounts
+     * @param  array<string, mixed>  $amounts
      * @param  array<string, string>  $discounts
      */
     private function checkAmounts(ImportRow $row, ?string $units, array $amounts, array $discounts = []): void
@@ -285,7 +285,7 @@ final class SalesImportType implements ImportType
     /**
      * Línea sin movimiento: unidades e importes de venta en cero. Se omite con aviso; si algún importe no es cero, se valida normal.
      *
-     * @param  array<string, string|null>  $amounts
+     * @param  array<string, mixed>  $amounts
      * @param  array<string, string>  $discounts
      */
     private function isEmptyLine(?string $units, array $amounts, array $discounts): bool
@@ -330,7 +330,7 @@ final class SalesImportType implements ImportType
     }
 
     /**
-     * @param  array<string, string|null>  $amounts
+     * @param  array<string, mixed>  $amounts
      * @param  array<string, mixed>  $discounts
      */
     private function collect(Company $company, DateTimeImmutable $issued, ?string $units, array $amounts, ?string $seller, ?string $operator, array $discounts = []): void
@@ -351,8 +351,12 @@ final class SalesImportType implements ImportType
         $perCompany['net'] += Decimal::units($amounts['net_total']);
         $this->stats['lines'][$company->id] = $perCompany;
 
-        $this->people['seller'][$company->id.'|'.Seller::normalize($seller)] ??= $seller;
-        $this->people['operator'][$company->id.'|'.Operator::normalize($operator)] ??= $operator;
+        if ($seller !== null) {
+            $this->people['seller'][$company->id.'|'.Seller::normalize($seller)] ??= $seller;
+        }
+        if ($operator !== null) {
+            $this->people['operator'][$company->id.'|'.Operator::normalize($operator)] ??= $operator;
+        }
     }
 
     /** @return array<string, string> clave de documento => content_hash ya guardado */

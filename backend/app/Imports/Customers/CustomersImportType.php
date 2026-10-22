@@ -184,7 +184,7 @@ final class CustomersImportType implements ImportType
         return $found;
     }
 
-    /** @param  array<string, string|null>  $fields */
+    /** @param  array<string, mixed>  $fields */
     private function same(Customer $customer, array $fields): bool
     {
         if ((int) $fields['branch'] !== (int) $customer->branch_id) {

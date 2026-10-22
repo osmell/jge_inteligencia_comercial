@@ -58,8 +58,8 @@ class DemoSalesSeeder extends Seeder
             $lineBuffer = [];
 
             foreach ((new DemoSalesGenerator($this->scale))->documents() as $doc) {
-                $company = $companies[$doc['company']];
-                $branch = $branches[$company->id][$doc['branch']];
+                $company = $companies[$doc['company']] ?? throw new RuntimeException("Compañía {$doc['company']} no encontrada.");
+                $branch = $branches[$company->id][$doc['branch']] ?? throw new RuntimeException("Sucursal {$doc['branch']} no encontrada.");
 
                 $documentId = DB::table('sales_documents')->insertGetId([
                     'company_id' => $company->id,
@@ -146,7 +146,7 @@ class DemoSalesSeeder extends Seeder
         $out = ['sellers' => [], 'operators' => []];
 
         foreach (DemoSalesGenerator::COMPANIES as $code => $spec) {
-            $companyId = $companies[$code]->id;
+            $companyId = $companies[$code]?->id;
             foreach (array_keys($spec['sellers']) as $name) {
                 $out['sellers']["{$code}|{$name}"] = Seller::firstOrCreate(['company_id' => $companyId, 'normalized_name' => Seller::normalize($name)], ['name' => $name])->id;
             }
@@ -164,10 +164,10 @@ class DemoSalesSeeder extends Seeder
             ->selectRaw('count(distinct d.id) as docs, count(*) as lines, min(d.issued_on) as first, max(d.issued_on) as last, sum(l.net_total) as net')->first();
 
         DB::table('import_batches')->where('id', $batchId)->update([
-            'rows_total' => $totals->lines,
-            'documents_total' => $totals->docs,
-            'documents_new' => $totals->docs,
-            'summary' => json_encode(['demo' => true, 'date_from' => $totals->first, 'date_to' => $totals->last, 'net_total' => (string) $totals->net]),
+            'rows_total' => $totals?->lines,
+            'documents_total' => $totals?->docs,
+            'documents_new' => $totals?->docs,
+            'summary' => json_encode(['demo' => true, 'date_from' => $totals?->first, 'date_to' => $totals?->last, 'net_total' => (string) $totals?->net]),
         ]);
     }
 

@@ -27,7 +27,7 @@ return new class extends Migration
         $now = now();
         foreach (DB::table('branches')->orderBy('id')->get() as $branch) {
             $name = 'Tienda '.$branch->name;
-            $normalized = mb_strtolower(preg_replace('/\s+/u', ' ', trim($name)));
+            $normalized = mb_strtolower((string) preg_replace('/\s+/u', ' ', trim($name)));
             $existing = DB::table('sellers')->where('company_id', $branch->company_id)->where('normalized_name', $normalized)->first();
             if ($existing) {
                 DB::table('sellers')->where('id', $existing->id)->update(['branch_id' => $branch->id, 'is_default' => true]);

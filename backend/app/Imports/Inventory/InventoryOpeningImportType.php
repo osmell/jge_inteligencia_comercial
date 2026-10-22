@@ -206,13 +206,13 @@ final class InventoryOpeningImportType implements ImportType
         }
     }
 
-    /** @param  array<string, string|null>  $f */
+    /** @param  array<string, mixed>  $f */
     private function value(array $f): int
     {
         return Quantity::extend(Quantity::units((string) $f['quantity']), Decimal::units((string) $f['unit_cost']));
     }
 
-    /** @param  array<string, string|null>  $f */
+    /** @param  array<string, mixed>  $f */
     private function sourceKey(array $f): string
     {
         return "opening:{$f['company']}:{$f['branch']}:{$f['product_id']}:{$f['unit_id']}";

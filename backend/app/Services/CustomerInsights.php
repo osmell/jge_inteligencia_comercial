@@ -158,7 +158,7 @@ class CustomerInsights
 
         // Primera venta del sistema en esa compañía (en el ámbito del usuario): lo anterior no está reflejado en la ficha.
         $historyStarts = SalesLine::query()->where('sales_lines.company_id', $companyId)->min('issued_on');
-        $top = fn (string $dimension, int $limit) => $hasSales ? $this->stats->breakdown($dimension, $first, $last, $filters, 'net_total', $limit)['rows'] : [];
+        $top = fn (string $dimension, int $limit) => $first !== null && $last !== null ? $this->stats->breakdown($dimension, $first, $last, $filters, 'net_total', $limit)['rows'] : [];
         $dates = $hasSales
             ? SalesDocument::query()->where('customer_code', $code)->where('company_id', $companyId)->distinct()->orderBy('issued_on')->pluck('issued_on')->map(fn ($d) => $this->date($d))->unique()->values()->all()
             : [];
@@ -166,7 +166,7 @@ class CustomerInsights
 
         return [
             'customer' => [
-                'id' => $customer->id, 'company_id' => $customer->company_id, 'company' => $customer->company->name, 'branch' => $customer->branch?->name, 'branch_id' => $customer->branch_id,
+                'id' => $customer->id, 'company_id' => $customer->company_id, 'company' => $customer->company?->name, 'branch' => $customer->branch?->name, 'branch_id' => $customer->branch_id,
                 'code' => $customer->code, 'name' => $customer->name, 'trade_name' => $customer->trade_name, 'contact_name' => $customer->contact_name,
                 'phone' => $customer->phone, 'whatsapp' => $customer->whatsapp, 'email' => $customer->email, 'address' => $customer->address,
                 'source' => $customer->source,

@@ -125,7 +125,10 @@ final class ProductUnitsImportType implements ImportType
 
         foreach ($context->groups as $key => $group) {
             $f = $group->fields;
-            $product = $products[(int) $f['product_id']];
+            $product = $products[(int) $f['product_id']] ?? null;
+            if ($product === null) {
+                continue;      // el producto ya se validó: no puede faltar aquí
+            }
             $baseChanges = $product->base_unit_id !== (int) $f['base_unit_id'];
             if ($baseChanges && $product->base_unit_id !== null && isset($withMovements[$product->id])) {
                 $context->errors->error('base_unit_locked', "El producto {$f['code']} ya tiene movimientos de inventario: su unidad base no se puede cambiar.", $group->firstRow, config('imports.product_units.columns.base_unit.0'), $f['code']);

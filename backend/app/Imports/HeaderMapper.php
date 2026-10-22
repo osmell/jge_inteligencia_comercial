@@ -59,6 +59,6 @@ final class HeaderMapper
 
     public static function normalize(string $header): string
     {
-        return preg_replace('/[^a-z0-9]+/', '', Str::lower(Str::ascii($header)));
+        return (string) preg_replace('/[^a-z0-9]+/', '', Str::lower(Str::ascii($header)));
     }
 }

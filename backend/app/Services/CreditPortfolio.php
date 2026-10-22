@@ -46,7 +46,7 @@ class CreditPortfolio
             $units = Decimal::units(number_format((float) $invoice->getAttribute('balance'), Decimal::SCALE, '.', ''));
             $key = $invoice->company_id.'|'.$invoice->customer_code;
             $customers[$key] ??= [
-                'company_id' => $invoice->company_id, 'company' => $invoice->company->name, 'code' => $invoice->customer_code, 'name' => $invoice->customer_name,
+                'company_id' => $invoice->company_id, 'company' => $invoice->company?->name, 'code' => $invoice->customer_code, 'name' => $invoice->customer_name,
                 'buckets' => $zero, 'total' => 0, 'invoices' => 0, 'oldest_days' => 0,
             ];
             $customers[$key]['buckets'][$bucket] += $units;

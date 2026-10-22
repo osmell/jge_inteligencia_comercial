@@ -79,7 +79,7 @@ final class SalesPersister
     /**
      * Crea los documentos nuevos por bloques (un INSERT por bloque) y recupera sus ids.
      *
-     * @return array<string, array{0: int, 1: array<string, string|null>}> clave de grupo => [id del documento, campos]
+     * @return array<string, array{0: int, 1: array<string, mixed>}> clave de grupo => [id del documento, campos]
      */
     private function createDocuments(ImportContext $context): array
     {

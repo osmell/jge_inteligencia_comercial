@@ -117,8 +117,8 @@ class SalesStatistics
         return [
             'kpis' => $this->kpis($this->base(null, null, $filters)),
             // SQLite devuelve la fecha con hora.
-            'first' => $dates->first ? CarbonImmutable::parse($dates->first)->toDateString() : null,
-            'last' => $dates->last ? CarbonImmutable::parse($dates->last)->toDateString() : null,
+            'first' => $dates?->first ? CarbonImmutable::parse($dates->first)->toDateString() : null,
+            'last' => $dates?->last ? CarbonImmutable::parse($dates->last)->toDateString() : null,
         ];
     }
 
@@ -289,7 +289,7 @@ class SalesStatistics
      */
     private function kpis(Builder $query): array
     {
-        return $this->format($query->selectRaw($this->aggregates())->toBase()->first());
+        return $this->format($query->selectRaw($this->aggregates())->toBase()->first() ?? throw new \LogicException('La consulta de totales no devolvió ninguna fila.'));
     }
 
     private function aggregates(): string

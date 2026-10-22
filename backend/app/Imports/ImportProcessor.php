@@ -56,7 +56,7 @@ final class ImportProcessor
                 }
 
                 $values = [];
-                foreach ($map as $key => $index) {
+                foreach ($map ?? [] as $key => $index) {
                     $values[$key] = $cells[$index] ?? null;
                 }
 
@@ -191,7 +191,7 @@ final class ImportProcessor
     private array $pool = [];
 
     /**
-     * @param  array<string, string|null>  $fields
+     * @param  array<string, mixed>  $fields
      * @return array<string, string|null>
      */
     private function pooled(array $fields): array

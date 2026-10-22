@@ -78,7 +78,10 @@ class SalesStatsRequest extends FormRequest
         }
 
         try {
-            return [CarbonImmutable::createFromFormat('!Y-m-d', $from), CarbonImmutable::createFromFormat('!Y-m-d', $to)];
+            $start = CarbonImmutable::createFromFormat('!Y-m-d', $from);
+            $end = CarbonImmutable::createFromFormat('!Y-m-d', $to);
+
+            return $start === null || $end === null ? null : [$start, $end];
         } catch (\Throwable) {
             return null;
         }

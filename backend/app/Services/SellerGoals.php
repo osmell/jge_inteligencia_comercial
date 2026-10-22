@@ -35,7 +35,7 @@ class SellerGoals
     /** Primer día del mes de "YYYY-MM". */
     public static function monthStart(string $month): CarbonImmutable
     {
-        return CarbonImmutable::createFromFormat('!Y-m', $month);
+        return CarbonImmutable::createFromFormat('!Y-m', $month) ?? throw new \InvalidArgumentException("Mes no válido: {$month}");
     }
 
     /**
@@ -143,7 +143,7 @@ class SellerGoals
                 }
 
                 $new = [
-                    'amount' => $goal?->exists ? $goal->fresh()->amount : null, 'days_off' => $goal?->exists ? $goal->days_off : null,
+                    'amount' => $goal?->exists ? $goal->fresh()?->amount : null, 'days_off' => $goal?->exists ? $goal->days_off : null,
                     'starts_on' => $seller->starts_on?->toDateString(), 'ends_on' => $seller->ends_on?->toDateString(),
                 ];
 

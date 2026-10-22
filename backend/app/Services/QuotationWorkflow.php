@@ -74,11 +74,11 @@ class QuotationWorkflow
 
         if ($to === 'issued') {
             $this->assertIssuable($quotation);
-            if ($quotation->valid_until->lt(now()->startOfDay())) {
+            if ($quotation->valid_until?->lt(now()->startOfDay())) {
                 throw ValidationException::withMessages(['valid_until' => 'La fecha de vencimiento ya pasó.']);
             }
         }
-        if ($to === 'sent' && $quotation->customer->do_not_contact) {
+        if ($to === 'sent' && $quotation->customer?->do_not_contact) {
             throw ValidationException::withMessages(['status' => 'El cliente pidió no recibir comunicaciones: la cotización no se puede enviar.']);
         }
         if ($to === 'rejected' && $lossReason === null) {
@@ -107,7 +107,7 @@ class QuotationWorkflow
         if (! in_array($quotation->status, Quotation::LINKABLE, true)) {
             throw ValidationException::withMessages(['document_id' => 'Solo se vincula una factura a una cotización emitida, enviada, en seguimiento o aceptada.']);
         }
-        if ($document->company_id !== $quotation->company_id || $document->customer_code !== $quotation->customer->code) {
+        if ($document->company_id !== $quotation->company_id || $document->customer_code !== $quotation->customer?->code) {
             throw ValidationException::withMessages(['document_id' => 'La factura debe ser de la misma compañía y del mismo cliente de la cotización.']);
         }
         if ($quotation->issued_at !== null && $document->issued_on->lt($quotation->issued_at->copy()->startOfDay())) {

@@ -130,7 +130,7 @@ class FollowUpAgenda
                 continue;
             }
             $rows[] = [
-                'company_id' => $c->company_id, 'company' => $c->company->name, 'code' => $c->code, 'name' => $c->name,
+                'company_id' => $c->company_id, 'company' => $c->company?->name, 'code' => $c->code, 'name' => $c->name,
                 'phone' => $c->phone, 'whatsapp' => $c->whatsapp,
                 'status' => $status, 'last_purchase' => $last->toDateString(), 'days_since_last_purchase' => (int) $last->diffInDays($today),
                 'seller' => $c->seller?->name, 'last_contact_at' => isset($lastContact[$id]) ? $lastContact[$id]->toIso8601String() : null,
@@ -150,9 +150,9 @@ class FollowUpAgenda
 
         return [
             'id' => $i->id,
-            'customer' => ['company_id' => $c->company_id, 'code' => $c->code, 'name' => $c->name, 'phone' => $c->phone, 'whatsapp' => $c->whatsapp, 'seller' => $c->seller?->name],
+            'customer' => ['company_id' => $c?->company_id, 'code' => $c?->code, 'name' => $c?->name, 'phone' => $c?->phone, 'whatsapp' => $c?->whatsapp, 'seller' => $c?->seller?->name],
             'next_action' => $i->next_action, 'next_action_at' => $i->next_action_at?->toIso8601String(),
-            'days_overdue' => $i->next_action_at < $now ? (int) $i->next_action_at->startOfDay()->diffInDays($now->startOfDay()) : 0,
+            'days_overdue' => $i->next_action_at !== null && $i->next_action_at < $now ? (int) $i->next_action_at->startOfDay()->diffInDays($now->startOfDay()) : 0,
             'origin' => ['channel' => $i->channel, 'outcome' => $i->outcome, 'occurred_at' => $i->occurred_at->toIso8601String()],
             'user' => $i->user ? ['id' => $i->user->id, 'name' => $i->user->name] : null,
         ];

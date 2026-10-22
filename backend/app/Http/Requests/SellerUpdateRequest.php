@@ -59,7 +59,7 @@ class SellerUpdateRequest extends FormRequest
     {
         return function (string $attribute, mixed $value, \Closure $fail) use ($companyId, $seller) {
             $taken = Seller::where('company_id', $companyId)->where('normalized_name', Operator::normalize((string) $value))
-                ->when($seller, fn ($q) => $q->where('id', '!=', $seller->id))->exists();
+                ->when($seller, fn ($q) => $q->where('id', '!=', $seller?->id))->exists();
             if ($taken) {
                 $fail('Ya existe un vendedor con ese nombre en la compañía.');
             }

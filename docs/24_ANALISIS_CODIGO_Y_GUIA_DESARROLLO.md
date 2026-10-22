@@ -141,7 +141,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 |---|---|---|---|
 | A ✅ | **CI en GitHub Actions** (Pint, PHPStan, pruebas, typecheck, lint, test, build, audits) + plantilla de PR + `CONTRIBUTING.md` + actualizar `README` | Bajo | Nulo |
 | B ✅ | `strict_types` en todos los archivos (automático con Pint `declare_strict_types`) y revisión de fallos | Bajo–medio | Bajo (las pruebas lo detectan) |
-| C | PHPStan nivel 5 → 6 → 8, subiendo uno por vez sin *baseline* | Medio | Bajo |
+| C ✅ | PHPStan nivel 5 → 6 → 8, subiendo uno por vez sin *baseline* | Medio | Bajo |
 | D ✅ | Mover consultas de los 10 controladores con `DB::` a servicios/scopes (empezando por Conversaciones, Notificaciones, Cotizaciones) | Medio | Medio (cubierto por pruebas Feature) |
 | E ✅ | Crear `tests/Unit` con la lógica pura y empezar por RFM, aging, scoring, ventanas | Medio | Bajo |
 | F ✅ | Policies para los recursos con alcance por registro (clientes, cotizaciones, conversaciones) | Medio | Medio (toca permisos: confirmar antes) |
@@ -158,7 +158,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | Indicador | Hoy | Meta |
 |---|---|---|
 | Archivos con `strict_types` | 0 % | 100 % |
-| Nivel PHPStan | 5 | 8 |
+| Nivel PHPStan | 5 → **8** (paso C) | 8 |
 | Controladores con `DB::` | 10 → **0** (paso D) | 0 |
 | `app()`/`resolve()` en servicios, importaciones y controladores | 39 → **0** (paso H); quedan 10 en puntos donde Laravel no inyecta (ver paso H) | 0 |
 | Pruebas unitarias | 0 | ≥ 150 |
@@ -252,3 +252,18 @@ Resultado: Pint y PHPStan limpios, 664 pruebas pasan (4 nuevas).
 
 ### Paso F — Policies de autorización por registro (2026-10-21)
 Implementado según `docs/25_PROPUESTA_POLICIES.md` (decisiones D1–D7 en ★: refactor sin cambio de comportamiento). 6 Policies + 1 Gate, `PoliciesTest` como especificación viva (675 pruebas en total, las 664 anteriores intactas) y una regla de arquitectura que impide comparar roles en controladores.
+
+### Paso C — PHPStan del nivel 5 al 8 (2026-10-21)
+Se subió de uno en uno (6 → 7 → 8), con un commit por nivel y las 675 pruebas en verde al terminar cada uno. Sin *baseline*: los errores se corrigieron, salvo las excepciones documentadas abajo.
+
+| Nivel | Errores | Qué se corrigió |
+|---|---|---|
+| 6 | 124 | Tipos de arreglos y genéricos faltantes (reglas de validación, recursos, auditoría, consultas); 14 `collect()` sin tipo; **etiquetas de documentación mal escritas**: 14 comentarios de una sola línea con `@return`/`@param` a mitad de línea que PHPStan no leía |
+| 7 | 155 | Conversiones explícitas `(int)` en búsquedas por id que venían de la petición; `array_values()` donde el tipo prometía una lista; `fopen('php://output')` que puede devolver `false` (7 descargas CSV ahora fallan con un mensaje claro); `object` → `stdClass`; el tipo real de `historyStarts()` (el comentario anterior era incorrecto) |
+| 8 | 258 | Nulos: `?->` en relaciones opcionales (sucursal, vendedor, cliente…), `Decimal::units(null)` = 0, mes inválido → excepción en vez de `null`, fila de totales ausente → excepción, producto faltante en la validación de unidades |
+
+**Excepciones aceptadas (en `phpstan.neon`, con su motivo)**
+1. **SQL dinámico** (`selectRaw`/`orderByRaw` con fragmentos generados por el código: columnas de lista blanca, fechas, subconsultas): solo 4 archivos (`QuotationController`, `ConversationList`, `CustomerSalesReport`, `SalesStatistics`). Los valores del usuario siempre van como parámetros.
+2. **`$request->user()` nunca es nulo** en `app/Http/Controllers` y `app/Http/Requests`: las rutas que lo usan están detrás de `auth:sanctum` y del middleware de permisos. Se intentó una extensión propia de PHPStan, pero la de Larastan tiene prioridad; por eso es una excepción limitada a esas dos carpetas.
+
+**Defectos latentes encontrados**: una descarga CSV que ante un fallo al abrir la salida habría continuado con un recurso inválido; cuatro lugares que asumían una relación presente (sucursal/vendedor/compañía) y habrían lanzado error ante datos incompletos; el parámetro `month` de metas que ante un formato inválido devolvía `null` en silencio.

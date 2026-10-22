@@ -55,7 +55,7 @@ class InventoryMovementController extends Controller
                 $isReversed = in_array($m->id, $reversed, true);
                 $row = [
                     'id' => $m->id, 'date' => $m->occurred_on->toDateString(), 'type' => $m->type, 'reason' => $m->reason, 'branch' => $branches[$m->branch_id] ?? '',
-                    'product' => ['id' => $m->product_id, 'code' => $m->product->code, 'name' => $m->product->name],
+                    'product' => ['id' => $m->product_id, 'code' => $m->product?->code, 'name' => $m->product?->name],
                     'quantity' => Quantity::display(Quantity::units((string) $m->quantity)), 'entered' => Quantity::display(Quantity::units((string) $m->entered_quantity)),
                     'entered_unit' => $m->unit_id ? ($units[$m->unit_id] ?? null) : null, 'reference' => $m->reference, 'note' => $m->note, 'user' => $m->user?->name,
                     'reversed' => $isReversed, 'reversible' => ! $isReversed && in_array($m->type, InventoryMovement::REVERSIBLE, true),

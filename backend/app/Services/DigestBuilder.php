@@ -75,7 +75,7 @@ class DigestBuilder
         $r = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')->where('d.company_id', $companyId)
             ->whereBetween('d.issued_on', [$from->toDateString(), $to->toDateString()])->selectRaw('coalesce(sum(l.net_total), 0) as net, count(distinct d.id) as documents')->first();
 
-        return ['net' => round((float) $r->net, 2), 'documents' => (int) $r->documents];
+        return ['net' => round((float) $r?->net, 2), 'documents' => (int) $r?->documents];
     }
 
     private function change(float $now, ?float $before): ?float

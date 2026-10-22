@@ -46,7 +46,7 @@ class InventoryShortfallController extends Controller
 
         return response()->json([
             'data' => $rows->take(self::PAGE_SIZE)->map(fn (InventoryShortfall $s) => [
-                'id' => $s->id, 'company_id' => $s->company_id, 'branch_id' => $s->branch_id, 'branch' => $s->branch->name, 'issued_on' => $s->issued_on->toDateString(),
+                'id' => $s->id, 'company_id' => $s->company_id, 'branch_id' => $s->branch_id, 'branch' => $s->branch?->name, 'issued_on' => $s->issued_on->toDateString(),
                 'document' => $lines[$s->sales_line_id] ?? null,
                 'product' => ['id' => $s->product_id, 'code' => $s->product_code, 'name' => $s->product?->name],
                 'requested' => Quantity::display(Quantity::units((string) $s->requested)), 'applied' => Quantity::display(Quantity::units((string) $s->applied)),

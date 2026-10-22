@@ -26,7 +26,7 @@ class Operator extends Model
     /** Misma normalización para buscar y para guardar. */
     public static function normalize(string $name): string
     {
-        return mb_strtolower(preg_replace('/\s+/u', ' ', trim($name)));
+        return mb_strtolower((string) preg_replace('/\s+/u', ' ', trim($name)));
     }
 
     /** @return BelongsTo<Company, $this> */

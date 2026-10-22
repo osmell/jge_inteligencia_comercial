@@ -10,7 +10,7 @@ final class ImportGroup
     /** @var list<string> huellas binarias (16 bytes) de cada línea, para detectar repeticiones y comparar contenido */
     public array $lineHashes = [];
 
-    /** @param  array<string, string|null>  $fields */
+    /** @param  array<string, mixed>  $fields */
     public function __construct(public readonly string $key, public readonly array $fields, public readonly int $firstRow) {}
 
     public function linesCount(): int

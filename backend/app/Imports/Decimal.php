@@ -9,9 +9,12 @@ final class Decimal
 {
     public const SCALE = 4;
 
-    /** '12.3456' → 123456 */
-    public static function units(string $decimal): int
+    /** '12.3456' → 123456. Sin valor (null) es 0. */
+    public static function units(?string $decimal): int
     {
+        if ($decimal === null) {
+            return 0;
+        }
         $negative = str_starts_with($decimal, '-');
         [$int, $frac] = array_pad(explode('.', ltrim($decimal, '+-'), 2), 2, '');
         $value = (int) ($int.str_pad(substr($frac, 0, self::SCALE), self::SCALE, '0'));

@@ -37,7 +37,7 @@ class ImportBatchResource extends JsonResource
             'errors_total' => $this->errors_total,
             'warnings_total' => $this->warnings_total,
             'failure_message' => $this->failure_message,
-            'user' => $this->whenLoaded('user', fn () => ['id' => $this->user->id, 'username' => $this->user->username, 'name' => $this->user->name]),
+            'user' => $this->whenLoaded('user', fn () => ['id' => $this->user?->id, 'username' => $this->user?->username, 'name' => $this->user?->name]),
             'created_at' => $this->created_at,
             'validated_at' => $this->validated_at,
             'finished_at' => $this->finished_at,

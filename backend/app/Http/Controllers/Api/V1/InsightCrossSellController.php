@@ -99,9 +99,9 @@ class InsightCrossSellController extends Controller
         $r = $o->rule;
 
         return [
-            'code' => $o->customer_code, 'name' => $o->customer_name, 'suggestion' => $r->consequent, 'because' => $r->antecedent, 'confidence_pct' => round((float) $r->confidence * 100, 1),
-            'support' => $r->both_customers, 'lift' => round((float) $r->lift, 2),
-            'explanation' => "Compra «{$r->antecedent}» y todavía no «{$r->consequent}». ".$r->explain(),
+            'code' => $o->customer_code, 'name' => $o->customer_name, 'suggestion' => $r?->consequent, 'because' => $r?->antecedent, 'confidence_pct' => round((float) $r?->confidence * 100, 1),
+            'support' => $r?->both_customers, 'lift' => round((float) $r?->lift, 2),
+            'explanation' => "Compra «{$r?->antecedent}» y todavía no «{$r?->consequent}». ".$r?->explain(),
         ];
     }
 }

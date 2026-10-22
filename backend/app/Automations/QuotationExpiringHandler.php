@@ -33,7 +33,7 @@ class QuotationExpiringHandler extends NoticeHandler
                 if (! $this->notifier->scopedAs($user, fn () => Customer::query()->whereKey($q->customer_id)->exists())) {
                     continue;
                 }
-                $this->notify($user, 'quotation_expiring', "La cotización {$q->number} {$when}", "{$q->customer->name} · {$amount}", "/cotizaciones/{$q->id}", "quotation:{$q->id}:".($expired ? 'expired' : 'expiring'), $expired ? 'danger' : 'warning', $q->company_id);
+                $this->notify($user, 'quotation_expiring', "La cotización {$q->number} {$when}", "{$q->customer?->name} · {$amount}", "/cotizaciones/{$q->id}", "quotation:{$q->id}:".($expired ? 'expired' : 'expiring'), $expired ? 'danger' : 'warning', $q->company_id);
             }
         }
     }

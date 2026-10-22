@@ -139,7 +139,7 @@ final class ImportRow
             return number_format(round((float) $value, $scale), $scale, '.', '');
         }
 
-        if (! is_string($value) || ! preg_match('/^[+-]?\d+(\.\d+)?$/', $text = preg_replace('/[\s\x{00A0}]/u', '', $value))) {
+        if (! is_string($value) || ! preg_match('/^[+-]?\d+(\.\d+)?$/', $text = (string) preg_replace('/[\s\x{00A0}]/u', '', $value))) {
             $this->fail($key, 'invalid_number', 'No es un número válido (use punto decimal y sin separador de miles).');
 
             return null;

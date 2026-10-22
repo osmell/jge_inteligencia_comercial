@@ -70,7 +70,7 @@ class CreditInvoiceController extends Controller
         $reversed = $movements->whereNotNull('reverses_id')->pluck('reverses_id')->all();
 
         return response()->json(['data' => $this->present($record, CarbonImmutable::today()) + [
-            'branch' => $record->branch->name, 'subtotal' => $this->money($record->subtotal), 'discount_total' => $this->money($record->discount_total), 'tax_total' => $this->money($record->tax_total),
+            'branch' => $record->branch?->name, 'subtotal' => $this->money($record->subtotal), 'discount_total' => $this->money($record->discount_total), 'tax_total' => $this->money($record->tax_total),
             'movements' => $movements->map(fn (CreditMovement $m) => [
                 'id' => $m->id, 'type' => $m->type, 'amount' => $this->money($m->amount), 'occurred_on' => $m->occurred_on->toDateString(),
                 'method' => $m->method, 'reference' => $m->reference, 'note' => $m->note, 'user' => $m->user?->name, 'reverses_id' => $m->reverses_id,
@@ -104,8 +104,8 @@ class CreditInvoiceController extends Controller
         $age = (int) CarbonImmutable::parse($i->issued_on)->startOfDay()->diffInDays($today, false);
 
         return [
-            'id' => $i->id, 'company_id' => $i->company_id, 'company' => $i->company->name, 'document' => $i->documentNumber(), 'issued_on' => $i->issued_on->toDateString(),
-            'customer' => ['code' => $i->customer_code, 'name' => $i->customer_name], 'seller' => $i->seller->name,
+            'id' => $i->id, 'company_id' => $i->company_id, 'company' => $i->company?->name, 'document' => $i->documentNumber(), 'issued_on' => $i->issued_on->toDateString(),
+            'customer' => ['code' => $i->customer_code, 'name' => $i->customer_name], 'seller' => $i->seller?->name,
             'total' => $this->money($i->total), 'balance' => number_format($balance, 2, '.', ''), 'paid' => number_format((float) $i->total - $balance, 2, '.', ''),
             'age_days' => max(0, $age), 'bucket' => $balance > 0 ? CreditAging::bucket($age) : null, 'sales_linked' => $i->sales_document_id !== null,
         ];

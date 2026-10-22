@@ -29,7 +29,7 @@ class OperatorRequest extends FormRequest
             'company_id' => $create ? ['required', 'integer', Rule::exists('companies', 'id'), $this->companyInScope(...)] : ['prohibited'],
             'name' => [$create ? 'required' : 'sometimes', 'string', 'max:255', function (string $attribute, mixed $value, \Closure $fail) use ($companyId, $operator) {
                 $taken = Operator::where('company_id', $companyId)->where('normalized_name', Operator::normalize((string) $value))
-                    ->when($operator, fn ($q) => $q->where('id', '!=', $operator->id))->exists();
+                    ->when($operator, fn ($q) => $q->where('id', '!=', $operator?->id))->exists();
                 if ($taken) {
                     $fail('Ya existe un facturador con ese nombre en la compañía.');
                 }

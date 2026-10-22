@@ -115,7 +115,7 @@ class InventoryUnitController extends Controller
             'id' => $product->id, 'company_id' => $product->company_id, 'code' => $product->code, 'name' => $product->name,
             'base_unit' => $product->baseUnit?->only(['id', 'code', 'name']),
             'equivalences' => $product->equivalences->sortBy('unit.name')->values()->map(fn (ProductUnit $e) => [
-                'unit_id' => $e->unit_id, 'unit' => $e->unit->name, 'factor' => $e->factorText(),
+                'unit_id' => $e->unit_id, 'unit' => $e->unit?->name, 'factor' => $e->factorText(),
             ])->all(),
         ];
     }

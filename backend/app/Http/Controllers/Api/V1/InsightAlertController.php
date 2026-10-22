@@ -106,7 +106,7 @@ class InsightAlertController extends Controller
     {
         return [
             'follow_up' => $a->follow_up_interaction_id !== null,
-            'closed' => $a->status === InsightAlert::CLOSED ? ['at' => $a->closed_at?->toIso8601String(), 'reason' => $a->close_reason, 'note' => $a->close_note, 'by' => $closers[$a->closed_by] ?? null] : null,
+            'closed' => $a->status === InsightAlert::CLOSED ? ['at' => $a->closed_at?->toIso8601String(), 'reason' => $a->close_reason, 'note' => $a->close_note, 'by' => $closers[(int) $a->closed_by] ?? null] : null,
             'id' => $a->id, 'code' => $a->customer_code, 'name' => $a->customer_name, 'type' => $a->type, 'severity' => $a->severity, 'status' => $a->status, 'explanation' => $a->explanation, 'facts' => $a->facts,
             'first_detected_at' => $a->first_detected_at->toIso8601String(), 'last_detected_at' => $a->last_detected_at->toIso8601String(), 'run_id' => $a->insight_run_id,
         ];

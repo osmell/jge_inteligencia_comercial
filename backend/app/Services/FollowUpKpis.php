@@ -134,7 +134,7 @@ class FollowUpKpis
     {
         $out = ['on_time' => 0, 'late' => 0, 'open_overdue' => 0, 'upcoming' => 0];
         foreach ($rows as $i) {
-            $dueDay = $i->next_action_at->endOfDay();
+            $dueDay = $i->next_action_at?->endOfDay();
             if ($i->next_action_done_at !== null) {
                 $out[$i->next_action_done_at <= $dueDay ? 'on_time' : 'late']++;
             } elseif ($i->next_action_at < $now) {

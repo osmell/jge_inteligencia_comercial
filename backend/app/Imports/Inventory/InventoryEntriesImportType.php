@@ -246,7 +246,7 @@ final class InventoryEntriesImportType implements ImportType
     }
 
     /**
-     * @param  array<string, string|null>  $f
+     * @param  array<string, mixed>  $f
      * @param  array{subtotal: int, discount: int, tax: int, total: int}  $sum
      */
     private function createReceipt(ImportContext $context, array $f, string $hash, int $lines, array $sum): int
@@ -258,7 +258,7 @@ final class InventoryEntriesImportType implements ImportType
         ]);
     }
 
-    /** @param  array<string, string|null>  $amounts */
+    /** @param  array<string, mixed>  $amounts */
     private function checkAmounts(ImportRow $row, string $quantity, array $amounts): void
     {
         if (Decimal::isNegative($quantity)) {

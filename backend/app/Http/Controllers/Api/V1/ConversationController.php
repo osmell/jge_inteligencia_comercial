@@ -164,12 +164,13 @@ class ConversationController extends Controller
         $conversationId = WhatsappMessage::query()->whereKey($file->message_id)->value('conversation_id');
         abort_if($conversationId === null, 404);
         $c = $this->find($request, (int) $conversationId);
-        abort_unless(Storage::disk('conversations')->exists($file->path), 404, 'El archivo no está disponible.');
+        $path = (string) $file->path;
+        abort_unless(Storage::disk('conversations')->exists($path), 404, 'El archivo no está disponible.');
         $this->access->recordView($request->user(), $c);
 
         $inline = in_array($file->mime, self::INLINE, true) && $request->boolean('inline', true);
 
-        return Storage::disk('conversations')->response($file->path, $file->original_name ?? basename($file->path), [
+        return Storage::disk('conversations')->response($path, $file->original_name ?? basename($path), [
             'Content-Type' => $file->mime, 'X-Content-Type-Options' => 'nosniff', 'Content-Security-Policy' => "default-src 'none'; sandbox", 'Cache-Control' => 'private, max-age=3600',
         ], $inline ? 'inline' : 'attachment');
     }
