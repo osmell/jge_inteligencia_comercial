@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Services\CustomerActivity;
-use App\Services\CustomerInsights;
+use App\Services\Customers\CustomerSearch;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,7 +28,7 @@ class CustomersRequest extends FormRequest
             'company_id' => [$isSearch ? 'nullable' : 'required', 'integer', 'min:1'],
             'status' => ['nullable', Rule::in(CustomerActivity::STATUSES)],
             'type_id' => ['nullable', 'integer', 'min:1'],
-            'sort' => ['nullable', Rule::in(CustomerInsights::SORTS)],
+            'sort' => ['nullable', Rule::in(CustomerSearch::SORTS)],
             'page' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'document_id' => [str_ends_with($this->path(), 'document') ? 'required' : 'nullable', 'integer', 'min:1'],
         ];
