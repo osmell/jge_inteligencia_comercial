@@ -23,6 +23,17 @@ class AuthController extends Controller
     {
         $username = mb_strtolower(trim($request->validated('username')));
         $throttleKey = $username.'|'.$request->ip();
+        // Además del límite por usuario, un límite por dirección: probar una clave contra muchos usuarios también se frena.
+        $ipKey = 'login-ip|'.$request->ip();
+        $ipLimit = (int) config('security.login_per_ip_per_minute');
+
+        if (RateLimiter::tooManyAttempts($ipKey, $ipLimit)) {
+            $audit->record('auth.locked', username: $username);
+
+            throw ValidationException::withMessages([
+                'username' => __('auth.throttle', ['seconds' => RateLimiter::availableIn($ipKey)]),
+            ])->status(429);
+        }
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
             $audit->record('auth.locked', username: $username);
@@ -36,6 +47,7 @@ class AuthController extends Controller
 
         if (! Auth::guard('web')->attempt($credentials)) {
             RateLimiter::hit($throttleKey);
+            RateLimiter::hit($ipKey);
             $audit->record('auth.login_failed', username: $username);
 
             throw ValidationException::withMessages(['username' => __('auth.failed')]);

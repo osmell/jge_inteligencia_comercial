@@ -47,10 +47,9 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
 
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::post('logout', [AuthController::class, 'logout']);
-        Route::get('me', [AuthController::class, 'me']);
-    });
+    // `me` exige cuenta activa (una cuenta desactivada con la sesión abierta deja de ver datos); `logout` sí lo permite para poder salir.
+    Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('me', [AuthController::class, 'me'])->middleware(['auth:sanctum', 'active']);
 });
 
 Route::middleware(['auth:sanctum', 'active'])->group(function () {

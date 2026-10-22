@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Models\Concerns\ScopedByOrganization;
 use App\Services\PaymentPromises;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -45,5 +46,16 @@ class PaymentPromise extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Solo las promesas de clientes con facturas que la persona puede ver (un vendedor, las de los suyos): la visibilidad de la cartera
+     * se hereda de `CreditInvoice`, que ya aplica el alcance por compañía, sucursal y vendedor.
+     *
+     * @param  Builder<PaymentPromise>  $query
+     */
+    public function scopeVisibleCustomers(Builder $query): void
+    {
+        $query->whereExists(CreditInvoice::query()->selectRaw('1')->whereColumn('credit_invoices.company_id', 'payment_promises.company_id')->whereColumn('credit_invoices.customer_code', 'payment_promises.customer_code')->toBase());
     }
 }

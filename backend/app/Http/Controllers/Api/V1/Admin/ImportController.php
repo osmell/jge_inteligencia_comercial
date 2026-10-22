@@ -14,6 +14,7 @@ use App\Jobs\ConfirmImportJob;
 use App\Jobs\ValidateImportJob;
 use App\Models\ImportBatch;
 use App\Services\AuditLogger;
+use App\Services\Reports\CsvSafe;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -107,7 +108,7 @@ class ImportController extends Controller
             fwrite($out, "\xEF\xBB\xBF"); // BOM para que Excel lea UTF-8
             fputcsv($out, ['Fila', 'Columna', 'Severidad', 'Código', 'Mensaje', 'Valor']);
             foreach ($batch->errors()->orderBy('row_number')->orderBy('id')->cursor() as $e) {
-                fputcsv($out, [$e->row_number, self::csvSafe($e->column), $e->severity === 'error' ? 'Error' : 'Advertencia', $e->code, self::csvSafe($e->message), self::csvSafe($e->value)]);
+                fputcsv($out, [$e->row_number, CsvSafe::value($e->column), $e->severity === 'error' ? 'Error' : 'Advertencia', $e->code, CsvSafe::value($e->message), CsvSafe::value($e->value)]);
             }
             fclose($out);
         }, "errores-importacion-{$batch->id}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
@@ -161,11 +162,5 @@ class ImportController extends Controller
     private function authorizeBatch(Request $request, ImportBatch $batch): void
     {
         abort_unless($this->visible($request)->whereKey($batch->id)->exists(), 404);
-    }
-
-    /** Evita que Excel interprete como fórmula un texto que viene del archivo subido. */
-    private static function csvSafe(?string $value): ?string
-    {
-        return $value !== null && preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
     }
 }

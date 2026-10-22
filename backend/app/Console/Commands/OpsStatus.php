@@ -34,6 +34,11 @@ class OpsStatus extends Command
             $checks['database'] = ['value' => 'sin conexión: '.mb_substr($e->getMessage(), 0, 120), 'ok' => false];
         }
 
+        // En producción: sin modo de depuración (mostraría trazas y variables) y con cookie de sesión solo por HTTPS.
+        $production = app()->isProduction();
+        $checks['debug_off'] = ['value' => $production ? (config('app.debug') ? 'APP_DEBUG=true' : 'ok') : 'no aplica (no es producción)', 'ok' => ! $production || ! config('app.debug')];
+        $checks['secure_cookie'] = ['value' => $production ? (config('session.secure') ? 'ok' : 'SESSION_SECURE_COOKIE desactivado') : 'no aplica (no es producción)', 'ok' => ! $production || config('session.secure') === true];
+
         if ($checks['database']['ok']) {
             $failedJobs = DB::table('failed_jobs')->count();
             $checks['failed_jobs'] = ['value' => $failedJobs, 'ok' => $failedJobs <= (int) $this->option('max-failed-jobs')];

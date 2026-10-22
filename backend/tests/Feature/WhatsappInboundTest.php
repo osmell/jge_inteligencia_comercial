@@ -168,11 +168,11 @@ class WhatsappInboundTest extends TestCase
         $this->deliver(['id' => 'wamid.3', 'from' => '50370001234', 'timestamp' => (string) now()->timestamp, 'type' => 'image', 'image' => ['id' => 'FAKE1']])->assertOk();
 
         Http::fake([
-            'graph.facebook.com/v21.0/OK1' => Http::response(['url' => 'https://lookaside.example/ok', 'mime_type' => 'image/png', 'sha256' => hash('sha256', $png), 'file_size' => strlen($png)]),
-            'lookaside.example/ok' => Http::response($png),
-            'graph.facebook.com/v21.0/BAD1' => Http::response(['url' => 'https://lookaside.example/bad', 'mime_type' => 'application/x-msdownload', 'file_size' => 10]),
-            'graph.facebook.com/v21.0/FAKE1' => Http::response(['url' => 'https://lookaside.example/fake', 'mime_type' => 'image/png', 'file_size' => 20]),
-            'lookaside.example/fake' => Http::response('<?php echo "no soy una imagen"; ?>'),
+            'graph.facebook.com/v21.0/OK1' => Http::response(['url' => 'https://lookaside.fbsbx.com/ok', 'mime_type' => 'image/png', 'sha256' => hash('sha256', $png), 'file_size' => strlen($png)]),
+            'lookaside.fbsbx.com/ok' => Http::response($png),
+            'graph.facebook.com/v21.0/BAD1' => Http::response(['url' => 'https://lookaside.fbsbx.com/bad', 'mime_type' => 'application/x-msdownload', 'file_size' => 10]),
+            'graph.facebook.com/v21.0/FAKE1' => Http::response(['url' => 'https://lookaside.fbsbx.com/fake', 'mime_type' => 'image/png', 'file_size' => 20]),
+            'lookaside.fbsbx.com/fake' => Http::response('<?php echo "no soy una imagen"; ?>'),
         ]);
         foreach (WhatsappAttachment::orderBy('id')->get() as $a) {
             app(WhatsappMedia::class)->download($a);

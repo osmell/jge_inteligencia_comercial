@@ -11,6 +11,7 @@ use App\Models\WhatsappMessage;
 use App\Models\WhatsappSetting;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use RuntimeException;
 
 /**
@@ -70,7 +71,13 @@ class WhatsappMedia
             return;
         }
 
-        $file = $this->source->download($s, (string) $meta->json('url'));
+        try {
+            $file = $this->source->download($s, (string) $meta->json('url'));
+        } catch (InvalidArgumentException) {
+            $this->fail($attachment, 'La dirección del archivo no pertenece a Meta: no se descargó.');
+
+            return;
+        }
         if ($file->serverError() || $file->status() === 429) {
             throw new RuntimeException('La descarga falló ('.$file->status().'); se reintentará.');
         }

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\WebhookDelivery;
+use App\Rules\SafeOutboundUrl;
 use App\Services\WebhookService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -26,7 +27,7 @@ class WebhookController extends Controller
     {
         $types = array_column($this->webhook->available(), 'type');
         $data = $request->validate([
-            'enabled' => ['required', 'boolean'], 'url' => ['nullable', 'url:http,https', 'max:500'], 'secret' => ['nullable', 'string', 'min:16', 'max:200'],
+            'enabled' => ['required', 'boolean'], 'url' => ['nullable', 'url:http,https', 'max:500', new SafeOutboundUrl], 'secret' => ['nullable', 'string', 'min:16', 'max:200'],
             'events' => ['nullable', 'array'], 'events.*' => ['string', Rule::in($types)],
         ], ['secret.min' => 'El secreto debe tener al menos 16 caracteres.']);
         $this->webhook->save($request->user(), $data);

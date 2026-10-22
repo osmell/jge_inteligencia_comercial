@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -20,9 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     // Autorización de los canales privados del tiempo real (sesión de la SPA).
-    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum']])
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum', 'active']])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        // Cabeceras de seguridad en toda respuesta y límite general de peticiones de la API (ver docs/28_SEGURIDAD.md).
+        $middleware->append(SecurityHeaders::class);
+        $middleware->throttleApi();
         // Identificador de petición en todos los registros y en la respuesta (X-Request-Id).
         $middleware->api(prepend: [AssignRequestId::class]);
         // El permiso se comprueba antes de resolver el modelo: sin permiso siempre 403, nunca 404.

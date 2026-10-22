@@ -44,7 +44,7 @@ class PaymentPromiseController extends Controller
     public function cancel(Request $request, int $promise): JsonResponse
     {
         $data = $request->validate(['reason' => ['required', 'string', 'max:500']]);
-        $this->promises->cancel(PaymentPromise::query()->findOrFail($promise), $request->user(), $data['reason']);
+        $this->promises->cancel(PaymentPromise::query()->visibleCustomers()->findOrFail($promise), $request->user(), $data['reason']);
 
         return response()->json(['data' => ['cancelled' => true]]);
     }

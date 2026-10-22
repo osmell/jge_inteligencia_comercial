@@ -53,9 +53,8 @@ jobs:
       - name: Pruebas
         run: php artisan test
 
-      - name: Auditoría de dependencias
+      - name: Auditoría de dependencias (bloquea ante cualquier vulnerabilidad conocida)
         run: composer audit --no-interaction
-        continue-on-error: true
 
   frontend:
     name: Frontend (tipos, lint, pruebas, build)
@@ -83,6 +82,5 @@ jobs:
       - run: npm test
       - run: npm run build
 
-      - name: Auditoría de dependencias
+      - name: Auditoría de dependencias (bloquea ante vulnerabilidades altas o críticas)
         run: npm audit --audit-level=high
-        continue-on-error: true

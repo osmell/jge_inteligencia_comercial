@@ -8,6 +8,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY docker/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+COPY docker/security.ini /usr/local/etc/php/conf.d/security.ini
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

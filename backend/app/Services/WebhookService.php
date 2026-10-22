@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\UserNotification;
 use App\Models\WebhookDelivery;
 use App\Models\WebhookSetting;
+use App\Support\PublicUrl;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -123,6 +124,12 @@ class WebhookService
     {
         $time = (string) now()->timestamp;
         try {
+            // La resolución del nombre pudo cambiar desde que se guardó la dirección: se vuelve a comprobar en cada entrega.
+            if (config('security.allow_private_urls') !== true && ! PublicUrl::isSafe((string) $s->url)) {
+                $this->failed($d, false, 'La dirección de destino no es pública o no usa HTTPS.', null);
+
+                return;
+            }
             $r = $this->transport->post((string) $s->url, [
                 'Content-Type' => 'application/json', 'X-JGE-Event' => $d->event, 'X-JGE-Delivery' => (string) $d->id, 'X-JGE-Timestamp' => $time,
                 'X-JGE-Signature' => 'sha256='.hash_hmac('sha256', $time.'.'.$d->payload, (string) $s->secret),
