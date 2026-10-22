@@ -17,6 +17,7 @@ use App\Models\ImportBatch;
 use App\Models\InventoryMovement;
 use App\Models\InventoryReceipt;
 use App\Models\User;
+use App\Services\DataScope;
 use App\Services\InventoryLedger;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
@@ -73,6 +74,8 @@ final class InventoryEntriesImportType implements ImportType
     private array $withoutOpening = [];
 
     private int $skipped = 0;
+
+    public function __construct(private readonly DataScope $scope, private readonly InventoryLedger $ledger) {}
 
     public function key(): string
     {
@@ -204,7 +207,7 @@ final class InventoryEntriesImportType implements ImportType
 
     public function persist(ImportContext $context): void
     {
-        $ledger = app(InventoryLedger::class);
+        $ledger = $this->ledger;
         $this->lookup ??= new InventoryUnits;
         $receipts = [];
         /** @var array<string, array{subtotal: int, discount: int, tax: int, total: int}> $totals */
@@ -346,6 +349,6 @@ final class InventoryEntriesImportType implements ImportType
 
     private function resolver(): LocationResolver
     {
-        return $this->resolver ??= new LocationResolver($this->user);
+        return $this->resolver ??= new LocationResolver($this->user, $this->scope);
     }
 }

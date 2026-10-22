@@ -18,6 +18,7 @@ use App\Models\ImportBatch;
 use App\Models\Operator;
 use App\Models\Seller;
 use App\Models\User;
+use App\Services\DataScope;
 use DateTimeImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -64,6 +65,8 @@ final class CreditInvoicesImportType implements ImportType
 
     /** @var array<int, int> documentos por compañía */
     private array $perCompany = [];
+
+    public function __construct(private readonly DataScope $scope) {}
 
     public function key(): string
     {
@@ -414,6 +417,6 @@ final class CreditInvoicesImportType implements ImportType
 
     private function resolver(): LocationResolver
     {
-        return $this->resolver ??= new LocationResolver($this->user);
+        return $this->resolver ??= new LocationResolver($this->user, $this->scope);
     }
 }

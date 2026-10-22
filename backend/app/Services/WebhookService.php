@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\WebhookTransport;
 use App\Models\User;
 use App\Models\UserNotification;
 use App\Models\WebhookDelivery;
 use App\Models\WebhookSetting;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -23,7 +23,7 @@ class WebhookService
 
     private const BACKOFF = [10, 60];
 
-    public function __construct(private readonly AuditLogger $audit, private readonly Notifier $notifier) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly NotificationTypes $types, private readonly WebhookTransport $transport) {}
 
     /** @return array<string, mixed> */
     public function describe(): array
@@ -36,7 +36,7 @@ class WebhookService
     /** @return list<array{type: string, label: string}> */
     public function available(): array
     {
-        return array_map(fn (string $type, array $d) => ['type' => $type, 'label' => $d['label']], array_keys($this->notifier->types()), $this->notifier->types());
+        return array_map(fn (string $type, array $d) => ['type' => $type, 'label' => $d['label']], array_keys($this->types->all()), $this->types->all());
     }
 
     /** @param array<string, mixed> $data  secreto vacío = conservar */
@@ -123,10 +123,10 @@ class WebhookService
     {
         $time = (string) now()->timestamp;
         try {
-            $r = Http::timeout(15)->withHeaders([
+            $r = $this->transport->post((string) $s->url, [
                 'Content-Type' => 'application/json', 'X-JGE-Event' => $d->event, 'X-JGE-Delivery' => (string) $d->id, 'X-JGE-Timestamp' => $time,
                 'X-JGE-Signature' => 'sha256='.hash_hmac('sha256', $time.'.'.$d->payload, (string) $s->secret),
-            ])->withBody($d->payload, 'application/json')->post((string) $s->url);
+            ], $d->payload);
             if ($r->successful()) {
                 $d->forceFill(['status' => WebhookDelivery::SENT, 'http_status' => $r->status(), 'sent_at' => now(), 'error' => null, 'next_attempt_at' => null])->save();
 

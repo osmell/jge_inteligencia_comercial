@@ -20,6 +20,7 @@ use App\Models\Operator;
 use App\Models\SalesDocument;
 use App\Models\Seller;
 use App\Models\User;
+use App\Services\DataScope;
 use DateTimeImmutable;
 
 /**
@@ -77,6 +78,8 @@ final class SalesImportType implements ImportType
 
     /** @var array<string, mixed> */
     private array $stats = ['lines' => [], 'min' => null, 'max' => null, 'net' => 0, 'tax' => 0, 'grand' => 0, 'cost' => 0, 'skipped' => 0];
+
+    public function __construct(private readonly DataScope $scope) {}
 
     public function key(): string
     {
@@ -424,7 +427,7 @@ final class SalesImportType implements ImportType
 
     private function locations(): LocationResolver
     {
-        return $this->resolver ??= new LocationResolver($this->user);
+        return $this->resolver ??= new LocationResolver($this->user, $this->scope);
     }
 
     /** @return array<string, Company> */

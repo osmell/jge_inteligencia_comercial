@@ -49,8 +49,36 @@ final class ArchitectureTest extends TestCase
 
     public function test_controllers_do_not_use_the_service_locator(): void
     {
-        $offenders = array_filter($this->phpFiles('app/Http/Controllers'), fn (string $f) => preg_match('/(?<![>\w])(app|resolve)\(/', (string) file_get_contents($f)) === 1);
+        $offenders = array_filter($this->phpFiles('app/Http/Controllers'), fn (string $f) => preg_match('/(?<![>\w$])(?<!function )(app|resolve)\(/', (string) file_get_contents($f)) === 1);
 
         $this->assertSame([], array_values($offenders), 'Las dependencias llegan por constructor.');
+    }
+
+    public function test_services_and_imports_do_not_use_the_service_locator(): void
+    {
+        $offenders = [];
+        foreach (['app/Services', 'app/Imports'] as $dir) {
+            foreach ($this->phpFiles($dir) as $file) {
+                if (preg_match('/(?<![>\w$])(?<!function )(app|resolve)\(/', (string) file_get_contents($file)) === 1) {
+                    $offenders[] = $file;
+                }
+            }
+        }
+
+        $this->assertSame([], $offenders, 'Las dependencias de servicios e importaciones llegan por constructor.');
+    }
+
+    public function test_only_the_integrations_talk_http_to_external_systems(): void
+    {
+        $offenders = [];
+        foreach (['app/Services', 'app/Http', 'app/Jobs', 'app/Imports', 'app/Automations'] as $dir) {
+            foreach ($this->phpFiles($dir) as $file) {
+                if (str_contains((string) file_get_contents($file), 'Http::')) {
+                    $offenders[] = $file;
+                }
+            }
+        }
+
+        $this->assertSame([], $offenders, 'Las llamadas a sistemas externos van detrás de un puerto en app/Contracts con su implementación en app/Integrations.');
     }
 }

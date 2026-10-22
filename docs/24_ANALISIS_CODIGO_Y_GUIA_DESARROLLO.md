@@ -146,7 +146,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | E ✅ | Crear `tests/Unit` con la lógica pura y empezar por RFM, aging, scoring, ventanas | Medio | Bajo |
 | F | Policies para los recursos con alcance por registro (clientes, cotizaciones, conversaciones) | Medio | Medio (toca permisos: confirmar antes) |
 | G | Dividir `DashboardService`, `SalesStatistics`, `CustomerInsights`, `SalesReportExporter` y los `ImportType` > 400 líneas | Medio–alto | Medio |
-| H | Interfaces para puertos externos (WhatsApp, correo, webhook) y eliminar `app()`/`new` de la lógica | Medio | Bajo |
+| H ✅ | Interfaces para puertos externos (WhatsApp, correo, webhook) y eliminar `app()`/`new` de la lógica | Medio | Bajo |
 | I | `Resource` en todas las respuestas + generación de tipos TS (OpenAPI con Scribe/Scramble) | Medio | Bajo |
 | J | Hooks para páginas con > 8 estados; Playwright con 5–8 flujos críticos | Medio–alto | Bajo |
 | K | ADR, `CHANGELOG`, etiquetas, métricas y registros estructurados | Bajo | Nulo |
@@ -160,7 +160,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | Archivos con `strict_types` | 0 % | 100 % |
 | Nivel PHPStan | 5 | 8 |
 | Controladores con `DB::` | 10 → **0** (paso D) | 0 |
-| `app()`/`resolve()` fuera de proveedores | 39 | 0 |
+| `app()`/`resolve()` en servicios, importaciones y controladores | 39 → **0** (paso H); quedan 9 en puntos donde Laravel no inyecta (ver paso H) | 0 |
 | Pruebas unitarias | 0 | ≥ 150 |
 | Policies | 0 | las de recursos con alcance por registro |
 | Servicios > 300 líneas | 4 | 0 |
@@ -224,3 +224,28 @@ Se creó `backend/tests/Unit` (la suite «Unit» ya estaba declarada en `phpunit
 - `WhatsappController` recibe `WhatsappInbound` por constructor (antes `app()`).
 - **`tests/Unit/ArchitectureTest`** hace cumplir tres reglas en cada ejecución (y en la CI): sin `DB::` en controladores, sin `app()`/`resolve()` en controladores y `strict_types` en todo archivo PHP. Una regresión rompe la prueba.
 - **Alcance que queda**: los controladores todavía encadenan filtros de Eloquent (`->where(...)`) para listados y filtros de pantalla. Es aceptable por ahora; se moverán a *scopes* o clases de consulta cuando se toque cada módulo (pasos G e I). Quedan también 37 usos de `app()`/`resolve()` fuera de controladores (paso H).
+
+### Paso H — Puertos hacia sistemas externos y dependencias por constructor (2026-10-21)
+**Puertos (`app/Contracts`) e implementaciones (`app/Integrations`)**
+
+| Puerto | Implementación | Lo usan |
+|---|---|---|
+| `WhatsappMessaging` (consultar cuenta, enviar, subir archivo) | `GraphApiWhatsapp` (Meta Cloud API) | `WhatsappService`, `ConversationSender` |
+| `WhatsappMediaSource` (datos y descarga de archivos) | `GraphApiWhatsapp` | `WhatsappMedia` |
+| `WebhookTransport` (POST firmado) | `HttpWebhookTransport` | `WebhookService` |
+
+- Los dos puertos de WhatsApp son interfaces separadas (segregación de interfaces): quien solo descarga no depende de enviar. Enlaces en `AppServiceProvider`; cambiar de proveedor o simular es cambiar un enlace.
+- Los puertos devuelven `Illuminate\Http\Client\Response` (decisión pragmática: así las pruebas actuales con `Http::fake` siguen valiendo). Si algún día se cambia de proveedor, ese tipo se reemplaza por un objeto propio.
+- `tests/Support/FakeWhatsappMessaging` es un doble sin red; `WhatsappPortTest` demuestra que el servicio funciona con él sin enviar ninguna petición HTTP.
+
+**Dependencias por constructor (se eliminaron 30 usos de `app()`/`new`)**
+- `Notifier` ↔ `WebhookService` eran circulares (por eso había `app()`). Se rompió el ciclo extrayendo `NotificationTypes` (el catálogo de tipos de aviso).
+- Inyectados: `Notifier` (correo y webhooks), `ConversationSender` (registro de contacto), `WhatsappInbound` (alertas y ausencia), `PaymentPromises` (cartera), `ImportRunner` (auditoría).
+- `AutomationRunner` e `ImportRegistry` reciben el contenedor de Laravel como dependencia explícita: son fábricas que crean manejadores/tipos por nombre.
+- Los 7 tipos de importación y `LocationResolver` reciben `DataScope` (y `InventoryLedger` los de inventario) por constructor.
+
+**Reglas nuevas en `ArchitectureTest`**: sin `app()`/`resolve()` en `Services` ni `Imports`; ninguna llamada `Http::` fuera de `app/Integrations`.
+
+**Excepciones que se mantienen (Laravel no inyecta ahí)**: 4 `FormRequest` (`app(DataScope|UserAccess)` dentro de reglas), `OrganizationScope` (alcance global del modelo), el trait `Auditable` (eventos de modelo), `ConversationBroadcast` (evento de difusión) y los métodos `failed()` de 2 trabajos en cola. Se revisarán si se cambia a una arquitectura de acciones (paso G).
+
+Resultado: Pint y PHPStan limpios, 664 pruebas pasan (4 nuevas).

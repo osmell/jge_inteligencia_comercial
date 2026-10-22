@@ -20,10 +20,12 @@ use Illuminate\Support\Facades\DB;
  */
 class Notifier
 {
+    public function __construct(private readonly NotificationTypes $types, private readonly MailService $mail, private readonly WebhookService $webhooks) {}
+
     /** @return array<string, array<string, mixed>> */
     public function types(): array
     {
-        return (array) config('notifications.types');
+        return $this->types->all();
     }
 
     /** Tipos que la persona puede recibir, con si los tiene activados. @return list<array<string, mixed>> */
@@ -83,9 +85,9 @@ class Notifier
             'url' => $url, 'dedupe_key' => $dedupeKey, 'status' => UserNotification::NEW, 'created_at' => now(),
         ]);
         if ($this->wantsEmail($user, $type)) {
-            app(MailService::class)->queueNotice($user, $notice);
+            $this->mail->queueNotice($user, $notice);
         }
-        app(WebhookService::class)->queueNotice($notice);
+        $this->webhooks->queueNotice($notice);
         NoticeCreated::dispatch($user->id, $type);
 
         return $notice;

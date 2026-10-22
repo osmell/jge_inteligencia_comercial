@@ -30,7 +30,7 @@ class PaymentPromises
 
     public const MAX_DAYS_AHEAD = 90;
 
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly CreditPortfolio $portfolio) {}
 
     public function create(User $user, int $companyId, string $code, CarbonImmutable $promisedOn, string $amount, ?string $note): PaymentPromise
     {
@@ -43,7 +43,7 @@ class PaymentPromises
             throw ValidationException::withMessages(['promised_on' => 'La fecha prometida debe ser desde hoy y dentro de los próximos '.self::MAX_DAYS_AHEAD.' días.']);
         }
 
-        $portfolio = app(CreditPortfolio::class)->aging($companyId, $code);
+        $portfolio = $this->portfolio->aging($companyId, $code);
         $customer = $portfolio['customers'][0] ?? null;
         if ($customer === null) {
             throw ValidationException::withMessages(['code' => 'El cliente no tiene saldo por cobrar.']);

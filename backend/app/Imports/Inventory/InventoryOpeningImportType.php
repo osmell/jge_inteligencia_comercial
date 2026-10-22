@@ -17,6 +17,7 @@ use App\Models\Branch;
 use App\Models\ImportBatch;
 use App\Models\InventoryMovement;
 use App\Models\User;
+use App\Services\DataScope;
 use App\Services\InventoryLedger;
 use Carbon\CarbonImmutable;
 use DateTimeImmutable;
@@ -49,6 +50,8 @@ final class InventoryOpeningImportType implements ImportType
 
     /** @var array<int, array{0: string, 1: int}> fecha de corte y fila que la fijó, por sucursal */
     private array $cutoffs = [];
+
+    public function __construct(private readonly DataScope $scope, private readonly InventoryLedger $ledger) {}
 
     public function key(): string
     {
@@ -154,7 +157,7 @@ final class InventoryOpeningImportType implements ImportType
 
     public function persist(ImportContext $context): void
     {
-        $ledger = app(InventoryLedger::class);
+        $ledger = $this->ledger;
         $this->lookup ??= new InventoryUnits;
 
         foreach ($context->groups as $key => $group) {
@@ -236,6 +239,6 @@ final class InventoryOpeningImportType implements ImportType
 
     private function resolver(): LocationResolver
     {
-        return $this->resolver ??= new LocationResolver($this->user);
+        return $this->resolver ??= new LocationResolver($this->user, $this->scope);
     }
 }

@@ -46,6 +46,8 @@ final class ProductUnitsImportType implements ImportType
     /** @var array<string, array{0: int, 1: int}> unidad base declarada por producto y la fila que la fijó */
     private array $bases = [];
 
+    public function __construct(private readonly DataScope $scope) {}
+
     public function key(): string
     {
         return 'product_units';
@@ -226,7 +228,7 @@ final class ProductUnitsImportType implements ImportType
 
             return null;
         }
-        $allowed = $this->user ? app(DataScope::class)->fullCompanyIds($this->user) : null;
+        $allowed = $this->user ? $this->scope->fullCompanyIds($this->user) : null;
         if ($allowed !== null && ! in_array($company->id, $allowed, true)) {
             $row->fail('company', 'company_out_of_scope', "No tienes acceso completo a la compañía «{$text}».");
 
@@ -238,6 +240,6 @@ final class ProductUnitsImportType implements ImportType
 
     private function resolver(): LocationResolver
     {
-        return $this->resolver ??= new LocationResolver($this->user);
+        return $this->resolver ??= new LocationResolver($this->user, $this->scope);
     }
 }

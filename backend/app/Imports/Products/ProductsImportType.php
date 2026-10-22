@@ -13,6 +13,7 @@ use App\Imports\ParsedRow;
 use App\Models\ImportBatch;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\DataScope;
 
 /**
  * Archivo maestro de productos: una fila por producto (compañía + código). Los nuevos se insertan y los existentes se
@@ -39,6 +40,8 @@ final class ProductsImportType implements ImportType
     private ?User $user = null;
 
     private ?LocationResolver $resolver = null;
+
+    public function __construct(private readonly DataScope $scope) {}
 
     public function key(): string
     {
@@ -195,6 +198,6 @@ final class ProductsImportType implements ImportType
 
     private function resolver(): LocationResolver
     {
-        return $this->resolver ??= new LocationResolver($this->user);
+        return $this->resolver ??= new LocationResolver($this->user, $this->scope);
     }
 }

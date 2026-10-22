@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\WhatsappMediaSource;
 use App\Models\WhatsappAttachment;
 use App\Models\WhatsappConversation;
 use App\Models\WhatsappMessage;
 use App\Models\WhatsappSetting;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -19,6 +19,8 @@ use RuntimeException;
  */
 class WhatsappMedia
 {
+    public function __construct(private readonly WhatsappMediaSource $source) {}
+
     /** Tipo declarado => [clase de archivo, extensión]. */
     public const TYPES = [
         'image/jpeg' => ['image', 'jpg'], 'image/png' => ['image', 'png'], 'image/webp' => ['image', 'webp'],
@@ -46,7 +48,7 @@ class WhatsappMedia
             return;
         }
 
-        $meta = Http::withToken((string) $s->access_token)->timeout(20)->get("https://graph.facebook.com/{$s->api_version}/{$attachment->media_id}");
+        $meta = $this->source->info($s, (string) $attachment->media_id);
         if ($meta->serverError() || $meta->status() === 429) {
             throw new RuntimeException('Meta no respondió ('.$meta->status().'); se reintentará.');
         }
@@ -68,7 +70,7 @@ class WhatsappMedia
             return;
         }
 
-        $file = Http::withToken((string) $s->access_token)->timeout(60)->get((string) $meta->json('url'));
+        $file = $this->source->download($s, (string) $meta->json('url'));
         if ($file->serverError() || $file->status() === 429) {
             throw new RuntimeException('La descarga falló ('.$file->status().'); se reintentará.');
         }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\WhatsappMessaging;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\WhatsappConsent;
@@ -11,7 +12,6 @@ use App\Models\WhatsappConversation;
 use App\Models\WhatsappMessage;
 use App\Models\WhatsappSetting;
 use App\Models\WhatsappTemplate;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -24,7 +24,7 @@ class WhatsappService
 {
     private const RANK = ['sent' => 1, 'delivered' => 2, 'read' => 3];
 
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly WhatsappMessaging $whatsapp) {}
 
     /** @return array<string, mixed> configuración sin credenciales */
     public function describe(): array
@@ -76,7 +76,7 @@ class WhatsappService
             return ['ok' => false, 'message' => 'Faltan el identificador del número o el token de acceso.'];
         }
         try {
-            $r = Http::withToken((string) $s->access_token)->timeout(15)->get($this->url($s, (string) $s->phone_number_id), ['fields' => 'display_phone_number,verified_name']);
+            $r = $this->whatsapp->profile($s);
             $result = $r->successful()
                 ? ['ok' => true, 'message' => 'Conexión correcta con '.($r->json('verified_name') ?? 'la cuenta').' ('.($r->json('display_phone_number') ?? 'número sin dato').').']
                 : ['ok' => false, 'message' => 'Meta respondió: '.mb_substr((string) ($r->json('error.message') ?? $r->status()), 0, 300)];
@@ -185,7 +185,7 @@ class WhatsappService
                 'messaging_product' => 'whatsapp', 'to' => $log->to_number, 'type' => 'template',
                 'template' => ['name' => $template->name, 'language' => ['code' => $template->language], 'components' => $params === [] ? [] : [['type' => 'body', 'parameters' => array_map(fn (string $p) => ['type' => 'text', 'text' => $p], $params)]]],
             ];
-            $r = Http::withToken((string) $s->access_token)->timeout(20)->post($this->url($s, $s->phone_number_id.'/messages'), $payload);
+            $r = $this->whatsapp->send($s, $payload);
             if ($r->successful()) {
                 $log->forceFill(['status' => WhatsappMessage::SENT, 'wa_message_id' => $r->json('messages.0.id'), 'sent_at' => now(), 'error' => null])->save();
             } else {
@@ -241,11 +241,6 @@ class WhatsappService
         }
 
         return $applied;
-    }
-
-    private function url(WhatsappSetting $s, string $path): string
-    {
-        return "https://graph.facebook.com/{$s->api_version}/{$path}";
     }
 
     /** Solo dígitos, con código de país. */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Contracts\WhatsappMessaging;
 use App\Jobs\SendWhatsappMessage;
 use App\Models\Customer;
 use App\Models\User;
@@ -15,7 +16,6 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -38,7 +38,7 @@ class ConversationSender
 
     private const CONTAINERS = ['application/zip', 'application/octet-stream', 'application/x-ole-storage', 'application/CDFV2', 'application/vnd.ms-office', 'application/x-tika-msoffice', 'application/x-tika-ooxml'];
 
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly WhatsappMessaging $whatsapp, private readonly ConversationLog $log) {}
 
     /** Guarda el mensaje (y su archivo) y lo deja en cola; devuelve el ya existente si la clave se repite. */
     public function send(User $user, WhatsappConversation $c, ?string $body, ?UploadedFile $file, ?int $replyToId, ?string $clientKey): WhatsappMessage
@@ -153,10 +153,10 @@ class ConversationSender
         if ($quoted !== null) {
             $payload['context'] = ['message_id' => $quoted];
         }
-        $r = $this->call(fn () => Http::withToken((string) $s->access_token)->timeout(20)->post("https://graph.facebook.com/{$s->api_version}/{$s->phone_number_id}/messages", $payload));
+        $r = $this->call(fn () => $this->whatsapp->send($s, $payload));
         if ($r->successful() && $r->json('messages.0.id')) {
             $message->forceFill(['status' => WhatsappMessage::SENT, 'wa_message_id' => $r->json('messages.0.id'), 'sent_at' => now(), 'error' => null])->save();
-            app(ConversationLog::class)->contact($message);
+            $this->log->contact($message);
         } else {
             $this->giveUp($message, 'Meta respondió: '.mb_substr((string) ($r->json('error.message') ?? $r->status()), 0, 800));
         }
@@ -179,8 +179,7 @@ class ConversationSender
 
             return null;
         }
-        $r = $this->call(fn () => Http::withToken((string) $s->access_token)->timeout(60)->attach('file', $bytes, basename((string) $file->path), ['Content-Type' => (string) $file->mime])
-            ->post("https://graph.facebook.com/{$s->api_version}/{$s->phone_number_id}/media", ['messaging_product' => 'whatsapp', 'type' => $file->mime]));
+        $r = $this->call(fn () => $this->whatsapp->upload($s, $bytes, basename((string) $file->path), (string) $file->mime));
         if (! $r->successful() || ! $r->json('id')) {
             $this->giveUp($message, 'Meta no aceptó el archivo: '.mb_substr((string) ($r->json('error.message') ?? $r->status()), 0, 800));
 

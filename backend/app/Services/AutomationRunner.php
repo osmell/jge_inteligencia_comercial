@@ -8,6 +8,7 @@ use App\Automations\Handler;
 use App\Models\AutomationRun;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Throwable;
 
@@ -19,7 +20,7 @@ use Throwable;
  */
 class AutomationRunner
 {
-    public function __construct(private readonly AutomationCatalog $catalog, private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AutomationCatalog $catalog, private readonly AuditLogger $audit, private readonly Container $container) {}
 
     /**
      * @return array{started: int, retried: int, interrupted: int}
@@ -89,7 +90,7 @@ class AutomationRunner
             $run->forceFill(['attempt' => $run->attempt + 1, 'status' => AutomationRun::RUNNING, 'started_at' => $now, 'finished_at' => null, 'next_retry_at' => null, 'error' => null])->save();
         }
         try {
-            $handler = app($this->catalog->definitions()[$run->automation]['handler']);
+            $handler = $this->container->make($this->catalog->definitions()[$run->automation]['handler']);
             /** @var Handler $handler */
             $result = $handler->run($this->catalog->params($run->automation));
             $run->forceFill(['status' => AutomationRun::OK, 'finished_at' => CarbonImmutable::now(), 'result' => $result, 'next_retry_at' => null, 'error' => null])->save();

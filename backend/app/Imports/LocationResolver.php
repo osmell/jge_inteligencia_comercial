@@ -19,7 +19,7 @@ final class LocationResolver
     /** @var array<int, array<string, Branch>> */
     private array $branches = [];
 
-    public function __construct(private readonly ?User $user) {}
+    public function __construct(private readonly ?User $user, private readonly DataScope $scope) {}
 
     /** @return array{0: Company|null, 1: Branch|null} */
     public function resolve(ImportRow $row, string $companyKey = 'company', string $branchKey = 'branch'): array
@@ -42,7 +42,7 @@ final class LocationResolver
             return [null, null];
         }
 
-        $allowed = $this->user ? app(DataScope::class)->fullCompanyIds($this->user) : null;
+        $allowed = $this->user ? $this->scope->fullCompanyIds($this->user) : null;
         if ($allowed !== null && ! in_array($company->id, $allowed, true)) {
             $row->fail($companyKey, 'company_out_of_scope', "No tienes acceso completo a la compañía «{$companyText}».");
 

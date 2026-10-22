@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\DB;
  */
 class WhatsappInbound
 {
+    public function __construct(private readonly ConversationAlerts $alerts, private readonly ConversationAway $away) {}
+
     private const MEDIA = ['image' => 'image', 'video' => 'video', 'audio' => 'audio', 'voice' => 'audio', 'document' => 'document', 'sticker' => 'image'];
 
     /**
@@ -81,8 +83,8 @@ class WhatsappInbound
                 ])->save();
                 if ($type !== 'reaction') {
                     DB::afterCommit(function () use ($message, $conversation) {
-                        app(ConversationAlerts::class)->inbound($message);
-                        app(ConversationAway::class)->handle($conversation);
+                        $this->alerts->inbound($message);
+                        $this->away->handle($conversation);
                     });
                 }
                 if ($attachment !== null) {

@@ -18,6 +18,7 @@ final class ImportRunner
         private readonly ImportRegistry $registry,
         private readonly ImportProcessor $processor,
         private readonly ImportFileStore $files,
+        private readonly AuditLogger $audit,
     ) {}
 
     public function validate(ImportBatch $batch): void
@@ -89,7 +90,7 @@ final class ImportRunner
                 $this->save($batch, $result, $context, $errors, ImportStatus::Imported);
             });
 
-            app(AuditLogger::class)->record('import.completed', $batch->user, auditable: $batch, new: [
+            $this->audit->record('import.completed', $batch->user, auditable: $batch, new: [
                 'type' => $batch->type,
                 'documents_new' => $batch->documents_new,
                 'documents_duplicate' => $batch->documents_duplicate,

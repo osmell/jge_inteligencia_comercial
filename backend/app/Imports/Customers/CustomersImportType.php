@@ -16,6 +16,7 @@ use App\Models\ImportBatch;
 use App\Models\Operator;
 use App\Models\Seller;
 use App\Models\User;
+use App\Services\DataScope;
 
 /**
  * Archivo maestro de clientes (con tipo, vendedor y facturador opcionales por nombre): una fila por cliente (compañía + código). Los nuevos se insertan y los existentes se
@@ -56,6 +57,8 @@ final class CustomersImportType implements ImportType
 
     /** @var array<string, array<string, int>> «seller|operator» + compañía => nombre normalizado => id */
     private array $people = [];
+
+    public function __construct(private readonly DataScope $scope) {}
 
     public function key(): string
     {
@@ -306,6 +309,6 @@ final class CustomersImportType implements ImportType
 
     private function resolver(): LocationResolver
     {
-        return $this->resolver ??= new LocationResolver($this->user);
+        return $this->resolver ??= new LocationResolver($this->user, $this->scope);
     }
 }
