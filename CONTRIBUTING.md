@@ -46,4 +46,6 @@ docker compose exec -T frontend sh -c "npm run typecheck && npm run lint && npm 
 ## Documentación
 - Cada fase tiene su documento en `docs/`; actualízalo en el mismo PR.
 - Las modificaciones de la revisión se registran en `docs/23_AJUSTES_REVISION.md` y solo pasan a «Aprobado» con la aprobación del responsable.
-- Decisiones técnicas importantes: ADR corto en `docs/adr/`.
+- Decisiones técnicas importantes: ADR corto en `docs/adr/` (plantilla en `docs/adr/000-plantilla.md`).
+- Todo cambio visible para quien usa el sistema añade una línea en **Sin publicar** de `CHANGELOG.md`.
+- Operación y monitoreo (registros, `ops:status`, respaldos): `docs/26_OPERACION.md`.

@@ -149,7 +149,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | H ✅ | Interfaces para puertos externos (WhatsApp, correo, webhook) y eliminar `app()`/`new` de la lógica | Medio | Bajo |
 | I | `Resource` en todas las respuestas + generación de tipos TS (OpenAPI con Scribe/Scramble) | Medio | Bajo |
 | J | Hooks para páginas con > 8 estados; Playwright con 5–8 flujos críticos | Medio–alto | Bajo |
-| K | ADR, `CHANGELOG`, etiquetas, métricas y registros estructurados | Bajo | Nulo |
+| K ✅ | ADR, `CHANGELOG`, etiquetas, métricas y registros estructurados | Bajo | Nulo |
 
 **Orden recomendado**: A → B → E → D → H → F → C → G → I → J → K. Primero lo que protege (CI, tipos estrictos, pruebas unitarias) y después lo que reordena el código; así cada refactor queda cubierto antes de hacerse.
 
@@ -284,3 +284,12 @@ Se dividió por responsabilidad, **sin cambiar la API ni el comportamiento**: la
 **Pruebas nuevas**: `ImportRulesTest` (11 pruebas) cubre las reglas extraídas sin archivo ni base de datos; `ArchitectureTest` ahora impide que una clase de `Services`, `Imports` o controladores pase de 400 líneas.
 
 **Pendiente de este tema**: `InventoryEntriesImportType` (344), `CustomersImportType` (304), `FollowUpKpis` (275) y `SellerGoals` (273) siguen por debajo del límite; se dividirán cuando se modifiquen. Los tipos de importación comparten aún `person`/`newPeople` (alta de vendedores y facturadores), candidatos a un servicio común.
+
+### Paso K — ADR, changelog, etiquetas, registros estructurados y operación (2026-10-21)
+- **ADR**: `docs/adr/` con plantilla, índice y 11 decisiones ya tomadas (autenticación, PostgreSQL/SQLite, enteros escalados, importaciones, autorización en capas, libros inmutables, WhatsApp, tiempo real, puertos, dashboard y calidad automatizada).
+- **`CHANGELOG.md`** en formato Keep a Changelog: una versión `0.N.0` por fase (con la fecha de cierre) y una sección «Sin publicar» con el plan de mantenibilidad. Cada PR visible para el usuario añade su línea.
+- **Etiquetas**: `v0.1.0` … `v0.12.0` en el commit que cerró cada fase.
+- **Registros estructurados**: middleware `AssignRequestId` (cabecera `X-Request-Id` en la respuesta y `request_id` en todos los registros de la petición; `user_id` en los errores), canal `json` (una línea JSON por registro) y registro `queue.job_failed` con contexto cuando un trabajo agota sus reintentos.
+- **Monitoreo**: comando `ops:status [--json]` (base de datos, trabajos fallidos, cola pendiente, y envíos/automatizaciones fallidos en la ventana), con código de salida 1 si algo pasa su umbral.
+- **Operación**: `docs/26_OPERACION.md` (procesos, estado, registros, alertas sugeridas, respaldo y restauración de PostgreSQL, lista tras un despliegue).
+- Pruebas: `OperationsTest` (7). Total: 694 en backend.

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Foundation\Application;
@@ -22,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum']])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        // Identificador de petición en todos los registros y en la respuesta (X-Request-Id).
+        $middleware->api(prepend: [AssignRequestId::class]);
         // El permiso se comprueba antes de resolver el modelo: sin permiso siempre 403, nunca 404.
         $middleware->prependToPriorityList(
             before: SubstituteBindings::class,
@@ -33,6 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Quién estaba conectado cuando ocurrió el error (el identificador de petición ya viaja en el contexto compartido).
+        $exceptions->context(fn () => array_filter(['user_id' => auth()->id()]));
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );

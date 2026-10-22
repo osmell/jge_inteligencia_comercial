@@ -1,7 +1,7 @@
 # JGE Inteligencia Comercial
 
 Plataforma web de inteligencia comercial, seguimiento de clientes, crédito e inventario para JGE Soluciones Integrales.
-Contexto y fases del proyecto: carpeta [`docs/`](docs/README.md). **Estado: Fases 1 a 12 implementadas (ver `docs/`); en revisión funcional ajuste por ajuste (`docs/23_AJUSTES_REVISION.md`).** Para colaborar: [`CONTRIBUTING.md`](CONTRIBUTING.md) y la guía de desarrollo [`docs/24`](docs/24_ANALISIS_CODIGO_Y_GUIA_DESARROLLO.md).
+Contexto y fases del proyecto: carpeta [`docs/`](docs/README.md). **Estado: Fases 1 a 12 implementadas (ver `docs/`); en revisión funcional ajuste por ajuste (`docs/23_AJUSTES_REVISION.md`).** Para colaborar: [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CHANGELOG.md`](CHANGELOG.md), [decisiones de arquitectura](docs/adr/README.md) y [operación](docs/26_OPERACION.md) y la guía de desarrollo [`docs/24`](docs/24_ANALISIS_CODIGO_Y_GUIA_DESARROLLO.md).
 
 ## Estructura
 

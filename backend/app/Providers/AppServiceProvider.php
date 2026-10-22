@@ -15,7 +15,10 @@ use App\Services\Dashboard;
 use App\Services\DashboardService;
 use App\Services\DataScope;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -46,6 +49,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Un trabajo en cola que agota sus reintentos queda en el registro con contexto estructurado (y en `failed_jobs`).
+        Queue::failing(function (JobFailed $event): void {
+            Log::error('queue.job_failed', ['job' => $event->job->resolveName(), 'queue' => $event->job->getQueue(), 'attempts' => $event->job->attempts(), 'exception' => $event->exception->getMessage()]);
+        });
+
         // Análisis de toda la compañía (concentración, estacionalidad…): no disponibles para vendedores.
         Gate::define('view-company-analysis', fn (User $user) => $user->role->slug !== Role::VENDEDOR
             ? Response::allow()
