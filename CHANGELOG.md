@@ -14,6 +14,8 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Pruebas unitarias** (`tests/Unit`) de la aritmética de cantidades e importes, antigüedad de cartera, RFM, ventana de 24 h, reglas de importación y reglas de arquitectura.
 - **Policies** de autorización por registro (conversaciones, cotizaciones, contactos, clientes, vendedores, facturadores, respuestas rápidas).
 - **Puertos** (`app/Contracts`) para WhatsApp y webhooks, con sus integraciones.
+- **Pruebas de extremo a extremo** con Playwright (`e2e/`): 7 flujos críticos en un navegador real, ejecutados cada noche y a demanda en GitHub.
+- **Hooks del frontend** (`useFilters`, `useSubmit`, `useFormValues`, `useExport`, `useDebounced`, `useFitRows`) que reemplazan filas repetidas de `useState`.
 - **Identificador de petición** (`X-Request-Id`) en cada respuesta y en cada registro, canal de registros `json`, registro estructurado de trabajos en cola fallidos y comando `ops:status` para monitoreo.
 - Documentación para el equipo: análisis del código y guía SOLID (`docs/24`), propuesta de Policies (`docs/25`), operación (`docs/26`) y decisiones de arquitectura (`docs/adr`).
 

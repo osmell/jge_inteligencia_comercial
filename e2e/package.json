@@ -1,0 +1,13 @@
+{
+  "name": "jge-e2e",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Pruebas de extremo a extremo (navegador real) de los flujos críticos",
+  "scripts": {
+    "test": "playwright test",
+    "test:writes": "E2E_ALLOW_WRITES=1 playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0"
+  }
+}

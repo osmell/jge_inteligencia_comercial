@@ -148,7 +148,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | G ✅ | Dividir `DashboardService`, `SalesStatistics`, `CustomerInsights`, `SalesReportExporter` y los `ImportType` > 400 líneas | Medio–alto | Medio |
 | H ✅ | Interfaces para puertos externos (WhatsApp, correo, webhook) y eliminar `app()`/`new` de la lógica | Medio | Bajo |
 | I | `Resource` en todas las respuestas + generación de tipos TS (OpenAPI con Scribe/Scramble) | Medio | Bajo |
-| J | Hooks para páginas con > 8 estados; Playwright con 5–8 flujos críticos | Medio–alto | Bajo |
+| J ✅ | Hooks para páginas con > 8 estados; Playwright con 5–8 flujos críticos | Medio–alto | Bajo |
 | K ✅ | ADR, `CHANGELOG`, etiquetas, métricas y registros estructurados | Bajo | Nulo |
 
 **Orden recomendado**: A → B → E → D → H → F → C → G → I → J → K. Primero lo que protege (CI, tipos estrictos, pruebas unitarias) y después lo que reordena el código; así cada refactor queda cubierto antes de hacerse.
@@ -164,7 +164,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | Pruebas unitarias | 0 | ≥ 150 |
 | Policies | 0 → **6** (paso F) | las de recursos con alcance por registro |
 | Servicios > 300 líneas | 4 → **0** (paso G) | 0 |
-| Páginas con > 8 `useState` | 8 | 0 |
+| Páginas con > 8 `useState` | 8 → **0** (paso J) | 0 |
 | CI obligatoria en PR | No | Sí |
 
 ## 8. Alcance y límites de este análisis
@@ -293,3 +293,24 @@ Se dividió por responsabilidad, **sin cambiar la API ni el comportamiento**: la
 - **Monitoreo**: comando `ops:status [--json]` (base de datos, trabajos fallidos, cola pendiente, y envíos/automatizaciones fallidos en la ventana), con código de salida 1 si algo pasa su umbral.
 - **Operación**: `docs/26_OPERACION.md` (procesos, estado, registros, alertas sugeridas, respaldo y restauración de PostgreSQL, lista tras un despliegue).
 - Pruebas: `OperationsTest` (7). Total: 694 en backend.
+
+### Paso J — Hooks en el frontend y pruebas de extremo a extremo (2026-10-22)
+**Hooks reutilizables** (`frontend/src/lib`), cada uno con pruebas (`hooks.test.tsx`, 8):
+
+| Hook | Reemplaza |
+|---|---|
+| `useFilters` | Una fila de `useState` por filtro + el `setPage(1)` que había que recordar en cada uno: cambiar un filtro vuelve a la página 1 |
+| `useFormValues` | Un `useState` por campo de formulario |
+| `useSubmit` / `useSaveForm` | El trío «guardando + errores + try/catch» copiado en cada modal y formulario |
+| `useExport` | «exportando + error de exportación» de cada pantalla con CSV/Excel/PDF |
+| `useDebounced` | El `useEffect` con `setTimeout` de cada búsqueda |
+| `useFitRows` | El cálculo de filas por altura de ventana con su escucha de `resize` |
+| `useGoalsEditor` | Borradores, sugerencias y guardado de las metas |
+
+Pantallas simplificadas: Recomendaciones, Cotizaciones (lista y detalle), Usuarios, Compañías, Sucursales, Unidades y equivalencias, Productos, Metas, Ventas y Rotación. Ninguna pasa ya de 8 `useState`. **Las 242 pruebas de pantalla existentes pasan sin modificarse** (250 con las de los hooks); `tsc`, lint y build limpios.
+
+**Pruebas de extremo a extremo** (`e2e/`, Playwright 1.64, Chromium): 7 flujos (11 pruebas) — sesión (clave incorrecta, entrada, persistencia al recargar, cierre y pantalla protegida), barra de comandos (tecla `/`, y que escribir en un campo no la roba), menú por rol y bloqueo de URL de administración para un vendedor, tablero de ventas, administración (compañías, usuarios, formulario), ficha de cliente hasta el reporte de ventas por cliente, y creación y cancelación de una cotización.
+- Por omisión **solo leen**; la que crea datos exige `E2E_ALLOW_WRITES=1`. Usan el cliente fijo «Cliente E2E» (`E2eSeeder`).
+- Se validaron contra una instalación aislada (SQLite, puerto aparte) sin tocar la base de desarrollo: **11 de 11 pasan**. Contra la base de desarrollo real pasan las 9 de lectura (las 2 de clientes y cotización se omiten sin el cliente fijo).
+- `.github/workflows/e2e.yml` levanta la aplicación (SQLite + datos de demostración) y las ejecuta cada noche y a demanda. **No se ha ejecutado aún en GitHub**; si falla por diferencias de entorno se corrige en un commit aparte.
+- Hallazgo: en la base de desarrollo actual el rol Gerente General no tiene los permisos de ventas (el dashboard muestra «tu rol todavía no tiene indicadores»); las pruebas usan administración para lo que lee ventas.

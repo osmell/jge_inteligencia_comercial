@@ -23,6 +23,9 @@ docker compose exec -T -u $(id -u) backend vendor/bin/pint app config routes dat
 docker compose exec -T frontend sh -c "npm run typecheck && npm run lint && npm test && npm run build"
 ```
 
+## Pruebas de extremo a extremo
+Los flujos críticos (sesión, barra de comandos, menú por rol, ventas, administración, clientes, cotizaciones) se prueban en un navegador real con Playwright (`e2e/`, ver su README). Corren cada noche y a demanda en GitHub (*Actions → E2E*); un cambio que toque una de esas pantallas debe ejecutarlas antes de fusionarse.
+
 ## Reglas de código (resumen de SOLID para este proyecto)
 - **Controlador delgado**: autorizar, validar con `FormRequest`, delegar a un servicio, responder. Sin `DB::` ni consultas encadenadas.
 - **Una regla de negocio, un lugar**: búscala antes en `app/Services`. Un servicio = un caso de uso.
@@ -30,7 +33,7 @@ docker compose exec -T frontend sh -c "npm run typecheck && npm run lint && npm 
 - **Dependencias por constructor**; evita `app()`, `resolve()` y `new` de colaboradores dentro de la lógica.
 - **Código nuevo con `declare(strict_types=1);`** y tipos de retorno explícitos.
 - **Migraciones**: nunca se editan después de fusionadas; se añade una nueva. SQL portable (pruebas en SQLite, producción en PostgreSQL).
-- **Frontend**: sin `fetch` fuera de `src/lib`; lógica con estado complejo en *hooks*; sigue `docs/12_SISTEMA_DE_DISENO.md`.
+- **Frontend**: sin `fetch` fuera de `src/lib`; lógica con estado complejo en *hooks* (`useFilters`, `useSubmit`, `useFormValues`, `useExport`, `useDebounced`: úselos antes de escribir otra fila de `useState`); sigue `docs/12_SISTEMA_DE_DISENO.md`.
 
 ## Pruebas
 - Toda funcionalidad nueva lleva pruebas; toda corrección de error empieza por una prueba que falla.

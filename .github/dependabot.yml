@@ -10,6 +10,9 @@ updates:
     schedule: { interval: monthly }
     groups:
       npm: { patterns: ["*"] }
+  - package-ecosystem: npm
+    directory: /e2e
+    schedule: { interval: monthly }
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }

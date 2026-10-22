@@ -1,0 +1,88 @@
+name: E2E
+
+# Pruebas de extremo a extremo en un navegador real (e2e/). Más lentas que la CI normal: corren cada noche y a demanda
+# (Actions → E2E → Run workflow); no bloquean los Pull Requests.
+on:
+  schedule:
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Navegador (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_sqlite, zip, intl
+          coverage: none
+          tools: composer:v2
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: API (SQLite, usuarios de desarrollo, datos de demostración)
+        working-directory: backend
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          cp .env.example .env
+          touch database/e2e.sqlite
+          {
+            echo "DB_CONNECTION=sqlite"
+            echo "DB_DATABASE=$GITHUB_WORKSPACE/backend/database/e2e.sqlite"
+            echo "SESSION_DRIVER=file"
+            echo "CACHE_STORE=file"
+            echo "QUEUE_CONNECTION=sync"
+            echo "BROADCAST_CONNECTION=null"
+          } >> .env
+          php artisan key:generate --ansi
+          php artisan migrate --force --seed
+          php artisan db:seed --class=E2eSeeder
+          php artisan db:seed --class=DemoSalesSeeder
+          nohup php artisan serve --host=127.0.0.1 --port=8000 > ../api.log 2>&1 &
+
+      - name: Frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          nohup npm run dev -- --host 127.0.0.1 > ../web.log 2>&1 &
+
+      - name: Esperar a que respondan
+        run: |
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8000/up > /dev/null && curl -sf http://127.0.0.1:5173/ > /dev/null && exit 0
+            sleep 2
+          done
+          echo "La aplicación no arrancó"; cat api.log web.log; exit 1
+
+      - name: Playwright
+        working-directory: e2e
+        env:
+          E2E_BASE_URL: http://localhost:5173
+          E2E_ALLOW_WRITES: '1'
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npx playwright test
+
+      - name: Informe y registros si falla
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-informe
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            api.log
+            web.log
+          retention-days: 7
