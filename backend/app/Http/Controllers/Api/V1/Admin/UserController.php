@@ -9,17 +9,16 @@ use App\Http\Requests\UserRequest;
 use App\Http\Resources\AdminUserResource;
 use App\Models\Role;
 use App\Models\User;
-use App\Services\AuditLogger;
 use App\Services\UserAccess;
+use App\Services\UserAdministration;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Support\Facades\DB;
 
 /** Los usuarios no se eliminan: se desactivan con is_active. */
 class UserController extends Controller
 {
-    public function __construct(private readonly UserAccess $access) {}
+    public function __construct(private readonly UserAccess $access, private readonly UserAdministration $users) {}
 
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -40,12 +39,7 @@ class UserController extends Controller
 
     public function store(UserRequest $request): JsonResponse
     {
-        $user = DB::transaction(function () use ($request) {
-            $user = User::create($request->safe()->except(['company_ids', 'branch_ids']));
-            $this->syncScope($user, $request);
-
-            return $user;
-        });
+        $user = $this->users->create($request->user(), $request->safe()->except(['company_ids', 'branch_ids']), $request->validated('company_ids'), $request->validated('branch_ids'));
 
         return (new AdminUserResource($this->loaded($user)))->response()->setStatusCode(201);
     }
@@ -61,35 +55,9 @@ class UserController extends Controller
     {
         abort_unless($this->access->canManage($request->user(), $user), 404);
 
-        DB::transaction(function () use ($request, $user) {
-            $data = $request->safe()->except(['company_ids', 'branch_ids']);
-            if (empty($data['password'])) {
-                unset($data['password']);
-            }
-            $user->update($data);
-            $this->syncScope($user, $request);
-        });
+        $this->users->update($request->user(), $user, $request->safe()->except(['company_ids', 'branch_ids']), $request->validated('company_ids'), $request->validated('branch_ids'));
 
         return new AdminUserResource($this->loaded($user));
-    }
-
-    private function syncScope(User $user, UserRequest $request): void
-    {
-        // Se usan las tablas pivote sin pasar por los global scopes del usuario autenticado.
-        $old = [
-            'company_ids' => $user->companies()->withoutGlobalScopes()->pluck('companies.id')->sort()->values()->all(),
-            'branch_ids' => $user->branches()->withoutGlobalScopes()->pluck('branches.id')->sort()->values()->all(),
-        ];
-        $user->companies()->withoutGlobalScopes()->sync($request->validated('company_ids'));
-        $user->branches()->withoutGlobalScopes()->sync($request->validated('branch_ids'));
-        $new = [
-            'company_ids' => collect($request->validated('company_ids'))->sort()->values()->all(),
-            'branch_ids' => collect($request->validated('branch_ids'))->sort()->values()->all(),
-        ];
-
-        if ($old !== $new) {
-            app(AuditLogger::class)->record('user.scope_changed', $request->user(), auditable: $user, old: $old, new: $new);
-        }
     }
 
     private function loaded(User $user): User

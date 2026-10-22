@@ -8,11 +8,11 @@ use App\Http\Controllers\Controller;
 use App\Inventory\Quantity;
 use App\Jobs\SyncSalesInventoryJob;
 use App\Models\InventoryShortfall;
+use App\Models\SalesLine;
 use App\Services\SalesInventorySync;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /** Ventas que no pudieron descontar todo su inventario («faltantes por conciliar»). */
@@ -42,12 +42,12 @@ class InventoryShortfallController extends Controller
             ->when($status === 'open', fn (Builder $q) => $q->whereNull('resolved_at'))->when($status === 'resolved', fn (Builder $q) => $q->whereNotNull('resolved_at'))
             ->orderBy('issued_on')->orderBy('id')->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE + 1)->get();
 
-        $lines = DB::table('sales_lines as l')->join('sales_documents as d', 'd.id', '=', 'l.sales_document_id')->whereIn('l.id', $rows->pluck('sales_line_id'))->get(['l.id', 'd.series', 'd.number'])->keyBy('id');
+        $lines = SalesLine::documentNumbers($rows->pluck('sales_line_id'));
 
         return response()->json([
             'data' => $rows->take(self::PAGE_SIZE)->map(fn (InventoryShortfall $s) => [
                 'id' => $s->id, 'company_id' => $s->company_id, 'branch_id' => $s->branch_id, 'branch' => $s->branch->name, 'issued_on' => $s->issued_on->toDateString(),
-                'document' => isset($lines[$s->sales_line_id]) ? "{$lines[$s->sales_line_id]->series}-{$lines[$s->sales_line_id]->number}" : null,
+                'document' => $lines[$s->sales_line_id] ?? null,
                 'product' => ['id' => $s->product_id, 'code' => $s->product_code, 'name' => $s->product?->name],
                 'requested' => Quantity::display(Quantity::units((string) $s->requested)), 'applied' => Quantity::display(Quantity::units((string) $s->applied)),
                 'missing' => Quantity::display(Quantity::units((string) $s->missing)), 'reason' => $s->reason, 'resolved' => $s->resolved_at !== null,

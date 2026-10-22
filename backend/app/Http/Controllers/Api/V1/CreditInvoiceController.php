@@ -11,8 +11,8 @@ use App\Models\CreditMovement;
 use App\Services\CreditAging;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Consulta de facturas de crédito con su saldo (calculado desde el libro de movimientos) y su antigüedad.
@@ -25,7 +25,7 @@ class CreditInvoiceController extends Controller
     public function index(CreditInvoicesRequest $request): JsonResponse
     {
         $today = CarbonImmutable::today();
-        $query = $this->withBalance()
+        $query = CreditInvoice::query()->withBalance()
             ->when($request->filled('company_id'), fn (Builder $q) => $q->where('credit_invoices.company_id', $request->integer('company_id')))
             ->when($request->filled('code'), fn (Builder $q) => $q->where('credit_invoices.customer_code', $request->string('code')->toString()))
             ->when($request->filled('q'), function (Builder $q) use ($request) {
@@ -40,7 +40,7 @@ class CreditInvoiceController extends Controller
         $open = (clone $query)->whereRaw('coalesce(m.balance, 0) > 0');
         $meta = [
             'open_count' => (clone $open)->toBase()->count(),
-            'open_balance' => number_format((float) (clone $open)->toBase()->sum(DB::raw('coalesce(m.balance, 0)')), 2, '.', ''),
+            'open_balance' => number_format((float) (clone $open)->toBase()->sum(new Expression('coalesce(m.balance, 0)')), 2, '.', ''),
         ];
 
         $status = $request->input('status', 'open');
@@ -65,7 +65,7 @@ class CreditInvoiceController extends Controller
 
     public function show(int $invoice): JsonResponse
     {
-        $record = $this->withBalance()->with(['company', 'seller', 'branch'])->where('credit_invoices.id', $invoice)->first() ?? abort(404, 'Factura no encontrada.');
+        $record = CreditInvoice::query()->withBalance()->with(['company', 'seller', 'branch'])->where('credit_invoices.id', $invoice)->first() ?? abort(404, 'Factura no encontrada.');
         $movements = $record->movements()->with('user')->get();
         $reversed = $movements->whereNotNull('reverses_id')->pluck('reverses_id')->all();
 
@@ -77,15 +77,6 @@ class CreditInvoiceController extends Controller
                 'reversed' => in_array($m->id, $reversed, true),
             ])->all(),
         ]]);
-    }
-
-    /** @return Builder<CreditInvoice> */
-    private function withBalance(): Builder
-    {
-        $balances = DB::table('credit_movements')->selectRaw('credit_invoice_id, sum(amount) as balance')->groupBy('credit_invoice_id');
-
-        return CreditInvoice::query()->leftJoinSub($balances, 'm', 'm.credit_invoice_id', '=', 'credit_invoices.id')
-            ->select('credit_invoices.*')->selectRaw('coalesce(m.balance, 0) as balance');
     }
 
     /** @param  Builder<CreditInvoice>  $query */

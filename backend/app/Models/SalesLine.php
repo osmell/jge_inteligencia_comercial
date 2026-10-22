@@ -9,6 +9,7 @@ use App\Models\Concerns\ScopedByOrganization;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Línea de una factura de venta. Los importes se guardan como vienen en el archivo.
@@ -43,5 +44,17 @@ class SalesLine extends Model
     public function document(): BelongsTo
     {
         return $this->belongsTo(SalesDocument::class, 'sales_document_id');
+    }
+
+    /**
+     * Número de documento («serie-número») de cada línea, por id de línea.
+     *
+     * @param  iterable<int>  $lineIds
+     * @return array<int, string>
+     */
+    public static function documentNumbers(iterable $lineIds): array
+    {
+        return DB::table('sales_lines as l')->join('sales_documents as d', 'd.id', '=', 'l.sales_document_id')->whereIn('l.id', collect($lineIds)->all())
+            ->get(['l.id', 'd.series', 'd.number'])->mapWithKeys(fn ($r) => [(int) $r->id => "{$r->series}-{$r->number}"])->all();
     }
 }

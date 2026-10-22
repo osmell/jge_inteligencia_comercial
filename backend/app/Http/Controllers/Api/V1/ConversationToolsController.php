@@ -4,23 +4,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Events\ConversationBroadcast;
 use App\Http\Controllers\Controller;
-use App\Models\Customer;
 use App\Models\Quotation;
 use App\Models\Role;
 use App\Models\WhatsappConversation;
-use App\Models\WhatsappMessage;
 use App\Services\AuditLogger;
 use App\Services\ConversationAccess;
+use App\Services\ConversationAssignment;
+use App\Services\ConversationLabels;
 use App\Services\ConversationPresenter;
 use App\Services\ConversationSender;
-use App\Services\WhatsappService;
-use Illuminate\Database\Query\Builder;
+use App\Services\QuickReplies;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -32,7 +29,9 @@ class ConversationToolsController extends Controller
         private readonly AuditLogger $audit,
         private readonly ConversationSender $sender,
         private readonly ConversationPresenter $presenter,
-        private readonly WhatsappService $wa,
+        private readonly ConversationAssignment $assignment,
+        private readonly ConversationLabels $labelsService,
+        private readonly QuickReplies $quickRepliesService,
     ) {}
 
     /** Clientes del equipo de quien supervisa a los que se puede asignar el número desconocido (misma compañía). */
@@ -40,10 +39,7 @@ class ConversationToolsController extends Controller
     {
         $c = $this->unassigned($request, $conversation);
         $request->validate(['q' => ['nullable', 'string', 'max:100']]);
-        $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], mb_strtolower((string) $request->query('q', ''))).'%';
-        $rows = $this->team($request)->where('customers.company_id', $c->company_id)
-            ->when($request->filled('q'), fn ($q) => $q->where(fn ($w) => $w->whereRaw('lower(customers.name) like ?', [$term])->orWhereRaw('lower(customers.code) like ?', [$term])))
-            ->orderBy('customers.name')->limit(15)->get(['customers.id', 'customers.code', 'customers.name', 'customers.whatsapp']);
+        $rows = $this->assignment->candidates($request->user(), $c->company_id, $request->query('q') === null ? null : (string) $request->query('q'));
 
         return response()->json(['data' => $rows->map(fn ($r) => ['id' => $r->id, 'code' => $r->code, 'name' => $r->name, 'whatsapp' => $r->whatsapp])->all()]);
     }
@@ -53,21 +49,7 @@ class ConversationToolsController extends Controller
     {
         $c = $this->unassigned($request, $conversation);
         $data = $request->validate(['customer_id' => ['required', 'integer']]);
-        $customer = $this->team($request)->where('customers.company_id', $c->company_id)->where('customers.id', $data['customer_id'])->first(['customers.id']);
-        abort_if($customer === null, 422, 'Solo puedes asignarlo a un cliente de tu equipo en la misma compañía.');
-        $model = Customer::withoutGlobalScopes()->findOrFail($customer->id);
-        DB::transaction(function () use ($c, $model, $request) {
-            $c->forceFill(['customer_id' => $model->id])->save();
-            if ($this->wa->number($model->whatsapp) === '') {
-                $model->forceFill(['whatsapp' => '+'.$c->wa_number])->save();      // para poder usar plantillas con este número
-            }
-            DB::table('whatsapp_messages')->where('conversation_id', $c->id)->whereNull('customer_id')->update(['customer_id' => $model->id]);
-            $this->audit->record('conversations.assigned', $request->user(), auditable: $c, new: ['customer_id' => $model->id, 'wa_number' => $c->wa_number], companyId: $c->company_id);
-        });
-        $last = WhatsappMessage::query()->where('conversation_id', $c->id)->max('id');
-        if ($last !== null) {
-            ConversationBroadcast::dispatch((int) $last, 'updated');         // las listas de quienes ya ven la conversación se actualizan
-        }
+        abort_unless($this->assignment->assign($request->user(), $c, (int) $data['customer_id']), 422, 'Solo puedes asignarlo a un cliente de tu equipo en la misma compañía.');
 
         return response()->json(['data' => $this->presenter->conversation($c->refresh()) + ['can_reply' => $this->access->canReply($request->user(), $c)]]);
     }
@@ -76,21 +58,7 @@ class ConversationToolsController extends Controller
     {
         $c = $this->writable($request, $conversation);
         $data = $request->validate(['labels' => ['present', 'array', 'max:5'], 'labels.*' => ['string', Rule::in((array) config('conversations.labels'))]]);
-        $new = array_values(array_unique($data['labels']));
-        DB::transaction(function () use ($c, $new, $request) {
-            $old = DB::table('conversation_labels')->where('conversation_id', $c->id)->pluck('label')->all();
-            DB::table('conversation_labels')->where('conversation_id', $c->id)->whereNotIn('label', $new)->delete();
-            foreach (array_diff($new, $old) as $label) {
-                DB::table('conversation_labels')->insert(['conversation_id' => $c->id, 'label' => $label, 'user_id' => $request->user()->id, 'created_at' => now()]);
-            }
-            if (array_diff($new, $old) !== [] || array_diff($old, $new) !== []) {
-                $this->audit->record('conversations.labels_changed', $request->user(), auditable: $c, old: ['labels' => $old], new: ['labels' => $new], companyId: $c->company_id);
-            }
-        });
-        $last = WhatsappMessage::query()->where('conversation_id', $c->id)->max('id');
-        if ($last !== null) {
-            ConversationBroadcast::dispatch((int) $last, 'updated');
-        }
+        $new = $this->labelsService->sync($request->user(), $c, $data['labels']);
 
         return response()->json(['data' => ['labels' => $new]]);
     }
@@ -99,8 +67,7 @@ class ConversationToolsController extends Controller
     public function quickReplies(Request $request): JsonResponse
     {
         $user = $request->user();
-        $rows = DB::table('quick_replies as q')->join('users as u', 'u.id', '=', 'q.user_id')->where('q.is_active', true)->where(fn ($w) => $w->where('q.user_id', $user->id)->orWhere('q.shared', true))
-            ->orderBy('q.title')->get(['q.id', 'q.title', 'q.body', 'q.shared', 'q.user_id', 'u.name as author']);
+        $rows = $this->quickRepliesService->visibleTo($user);
 
         return response()->json(['data' => $rows->map(fn ($r) => ['id' => $r->id, 'title' => $r->title, 'body' => $r->body, 'shared' => (bool) $r->shared, 'mine' => (int) $r->user_id === $user->id, 'author' => $r->author])->all()]);
     }
@@ -108,17 +75,16 @@ class ConversationToolsController extends Controller
     public function storeQuickReply(Request $request): JsonResponse
     {
         $data = $this->quickReplyData($request);
-        $id = DB::table('quick_replies')->insertGetId($data + ['user_id' => $request->user()->id, 'is_active' => true, 'created_at' => now()]);
+        $id = $this->quickRepliesService->create($request->user(), $data);
 
         return response()->json(['data' => ['id' => $id]], 201);
     }
 
     public function updateQuickReply(Request $request, int $reply): JsonResponse
     {
-        $row = DB::table('quick_replies')->where(['id' => $reply, 'user_id' => $request->user()->id])->first();
-        abort_if($row === null, 404);
+        abort_unless($this->quickRepliesService->exists($request->user(), $reply), 404);
         $data = $request->has('is_active') && ! $request->has('title') ? ['is_active' => $request->validate(['is_active' => ['required', 'boolean']])['is_active']] : $this->quickReplyData($request);
-        DB::table('quick_replies')->where('id', $reply)->update($data + ['updated_at' => now()]);
+        $this->quickRepliesService->update($request->user(), $reply, $data);
 
         return response()->json(['data' => ['id' => $reply]]);
     }
@@ -178,11 +144,5 @@ class ConversationToolsController extends Controller
         abort_if($c->customer_id !== null, 422, 'Esta conversación ya tiene un cliente asignado.');
 
         return $c;
-    }
-
-    /** @return Builder clientes de los vendedores que supervisa la persona */
-    private function team(Request $request)
-    {
-        return DB::table('customers')->whereIn('customers.seller_id', DB::table('sellers')->where('supervisor_id', $request->user()->id)->select('id'));
     }
 }

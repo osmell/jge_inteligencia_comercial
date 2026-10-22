@@ -83,4 +83,16 @@ class CreditInvoice extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    /**
+     * Agrega la columna `balance` (suma de movimientos) y el alias `m` para filtrar por saldo.
+     *
+     * @param  Builder<CreditInvoice>  $query
+     */
+    public function scopeWithBalance(Builder $query): void
+    {
+        $balances = DB::table('credit_movements')->selectRaw('credit_invoice_id, sum(amount) as balance')->groupBy('credit_invoice_id');
+        $query->leftJoinSub($balances, 'm', 'm.credit_invoice_id', '=', 'credit_invoices.id')
+            ->select('credit_invoices.*')->selectRaw('coalesce(m.balance, 0) as balance');
+    }
 }

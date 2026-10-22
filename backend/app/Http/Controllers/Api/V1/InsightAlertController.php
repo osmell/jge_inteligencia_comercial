@@ -7,19 +7,19 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Customer;
-use App\Models\CustomerInteraction;
 use App\Models\InsightAlert;
+use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\InsightAlertFollowUp;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /** Alertas de clientes (riesgo de inactividad, cambios anormales y líneas abandonadas), con el alcance del usuario. */
 class InsightAlertController extends Controller
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly InsightAlertFollowUp $followUps) {}
 
     private const PAGE_SIZE = 25;
 
@@ -50,7 +50,7 @@ class InsightAlertController extends Controller
             ->orderByRaw(self::SEVERITY_ORDER)->orderBy('customer_name')->orderBy('id')->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE + 1)->get();
 
         $slice = $rows->take(self::PAGE_SIZE);
-        $closers = DB::table('users')->whereIn('id', $slice->pluck('closed_by')->filter())->pluck('name', 'id')->all();
+        $closers = User::withoutGlobalScopes()->whereIn('id', $slice->pluck('closed_by')->filter())->pluck('name', 'id')->all();
 
         return response()->json([
             'data' => $slice->map(fn (InsightAlert $a) => $this->present($a, $closers))->values()->all(),
@@ -93,16 +93,7 @@ class InsightAlertController extends Controller
         $customer = Customer::query()->where(['company_id' => $record->company_id, 'code' => $record->customer_code])->first() ?? abort(404, 'Cliente no encontrado.');
         abort_if($customer->do_not_contact, 422, 'El cliente pidió no recibir comunicaciones: no se programan acciones de contacto.');
 
-        $interaction = DB::transaction(function () use ($request, $record, $customer, $data) {
-            $interaction = CustomerInteraction::create([
-                'company_id' => $customer->company_id, 'customer_id' => $customer->id, 'user_id' => $request->user()->id, 'channel' => 'other', 'direction' => 'outbound', 'outcome' => CustomerInteraction::PLANNED,
-                'occurred_at' => now(), 'response' => 'Acción planeada desde una recomendación: '.mb_substr($record->explanation, 0, 400), 'next_action' => $data['next_action'], 'next_action_at' => $data['next_action_at'], 'insight_alert_id' => $record->id,
-            ]);
-            $record->forceFill(['follow_up_interaction_id' => $interaction->id])->save();
-
-            return $interaction;
-        });
-        $this->audit->record('insights.alert_follow_up_created', $request->user(), auditable: $record, new: ['interaction_id' => $interaction->id, 'next_action' => $data['next_action'], 'next_action_at' => $data['next_action_at']], companyId: $record->company_id);
+        $interaction = $this->followUps->create($request->user(), $record, $customer, $data['next_action'], $data['next_action_at']);
 
         return response()->json(['data' => ['interaction_id' => $interaction->id]], 201);
     }

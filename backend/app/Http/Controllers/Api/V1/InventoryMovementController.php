@@ -6,15 +6,16 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Inventory\Quantity;
+use App\Models\Branch;
 use App\Models\InventoryMovement;
 use App\Models\Product;
+use App\Models\Unit;
 use App\Services\InventoryOperations;
 use App\Services\InventoryStock;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /** Movimientos manuales de inventario: ajustes, devoluciones, traslados y reversas, y su consulta. */
@@ -46,8 +47,8 @@ class InventoryMovementController extends Controller
 
         $slice = $rows->take(self::PAGE_SIZE);
         $reversed = InventoryMovement::query()->whereIn('reverses_id', $slice->pluck('id'))->pluck('reverses_id')->all();
-        $branches = DB::table('branches')->whereIn('id', $slice->pluck('branch_id'))->pluck('name', 'id');
-        $units = DB::table('units')->pluck('name', 'id');
+        $branches = Branch::withoutGlobalScopes()->whereIn('id', $slice->pluck('branch_id'))->pluck('name', 'id');
+        $units = Unit::query()->pluck('name', 'id');
 
         return response()->json([
             'data' => $slice->map(function (InventoryMovement $m) use ($costs, $reversed, $branches, $units) {

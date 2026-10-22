@@ -13,16 +13,16 @@ use App\Models\Product;
 use App\Models\ProductUnit;
 use App\Models\Unit;
 use App\Services\AuditLogger;
+use App\Services\ProductUnitsEditor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
 /** Catálogo de unidades y, por producto, su unidad base y sus equivalencias. */
 class InventoryUnitController extends Controller
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly ProductUnitsEditor $editor) {}
 
     public function units(): JsonResponse
     {
@@ -97,13 +97,7 @@ class InventoryUnitController extends Controller
         }
 
         $old = $this->present($record);
-        DB::transaction(function () use ($record, $baseId, $rows) {
-            $record->forceFill(['base_unit_id' => $baseId])->save();
-            $record->equivalences()->whereNotIn('unit_id', array_keys($rows))->delete();
-            foreach ($rows as $unitId => $factor) {
-                ProductUnit::query()->updateOrCreate(['product_id' => $record->id, 'unit_id' => $unitId], $factor);
-            }
-        });
+        $this->editor->save($record, $baseId, $rows);
         $new = $this->present($record->refresh());
         if ($old !== $new) {
             $this->audit->record('inventory.product_units_updated', $request->user(), auditable: $record, old: $old, new: $new, companyId: $record->company_id);

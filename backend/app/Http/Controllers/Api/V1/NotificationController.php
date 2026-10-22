@@ -6,11 +6,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\UserNotification;
+use App\Services\NotificationPreferences;
 use App\Services\Notifier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /** Los avisos internos de la persona que inició sesión: lista, marcar como vistos o descartar, y sus preferencias. */
@@ -18,7 +18,7 @@ class NotificationController extends Controller
 {
     private const PAGE_SIZE = 20;
 
-    public function __construct(private readonly Notifier $notifier) {}
+    public function __construct(private readonly Notifier $notifier, private readonly NotificationPreferences $preferences) {}
 
     /** Contador de nuevos y los más recientes, para la campana. */
     public function summary(Request $request): JsonResponse
@@ -83,25 +83,8 @@ class NotificationController extends Controller
     public function updatePreferences(Request $request): JsonResponse
     {
         $user = $request->user();
-        $allowed = array_column($this->notifier->typesFor($user), 'type');
         $data = $request->validate(['paused' => ['nullable', 'boolean'], 'types' => ['nullable', 'array'], 'types.*' => ['boolean'], 'email' => ['nullable', 'array'], 'email.*' => ['boolean']]);
-
-        DB::transaction(function () use ($user, $allowed, $data) {
-            if (array_key_exists('paused', $data) && $data['paused'] !== null) {
-                DB::table('notification_settings')->updateOrInsert(['user_id' => $user->id], ['paused' => (bool) $data['paused']]);
-            }
-            foreach (($data['types'] ?? []) as $type => $enabled) {
-                if (in_array($type, $allowed, true)) {
-                    DB::table('notification_preferences')->updateOrInsert(['user_id' => $user->id, 'type' => $type], ['enabled' => (bool) $enabled]);
-                }
-            }
-            foreach (($data['email'] ?? []) as $type => $email) {
-                if (in_array($type, $allowed, true)) {
-                    $enabled = DB::table('notification_preferences')->where(['user_id' => $user->id, 'type' => $type])->value('enabled');
-                    DB::table('notification_preferences')->updateOrInsert(['user_id' => $user->id, 'type' => $type], ['email' => (bool) $email, 'enabled' => $enabled ?? (bool) (config("notifications.types.{$type}.default") ?? true)]);
-                }
-            }
-        });
+        $this->preferences->update($user, $data);
 
         return $this->preferences($request);
     }

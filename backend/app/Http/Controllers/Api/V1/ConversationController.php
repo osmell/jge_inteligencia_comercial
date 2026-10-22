@@ -13,13 +13,13 @@ use App\Models\WhatsappConversation;
 use App\Models\WhatsappMessage;
 use App\Models\WhatsappTemplate;
 use App\Services\ConversationAccess;
+use App\Services\ConversationList;
 use App\Services\ConversationPresenter;
 use App\Services\ConversationSender;
 use App\Services\WhatsappService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -33,30 +33,19 @@ class ConversationController extends Controller
     /** Tipos que el navegador puede mostrar en línea; el resto siempre se descarga. */
     private const INLINE = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/aac', 'application/pdf'];
 
-    public function __construct(private readonly ConversationAccess $access, private readonly ConversationSender $sender, private readonly WhatsappService $wa, private readonly ConversationPresenter $presenter) {}
+    public function __construct(private readonly ConversationAccess $access, private readonly ConversationSender $sender, private readonly WhatsappService $wa, private readonly ConversationPresenter $presenter, private readonly ConversationList $list) {}
 
     public function index(Request $request): JsonResponse
     {
         $data = $request->validate(['q' => ['nullable', 'string', 'max:100'], 'unassigned' => ['nullable', 'boolean'], 'status' => ['nullable', 'in:open,archived'], 'page' => ['nullable', 'integer', 'min:1', 'max:10000']]);
         $user = $request->user();
         $page = max(1, (int) ($data['page'] ?? 1));
-        $unread = $this->unreadQuery($user);
-
-        $rows = $this->access->visible($user)->select('whatsapp_conversations.*')->selectSub($unread, 'unread')
-            ->where('whatsapp_conversations.status', $data['status'] ?? WhatsappConversation::OPEN)
-            ->when(! empty($data['unassigned']), fn (Builder $q) => $q->whereNull('whatsapp_conversations.customer_id'))
-            ->when(! empty($data['q']), function (Builder $q) use ($data) {
-                $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], mb_strtolower($data['q'])).'%';
-                $q->where(fn (Builder $w) => $w->whereRaw('lower(whatsapp_conversations.wa_number) like ?', [$term])->orWhereRaw('lower(coalesce(whatsapp_conversations.profile_name, \'\')) like ?', [$term])
-                    ->orWhereIn('whatsapp_conversations.customer_id', DB::table('customers')->select('id')->whereRaw('lower(name) like ?', [$term])));
-            })
-            ->orderByRaw('whatsapp_conversations.last_message_at desc nulls last')->orderByDesc('whatsapp_conversations.id')
-            ->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE + 1)->get();
-        $labels = DB::table('conversation_labels')->whereIn('conversation_id', $rows->pluck('id'))->orderBy('label')->get()->groupBy('conversation_id');
+        $rows = $this->list->page($user, $data, $page, self::PAGE_SIZE);
+        $labels = $this->list->labels($rows->pluck('id'));
         $customers = Customer::withoutGlobalScopes()->whereIn('id', $rows->pluck('customer_id')->filter())->get(['id', 'code', 'name', 'company_id'])->keyBy('id');
 
         return response()->json([
-            'data' => $rows->take(self::PAGE_SIZE)->map(fn (WhatsappConversation $c) => $this->present($c, $customers->get($c->customer_id), (int) $c->getAttribute('unread'), $user, $labels->get($c->id, collect())->pluck('label')->all()))->values()->all(),
+            'data' => $rows->take(self::PAGE_SIZE)->map(fn (WhatsappConversation $c) => $this->present($c, $customers->get($c->customer_id), (int) $c->getAttribute('unread'), $user, $labels->get($c->id, collect())->all()))->values()->all(),
             'meta' => ['page' => $page, 'has_more' => $rows->count() > self::PAGE_SIZE],
         ]);
     }
@@ -65,16 +54,9 @@ class ConversationController extends Controller
     public function unread(Request $request): JsonResponse
     {
         $user = $request->user();
-        $count = $this->access->visible($user)->where('whatsapp_conversations.status', WhatsappConversation::OPEN)->whereRaw('('.$this->unreadQuery($user)->toSql().') > 0', $this->unreadQuery($user)->getBindings())->count();
+        $count = $this->list->unreadCount($user);
 
         return response()->json(['data' => ['conversations' => $count]]);
-    }
-
-    /** Subconsulta: mensajes del cliente que esta persona aún no leyó en cada conversación. */
-    private function unreadQuery(User $user): \Illuminate\Database\Query\Builder
-    {
-        return DB::table('whatsapp_messages as m')->selectRaw('count(*)')->whereColumn('m.conversation_id', 'whatsapp_conversations.id')->where('m.direction', 'in')
-            ->whereRaw('m.id > coalesce((select r.last_read_message_id from conversation_reads r where r.conversation_id = whatsapp_conversations.id and r.user_id = ?), 0)', [$user->id]);
     }
 
     /** Mensajes de una conversación, de a 50, del más reciente hacia atrás (`before` = id del más antiguo ya cargado). */
@@ -91,7 +73,7 @@ class ConversationController extends Controller
         $page = $rows->take(self::MESSAGES)->reverse()->values();
         $attachments = WhatsappAttachment::query()->whereIn('message_id', $page->pluck('id'))->get()->groupBy('message_id');
         $replies = WhatsappMessage::query()->whereIn('id', $page->pluck('reply_to_id')->filter())->get()->keyBy('id');
-        $authors = DB::table('users')->whereIn('id', $page->pluck('user_id')->filter())->pluck('name', 'id');
+        $authors = $this->list->authorNames($page->pluck('user_id'));
 
         return response()->json([
             'data' => $page->map(fn (WhatsappMessage $m) => $this->presenter->message($m, $attachments->get($m->id, collect()), $replies->get($m->reply_to_id), $authors[$m->user_id] ?? null))->all(),
@@ -151,7 +133,7 @@ class ConversationController extends Controller
     {
         $c = $this->find($request, $conversation);
         $last = (int) WhatsappMessage::query()->where('conversation_id', $c->id)->max('id');
-        DB::table('conversation_reads')->upsert([['user_id' => $request->user()->id, 'conversation_id' => $c->id, 'last_read_message_id' => $last, 'updated_at' => now()]], ['user_id', 'conversation_id'], ['last_read_message_id', 'updated_at']);
+        $this->list->markRead($request->user(), $c, $last);
 
         return response()->json(['data' => ['last_read_message_id' => $last]]);
     }
@@ -160,7 +142,7 @@ class ConversationController extends Controller
     {
         $c = $this->find($request, $conversation);
         $notes = ConversationNote::query()->where('conversation_id', $c->id)->orderByDesc('id')->limit(100)->get();
-        $authors = DB::table('users')->whereIn('id', $notes->pluck('user_id')->filter())->pluck('name', 'id');
+        $authors = $this->list->authorNames($notes->pluck('user_id'));
 
         return response()->json(['data' => $notes->reverse()->values()->map(fn (ConversationNote $n) => ['id' => $n->id, 'body' => $n->body, 'author' => $authors[$n->user_id] ?? null, 'created_at' => $n->created_at->toIso8601String()])->all()]);
     }

@@ -13,7 +13,6 @@ use App\Services\CreditSettlement;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Captura de abonos (permiso credit.payments) y notas de crédito (permiso credit.notes, solo administrador/supervisor
@@ -29,9 +28,7 @@ class CreditSettlementController extends Controller
         $user = $request->user();
         abort_unless($user->hasPermission('credit.payments') || $user->hasPermission('credit.notes'), 403, 'No tienes permiso para realizar esta acción.');
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1'], 'code' => ['required', 'string', 'max:255']]);
-        $balances = DB::table('credit_movements')->selectRaw('credit_invoice_id, sum(amount) as balance')->groupBy('credit_invoice_id');
-        $rows = CreditInvoice::query()->leftJoinSub($balances, 'm', 'm.credit_invoice_id', '=', 'credit_invoices.id')
-            ->select('credit_invoices.*')->selectRaw('coalesce(m.balance, 0) as balance')
+        $rows = CreditInvoice::query()->withBalance()
             ->where('credit_invoices.company_id', $data['company_id'])->where('credit_invoices.customer_code', $data['code'])
             ->whereRaw('coalesce(m.balance, 0) > 0')->orderBy('credit_invoices.issued_on')->orderBy('credit_invoices.id')->limit(200)->get();
 

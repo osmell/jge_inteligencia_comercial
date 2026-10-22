@@ -22,7 +22,7 @@ use Illuminate\Validation\Rule;
 /** Administración de WhatsApp (cuenta, plantillas, registro), mensajes y consentimiento por cliente, y el webhook de Meta. */
 class WhatsappController extends Controller
 {
-    public function __construct(private readonly WhatsappService $wa, private readonly AuditLogger $audit) {}
+    public function __construct(private readonly WhatsappService $wa, private readonly AuditLogger $audit, private readonly WhatsappInbound $inbound) {}
 
     public function show(): JsonResponse
     {
@@ -128,7 +128,7 @@ class WhatsappController extends Controller
 
         $payload = (array) $request->json()->all();
 
-        return response()->json(['applied' => $this->wa->applyStatuses($payload), 'received' => app(WhatsappInbound::class)->process($payload)]);
+        return response()->json(['applied' => $this->wa->applyStatuses($payload), 'received' => $this->inbound->process($payload)]);
     }
 
     /** @return array<string, mixed> */

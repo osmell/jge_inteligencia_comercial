@@ -142,7 +142,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | A ✅ | **CI en GitHub Actions** (Pint, PHPStan, pruebas, typecheck, lint, test, build, audits) + plantilla de PR + `CONTRIBUTING.md` + actualizar `README` | Bajo | Nulo |
 | B ✅ | `strict_types` en todos los archivos (automático con Pint `declare_strict_types`) y revisión de fallos | Bajo–medio | Bajo (las pruebas lo detectan) |
 | C | PHPStan nivel 5 → 6 → 8, subiendo uno por vez sin *baseline* | Medio | Bajo |
-| D | Mover consultas de los 10 controladores con `DB::` a servicios/scopes (empezando por Conversaciones, Notificaciones, Cotizaciones) | Medio | Medio (cubierto por pruebas Feature) |
+| D ✅ | Mover consultas de los 10 controladores con `DB::` a servicios/scopes (empezando por Conversaciones, Notificaciones, Cotizaciones) | Medio | Medio (cubierto por pruebas Feature) |
 | E ✅ | Crear `tests/Unit` con la lógica pura y empezar por RFM, aging, scoring, ventanas | Medio | Bajo |
 | F | Policies para los recursos con alcance por registro (clientes, cotizaciones, conversaciones) | Medio | Medio (toca permisos: confirmar antes) |
 | G | Dividir `DashboardService`, `SalesStatistics`, `CustomerInsights`, `SalesReportExporter` y los `ImportType` > 400 líneas | Medio–alto | Medio |
@@ -159,7 +159,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 |---|---|---|
 | Archivos con `strict_types` | 0 % | 100 % |
 | Nivel PHPStan | 5 | 8 |
-| Controladores con consultas directas | 10 | 0 |
+| Controladores con `DB::` | 10 → **0** (paso D) | 0 |
 | `app()`/`resolve()` fuera de proveedores | 39 | 0 |
 | Pruebas unitarias | 0 | ≥ 150 |
 | Policies | 0 | las de recursos con alcance por registro |
@@ -204,3 +204,23 @@ Se creó `backend/tests/Unit` (la suite «Unit» ya estaba declarada en `phpunit
 - No tocan base de datos ni red. Solo las que necesitan `config()` o fechas de prueba usan el `TestCase` de Laravel.
 - Las reglas de RFM son privadas; se prueban por reflexión sin construir el servicio. Es una solución provisional: el paso G (dividir servicios) las extraerá a clases con métodos públicos y estas pruebas pasarán a llamarlas directo.
 - **Alcance pendiente**: `CreditScore`, `SalesStatistics`, `SeasonalityAnalysis` y otros mezclan cálculo con consultas a la base. Su lógica pura solo será probable sin base de datos cuando se separe el cálculo de la consulta (pasos D y G). Meta del plan: ≥ 150 pruebas unitarias.
+
+### Paso D — Consultas y transacciones fuera de los controladores (2026-10-21)
+**Los 10 controladores que usaban `DB::` ya no lo usan** (de 41 usos a 0), sin cambio de comportamiento: las 572 pruebas Feature pasan sin modificarse.
+
+| Servicio nuevo | Reemplaza lógica de | Qué concentra |
+|---|---|---|
+| `ConversationAssignment` | `ConversationToolsController` | Clientes candidatos del equipo, asignación de número desconocido y refresco de listas |
+| `ConversationLabels` | `ConversationToolsController` | Etiquetas de conversación y su auditoría |
+| `QuickReplies` | `ConversationToolsController` | Respuestas rápidas personales/compartidas |
+| `ConversationList` | `ConversationController` | Lista con filtros, no leídos, etiquetas, lectura y nombres de autores |
+| `NotificationPreferences` | `NotificationController` | Pausa y preferencias de campana/correo |
+| `UserAdministration` | `Admin\UserController` | Alta/edición de usuarios y cambio de alcance (quitó un `app()`) |
+| `InsightAlertFollowUp` | `InsightAlertController` | Acción planeada desde una alerta |
+| `ProductUnitsEditor` | `InventoryUnitController` | Unidad base y equivalencias en una transacción |
+| `CreditInvoice::scopeWithBalance` | `CreditInvoiceController` y `CreditSettlementController` | La subconsulta de saldos que estaba **duplicada** |
+| `SalesLine::documentNumbers` y consultas por modelo | `InventoryShortfallController`, `InventoryMovementController` | Búsquedas de nombres y números de documento |
+
+- `WhatsappController` recibe `WhatsappInbound` por constructor (antes `app()`).
+- **`tests/Unit/ArchitectureTest`** hace cumplir tres reglas en cada ejecución (y en la CI): sin `DB::` en controladores, sin `app()`/`resolve()` en controladores y `strict_types` en todo archivo PHP. Una regresión rompe la prueba.
+- **Alcance que queda**: los controladores todavía encadenan filtros de Eloquent (`->where(...)`) para listados y filtros de pantalla. Es aceptable por ahora; se moverán a *scopes* o clases de consulta cuando se toque cada módulo (pasos G e I). Quedan también 37 usos de `app()`/`resolve()` fuera de controladores (paso H).
