@@ -1,6 +1,7 @@
 import { Pencil, Plus, Users } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useAuth } from '../auth/AuthContext'
+import { PASSWORD_HINT } from '../lib/passwordPolicy'
 import { useFormValues } from '../lib/useFormValues'
 import { useLoad } from '../lib/useLoad'
 import { submitForm } from '../lib/saveForm'
@@ -63,7 +64,7 @@ function UserForm({ user, catalogs, isSelf, onClose, onSaved }: { user: AdminUse
           <TextField id="user-name" label="Nombre completo" value={v.name} onChange={(e) => set('name', e.target.value)} errors={errors.name} />
           <TextField id="user-email" label="Correo (opcional)" type="email" value={v.email} onChange={(e) => set('email', e.target.value)} errors={errors.email} />
           <TextField id="user-password" label={user ? 'Nueva contraseña (opcional)' : 'Contraseña'} type="password" autoComplete="new-password" value={v.password}
-            onChange={(e) => set('password', e.target.value)} hint="Mínimo 10 caracteres, con letras y números." errors={errors.password} />
+            onChange={(e) => set('password', e.target.value)} hint={`${PASSWORD_HINT} ${user ? 'Si la cambias, la persona deberá crear una propia al entrar.' : 'Es temporal: la persona deberá cambiarla en su primer ingreso.'}`} errors={errors.password} />
           <SelectField id="user-role" label="Rol" value={v.roleId} onChange={(e) => set('roleId', e.target.value)} errors={errors.role_id}
             disabled={isSelf} hint={isSelf ? 'No puedes cambiar tu propio rol.' : undefined}>
             {catalogs.roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -142,7 +143,7 @@ export default function UsersPage() {
               <td className={`${td} font-medium`}>{u.name}</td>
               <td className={td}><Badge>{u.role.name}</Badge></td>
               <td className={td}>{scopeLabel(u)}</td>
-              <td className={td}><StatusBadge active={u.is_active} /></td>
+              <td className={td}><StatusBadge active={u.is_active} />{u.must_change_password && <div className="mt-1 text-xs text-warning">Clave temporal: aún no la cambia</div>}</td>
               <td className={`${td} tabular text-ink-muted`}>{u.last_login_at ? new Date(u.last_login_at).toLocaleString('es') : 'Nunca'}</td>
               <td className={`${td} text-right`}>
                 <Button variant="ghost" small icon={<Pencil className="h-4 w-4" aria-hidden="true" />} disabled={!ready} onClick={() => setForm(u)} aria-label={`Editar usuario ${u.username}`}>Editar</Button>

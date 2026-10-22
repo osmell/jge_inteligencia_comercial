@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\V1\InventoryUnitController;
 use App\Http\Controllers\Api\V1\MailController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrganizationController;
+use App\Http\Controllers\Api\V1\PasswordController;
 use App\Http\Controllers\Api\V1\PaymentPromiseController;
 use App\Http\Controllers\Api\V1\QuotationController;
 use App\Http\Controllers\Api\V1\Sales\ProductController;
@@ -50,9 +51,11 @@ Route::prefix('auth')->group(function () {
     // `me` exige cuenta activa (una cuenta desactivada con la sesión abierta deja de ver datos); `logout` sí lo permite para poder salir.
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('me', [AuthController::class, 'me'])->middleware(['auth:sanctum', 'active']);
+    // Cambiar la propia clave: lo único (con `me` y `logout`) que puede hacer una cuenta obligada a cambiarla.
+    Route::post('password', [PasswordController::class, 'update'])->middleware(['auth:sanctum', 'active']);
 });
 
-Route::middleware(['auth:sanctum', 'active'])->group(function () {
+Route::middleware(['auth:sanctum', 'active', 'password.current'])->group(function () {
     // Cualquier usuario autenticado: el contenido se limita a su ámbito.
     Route::get('companies', [OrganizationController::class, 'companies']);
     Route::get('branches', [OrganizationController::class, 'branches']);

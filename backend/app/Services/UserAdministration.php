@@ -20,7 +20,8 @@ class UserAdministration
     public function create(User $actor, array $attributes, array $companyIds, array $branchIds): User
     {
         return DB::transaction(function () use ($actor, $attributes, $companyIds, $branchIds) {
-            $user = User::create($attributes);
+            // La clave que fija administración es temporal: la persona debe cambiarla en su primer ingreso.
+            $user = User::create($attributes + ['must_change_password' => true]);
             $this->syncScope($actor, $user, $companyIds, $branchIds);
 
             return $user;
@@ -39,6 +40,13 @@ class UserAdministration
         DB::transaction(function () use ($actor, $user, $attributes, $companyIds, $branchIds) {
             if (empty($attributes['password'])) {
                 unset($attributes['password']);
+            } elseif ($actor->is($user)) {
+                // Quien se pone su propia clave no tiene que cambiarla después.
+                $attributes += ['must_change_password' => false, 'password_changed_at' => now()];
+            } else {
+                // Restablecimiento por administración: la clave nueva es temporal y la persona debe cambiarla al entrar.
+                $attributes += ['must_change_password' => true, 'password_changed_at' => null];
+                $this->audit->record('user.password_reset', $actor, auditable: $user, companyId: null);
             }
             $user->update($attributes);
             $this->syncScope($actor, $user, $companyIds, $branchIds);

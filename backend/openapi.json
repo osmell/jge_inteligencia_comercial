@@ -15539,6 +15539,50 @@
                 }
             }
         },
+        "/auth/password": {
+            "post": {
+                "operationId": "password.update",
+                "tags": [
+                    "Password"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`UserResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/UserResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/credit/promises": {
             "get": {
                 "operationId": "paymentPromise.index",
@@ -21341,6 +21385,9 @@
                     "name": {
                         "type": "string"
                     },
+                    "must_change_password": {
+                        "type": "boolean"
+                    },
                     "email": {
                         "type": [
                             "string",
@@ -21389,6 +21436,7 @@
                     "id",
                     "username",
                     "name",
+                    "must_change_password",
                     "email",
                     "is_active",
                     "last_login_at",
@@ -21553,6 +21601,29 @@
                     "name"
                 ],
                 "title": "BranchRequest"
+            },
+            "ChangePasswordRequest": {
+                "type": "object",
+                "properties": {
+                    "current_password": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "password": {
+                        "type": "string",
+                        "maxLength": 200
+                    },
+                    "password_confirmation": {
+                        "type": "string",
+                        "maxLength": 200
+                    }
+                },
+                "required": [
+                    "current_password",
+                    "password",
+                    "password_confirmation"
+                ],
+                "title": "ChangePasswordRequest"
             },
             "Company": {
                 "type": "object",
@@ -23095,6 +23166,9 @@
                     "name": {
                         "type": "string"
                     },
+                    "must_change_password": {
+                        "type": "boolean"
+                    },
                     "role": {
                         "type": "object",
                         "properties": {
@@ -23167,6 +23241,7 @@
                     "id",
                     "username",
                     "name",
+                    "must_change_password",
                     "role",
                     "permissions",
                     "companies",

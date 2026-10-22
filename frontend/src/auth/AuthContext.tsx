@@ -7,6 +7,8 @@ interface AuthState {
   loading: boolean
   login: (username: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  /** Reemplaza el usuario en memoria (por ejemplo, tras cambiar la clave). */
+  replaceUser: (user: AuthUser) => void
   can: (permission?: string) => boolean
 }
 
@@ -38,10 +40,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const replaceUser = useCallback((next: AuthUser) => setUser(next), [])
+
   // Solo oculta controles; la autorización real se aplica en el backend.
   const can = useCallback((permission?: string) => !permission || !!user?.permissions.includes(permission), [user])
 
-  const value = useMemo(() => ({ user, loading, login, logout, can }), [user, loading, login, logout, can])
+  const value = useMemo(() => ({ user, loading, login, logout, replaceUser, can }), [user, loading, login, logout, replaceUser, can])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

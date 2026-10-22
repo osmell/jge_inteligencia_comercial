@@ -16,7 +16,7 @@ Gravedad estimada para esta aplicación (datos de clientes y de crédito). «Cor
 | # | Hallazgo | Gravedad | Estado |
 |---|---|---|---|
 | H1 | **Un vendedor podía cancelar promesas de pago de clientes de otro vendedor** de su compañía (la lista las ocultaba, pero `POST /credit/promises/{id}/cancel` no aplicaba el alcance del vendedor). Lo encontró la prueba de aislamiento. | Media | Corregido (`PaymentPromise::visibleCustomers`) |
-| H2 | **Sin límite general de peticiones** en la API: permitía recorrer datos o saturar el servidor con una sola cuenta. | Media | Corregido: 300 por minuto y por persona (configurable) |
+| H2 | **Sin límite general de peticiones** en la API: permitía recorrer datos o saturar el servidor con una sola cuenta. | Media | Corregido: 600 por minuto y por persona (configurable con `API_RATE_PER_MINUTE`) |
 | H3 | **Rociado de claves**: el límite de intentos era por usuario+dirección; probar una clave contra muchos usuarios desde una dirección no se frenaba. | Media | Corregido: 20 fallos por minuto por dirección |
 | H4 | **La dirección de descarga de archivos de WhatsApp** la entrega Meta y se llamaba **con el token de acceso**: una respuesta alterada podía filtrarlo a un tercero o llevar al servidor a la red interna (SSRF). | Media | Corregido: solo HTTPS en dominios de Meta |
 | H5 | **Destino del webhook de salida** configurable sin restricción: un administrador podía apuntarlo a la red interna o al servicio de metadatos de la nube (SSRF). | Media (requiere ser administrador) | Corregido: en producción exige HTTPS y rechaza direcciones privadas, locales y reservadas; se vuelve a comprobar en cada entrega |
@@ -64,7 +64,7 @@ Cómo repetirlo: `e2e/tools/zap-api-scan.sh <API> <origen de la interfaz>` (solo
 | Medida | Dónde |
 |---|---|
 | Cabeceras de seguridad en toda respuesta, HSTS bajo HTTPS, sin `X-Powered-By` | `App\Http\Middleware\SecurityHeaders`, `docker/security.ini` (`expose_php = Off`) |
-| Límite general de la API por persona (y por dirección sin sesión) | `RateLimiter::for('api')` en `AppServiceProvider`; `API_RATE_PER_MINUTE` (300) |
+| Límite general de la API por persona (y por dirección sin sesión) | `RateLimiter::for('api')` en `AppServiceProvider`; `API_RATE_PER_MINUTE` (600) |
 | Límite de intentos de inicio de sesión por usuario+dirección **y** por dirección | `AuthController`; `LOGIN_RATE_PER_IP` (20/min) |
 | Cuenta desactivada: `me` y los canales de tiempo real también la rechazan | `routes/api.php`, `bootstrap/app.php` |
 | Promesas de pago con el alcance del vendedor | `PaymentPromise::scopeVisibleCustomers` |
@@ -110,8 +110,8 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 | # | Tema | Riesgo | Recomendación |
 |---|---|---|---|
 | R1 | **Sin segundo factor (2FA)** | Una contraseña robada da acceso completo a esa cuenta | Muy recomendable para Administrador y Gerencia antes de producción |
-| R2 | **Sin recuperación de contraseña ni cambio por la propia persona** | El administrador restablece claves a mano; las claves iniciales circulan por canales informales | Flujo de cambio de clave obligatorio en el primer ingreso |
-| R3 | **Sesión de 120 minutos de inactividad** y sin cierre de otras sesiones al cambiar la clave | Sesión robada vigente hasta 2 h | Reducir `SESSION_LIFETIME` y cerrar todas las sesiones al cambiar o restablecer la clave |
+| R2 | ~~Sin cambio de clave por la propia persona~~ **RESUELTO (2026-10-22, ADR-013)**: las claves fijadas por administración son temporales y se cambian en el primer ingreso; cualquiera puede cambiar la suya. | — | Pendiente solo la recuperación autónoma («olvidé mi clave»), que exige correo configurado por cada persona |
+| R3 | **Sesión de 120 minutos de inactividad** y sin cierre de otras sesiones al cambiar la clave. Además, con un servidor de varios procesos observé en pruebas, de forma intermitente, que tras cerrar sesión una petición en vuelo pudo dejar la sesión viva (causa sin confirmar; con un solo proceso no ocurre) | Sesión robada vigente hasta 2 h; cierre de sesión que no «pega» | Una «época de sesión» por usuario (se incrementa al cerrar sesión, cambiar o restablecer la clave y desactivar) que invalide cualquier sesión anterior, incluso resucitada; reducir `SESSION_LIFETIME` |
 | R4 | **Servidor SMTP y webhook configurables por administración** | Un administrador malicioso podría usar el servidor como proxy (el webhook ya rechaza la red interna; el SMTP no) | Limitar quién tiene `mail.manage`; registrar y alertar los cambios (ya quedan en Auditoría) |
 | R5 | **Hojas de cálculo (`.xlsx`) subidas** | Archivos comprimidos hostiles (bombas de descompresión) | El tamaño está limitado (20 MB) y la lectura es por flujo, pero conviene un límite de memoria/tiempo del proceso `queue` (ya tiene 1 GB) |
 | R6 | **Comunicación con Meta** | El secreto de la aplicación firma los webhooks | Rotarlo si alguien con acceso a la configuración deja la empresa |

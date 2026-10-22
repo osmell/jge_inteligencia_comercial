@@ -21,6 +21,9 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Identificador de petición** (`X-Request-Id`) en cada respuesta y en cada registro, canal de registros `json`, registro estructurado de trabajos en cola fallidos y comando `ops:status` para monitoreo.
 - Documentación para el equipo: análisis del código y guía SOLID (`docs/24`), propuesta de Policies (`docs/25`), operación (`docs/26`) y decisiones de arquitectura (`docs/adr`).
 
+### Seguridad
+- **Cambio de clave obligatorio**: la clave que fija administración (alta o restablecimiento) es temporal; hasta cambiarla, la API solo permite ver el perfil, cambiar la clave y salir. Cualquier persona puede cambiar su clave (pide la actual, con límite de intentos y en Auditoría).
+
 ### Cambiado
 - Todo el backend usa `declare(strict_types=1)`; PHPStan sube del nivel 5 al **8** sin *baseline*.
 - Las consultas y transacciones salieron de los controladores hacia servicios; el dashboard, las estadísticas de ventas, la ficha de clientes y los reportes se dividieron en clases por responsabilidad. Sin cambios de comportamiento.

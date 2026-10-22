@@ -20,6 +20,7 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'username' => $this->username,
             'name' => $this->name,
+            'must_change_password' => (bool) $this->must_change_password,
             'role' => ['slug' => $this->role->slug, 'name' => $this->role->name],
             'permissions' => $this->role->permissions->pluck('slug')->values(),
             'companies' => $this->companies->map(fn ($c) => ['id' => $c->id, 'code' => $c->code, 'name' => $c->name])->values(),

@@ -44,7 +44,8 @@ export async function api<T>(path: string, options: { method?: string; body?: un
 
   const data = await response.json().catch(() => ({}))
   if (!response.ok) {
-    throw new ApiError(response.status, data.message ?? 'Ocurrió un error inesperado.', data.errors)
+    const message = response.status === 429 ? 'Demasiadas solicitudes seguidas: espera unos segundos e inténtalo de nuevo.' : (data.message ?? 'Ocurrió un error inesperado.')
+    throw new ApiError(response.status, message, data.errors)
   }
   return data as T
 }

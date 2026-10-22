@@ -24,12 +24,14 @@ use Illuminate\Support\Carbon;
  * @property string $password
  * @property int $role_id
  * @property bool $is_active
+ * @property bool $must_change_password
+ * @property Carbon|null $password_changed_at
  * @property Carbon|null $last_login_at
  * @property Role $role
  * @property Collection<int, Company> $companies
  * @property Collection<int, Branch> $branches
  */
-#[Fillable(['username', 'name', 'email', 'password', 'role_id', 'is_active'])]
+#[Fillable(['username', 'name', 'email', 'password', 'role_id', 'is_active', 'must_change_password', 'password_changed_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -46,6 +48,8 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
+            'password_changed_at' => 'datetime',
             'last_login_at' => 'datetime',
         ];
     }

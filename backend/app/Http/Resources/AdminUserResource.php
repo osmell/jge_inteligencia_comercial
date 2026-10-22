@@ -20,6 +20,7 @@ class AdminUserResource extends JsonResource
             'id' => $this->id,
             'username' => $this->username,
             'name' => $this->name,
+            'must_change_password' => (bool) $this->must_change_password,
             'email' => $this->email,
             'is_active' => $this->is_active,
             'last_login_at' => $this->last_login_at,

@@ -2,10 +2,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import Layout from './components/Layout'
 import { ToastProvider } from './components/toast'
-import { RequireAuth, RequirePermission } from './components/RouteGuards'
+import { RequireAuth, RequirePermission, RequireSession } from './components/RouteGuards'
 import HomePage from './pages/HomePage'
 import ImportDetailPage from './pages/ImportDetailPage'
 import ImportsPage from './pages/ImportsPage'
+import ChangePasswordPage from './pages/ChangePasswordPage'
 import LoginPage from './pages/LoginPage'
 import AgendaPage from './pages/AgendaPage'
 import AuditPage from './pages/AuditPage'
@@ -56,6 +57,9 @@ export default function App() {
         <ToastProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route element={<RequireSession />}>
+            <Route path="/cambiar-clave" element={<ChangePasswordPage />} />
+          </Route>
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />

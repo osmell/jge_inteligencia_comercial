@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\EnsurePasswordIsCurrent;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\SecurityHeaders;
@@ -21,7 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     // Autorización de los canales privados del tiempo real (sesión de la SPA).
-    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum', 'active']])
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum', 'active', 'password.current']])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
         // Detrás de un balanceador o proxy: sin esto todas las peticiones parecen venir de la misma dirección y los límites de intentos
@@ -39,9 +40,15 @@ return Application::configure(basePath: dirname(__DIR__))
             before: SubstituteBindings::class,
             prepend: EnsurePermission::class,
         );
+        // La clave temporal se comprueba antes que el permiso y que la resolución de modelos: la respuesta es siempre `password_change_required`.
+        $middleware->prependToPriorityList(
+            before: EnsurePermission::class,
+            prepend: EnsurePasswordIsCurrent::class,
+        );
         $middleware->alias([
             'permission' => EnsurePermission::class,
             'active' => EnsureUserIsActive::class,
+            'password.current' => EnsurePasswordIsCurrent::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

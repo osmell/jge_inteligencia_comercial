@@ -2044,6 +2044,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["password.update"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/credit/promises": {
         parameters: {
             query?: never;
@@ -2644,6 +2660,7 @@ export interface components {
             id: number;
             username: string;
             name: string;
+            must_change_password: boolean;
             email: string | null;
             is_active: boolean;
             /** Format: date-time */
@@ -2691,6 +2708,12 @@ export interface components {
             code: string;
             name: string;
             is_active?: boolean;
+        };
+        /** ChangePasswordRequest */
+        ChangePasswordRequest: {
+            current_password: string;
+            password: string;
+            password_confirmation: string;
         };
         /** Company */
         Company: {
@@ -3088,6 +3111,7 @@ export interface components {
             id: number;
             username: string;
             name: string;
+            must_change_password: boolean;
             role: {
                 slug: string;
                 name: string;
@@ -8659,6 +8683,34 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "password.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description `UserResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "paymentPromise.index": {

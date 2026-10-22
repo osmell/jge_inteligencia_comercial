@@ -108,7 +108,7 @@ class HardeningTest extends TestCase
 
         foreach (['auth/me', 'admin/users', 'admin/users/'.$user->id] as $uri) {
             $body = (string) $this->getJson("/api/v1/$uri")->getContent();
-            $this->assertStringNotContainsString('password', $body, "GET /$uri expone el campo password.");
+            $this->assertStringNotContainsString('"password"', $body, "GET /$uri expone el campo password.");
             $this->assertStringNotContainsString('remember_token', $body, "GET /$uri expone remember_token.");
             $this->assertStringNotContainsString($user->password, $body);
         }

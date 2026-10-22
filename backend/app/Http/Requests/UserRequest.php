@@ -8,9 +8,9 @@ use App\Models\Branch;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\UserAccess;
+use App\Support\PasswordPolicy;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Password;
 
 class UserRequest extends FormRequest
 {
@@ -31,7 +31,7 @@ class UserRequest extends FormRequest
             'username' => ['required', 'string', 'min:3', 'max:50', 'regex:/^[a-z0-9._-]+$/', Rule::unique('users', 'username')->ignore($user)],
             'name' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
-            'password' => [$user ? 'nullable' : 'required', Password::min(10)->letters()->numbers()],
+            'password' => [$user ? 'nullable' : 'required', PasswordPolicy::rule()],
             'role_id' => ['required', 'integer', Rule::exists('roles', 'id')],
             'is_active' => ['sometimes', 'boolean'],
             'company_ids' => ['present', 'array'],

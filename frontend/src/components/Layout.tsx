@@ -1,6 +1,6 @@
-import { LogOut, Menu, X } from 'lucide-react'
+import { KeyRound, LogOut, Menu, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { BrandEmblem, BrandPlate } from './Brand'
 import { onConversationEvent, startRealtime } from '../lib/realtime'
@@ -153,6 +153,14 @@ export default function Layout() {
                 <p className="text-xs text-ink-muted">{user?.role.name}</p>
               </div>
             </div>
+            <Link
+              to="/cambiar-clave"
+              aria-label="Cambiar mi clave"
+              title="Cambiar mi clave"
+              className="inline-flex min-h-10 min-w-10 cursor-pointer items-center justify-center rounded-lg border border-line-strong text-ink transition-colors hover:bg-surface-muted"
+            >
+              <KeyRound className="h-4 w-4" aria-hidden="true" />
+            </Link>
             <button
               onClick={() => void logout()}
               aria-label="Cerrar sesión"

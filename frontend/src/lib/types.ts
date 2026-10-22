@@ -25,6 +25,8 @@ export interface AdminUser {
   name: string
   email: string | null
   is_active: boolean
+  /** Tiene una clave temporal y aún no la ha cambiado. */
+  must_change_password?: boolean
   last_login_at: string | null
   role: Role
   company_ids: number[]

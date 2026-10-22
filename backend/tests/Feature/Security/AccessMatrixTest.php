@@ -26,7 +26,7 @@ class AccessMatrixTest extends TestCase
 
     /** Rutas con sesión pero sin permiso específico: datos de la propia persona o catálogos de su ámbito. Agregar una exige revisión. */
     private const ANY_SIGNED_IN_USER = [
-        'POST api/v1/auth/logout', 'GET api/v1/auth/me', 'GET api/v1/branches', 'GET api/v1/broadcasting/auth', 'GET api/v1/companies',
+        'POST api/v1/auth/logout', 'POST api/v1/auth/password', 'GET api/v1/auth/me', 'GET api/v1/branches', 'GET api/v1/broadcasting/auth', 'GET api/v1/companies',
         'GET api/v1/dashboard', 'GET api/v1/dashboard/{section}', 'GET api/v1/notifications', 'GET api/v1/notifications/preferences',
         'PUT api/v1/notifications/preferences', 'POST api/v1/notifications/seen-all', 'GET api/v1/notifications/summary',
         'POST api/v1/notifications/test', 'POST api/v1/notifications/{notification}/dismiss', 'POST api/v1/notifications/{notification}/seen',
@@ -124,6 +124,33 @@ class AccessMatrixTest extends TestCase
         $this->actingAs($user, 'sanctum')->getJson('/api/v1/admin/users')->assertStatus(403);
         $this->actingAs($user, 'sanctum')->getJson('/api/v1/companies')->assertStatus(403);
         $this->actingAs($user, 'sanctum')->getJson('/api/v1/broadcasting/auth')->assertStatus(403);   // tampoco recibe tiempo real
+    }
+
+    /** Rutas que una cuenta obligada a cambiar su clave sí puede usar: ver su perfil, cambiar la clave y salir. */
+    private const ALLOWED_WITH_TEMPORARY_PASSWORD = ['GET api/v1/auth/me', 'POST api/v1/auth/logout', 'POST api/v1/auth/password'];
+
+    public function test_an_account_with_a_temporary_password_can_use_nothing_but_the_three_allowed_routes(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+        // Con TODOS los permisos: si algo se bloquea, es por la clave temporal y no por falta de permisos.
+        $user = User::factory()->role(Role::ADMINISTRADOR)->create(['must_change_password' => true]);
+
+        $blocked = 0;
+        foreach ($this->apiRoutes() as $route) {
+            $key = $this->methodOf($route).' '.$route->uri();
+            if (in_array($route->uri(), self::PUBLIC, true) || in_array($key, self::ALLOWED_WITH_TEMPORARY_PASSWORD, true) || $route->uri() === 'api/v1/auth/login') {
+                continue;
+            }
+            $response = $this->actingAs($user, 'sanctum')->json($this->methodOf($route), $this->url($route));
+            $this->assertSame(403, $response->getStatusCode(), "$key respondió {$response->getStatusCode()} a una cuenta con clave temporal.");
+            $this->assertSame('password_change_required', $response->json('code'), "$key no devolvió el código password_change_required.");
+            $blocked++;
+        }
+
+        $this->assertGreaterThan(170, $blocked);
+        foreach (['GET api/v1/auth/me'] as $allowed) {
+            $this->actingAs($user, 'sanctum')->getJson('/api/v1/auth/me')->assertOk();
+        }
     }
 
     public function test_the_whatsapp_webhook_refuses_unsigned_calls(): void

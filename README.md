@@ -48,6 +48,8 @@ Contraseña de todos: `Desarrollo-123` (solo entornos no productivos).
 | `vendedor1` | Vendedor | Alfa (Central) |
 | `vendedor2` | Vendedor | Beta (Central) |
 
+Estas cuentas **no** están obligadas a cambiar su clave. Las que cree administración sí: nacen con clave temporal y la persona debe cambiarla en su primer ingreso (`docs/adr/013-cambio-de-clave-obligatorio.md`).
+
 ## Pruebas y chequeos
 
 La integración continua (`.github/workflows/ci.yml`) ejecuta los mismos chequeos en cada Pull Request y en `main`.

@@ -21,6 +21,7 @@ docker run --rm --network host -v "$PWD/e2e:/e2e" -v jge_e2e_modules:/e2e/node_m
 ```
 O, con Node instalado: `cd e2e && npm ci && npx playwright install chromium && npx playwright test`.
 
+- La API limita las peticiones por persona (600 por minuto por omisión): para una instalación de pruebas arránquela con `API_RATE_PER_MINUTE=100000`, porque las pruebas recorren muchas pantallas en pocos segundos con la misma cuenta.
 - `E2E_BASE_URL` cambia la dirección del frontend (por omisión `http://localhost:5173`; la API debe estar en `:8000`).
 - Las pruebas **solo leen** salvo `tests/07-cotizacion.spec.ts`, que crea una cotización y exige `E2E_ALLOW_WRITES=1`. No lo use en una base con datos reales.
 - Las pruebas de clientes y cotizaciones usan el cliente fijo «Cliente E2E» (`E2eSeeder`).

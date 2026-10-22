@@ -44,6 +44,8 @@ jobs:
             echo "CACHE_STORE=file"
             echo "QUEUE_CONNECTION=sync"
             echo "BROADCAST_CONNECTION=null"
+            # Las pruebas recorren muchas pantallas en segundos con la misma cuenta: el límite normal de la API las frenaría.
+            echo "API_RATE_PER_MINUTE=100000"
           } >> .env
           php artisan key:generate --ansi
           php artisan migrate --force --seed
