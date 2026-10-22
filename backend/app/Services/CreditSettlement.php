@@ -38,7 +38,7 @@ class CreditSettlement
     }
 
     /**
-     * @param  array{series: string, number: string, subtotal: string, tax_total: string, total: string, observations?: string|null}  $document
+     * @param  array<string, mixed>  $document  series, number, subtotal, tax_total, total y observations (opcional)
      * @param  list<array{invoice_id: int, amount: string}>  $allocations
      */
     public function creditNote(int $companyId, string $customerCode, array $document, array $allocations, CarbonInterface $on, User $user): CreditNote
@@ -61,7 +61,7 @@ class CreditSettlement
             try {
                 $note = CreditNote::create([
                     'company_id' => $companyId, 'series' => $document['series'], 'number' => $document['number'], 'issued_on' => $on->toDateString(),
-                    'customer_code' => $customerCode, 'customer_name' => $invoices[array_key_first($invoices)]->customer_name,
+                    'customer_code' => $customerCode, 'customer_name' => array_values($invoices)[0]->customer_name,
                     'subtotal' => $document['subtotal'], 'tax_total' => $document['tax_total'], 'total' => $document['total'],
                     'observations' => $document['observations'] ?? null, 'user_id' => $user->id, 'created_at' => now(),
                 ]);

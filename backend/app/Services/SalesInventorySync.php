@@ -100,7 +100,7 @@ class SalesInventorySync
     /**
      * @param  array{branches: int, lines: int, movements: int, shortfalls: int}  $result
      */
-    private function line(object $line, ?Product $product, array &$result): void
+    private function line(\stdClass $line, ?Product $product, array &$result): void
     {
         $need = Quantity::units((string) $line->units);
         if ($need <= 0) {

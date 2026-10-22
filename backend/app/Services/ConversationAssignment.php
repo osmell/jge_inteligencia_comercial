@@ -45,7 +45,7 @@ class ConversationAssignment
         if ($found === null) {
             return false;
         }
-        $customer = Customer::withoutGlobalScopes()->findOrFail($found->id);
+        $customer = Customer::withoutGlobalScopes()->findOrFail((int) $found->id);
         DB::transaction(function () use ($conversation, $customer, $supervisor) {
             $conversation->forceFill(['customer_id' => $customer->id])->save();
             if ($this->wa->number($customer->whatsapp) === '') {

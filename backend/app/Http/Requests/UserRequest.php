@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Models\Branch;
 use App\Models\Role;
+use App\Models\User;
 use App\Services\UserAccess;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -60,7 +61,7 @@ class UserRequest extends FormRequest
             // Evita la escalada de privilegios de quien no es Administrador.
             $access = app(UserAccess::class);
             $actor = $this->user();
-            $role = Role::find($this->input('role_id'));
+            $role = Role::find((int) $this->input('role_id'));
             if ($role && ! $access->canAssignRole($actor, $role)) {
                 $validator->errors()->add('role_id', 'No puedes asignar el rol Administrador.');
             }
@@ -71,7 +72,7 @@ class UserRequest extends FormRequest
 
             // Evita que el administrador se bloquee a sí mismo.
             $user = $this->route('user');
-            if ($user && $user->is($this->user())) {
+            if ($user instanceof User && $user->is($this->user())) {
                 if ((int) $this->input('role_id') !== $user->role_id) {
                     $validator->errors()->add('role_id', 'No puedes cambiar tu propio rol.');
                 }

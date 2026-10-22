@@ -20,7 +20,7 @@ class AuditLogController extends Controller
         $logs = AuditLog::query()
             ->when($companies !== null, fn ($q) => $q->whereIn('company_id', $companies))
             ->when($request->query('event'), fn ($q, $event) => $q->where('event', $event))
-            ->when($request->query('username'), fn ($q, $u) => $q->where('username', mb_strtolower($u)))
+            ->when($request->query('username'), fn ($q, $u) => $q->where('username', mb_strtolower(is_string($u) ? $u : '')))
             ->when($request->query('company_id'), fn ($q, $id) => $q->where('company_id', $id))
             ->latest('id')
             ->paginate(50);

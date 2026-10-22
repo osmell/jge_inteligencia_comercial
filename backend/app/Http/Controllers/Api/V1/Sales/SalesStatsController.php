@@ -85,7 +85,7 @@ class SalesStatsController extends Controller
 
         if ($format === 'csv') {
             return response()->streamDownload(function () use ($dimension, $from, $to, $filters, $compare) {
-                $out = fopen('php://output', 'w');
+                $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
                 $this->exporter->writeCsv($out, $dimension, $from, $to, $filters, $compare);
                 fclose($out);
             }, "ventas-por-{$dimension}-{$range}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);

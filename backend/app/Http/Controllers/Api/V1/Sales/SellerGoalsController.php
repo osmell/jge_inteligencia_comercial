@@ -70,7 +70,7 @@ class SellerGoalsController extends Controller
         }
 
         return response()->streamDownload(function () use ($rows) {
-            $out = fopen('php://output', 'w');
+            $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
             $this->exporter->writeGoalsCsv($out, $rows);
             fclose($out);
         }, "metas-{$month}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);

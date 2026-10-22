@@ -46,7 +46,7 @@ class CustomerSalesReportController extends Controller
 
         if ($format === 'csv') {
             return response()->streamDownload(function () use ($rows) {
-                $out = fopen('php://output', 'w');
+                $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
                 $this->exporter->writeCustomerSalesCsv($out, $rows);
                 fclose($out);
             }, "ventas-por-cliente-{$range}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);

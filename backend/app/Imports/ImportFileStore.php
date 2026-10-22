@@ -20,7 +20,7 @@ final class ImportFileStore
 
         return [
             'path' => $path,
-            'hash' => hash_file('sha256', $file->getRealPath()),
+            'hash' => (string) hash_file('sha256', (string) $file->getRealPath()),
             'size' => (int) $file->getSize(),
         ];
     }

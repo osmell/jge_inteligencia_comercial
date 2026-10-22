@@ -37,7 +37,7 @@ class CreditPortfolioController extends Controller
         $this->audit->record('credit.aging_exported', $request->user(), new: ['company_id' => $companyId, 'customers' => count($aging['customers'])]);
 
         return response()->streamDownload(function () use ($aging) {
-            $out = fopen('php://output', 'w');
+            $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Compañía', 'Código cliente', 'Cliente', ...array_map($this->bucketHeader(...), $aging['buckets']), 'Total', 'Facturas con saldo', 'Días de la más antigua']);
             foreach ($aging['customers'] as $c) {

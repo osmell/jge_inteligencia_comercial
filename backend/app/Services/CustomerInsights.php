@@ -69,7 +69,7 @@ class CustomerInsights
     /**
      * Búsqueda por código, nombre o nombre comercial, con una fila por cliente (compañía + código).
      *
-     * @return array{rows: list<array<string, mixed>>, has_more: bool}
+     * @return array{rows: array<int, array<string, mixed>>, has_more: bool}
      */
     public function search(?string $term, ?int $companyId, string $sort, int $page, ?int $typeId = null, ?string $status = null): array
     {
@@ -121,7 +121,7 @@ class CustomerInsights
         $page_rows = $rows->take(self::PER_PAGE);
         $statuses = [];
         foreach ($page_rows->groupBy('company_id') as $cid => $group) {
-            $statuses += $this->activity->statusesFor((int) $cid, $group->pluck('code')->map(fn ($c) => (string) $c)->all());
+            $statuses += $this->activity->statusesFor((int) $cid, array_values($group->pluck('code')->map(fn ($c) => (string) $c)->all()));
         }
         $abc = $page_rows->pluck('company_id')->unique()->mapWithKeys(fn ($id) => [(int) $id => $this->abcClasses((int) $id)]);
 
@@ -162,6 +162,7 @@ class CustomerInsights
         $dates = $hasSales
             ? SalesDocument::query()->where('customer_code', $code)->where('company_id', $companyId)->distinct()->orderBy('issued_on')->pluck('issued_on')->map(fn ($d) => $this->date($d))->unique()->values()->all()
             : [];
+        $dates = array_values($dates);
 
         return [
             'customer' => [
@@ -193,7 +194,7 @@ class CustomerInsights
     /**
      * Facturas del cliente, de la más reciente a la más antigua.
      *
-     * @return array{rows: list<array<string, mixed>>, has_more: bool}
+     * @return array{rows: array<int, array<string, mixed>>, has_more: bool}
      */
     public function purchases(int $companyId, string $code, int $page): array
     {
@@ -216,7 +217,7 @@ class CustomerInsights
         $page_rows = $rows->take(self::PER_PAGE);
         $statuses = [];
         foreach ($page_rows->groupBy('company_id') as $cid => $group) {
-            $statuses += $this->activity->statusesFor((int) $cid, $group->pluck('code')->map(fn ($c) => (string) $c)->all());
+            $statuses += $this->activity->statusesFor((int) $cid, array_values($group->pluck('code')->map(fn ($c) => (string) $c)->all()));
         }
         $abc = $page_rows->pluck('company_id')->unique()->mapWithKeys(fn ($id) => [(int) $id => $this->abcClasses((int) $id)]);
 
@@ -233,7 +234,7 @@ class CustomerInsights
     /**
      * Líneas de una factura del cliente. Null si la factura no es de ese cliente o está fuera del ámbito del usuario.
      *
-     * @return list<array<string, mixed>>|null
+     * @return array<int, array<string, mixed>>|null
      */
     public function documentLines(int $companyId, string $code, int $documentId): ?array
     {

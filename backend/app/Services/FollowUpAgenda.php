@@ -28,7 +28,7 @@ class FollowUpAgenda
 
     /**
      * @param  array{company_id?: int|null, seller_id?: int|null, mine?: bool, horizon_days: int, no_contact_days: int}  $opts
-     * @return array{overdue: list<array<string, mixed>>, upcoming: list<array<string, mixed>>, reactivate: list<array<string, mixed>>, meta: array<string, mixed>}
+     * @return array{overdue: array<int, array<string, mixed>>, upcoming: array<int, array<string, mixed>>, reactivate: array<int, array<string, mixed>>, meta: array<string, mixed>}
      */
     public function build(User $user, array $opts, ?CarbonImmutable $now = null): array
     {

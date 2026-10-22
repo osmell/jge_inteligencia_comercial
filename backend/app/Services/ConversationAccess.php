@@ -79,6 +79,6 @@ class ConversationAccess
     /** @return list<int> */
     private function companyIds(User $user): array
     {
-        return $this->scope->companyIds($user) ?? DB::table('companies')->pluck('id')->map(fn ($id) => (int) $id)->all();
+        return $this->scope->companyIds($user) ?? array_values(DB::table('companies')->pluck('id')->map(fn ($id) => (int) $id)->all());
     }
 }

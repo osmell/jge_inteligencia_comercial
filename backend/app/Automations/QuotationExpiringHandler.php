@@ -43,6 +43,6 @@ class QuotationExpiringHandler extends NoticeHandler
     {
         $ids = array_unique(array_filter([$q->user_id, $q->seller?->user_id]));
 
-        return User::query()->whereIn('id', $ids)->where('is_active', true)->get()->all();
+        return array_values(User::query()->whereIn('id', $ids)->where('is_active', true)->get()->all());
     }
 }

@@ -21,7 +21,7 @@ class ProductCatalog
 
     /**
      * @param  array{q?: string|null, company_id?: int|null, level1?: string|null, level2?: string|null, level3?: string|null}  $f
-     * @return array{rows: list<array<string, mixed>>, has_more: bool}
+     * @return array{rows: array<int, array<string, mixed>>, has_more: bool}
      */
     public function search(array $f, string $sort, int $page, ?CarbonImmutable $today = null): array
     {
@@ -94,7 +94,7 @@ class ProductCatalog
     /**
      * Productos vendidos en los últimos 12 meses que no están en el catálogo (compañía + código), de más a menos venta.
      *
-     * @return array{rows: list<array<string, mixed>>, has_more: bool}
+     * @return array{rows: array<int, array<string, mixed>>, has_more: bool}
      */
     public function missing(int $page, ?CarbonImmutable $today = null): array
     {

@@ -37,7 +37,7 @@ final class SpreadsheetReader
                 $number = 0;
                 foreach ($sheet->getRowIterator() as $row) {
                     $number++;
-                    yield $number => $row->toArray();
+                    yield $number => array_values($row->toArray());
                 }
 
                 return; // solo una hoja

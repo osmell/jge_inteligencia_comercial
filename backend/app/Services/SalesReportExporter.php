@@ -210,6 +210,10 @@ class SalesReportExporter
     }
 
     /** @param  array<string, mixed>  $data */
+    /**
+     * @param  view-string  $view
+     * @param  array<string, mixed>  $data
+     */
     private function renderPdf(string $view, array $data, string $generatedBy, string $orientation): string
     {
         $options = new Options;
@@ -283,7 +287,7 @@ class SalesReportExporter
     /**
      * @param  array<string, mixed>  $filters
      * @param  array{0: CarbonImmutable, 1: CarbonImmutable}|null  $compare
-     * @return list<array<string, mixed>>
+     * @return array<int, array<string, mixed>>
      */
     private function rows(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, ?array $compare): array
     {
@@ -308,10 +312,10 @@ class SalesReportExporter
     public function describeFilters(array $filters): string
     {
         $names = [
-            'company_id' => ['Compañía', fn ($id) => Company::find($id)?->name],
-            'branch_id' => ['Sucursal', fn ($id) => Branch::find($id)?->name],
-            'seller_id' => ['Vendedor', fn ($id) => Seller::find($id)?->name],
-            'operator_id' => ['Operador', fn ($id) => Operator::find($id)?->name],
+            'company_id' => ['Compañía', fn ($id) => Company::find((int) $id)?->name],
+            'branch_id' => ['Sucursal', fn ($id) => Branch::find((int) $id)?->name],
+            'seller_id' => ['Vendedor', fn ($id) => Seller::find((int) $id)?->name],
+            'operator_id' => ['Operador', fn ($id) => Operator::find((int) $id)?->name],
             'group' => ['Grupo', null], 'line' => ['Línea', null], 'category' => ['Categoría', null], 'product_code' => ['Producto', null], 'customer_code' => ['Cliente', null],
         ];
 

@@ -40,7 +40,7 @@ class InventoryRotationController extends Controller
         $labels = ['out_of_stock' => 'Agotado', 'below_min' => 'Bajo el mínimo', 'no_rotation' => 'Sin rotación', 'above_max' => 'Sobre el máximo', 'ok' => 'Normal'];
 
         return response()->streamDownload(function () use ($result, $costs, $labels) {
-            $out = fopen('php://output', 'w');
+            $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Código', 'Producto', 'Sucursal', 'Existencia', 'Vendido (ventana)', 'Demanda diaria', 'Cobertura (días)', 'Rotación', 'Mínimo', 'Máximo', 'Sugerido a reponer', 'Última venta', 'Estado', ...($costs ? ['Valor'] : [])]);
             foreach ($result['rows'] as $r) {

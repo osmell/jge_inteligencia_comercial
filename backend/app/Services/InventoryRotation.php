@@ -64,10 +64,10 @@ class InventoryRotation
 
         $query = InventoryBalance::query()->join('products as p', 'p.id', '=', 'inventory_balances.product_id')->join('branches as b', 'b.id', '=', 'inventory_balances.branch_id')
             ->leftJoinSub($moves, 'm', fn ($j) => $j->on('m.company_id', '=', 'inventory_balances.company_id')->on('m.branch_id', '=', 'inventory_balances.branch_id')->on('m.product_id', '=', 'inventory_balances.product_id'))
-            ->when(! empty($filters['company_id']), fn (Builder $q) => $q->where('inventory_balances.company_id', $filters['company_id']))
-            ->when(! empty($filters['branch_id']), fn (Builder $q) => $q->where('inventory_balances.branch_id', $filters['branch_id']))
+            ->when(! empty($filters['company_id']), fn (Builder $q) => $q->where('inventory_balances.company_id', ($filters['company_id'] ?? null)))
+            ->when(! empty($filters['branch_id']), fn (Builder $q) => $q->where('inventory_balances.branch_id', ($filters['branch_id'] ?? null)))
             ->when(! empty($filters['q']), function (Builder $q) use ($filters) {
-                $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower((string) $filters['q'])).'%';
+                $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower((string) ($filters['q'] ?? null))).'%';
                 $q->where(fn (Builder $w) => $w->whereRaw("lower(p.code) like ? escape '\\'", [$like])->orWhereRaw("lower(p.name) like ? escape '\\'", [$like]));
             })
             ->select('inventory_balances.product_id', 'inventory_balances.branch_id', 'inventory_balances.company_id', 'inventory_balances.quantity', 'inventory_balances.value', 'p.code as product_code', 'p.name as product_name', 'b.name as branch_name')

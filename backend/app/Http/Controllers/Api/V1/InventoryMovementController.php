@@ -78,7 +78,7 @@ class InventoryMovementController extends Controller
             'quantity' => ['required', 'regex:/^\d{1,8}(\.\d{1,8})?$/'], 'unit_id' => ['nullable', 'integer', 'exists:units,id'],
             'occurred_on' => ['required', 'date_format:Y-m-d'], 'reason' => ['required', 'string', 'max:30'], 'note' => ['nullable', 'string', 'max:500'], 'unit_cost' => ['nullable', 'string', 'max:20'],
         ]);
-        $product = Product::query()->where('company_id', $data['company_id'])->findOrFail($data['product_id']);
+        $product = Product::query()->where('company_id', $data['company_id'])->findOrFail((int) $data['product_id']);
 
         $movement = $this->operations->record(
             $request->user(), $data['company_id'], $data['branch_id'], $product, $data['type'], $data['quantity'], $data['unit_id'] ?? null,
@@ -94,7 +94,7 @@ class InventoryMovementController extends Controller
             'company_id' => ['required', 'integer', 'min:1'], 'from_branch_id' => ['required', 'integer', 'min:1'], 'to_branch_id' => ['required', 'integer', 'min:1'], 'product_id' => ['required', 'integer', 'min:1'],
             'quantity' => ['required', 'regex:/^\d{1,8}(\.\d{1,8})?$/'], 'unit_id' => ['nullable', 'integer', 'exists:units,id'], 'occurred_on' => ['required', 'date_format:Y-m-d'], 'note' => ['nullable', 'string', 'max:500'],
         ]);
-        $product = Product::query()->where('company_id', $data['company_id'])->findOrFail($data['product_id']);
+        $product = Product::query()->where('company_id', $data['company_id'])->findOrFail((int) $data['product_id']);
 
         $result = $this->operations->transfer(
             $request->user(), $data['company_id'], $data['from_branch_id'], $data['to_branch_id'], $product, $data['quantity'], $data['unit_id'] ?? null, CarbonImmutable::parse($data['occurred_on']), $data['note'] ?? null,

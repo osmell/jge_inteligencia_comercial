@@ -37,7 +37,7 @@ class ConversationBroadcast implements ShouldBroadcast, ShouldDispatchAfterCommi
             return [];
         }
 
-        return app(ConversationAccess::class)->watchers($conversation)->map(fn ($u) => new PrivateChannel("users.{$u->id}.conversations"))->values()->all();
+        return array_values(app(ConversationAccess::class)->watchers($conversation)->map(fn ($u) => new PrivateChannel("users.{$u->id}.conversations"))->all());
     }
 
     /** @return array<string, mixed> */
@@ -57,6 +57,6 @@ class ConversationBroadcast implements ShouldBroadcast, ShouldDispatchAfterCommi
     {
         $id = WhatsappMessage::query()->whereKey($this->messageId)->value('conversation_id');
 
-        return $id === null ? null : WhatsappConversation::query()->find($id);
+        return $id === null ? null : WhatsappConversation::query()->find((int) $id);
     }
 }

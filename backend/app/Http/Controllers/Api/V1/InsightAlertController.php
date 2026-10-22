@@ -31,7 +31,7 @@ class InsightAlertController extends Controller
             'company_id' => ['required', 'integer', 'min:1'], 'seller_id' => ['nullable', 'integer', 'min:1'], 'type' => ['nullable', Rule::in(InsightAlert::TYPES)], 'severity' => ['nullable', Rule::in(['high', 'medium', 'low'])],
             'status' => ['nullable', Rule::in([InsightAlert::OPEN, InsightAlert::RESOLVED, InsightAlert::CLOSED])], 'q' => ['nullable', 'string', 'max:100'], 'page' => ['nullable', 'integer', 'min:1', 'max:10000'],
         ]);
-        Company::query()->findOrFail($data['company_id']);
+        Company::query()->findOrFail((int) $data['company_id']);
         $page = max(1, (int) ($data['page'] ?? 1));
 
         $base = fn () => InsightAlert::query()->visibleCustomers()->where('insight_alerts.company_id', $data['company_id'])

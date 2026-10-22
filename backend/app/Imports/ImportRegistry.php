@@ -15,7 +15,7 @@ final class ImportRegistry
     /** @return list<string> */
     public function keys(): array
     {
-        return array_keys(config('imports.types', []));
+        return array_map('strval', array_keys(config('imports.types', [])));
     }
 
     public function has(string $key): bool

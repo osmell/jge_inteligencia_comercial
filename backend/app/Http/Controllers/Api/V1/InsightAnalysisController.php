@@ -41,7 +41,7 @@ class InsightAnalysisController extends Controller
     {
         $this->guard($request);
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1']]);
-        $company = Company::query()->findOrFail($data['company_id']);
+        $company = Company::query()->findOrFail((int) $data['company_id']);
         $run = match ($analysis) {
             'concentration' => $this->concentration->compute($company, $request->user()),
             'seasonality' => $this->seasonality->compute($company, $request->user()),
@@ -55,7 +55,7 @@ class InsightAnalysisController extends Controller
     {
         $this->guard($request);
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1']]);
-        Company::query()->findOrFail($data['company_id']);
+        Company::query()->findOrFail((int) $data['company_id']);
         $run = InsightRun::query()->where(['company_id' => $data['company_id'], 'analysis' => $analysis])->orderByDesc('computed_at')->orderByDesc('id')->first();
 
         return response()->json(['data' => $run ? $this->present($run) : null]);

@@ -6,4 +6,15 @@ parameters:
         - app
         - database
         - routes
-    level: 6
+    level: 7
+    ignoreErrors:
+        # SQL dinámico con fragmentos generados por el propio código (columnas de listas blancas, fechas, subconsultas) nunca con texto del usuario.
+        # Los valores del usuario siempre van como parámetros (?). Cada archivo está revisado; no ampliar sin revisión.
+        -
+            message: '#expects (Illuminate\\Contracts\\Database\\Query\\Expression\|)?literal-string,#'
+            identifier: argument.type
+            paths:
+                - app/Http/Controllers/Api/V1/QuotationController.php
+                - app/Services/ConversationList.php
+                - app/Services/CustomerSalesReport.php
+                - app/Services/SalesStatistics.php

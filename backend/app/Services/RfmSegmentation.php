@@ -106,7 +106,7 @@ class RfmSegmentation
     /**
      * Frase que explica por qué un cliente cayó en su segmento.
      *
-     * @param  array{recency_days: int, frequency: int, monetary: string, r: int, f: int, m: int, segment: string}  $c
+     * @param  array<string, mixed>  $c  recency_days, frequency, monetary, r, f, m y segment
      */
     public static function explain(array $c): string
     {

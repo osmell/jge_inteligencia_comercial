@@ -96,9 +96,9 @@ final class SalesImportType implements ImportType
     {
         $optional = config('imports.sales.optional', []);
 
-        return collect((array) config('imports.sales.columns'))
-            ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, $aliases, required: ! in_array($key, $optional, true), hint: self::HINTS[$key] ?? null))
-            ->values()->all();
+        return array_values(collect((array) config('imports.sales.columns'))
+            ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, array_values($aliases), required: ! in_array($key, $optional, true), hint: self::HINTS[$key] ?? null))
+            ->all());
     }
 
     public function parseRow(ImportRow $row): ?ParsedRow
@@ -209,7 +209,7 @@ final class SalesImportType implements ImportType
         (new SalesPersister)->persist($context);
 
         // Facturas de crédito que se cargaron antes que su venta quedan enlazadas ahora.
-        CreditInvoicesImportType::linkPendingToSales(collect($context->groups)->map(fn ($g) => (int) $g->fields['company'])->unique()->values()->all());
+        CreditInvoicesImportType::linkPendingToSales(array_values(collect($context->groups)->map(fn ($g) => (int) $g->fields['company'])->unique()->all()));
 
         // Las salidas de inventario se generan en segundo plano, ya confirmada la importación.
         foreach (collect($context->groups)->map(fn ($g) => (int) $g->fields['company'])->unique() as $companyId) {

@@ -107,7 +107,7 @@ class WhatsappController extends Controller
     {
         $c = Customer::query()->findOrFail($customer);
         $data = $request->validate(['template_id' => ['required', 'integer'], 'params' => ['nullable', 'array', 'max:10'], 'params.*' => ['string', 'max:300']]);
-        $template = WhatsappTemplate::query()->findOrFail($data['template_id']);
+        $template = WhatsappTemplate::query()->findOrFail((int) $data['template_id']);
         $log = $this->wa->send($request->user(), $c, $template, $data['params'] ?? []);
 
         return response()->json(['data' => $this->message($log)], 201);

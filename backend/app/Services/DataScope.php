@@ -71,7 +71,7 @@ class DataScope
             return ['global' => true, 'companies' => [], 'restricted' => []];
         }
 
-        $companies = DB::table('company_user')->where('user_id', $user->id)->pluck('company_id')->map(fn ($id) => (int) $id)->all();
+        $companies = array_values(DB::table('company_user')->where('user_id', $user->id)->pluck('company_id')->map(fn ($id) => (int) $id)->all());
 
         $restricted = [];
         $rows = DB::table('branch_user')

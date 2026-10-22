@@ -27,13 +27,13 @@ class InsightRfmController extends Controller
     public function index(Request $request): JsonResponse
     {
         $data = $this->validated($request);
-        $company = Company::query()->findOrFail($data['company_id']);
+        $company = Company::query()->findOrFail((int) $data['company_id']);
         $run = $this->latestRun($company->id);
         $page = max(1, (int) ($data['page'] ?? 1));
 
         $base = fn () => RfmScore::query()->visibleCustomers()->where('company_id', $company->id)
             ->when(! empty($data['q']), function (Builder $q) use ($data) {
-                $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower($data['q'])).'%';
+                $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower((string) ($data['q'] ?? ''))).'%';
                 $q->where(fn (Builder $w) => $w->whereRaw("lower(customer_name) like ? escape '\\'", [$like])->orWhereRaw("lower(customer_code) like ? escape '\\'", [$like]));
             });
         $counts = array_fill_keys(array_keys(RfmSegmentation::SEGMENTS), 0);
@@ -41,7 +41,7 @@ class InsightRfmController extends Controller
             $counts[$segment] = (int) $total;
         }
 
-        $rows = $base()->when(! empty($data['segment']), fn (Builder $q) => $q->where('segment', $data['segment']))
+        $rows = $base()->when(! empty($data['segment']), fn (Builder $q) => $q->where('segment', ($data['segment'] ?? null)))
             ->orderByDesc('monetary')->orderBy('customer_name')->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE + 1)->get();
 
         return response()->json([
@@ -65,14 +65,14 @@ class InsightRfmController extends Controller
     public function export(Request $request): Response
     {
         $data = $this->validated($request);
-        $company = Company::query()->findOrFail($data['company_id']);
+        $company = Company::query()->findOrFail((int) $data['company_id']);
         $run = $this->latestRun($company->id);
         $this->audit->record('insights.rfm_exported', $request->user(), new: ['company_id' => $company->id, 'segment' => $data['segment'] ?? null], companyId: $company->id);
 
-        $rows = RfmScore::query()->visibleCustomers()->where('company_id', $company->id)->when(! empty($data['segment']), fn (Builder $q) => $q->where('segment', $data['segment']))->orderByDesc('monetary')->orderBy('customer_name')->get();
+        $rows = RfmScore::query()->visibleCustomers()->where('company_id', $company->id)->when(! empty($data['segment']), fn (Builder $q) => $q->where('segment', ($data['segment'] ?? null)))->orderByDesc('monetary')->orderBy('customer_name')->get();
 
         return response()->streamDownload(function () use ($rows, $run, $company) {
-            $out = fopen('php://output', 'w');
+            $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, ['Compañía', 'Código cliente', 'Cliente', 'Segmento', 'Última compra', 'Recencia (días)', 'Días con compra', 'Venta bruta', 'Devoluciones', 'Venta neta', 'R', 'F', 'M', 'Explicación', 'Calculado', 'Periodo']);
             foreach ($rows as $s) {
@@ -89,7 +89,7 @@ class InsightRfmController extends Controller
     public function recalculate(Request $request): JsonResponse
     {
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1']]);
-        $run = $this->rfm->compute(Company::query()->findOrFail($data['company_id']), $request->user());
+        $run = $this->rfm->compute(Company::query()->findOrFail((int) $data['company_id']), $request->user());
 
         return response()->json(['data' => $this->presentRun($run)]);
     }

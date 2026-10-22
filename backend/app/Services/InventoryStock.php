@@ -32,17 +32,17 @@ class InventoryStock
 
     /**
      * @param  array{company_id?: int|null, branch_id?: int|null, q?: string|null, status?: string|null}  $filters
-     * @return array{rows: list<array<string, mixed>>, has_more: bool, totals: array<string, mixed>}
+     * @return array{rows: array<int, array<string, mixed>>, has_more: bool, totals: array<string, mixed>}
      */
     public function stock(User $user, array $filters, int $page): array
     {
         $costs = $this->canSeeCosts($user);
         $status = $filters['status'] ?? 'with';
         $query = InventoryBalance::query()->with(['product.baseUnit:id,code,name', 'branch:id,name', 'company:id,name'])
-            ->when(! empty($filters['company_id']), fn (Builder $q) => $q->where('inventory_balances.company_id', $filters['company_id']))
-            ->when(! empty($filters['branch_id']), fn (Builder $q) => $q->where('inventory_balances.branch_id', $filters['branch_id']))
+            ->when(! empty($filters['company_id']), fn (Builder $q) => $q->where('inventory_balances.company_id', ($filters['company_id'] ?? null)))
+            ->when(! empty($filters['branch_id']), fn (Builder $q) => $q->where('inventory_balances.branch_id', ($filters['branch_id'] ?? null)))
             ->when(! empty($filters['q']), function (Builder $q) use ($filters) {
-                $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower((string) $filters['q'])).'%';
+                $like = '%'.str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], mb_strtolower((string) ($filters['q'] ?? null))).'%';
                 $q->whereHas('product', fn (Builder $p) => $p->where(fn (Builder $w) => $w->whereRaw("lower(products.code) like ? escape '\\'", [$like])->orWhereRaw("lower(products.name) like ? escape '\\'", [$like])));
             });
         if ($status === 'with') {
@@ -59,7 +59,7 @@ class InventoryStock
         $balances = $query->join('products as p', 'p.id', '=', 'inventory_balances.product_id')->select('inventory_balances.*')
             ->orderBy('p.name')->orderBy('inventory_balances.id')->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE + 1)->get();
 
-        $reconciled = $this->reconciledBranches($balances->pluck('branch_id')->unique()->all());
+        $reconciled = $this->reconciledBranches(array_values($balances->pluck('branch_id')->unique()->map(fn ($id) => (int) $id)->all()));
         $rows = $balances->take(self::PAGE_SIZE)->map(function (InventoryBalance $b) use ($costs, $reconciled) {
             $qty = Quantity::units((string) $b->quantity);
             $row = [
@@ -82,7 +82,7 @@ class InventoryStock
     /**
      * Movimientos de un producto en una sucursal con el saldo corrido. El saldo inicial es lo acumulado antes de «desde».
      *
-     * @return array{opening: array<string, mixed>, rows: list<array<string, mixed>>, truncated: bool, closing: array<string, mixed>, reconciled: bool}
+     * @return array{opening: array<string, mixed>, rows: array<int, array<string, mixed>>, truncated: bool, closing: array<string, mixed>, reconciled: bool}
      */
     public function kardex(User $user, int $companyId, int $branchId, Product $product, ?CarbonImmutable $from, ?CarbonImmutable $to): array
     {

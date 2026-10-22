@@ -57,7 +57,8 @@ class CohortAnalysis
         ksort($cohorts);
 
         $result = [];
-        $weighted = array_fill(0, $depth + 1, [0, 0]);   // [clientes retenidos, clientes observables]
+        $retained = array_fill(0, $depth + 1, 0);       // clientes retenidos por mes k
+        $observed = array_fill(0, $depth + 1, 0);       // clientes observables por mes k
         foreach ($cohorts as $cohort => $c) {
             $prior = $cohort === $firstMonth;
             $retention = [];
@@ -65,8 +66,8 @@ class CohortAnalysis
                 $observable = $this->offset($cohort, $lastMonth) > $k;     // el mes k debe ser anterior al mes (incompleto) de la última venta
                 $retention[] = $observable ? round(($c['active'][$k] ?? 0) / $c['customers'] * 100, 1) : null;
                 if ($observable && ! $prior) {
-                    $weighted[$k][0] += $c['active'][$k] ?? 0;
-                    $weighted[$k][1] += $c['customers'];
+                    $retained[$k] += $c['active'][$k] ?? 0;
+                    $observed[$k] += $c['customers'];
                 }
             }
             $result[] = ['month' => $cohort, 'customers' => $c['customers'], 'prior' => $prior, 'retention' => $retention];
@@ -74,7 +75,7 @@ class CohortAnalysis
 
         return $this->runs->record($company->id, 'cohorts', InsightRun::OK, CarbonImmutable::parse($first->first_on), CarbonImmutable::parse($first->last_on), [
             'depth' => $depth, 'first_month' => $firstMonth, 'last_month' => $lastMonth, 'cohorts' => $result,
-            'average' => array_map(fn (array $w) => $w[1] > 0 ? round($w[0] / $w[1] * 100, 1) : null, $weighted),
+            'average' => array_map(fn (int $kept, int $seen) => $seen > 0 ? round($kept / $seen * 100, 1) : null, $retained, $observed),
         ], null, $user);
     }
 

@@ -55,7 +55,7 @@ class ConversationAlerts
             }
             $customer = Customer::withoutGlobalScopes()->find($c->customer_id);
             $supervisorId = $customer?->seller_id === null ? null : DB::table('sellers')->where('id', $customer->seller_id)->value('supervisor_id');
-            $supervisor = $supervisorId === null ? null : User::query()->find($supervisorId);
+            $supervisor = $supervisorId === null ? null : User::query()->find((int) $supervisorId);
             if ($supervisor === null) {
                 continue;
             }
@@ -70,10 +70,10 @@ class ConversationAlerts
     private function responsibles(WhatsappConversation $c, ?Customer $customer): array
     {
         if ($customer === null) {
-            return User::query()->where('is_active', true)->whereHas('role', fn ($q) => $q->where('slug', Role::SUPERVISOR_VENTAS))->whereHas('companies', fn ($q) => $q->where('companies.id', $c->company_id))->get()->all();
+            return array_values(User::query()->where('is_active', true)->whereHas('role', fn ($q) => $q->where('slug', Role::SUPERVISOR_VENTAS))->whereHas('companies', fn ($q) => $q->where('companies.id', $c->company_id))->get()->all());
         }
         $userId = $customer->seller_id === null ? null : DB::table('sellers')->where('id', $customer->seller_id)->value('user_id');
-        $user = $userId === null ? null : User::query()->find($userId);
+        $user = $userId === null ? null : User::query()->find((int) $userId);
 
         return $user === null ? [] : [$user];
     }

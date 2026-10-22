@@ -24,7 +24,7 @@ class InsightCrossSellController extends Controller
     public function index(Request $request): JsonResponse
     {
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1']]);
-        Company::query()->findOrFail($data['company_id']);
+        Company::query()->findOrFail((int) $data['company_id']);
         $run = $this->latestRun((int) $data['company_id']);
 
         return response()->json([
@@ -65,7 +65,7 @@ class InsightCrossSellController extends Controller
     {
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1']]);
 
-        return response()->json(['data' => $this->presentRun($this->analysis->compute(Company::query()->findOrFail($data['company_id']), $request->user()))]);
+        return response()->json(['data' => $this->presentRun($this->analysis->compute(Company::query()->findOrFail((int) $data['company_id']), $request->user()))]);
     }
 
     private function latestRun(int $companyId): ?InsightRun

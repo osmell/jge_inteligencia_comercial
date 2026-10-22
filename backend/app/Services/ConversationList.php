@@ -28,7 +28,7 @@ class ConversationList
             ->where('whatsapp_conversations.status', $filters['status'] ?? WhatsappConversation::OPEN)
             ->when(! empty($filters['unassigned']), fn (Builder $q) => $q->whereNull('whatsapp_conversations.customer_id'))
             ->when(! empty($filters['q']), function (Builder $q) use ($filters) {
-                $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], mb_strtolower($filters['q'])).'%';
+                $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], mb_strtolower((string) ($filters['q'] ?? ''))).'%';
                 $q->where(fn (Builder $w) => $w->whereRaw('lower(whatsapp_conversations.wa_number) like ?', [$term])->orWhereRaw('lower(coalesce(whatsapp_conversations.profile_name, \'\')) like ?', [$term])
                     ->orWhereIn('whatsapp_conversations.customer_id', DB::table('customers')->select('id')->whereRaw('lower(name) like ?', [$term])));
             })

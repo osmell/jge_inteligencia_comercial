@@ -88,7 +88,7 @@ final class DemoSalesGenerator
             $count = (int) floor($expected) + (mt_rand() / mt_getrandmax() < $expected - floor($expected) ? 1 : 0);
 
             for ($i = 0; $i < $count; $i++) {
-                $company = $this->pick(self::COMPANY_WEIGHT);
+                $company = (string) $this->pick(self::COMPANY_WEIGHT);
                 $spec = self::COMPANIES[$company];
                 $seller = $this->pickSeller($company, $progress);
                 $customer = $this->pickCustomer($company);

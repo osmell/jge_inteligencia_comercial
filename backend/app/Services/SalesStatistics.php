@@ -127,7 +127,7 @@ class SalesStatistics
      *
      * @param  array<string, mixed>  $filters
      * @param  array{0: CarbonImmutable, 1: CarbonImmutable}  $compare
-     * @return array{rows: list<array<string, mixed>>, truncated: bool}
+     * @return array{rows: array<int, array<string, mixed>>, truncated: bool}
      */
     public function breakdownCompared(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $sort, int $limit, array $compare): array
     {
@@ -155,7 +155,7 @@ class SalesStatistics
      * @param  bool  $costedOnly  deja fuera los grupos sin ninguna línea con costo válido (para rankings de margen)
      * @param  bool  $discountedOnly  deja fuera los grupos sin descuento (para el ranking de descuento)
      * @param  array<string, mixed>  $filters
-     * @return array{rows: list<array<string, mixed>>, truncated: bool}
+     * @return array{rows: array<int, array<string, mixed>>, truncated: bool}
      */
     public function breakdown(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $sort, int $limit, bool $costedOnly = false, bool $discountedOnly = false): array
     {
@@ -196,7 +196,7 @@ class SalesStatistics
      * El de margen solo incluye grupos con costo válido y usa el costo actual.
      *
      * @param  array<string, mixed>  $filters
-     * @return array<string, list<array<string, mixed>>>
+     * @return array<string, array<int, array<string, mixed>>>
      */
     public function rankings(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, int $limit): array
     {
@@ -320,7 +320,7 @@ class SalesStatistics
     }
 
     /** @return array<string, mixed> */
-    private function format(object $r): array
+    private function format(\stdClass $r): array
     {
         $net = (float) $r->net_total;
         $documents = (int) $r->documents;

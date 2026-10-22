@@ -17,7 +17,7 @@ class InsightAlertSync
 {
     /**
      * @param  list<string>  $types  tipos de alerta que este cálculo gobierna
-     * @param  list<array{customer_code: string, customer_name: string, type: string, severity: string, dedupe_key: string, facts: array<string, mixed>, explanation: string}>  $candidates
+     * @param  list<array<string, mixed>>  $candidates  cada una con customer_code, customer_name, type, severity, dedupe_key, facts y explanation
      * @return array{new: int, updated: int, resolved: int}
      */
     public function sync(InsightRun $run, array $types, array $candidates): array

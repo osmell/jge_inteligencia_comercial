@@ -102,7 +102,7 @@ class ConversationToolsController extends Controller
     {
         $c = $this->writable($request, $conversation);
         $data = $request->validate(['quotation_id' => ['required', 'integer'], 'body' => ['nullable', 'string', 'max:1000'], 'client_key' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{8,64}$/']]);
-        $q = Quotation::query()->where('customer_id', $c->customer_id)->whereNotNull('attachment_path')->findOrFail($data['quotation_id']);
+        $q = Quotation::query()->where('customer_id', $c->customer_id)->whereNotNull('attachment_path')->findOrFail((int) $data['quotation_id']);
         abort_unless(Storage::disk('quotations')->exists((string) $q->attachment_path), 404, 'La cotización ya no tiene su archivo.');
 
         $tmp = tempnam(sys_get_temp_dir(), 'jge');

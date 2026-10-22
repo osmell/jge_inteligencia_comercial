@@ -103,7 +103,7 @@ class ImportController extends Controller
         $this->authorizeBatch($request, $batch);
 
         return response()->streamDownload(function () use ($batch) {
-            $out = fopen('php://output', 'w');
+            $out = fopen('php://output', 'w') ?: throw new \RuntimeException('No se pudo abrir la salida de la descarga.');
             fwrite($out, "\xEF\xBB\xBF"); // BOM para que Excel lea UTF-8
             fputcsv($out, ['Fila', 'Columna', 'Severidad', 'Código', 'Mensaje', 'Valor']);
             foreach ($batch->errors()->orderBy('row_number')->orderBy('id')->cursor() as $e) {

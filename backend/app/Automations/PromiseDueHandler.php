@@ -53,6 +53,6 @@ class PromiseDueHandler extends NoticeHandler
             ->whereNotNull('sellers.user_id')->pluck('sellers.user_id')->all();
         $ids = array_unique(array_filter([$promise->user_id, ...$sellerUsers]));
 
-        return User::query()->whereIn('id', $ids)->where('is_active', true)->get()->all();
+        return array_values(User::query()->whereIn('id', $ids)->where('is_active', true)->get()->all());
     }
 }

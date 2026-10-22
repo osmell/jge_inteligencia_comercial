@@ -81,8 +81,8 @@ class PaymentPromises
         $today ??= CarbonImmutable::today();
         $query = PaymentPromise::query()->with('user:id,name')
             ->whereExists(CreditInvoice::query()->selectRaw('1')->whereColumn('credit_invoices.company_id', 'payment_promises.company_id')->whereColumn('credit_invoices.customer_code', 'payment_promises.customer_code')->toBase())
-            ->when(! empty($opts['company_id']), fn (Builder $q) => $q->where('company_id', $opts['company_id']))
-            ->when(! empty($opts['code']), fn (Builder $q) => $q->where('customer_code', $opts['code']))
+            ->when(! empty($opts['company_id']), fn (Builder $q) => $q->where('company_id', ($opts['company_id'] ?? null)))
+            ->when(! empty($opts['code']), fn (Builder $q) => $q->where('customer_code', ($opts['code'] ?? null)))
             ->when(! empty($opts['mine']) && $user !== null, fn (Builder $q) => $q->where('user_id', $user?->id))
             ->orderBy('promised_on')->orderBy('id');
 

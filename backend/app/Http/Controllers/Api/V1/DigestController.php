@@ -48,7 +48,7 @@ class DigestController extends Controller
         $data = $request->validate(['company_id' => ['required', 'integer', 'min:1'], 'kind' => ['required', Rule::in([Digest::DAILY, Digest::WEEKLY])]]);
         abort_unless($request->user()->hasPermission('automations.manage'), 403, 'No tienes permiso para realizar esta acción.');
         abort_unless(in_array((int) $data['company_id'], $this->companyIds($request), true), 404, 'Compañía no encontrada.');
-        $company = Company::query()->findOrFail($data['company_id']);
+        $company = Company::query()->findOrFail((int) $data['company_id']);
         $digest = $data['kind'] === Digest::DAILY ? $this->builder->daily($company) : $this->builder->weekly($company);
         $this->audit->record('digests.generated', $request->user(), auditable: $digest, new: ['kind' => $digest->kind, 'period' => $digest->period_key], companyId: $company->id);
 
@@ -66,7 +66,7 @@ class DigestController extends Controller
     {
         $full = $this->scope->fullCompanyIds($request->user());
 
-        return $full ?? Company::query()->pluck('id')->map(fn ($id) => (int) $id)->all();
+        return $full ?? array_values(Company::query()->pluck('id')->map(fn ($id) => (int) $id)->all());
     }
 
     /** @return array<string, mixed> */

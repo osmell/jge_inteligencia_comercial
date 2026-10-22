@@ -72,13 +72,13 @@ class DashboardService
     {
         $ids = $this->profile($user)['seller_ids'];
 
-        return $ids === null ? [] : DB::table('sellers')->whereIn('id', $ids)->orderBy('name')->pluck('name')->all();
+        return $ids === null ? [] : array_values(DB::table('sellers')->whereIn('id', $ids)->orderBy('name')->pluck('name')->map(fn ($n) => (string) $n)->all());
     }
 
     /** @return list<int> compañías del ámbito de la persona (para el selector) */
     public function companyIds(User $user): array
     {
-        return $this->scope->companyIds($user) ?? DB::table('companies')->pluck('id')->map(fn ($id) => (int) $id)->all();
+        return $this->scope->companyIds($user) ?? array_values(DB::table('companies')->pluck('id')->map(fn ($id) => (int) $id)->all());
     }
 
     /**
@@ -172,7 +172,7 @@ class DashboardService
 
     /**
      * @param  array<string, mixed>  $filters
-     * @return list<array<string, mixed>>
+     * @return array<int, array<string, mixed>>
      */
     private function series(string $dimension, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $name): array
     {
@@ -382,6 +382,6 @@ class DashboardService
     /** @return list<int> */
     private function ids(QueryBuilder $query): array
     {
-        return $query->pluck('id')->map(fn ($id) => (int) $id)->all();
+        return array_values($query->pluck('id')->map(fn ($id) => (int) $id)->all());
     }
 }

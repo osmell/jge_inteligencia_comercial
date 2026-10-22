@@ -120,7 +120,7 @@ class ConversationController extends Controller
         if ($this->wa->number($customer->whatsapp) !== $c->wa_number) {
             return response()->json(['message' => 'El número de esta conversación ya no es el que tiene el cliente.'], 422);
         }
-        $m = $this->wa->send($request->user(), $customer, WhatsappTemplate::query()->findOrFail($data['template_id']), $data['params'] ?? []);
+        $m = $this->wa->send($request->user(), $customer, WhatsappTemplate::query()->findOrFail((int) $data['template_id']), $data['params'] ?? []);
         if ($m->status === WhatsappMessage::NOT_SENT) {
             return response()->json(['message' => (string) $m->error], 422);
         }
@@ -180,7 +180,7 @@ class ConversationController extends Controller
     }
 
     /**
-     * @param  list<string>  $labels
+     * @param  array<int, string>  $labels
      * @return array<string, mixed>
      */
     private function present(WhatsappConversation $c, ?Customer $customer, int $unread, User $user, array $labels = []): array
