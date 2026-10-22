@@ -14,6 +14,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Pruebas unitarias** (`tests/Unit`) de la aritmética de cantidades e importes, antigüedad de cartera, RFM, ventana de 24 h, reglas de importación y reglas de arquitectura.
 - **Policies** de autorización por registro (conversaciones, cotizaciones, contactos, clientes, vendedores, facturadores, respuestas rápidas).
 - **Puertos** (`app/Contracts`) para WhatsApp y webhooks, con sus integraciones.
+- **Revisión de seguridad** (`docs/28_SEGURIDAD.md`): matriz de acceso sobre las 192 rutas, pruebas de aislamiento entre compañías y vendedores, escaneo dinámico con OWASP ZAP (0 fallos), cabeceras de seguridad, límites de peticiones, defensa contra SSRF y 56 pruebas nuevas.
 - **Contrato de la API generado** (OpenAPI con Scramble en `backend/openapi.json`, documentación en `/docs/api` para administración y tipos de TypeScript generados) con comprobaciones automáticas de deriva; las cotizaciones usan `Resource` y tipos derivados.
 - **Pruebas de extremo a extremo** con Playwright (`e2e/`): 7 flujos críticos en un navegador real, ejecutados cada noche y a demanda en GitHub.
 - **Hooks del frontend** (`useFilters`, `useSubmit`, `useFormValues`, `useExport`, `useDebounced`, `useFitRows`) que reemplazan filas repetidas de `useState`.
@@ -24,6 +25,13 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - Todo el backend usa `declare(strict_types=1)`; PHPStan sube del nivel 5 al **8** sin *baseline*.
 - Las consultas y transacciones salieron de los controladores hacia servicios; el dashboard, las estadísticas de ventas, la ficha de clientes y los reportes se dividieron en clases por responsabilidad. Sin cambios de comportamiento.
 - Mensaje de rechazo único al escribir o agregar notas en una conversación ajena.
+
+### Seguridad
+- Un vendedor ya no puede cancelar promesas de pago de clientes de otro vendedor.
+- Límite general de peticiones y límite de intentos de inicio de sesión por dirección; cabeceras de seguridad; sin `X-Powered-By` ni página de bienvenida.
+- Las cuentas desactivadas dejan de ver `/auth/me` y de recibir tiempo real aunque conserven la sesión.
+- Descarga de archivos de WhatsApp solo desde dominios de Meta; destino del webhook sin acceso a la red interna.
+- Cookie de sesión `Secure` por omisión en producción; auditoría de dependencias que bloquea la CI.
 
 ### Corregido
 - `company_id` de la URL se pasaba como texto a los servicios de crédito.

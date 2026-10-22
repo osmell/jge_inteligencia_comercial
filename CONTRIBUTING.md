@@ -29,6 +29,9 @@ Las respuestas nuevas usan un `Resource` y el documento `backend/openapi.json` y
 ## Pruebas de extremo a extremo
 Los flujos críticos (sesión, barra de comandos, menú por rol, ventas, administración, clientes, cotizaciones) se prueban en un navegador real con Playwright (`e2e/`, ver su README). Corren cada noche y a demanda en GitHub (*Actions → E2E*); un cambio que toque una de esas pantallas debe ejecutarlas antes de fusionarse.
 
+## Seguridad
+`docs/28_SEGURIDAD.md` resume la revisión de seguridad y cómo repetirla. Una ruta nueva debe llevar `permission:` (o agregarse, tras revisarla, a la lista cerrada de `AccessMatrixTest`); un recurso nuevo con dueño (compañía, vendedor) necesita su caso en `TenantIsolationTest`. Una vulnerabilidad se corrige con su prueba automática.
+
 ## Reglas de código (resumen de SOLID para este proyecto)
 - **Controlador delgado**: autorizar, validar con `FormRequest`, delegar a un servicio, responder. Sin `DB::` ni consultas encadenadas.
 - **Una regla de negocio, un lugar**: búscala antes en `app/Services`. Un servicio = un caso de uso.

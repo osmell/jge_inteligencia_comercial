@@ -44,6 +44,11 @@ class HardeningTest extends TestCase
         $this->assertNull($response->headers->get('Strict-Transport-Security'), 'HSTS solo por HTTPS.');
     }
 
+    public function test_the_root_shows_no_framework_page(): void
+    {
+        $this->get('/')->assertNotFound();
+    }
+
     public function test_https_responses_add_hsts(): void
     {
         $response = $this->withServerVariables(['HTTPS' => 'on'])->getJson('https://localhost/api/v1/auth/me');

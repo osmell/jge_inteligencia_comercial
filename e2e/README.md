@@ -27,6 +27,10 @@ O, con Node instalado: `cd e2e && npm ci && npx playwright install chromium && n
 - Para no tocar la base de desarrollo, levante una instalación aparte (ver `.github/workflows/e2e.yml`, que hace exactamente eso con SQLite).
 - En fallos quedan capturas y un *trace* en `test-results/` (`npx playwright show-trace <archivo>`).
 
+## Con una política de seguridad de contenido (CSP) estricta
+`tests/08-politica-de-contenido.spec.ts` recorre las pantallas principales y falla si el navegador bloquea algo. Para que tenga sentido, sirva la interfaz compilada con la cabecera:
+`node e2e/tools/csp-server.cjs <carpeta dist> <puerto> <URL de la API>` (la política es la que se recomienda en `docs/28_SEGURIDAD.md`).
+
 ## Integración continua
 `.github/workflows/e2e.yml` levanta la aplicación (SQLite, datos de demostración) y ejecuta todas, incluida la que escribe. Corre cada noche y a
 demanda (verificado en GitHub: 11 de 11 en menos de 25 s) (*Actions → E2E → Run workflow*); no bloquea los Pull Requests porque es más lenta que la CI normal.

@@ -24,6 +24,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum', 'active']])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+        // Detrás de un balanceador o proxy: sin esto todas las peticiones parecen venir de la misma dirección y los límites de intentos
+        // (que usan la dirección del cliente) se aplicarían a todo el mundo a la vez. TRUSTED_PROXIES = «*» o una lista de direcciones.
+        if (is_string(env('TRUSTED_PROXIES')) && env('TRUSTED_PROXIES') !== '') {
+            $middleware->trustProxies(at: env('TRUSTED_PROXIES') === '*' ? '*' : array_map('trim', explode(',', (string) env('TRUSTED_PROXIES'))));
+        }
         // Cabeceras de seguridad en toda respuesta y límite general de peticiones de la API (ver docs/28_SEGURIDAD.md).
         $middleware->append(SecurityHeaders::class);
         $middleware->throttleApi();
