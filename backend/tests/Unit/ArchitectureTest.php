@@ -88,4 +88,18 @@ final class ArchitectureTest extends TestCase
 
         $this->assertSame([], array_values($offenders), 'Las reglas de acceso a un registro van en una Policy (app/Policies), no en el controlador.');
     }
+
+    public function test_no_service_or_import_class_grows_past_400_lines(): void
+    {
+        $offenders = [];
+        foreach (['app/Services', 'app/Imports', 'app/Http/Controllers'] as $dir) {
+            foreach ($this->phpFiles($dir) as $file) {
+                if (substr_count((string) file_get_contents($file), "\n") > 400) {
+                    $offenders[] = $file;
+                }
+            }
+        }
+
+        $this->assertSame([], $offenders, 'Una clase de más de 400 líneas casi siempre tiene más de un motivo de cambio: divídala por responsabilidad (docs/24).');
+    }
 }

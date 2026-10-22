@@ -11,6 +11,8 @@ use App\Imports\ImportContext;
 use App\Imports\ImportRow;
 use App\Imports\LocationResolver;
 use App\Imports\ParsedRow;
+use App\Imports\Rules\CreditAmounts;
+use App\Imports\Rules\RowRules;
 use App\Models\Company;
 use App\Models\CreditInvoice;
 use App\Models\CreditMovement;
@@ -93,13 +95,13 @@ final class CreditInvoicesImportType implements ImportType
 
     public function parseRow(ImportRow $row): ?ParsedRow
     {
-        $document = $this->limit($row, 'document', $row->code('document', warnNumeric: false));
-        $series = $this->limit($row, 'series', $row->code('series'));
+        $document = RowRules::limit($row, 'document', $row->code('document', warnNumeric: false));
+        $series = RowRules::limit($row, 'series', $row->code('series'));
         $issued = $row->date('issued_on', config('imports.sales.date_formats'));
-        $customerCode = $this->limit($row, 'customer_code', $row->code('customer_code', warnNumeric: false));
-        $customerName = $this->limit($row, 'customer_name', $row->text('customer_name'));
-        $seller = $this->limit($row, 'seller_name', $row->text('seller_name'));
-        $operator = $this->limit($row, 'operator_name', $row->text('operator_name'));
+        $customerCode = RowRules::limit($row, 'customer_code', $row->code('customer_code', warnNumeric: false));
+        $customerName = RowRules::limit($row, 'customer_name', $row->text('customer_name'));
+        $seller = RowRules::limit($row, 'seller_name', $row->text('seller_name'));
+        $operator = RowRules::limit($row, 'operator_name', $row->text('operator_name'));
 
         $amounts = [];
         foreach (self::AMOUNTS as $key) {
@@ -113,8 +115,8 @@ final class CreditInvoicesImportType implements ImportType
             return null;
         }
 
-        $this->checkAmounts($row, $amounts);
-        $this->checkDate($row, $issued);
+        CreditAmounts::check($row, $amounts);
+        RowRules::issuedDate($row, $issued);
         if ($row->failed()) {
             return null;
         }
@@ -246,51 +248,6 @@ final class CreditInvoicesImportType implements ImportType
         }
 
         return $linked;
-    }
-
-    /** @param  array<string, mixed>  $amounts */
-    private function checkAmounts(ImportRow $row, array $amounts): void
-    {
-        $negativeHint = 'No se esperan valores negativos: las devoluciones se registran como notas de crédito.';
-        foreach ($amounts as $key => $value) {
-            if ($value !== null && Decimal::isNegative($value)) {
-                $row->fail($key, 'negative_amount', $negativeHint);
-            }
-        }
-        if (! Decimal::isPositive($amounts['total'])) {
-            $row->fail('total', 'non_positive_total', 'El total de la factura debe ser mayor que cero.');
-        }
-
-        $tolerance = (int) round((float) config('imports.amount_tolerance') * 10 ** Decimal::SCALE);
-        $show = fn (int $u) => number_format($u / 10 ** Decimal::SCALE, 2, '.', '');
-        $expected = Decimal::units($amounts['subtotal']) - Decimal::units($amounts['discount_total']) + Decimal::units($amounts['tax_total']);
-        $total = Decimal::units($amounts['total']);
-        if (abs($total - $expected) > $tolerance) {
-            $row->fail('total', 'amount_mismatch', sprintf(
-                '«%s» (%s) no coincide con «%s» − «%s» + «%s» (%s).',
-                $row->label('total'), $show($total), $row->label('subtotal'), $row->label('discount_total'), $row->label('tax_total'), $show($expected),
-            ));
-        }
-    }
-
-    private function checkDate(ImportRow $row, DateTimeImmutable $issued): void
-    {
-        if ($issued > new DateTimeImmutable('+1 day')) {
-            $row->warn('issued_on', 'future_date', 'La fecha es posterior a hoy.');
-        } elseif ($issued < new DateTimeImmutable('2000-01-01')) {
-            $row->warn('issued_on', 'old_date', 'La fecha es anterior al año 2000.');
-        }
-    }
-
-    private function limit(ImportRow $row, string $key, ?string $value): ?string
-    {
-        if ($value !== null && mb_strlen($value) > 255) {
-            $row->fail($key, 'too_long', 'El texto supera los 255 caracteres.');
-
-            return null;
-        }
-
-        return $value;
     }
 
     /** @param  array<string, mixed>  $amounts */

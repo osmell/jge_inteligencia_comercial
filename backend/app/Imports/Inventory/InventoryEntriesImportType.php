@@ -11,6 +11,7 @@ use App\Imports\ImportContext;
 use App\Imports\ImportRow;
 use App\Imports\LocationResolver;
 use App\Imports\ParsedRow;
+use App\Imports\Rules\RowRules;
 use App\Inventory\Quantity;
 use App\Models\Branch;
 use App\Models\ImportBatch;
@@ -106,12 +107,12 @@ final class InventoryEntriesImportType implements ImportType
     {
         $this->lookup ??= new InventoryUnits;
         $received = $row->date('received_on', config('imports.sales.date_formats'));
-        $document = $this->limit($row, 'document', $row->code('document', warnNumeric: false), 100);
-        $supplier = $this->limit($row, 'supplier', $row->text('supplier'), 255);
+        $document = RowRules::limit($row, 'document', $row->code('document', warnNumeric: false), 100);
+        $supplier = RowRules::limit($row, 'supplier', $row->text('supplier'), 255);
         $code = $row->code('product_code', warnNumeric: false);
         $unitText = $row->text('unit');
         $quantity = $row->decimal('quantity', scale: Quantity::SCALE);
-        $observations = $this->limit($row, 'observations', $row->text('observations', required: false), 500);
+        $observations = RowRules::limit($row, 'observations', $row->text('observations', required: false), 500);
         $amounts = [];
         foreach (self::AMOUNTS as $key) {
             $amounts[$key] = $row->decimal($key, required: ! in_array($key, ['discount', 'tax'], true), scale: 4);
@@ -303,17 +304,6 @@ final class InventoryEntriesImportType implements ImportType
         } elseif ($received < new DateTimeImmutable('2000-01-01')) {
             $row->warn('received_on', 'old_date', 'La fecha es anterior al año 2000.');
         }
-    }
-
-    private function limit(ImportRow $row, string $key, ?string $value, int $max): ?string
-    {
-        if ($value !== null && mb_strlen($value) > $max) {
-            $row->fail($key, 'too_long', "El texto supera los {$max} caracteres.");
-
-            return null;
-        }
-
-        return $value;
     }
 
     /** Fecha de corte de la sucursal: la del primer inventario inicial; null si no tiene. */

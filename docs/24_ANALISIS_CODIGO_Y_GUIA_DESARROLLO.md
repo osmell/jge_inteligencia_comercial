@@ -145,7 +145,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | D ✅ | Mover consultas de los 10 controladores con `DB::` a servicios/scopes (empezando por Conversaciones, Notificaciones, Cotizaciones) | Medio | Medio (cubierto por pruebas Feature) |
 | E ✅ | Crear `tests/Unit` con la lógica pura y empezar por RFM, aging, scoring, ventanas | Medio | Bajo |
 | F ✅ | Policies para los recursos con alcance por registro (clientes, cotizaciones, conversaciones) | Medio | Medio (toca permisos: confirmar antes) |
-| G | Dividir `DashboardService`, `SalesStatistics`, `CustomerInsights`, `SalesReportExporter` y los `ImportType` > 400 líneas | Medio–alto | Medio |
+| G ✅ | Dividir `DashboardService`, `SalesStatistics`, `CustomerInsights`, `SalesReportExporter` y los `ImportType` > 400 líneas | Medio–alto | Medio |
 | H ✅ | Interfaces para puertos externos (WhatsApp, correo, webhook) y eliminar `app()`/`new` de la lógica | Medio | Bajo |
 | I | `Resource` en todas las respuestas + generación de tipos TS (OpenAPI con Scribe/Scramble) | Medio | Bajo |
 | J | Hooks para páginas con > 8 estados; Playwright con 5–8 flujos críticos | Medio–alto | Bajo |
@@ -163,7 +163,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | `app()`/`resolve()` en servicios, importaciones y controladores | 39 → **0** (paso H); quedan 10 en puntos donde Laravel no inyecta (ver paso H) | 0 |
 | Pruebas unitarias | 0 | ≥ 150 |
 | Policies | 0 → **6** (paso F) | las de recursos con alcance por registro |
-| Servicios > 300 líneas | 4 | 0 |
+| Servicios > 300 líneas | 4 → **0** (paso G) | 0 |
 | Páginas con > 8 `useState` | 8 | 0 |
 | CI obligatoria en PR | No | Sí |
 
@@ -267,3 +267,20 @@ Se subió de uno en uno (6 → 7 → 8), con un commit por nivel y las 675 prueb
 2. **`$request->user()` nunca es nulo** en `app/Http/Controllers` y `app/Http/Requests`: las rutas que lo usan están detrás de `auth:sanctum` y del middleware de permisos. Se intentó una extensión propia de PHPStan, pero la de Larastan tiene prioridad; por eso es una excepción limitada a esas dos carpetas.
 
 **Defectos latentes encontrados**: una descarga CSV que ante un fallo al abrir la salida habría continuado con un recurso inválido; cuatro lugares que asumían una relación presente (sucursal/vendedor/compañía) y habrían lanzado error ante datos incompletos; el parámetro `month` de metas que ante un formato inválido devolvía `null` en silencio.
+
+### Paso G — División de los servicios grandes (2026-10-21)
+Se dividió por responsabilidad, **sin cambiar la API ni el comportamiento**: las 675 pruebas anteriores pasan sin modificarse (687 en total con las nuevas).
+
+| Antes | Después | Qué se separó |
+|---|---|---|
+| `DashboardService` 387 líneas | **136** + 10 clases en `Services/Dashboard/` | Cada sección (`SalesSection`, `GoalsSection`, `CreditSection`…) es una clase que extiende `DashboardSection` (clave, permiso, `availableFor`, `build`). Se registran en `AppServiceProvider` (etiqueta `dashboard.sections`): **agregar una sección es crear una clase y añadirla a esa lista**, sin tocar `DashboardService` (principio abierto/cerrado) |
+| `SalesStatistics` 367 | **221** | `Sales/SalesQuery` (SQL: consulta base, dimensiones, agregados, orden; todo fragmento sale de listas blancas) y `Sales/SalesMetrics` (formato de cifras y variaciones) |
+| `CustomerInsights` 346 | **147** | `Customers/CustomerSearch` (búsqueda), `Customers/CustomerPurchases` (facturas y líneas), `Customers/AbcClassification` (clase ABC) |
+| `SalesReportExporter` 337 | **eliminado** → 6 clases en `Services/Reports/` | `SalesCsvExporter`, `SalesWorkbookExporter` (Excel), `SalesPdfExporter`, `SalesReportTable` (títulos, métricas y filas comunes), `FilterDescriber`, `CsvSafe` |
+| `SalesImportType` 445 / `CreditInvoicesImportType` 422 | **341 / 379** | `Imports/Rules/`: `RowRules` (límite de texto y fecha de emisión, antes copiados en 5 tipos), `SalesAmounts` y `CreditAmounts` (validación de importes) |
+
+**Hallazgo**: en el listado de facturas del cliente había código muerto que ejecutaba consultas de estado y clase ABC cuyo resultado nunca se usaba; se eliminó (menos consultas por petición).
+
+**Pruebas nuevas**: `ImportRulesTest` (11 pruebas) cubre las reglas extraídas sin archivo ni base de datos; `ArchitectureTest` ahora impide que una clase de `Services`, `Imports` o controladores pase de 400 líneas.
+
+**Pendiente de este tema**: `InventoryEntriesImportType` (344), `CustomersImportType` (304), `FollowUpKpis` (275) y `SellerGoals` (273) siguen por debajo del límite; se dividirán cuando se modifiquen. Los tipos de importación comparten aún `person`/`newPeople` (alta de vendedores y facturadores), candidatos a un servicio común.

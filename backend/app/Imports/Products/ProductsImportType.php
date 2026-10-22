@@ -10,6 +10,7 @@ use App\Imports\ImportContext;
 use App\Imports\ImportRow;
 use App\Imports\LocationResolver;
 use App\Imports\ParsedRow;
+use App\Imports\Rules\RowRules;
 use App\Models\ImportBatch;
 use App\Models\Product;
 use App\Models\User;
@@ -66,11 +67,11 @@ final class ProductsImportType implements ImportType
     public function parseRow(ImportRow $row): ?ParsedRow
     {
         $code = $this->integerCode($row);
-        $name = $this->limited($row, 'name', $row->text('name'));
+        $name = RowRules::limit($row, 'name', $row->text('name'));
         $fields = [
-            'level1' => $this->limited($row, 'level1', $row->text('level1', required: false)),
-            'level2' => $this->limited($row, 'level2', $row->text('level2', required: false)),
-            'level3' => $this->limited($row, 'level3', $row->text('level3', required: false)),
+            'level1' => RowRules::limit($row, 'level1', $row->text('level1', required: false)),
+            'level2' => RowRules::limit($row, 'level2', $row->text('level2', required: false)),
+            'level3' => RowRules::limit($row, 'level3', $row->text('level3', required: false)),
         ];
 
         [$company, $branch] = $this->resolver()->resolve($row);
@@ -183,17 +184,6 @@ final class ProductsImportType implements ImportType
         }
 
         return $text;
-    }
-
-    private function limited(ImportRow $row, string $key, ?string $value, int $max = 255): ?string
-    {
-        if ($value !== null && mb_strlen($value) > $max) {
-            $row->fail($key, 'too_long', "El texto supera los {$max} caracteres.");
-
-            return null;
-        }
-
-        return $value;
     }
 
     private function resolver(): LocationResolver

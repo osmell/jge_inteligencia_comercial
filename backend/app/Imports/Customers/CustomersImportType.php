@@ -10,6 +10,7 @@ use App\Imports\ImportContext;
 use App\Imports\ImportRow;
 use App\Imports\LocationResolver;
 use App\Imports\ParsedRow;
+use App\Imports\Rules\RowRules;
 use App\Models\Customer;
 use App\Models\CustomerType;
 use App\Models\ImportBatch;
@@ -85,14 +86,14 @@ final class CustomersImportType implements ImportType
     public function parseRow(ImportRow $row): ?ParsedRow
     {
         $code = $this->integerCode($row);
-        $name = $this->limited($row, 'name', $row->text('name'));
+        $name = RowRules::limit($row, 'name', $row->text('name'));
         $fields = [
-            'trade_name' => $this->limited($row, 'trade_name', $row->text('trade_name', required: false)),
-            'contact_name' => $this->limited($row, 'contact_name', $row->text('contact_name', required: false)),
+            'trade_name' => RowRules::limit($row, 'trade_name', $row->text('trade_name', required: false)),
+            'contact_name' => RowRules::limit($row, 'contact_name', $row->text('contact_name', required: false)),
             'phone' => $this->phone($row, 'phone'),
             'whatsapp' => $this->phone($row, 'whatsapp'),
             'email' => $this->email($row),
-            'address' => $this->limited($row, 'address', $row->text('address', required: false), 500),
+            'address' => RowRules::limit($row, 'address', $row->text('address', required: false), 500),
         ];
 
         [$company, $branch] = $this->resolver()->resolve($row);
@@ -286,20 +287,9 @@ final class CustomersImportType implements ImportType
 
     private function email(ImportRow $row): ?string
     {
-        $value = $this->limited($row, 'email', $row->text('email', required: false));
+        $value = RowRules::limit($row, 'email', $row->text('email', required: false));
         if ($value !== null && ! filter_var($value, FILTER_VALIDATE_EMAIL)) {
             $row->fail('email', 'invalid_email', 'No es un correo electrónico válido.');
-
-            return null;
-        }
-
-        return $value;
-    }
-
-    private function limited(ImportRow $row, string $key, ?string $value, int $max = 255): ?string
-    {
-        if ($value !== null && mb_strlen($value) > $max) {
-            $row->fail($key, 'too_long', "El texto supera los {$max} caracteres.");
 
             return null;
         }
