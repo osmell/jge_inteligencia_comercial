@@ -73,7 +73,11 @@ class InsightAlert extends Model
         return ['facts' => 'array', 'first_detected_at' => 'datetime', 'last_detected_at' => 'datetime', 'resolved_at' => 'datetime', 'closed_at' => 'datetime'];
     }
 
-    /** Solo los clientes que el usuario puede ver (un vendedor, los suyos). */
+    /**
+     * Solo los clientes que el usuario puede ver (un vendedor, los suyos).
+     *
+     * @param  Builder<InsightAlert>  $query
+     */
     public function scopeVisibleCustomers(Builder $query): void
     {
         $query->whereExists(Customer::query()->selectRaw('1')->whereColumn('customers.company_id', 'insight_alerts.company_id')->whereColumn('customers.code', 'insight_alerts.customer_code')->toBase());

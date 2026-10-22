@@ -10,6 +10,7 @@ use Illuminate\Validation\Rule;
 /** Mismos periodo y filtros que el dashboard; CSV exige la dimensión a exportar, Excel incluye todas y el PDF resume las principales. */
 class SalesExportRequest extends SalesStatsRequest
 {
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [

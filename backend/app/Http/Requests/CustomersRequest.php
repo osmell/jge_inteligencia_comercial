@@ -17,6 +17,7 @@ class CustomersRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $isSearch = str_ends_with($this->path(), 'v1/customers');

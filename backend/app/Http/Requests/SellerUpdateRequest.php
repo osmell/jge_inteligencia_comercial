@@ -19,6 +19,7 @@ class SellerUpdateRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         /** @var Seller|null $seller */
@@ -39,6 +40,7 @@ class SellerUpdateRequest extends FormRequest
         ];
     }
 
+    /** @return list<\Closure> */
     public function after(): array
     {
         return [function ($validator) {

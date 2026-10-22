@@ -12,7 +12,11 @@ use App\Services\AuditLogger;
  */
 trait Auditable
 {
-    /** Atributos que no generan registro de auditoría por sí solos. */
+    /**
+     * Atributos que no generan registro de auditoría por sí solos.
+     *
+     * @var list<string>
+     */
     private static array $auditIgnored = ['updated_at', 'created_at', 'remember_token', 'last_login_at'];
 
     public static function bootAuditable(): void
@@ -40,6 +44,10 @@ trait Auditable
         return null;
     }
 
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
     private function auditValues(array $attributes): array
     {
         $values = array_diff_key($attributes, array_flip(self::$auditIgnored));
@@ -51,6 +59,10 @@ trait Auditable
         return $values;
     }
 
+    /**
+     * @param  array<string, mixed>|null  $old
+     * @param  array<string, mixed>  $new
+     */
     private function writeAudit(string $action, ?array $old, array $new): void
     {
         app(AuditLogger::class)->record(

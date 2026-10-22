@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 class CreditNoteRequest extends CreditAllocationRequest
 {
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $money = ['required', 'regex:/^\d{1,14}(\.\d{1,4})?$/'];

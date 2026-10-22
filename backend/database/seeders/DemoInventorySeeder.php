@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\InventoryLedger;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -92,8 +93,13 @@ class DemoInventorySeeder extends Seeder
         })();
     }
 
-    /** Inventario inicial o entrada mensual que cubre la demanda del mes (no registra nada si ya alcanza). */
-    private function stock(InventoryLedger $ledger, ?User $admin, $units, int $companyId, int $branchId, Product $product, int $demand, bool $opening, CarbonImmutable $on, string $month, array $costs): void
+    /**
+     * Inventario inicial o entrada mensual que cubre la demanda del mes (no registra nada si ya alcanza).
+     *
+     * @param  Collection<string, int>  $units
+     * @param  list<int>  $costs
+     */
+    private function stock(InventoryLedger $ledger, ?User $admin, Collection $units, int $companyId, int $branchId, Product $product, int $demand, bool $opening, CarbonImmutable $on, string $month, array $costs): void
     {
         [$balance] = $ledger->balance($companyId, $branchId, $product->id);
         $factor = 1.15 + (crc32($product->code) % 100) / 100;
@@ -124,8 +130,11 @@ class DemoInventorySeeder extends Seeder
 
     }
 
-    /** @return array<string, Product> «compañía|código» => producto, con unidad base y equivalencias. */
-    private function products($lines): array
+    /**
+     * @param  Collection<int, \stdClass>  $lines
+     * @return array<string, Product> «compañía|código» => producto, con unidad base y equivalencias.
+     */
+    private function products(Collection $lines): array
     {
         $units = Unit::pluck('id', 'code');
         $out = [];

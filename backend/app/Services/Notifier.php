@@ -28,7 +28,11 @@ class Notifier
         return $this->types->all();
     }
 
-    /** Tipos que la persona puede recibir, con si los tiene activados. @return list<array<string, mixed>> */
+    /**
+     * Tipos que la persona puede recibir, con si los tiene activados.
+     *
+     * @return list<array<string, mixed>>
+     */
     public function typesFor(User $user): array
     {
         $prefs = DB::table('notification_preferences')->where('user_id', $user->id)->pluck('enabled', 'type');

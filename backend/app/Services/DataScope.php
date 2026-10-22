@@ -28,7 +28,11 @@ class DataScope
         return $this->cache[$user->id] ??= $this->resolve($user);
     }
 
-    /** Compañías asignadas al usuario; null si no tiene restricción (Administrador). @return list<int>|null */
+    /**
+     * Compañías asignadas al usuario; null si no tiene restricción (Administrador).
+     *
+     * @return list<int>|null
+     */
     public function companyIds(User $user): ?array
     {
         $scope = $this->for($user);
@@ -58,6 +62,9 @@ class DataScope
         $this->cache = [];
     }
 
+    /**
+     * @return array{global: bool, companies: list<int>, restricted: array<int, list<int>>}
+     */
     private function resolve(User $user): array
     {
         if ($user->seesAllOrganizations()) {

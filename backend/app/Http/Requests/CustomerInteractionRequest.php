@@ -16,6 +16,7 @@ class CustomerInteractionRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $create = $this->isMethod('POST');

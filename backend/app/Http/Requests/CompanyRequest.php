@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 
 class CompanyRequest extends FormRequest
 {
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $company = $this->route('company');

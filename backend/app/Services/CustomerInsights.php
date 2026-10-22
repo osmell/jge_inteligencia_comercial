@@ -311,7 +311,11 @@ class CustomerInsights
         ];
     }
 
-    /** Limita el listado a los clientes en un estado de actividad (o, para «sin compras», a los que no tienen ninguna). */
+    /**
+     * Limita el listado a los clientes en un estado de actividad (o, para «sin compras», a los que no tienen ninguna).
+     *
+     * @param  Builder<Customer>  $query
+     */
     private function filterByStatus(Builder $query, string $status, ?int $companyId): void
     {
         $byCompany = $this->activity->codesWithStatus($status, $companyId);

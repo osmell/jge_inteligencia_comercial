@@ -51,8 +51,12 @@ class FollowUpKpis
         ];
     }
 
-    /** @param  array<string, mixed>  $opts @return \Illuminate\Support\Collection<int, CustomerInteraction> */
-    private function contactRows(User $user, array $opts, CarbonImmutable $start, CarbonImmutable $end)
+    /**
+     * @param  array<string, mixed>  $opts  @return \Illuminate\Support\Collection<int, CustomerInteraction>
+     * @param  array<string, mixed>  $opts
+     * @return Collection<int, CustomerInteraction>
+     */
+    private function contactRows(User $user, array $opts, CarbonImmutable $start, CarbonImmutable $end): Collection
     {
         $query = CustomerInteraction::query()->where('outcome', '!=', CustomerInteraction::PLANNED)->whereBetween('occurred_at', [$start, $end]);
         $this->scope->restrict($query, $user, $opts);
@@ -60,8 +64,11 @@ class FollowUpKpis
         return $query->get(['id', 'user_id', 'customer_id', 'channel', 'direction', 'outcome', 'occurred_at']);
     }
 
-    /** @param  array<string, mixed>  $opts @return \Illuminate\Support\Collection<int, CustomerInteraction> */
-    private function dueRows(User $user, array $opts, CarbonImmutable $start, CarbonImmutable $end)
+    /**
+     * @param  array<string, mixed>  $opts
+     * @return Collection<int, CustomerInteraction>
+     */
+    private function dueRows(User $user, array $opts, CarbonImmutable $start, CarbonImmutable $end): Collection
     {
         $query = CustomerInteraction::query()->whereNotNull('next_action_at')->whereBetween('next_action_at', [$start, $end]);
         $this->scope->restrict($query, $user, $opts);
@@ -69,8 +76,11 @@ class FollowUpKpis
         return $query->get(['id', 'user_id', 'customer_id', 'next_action_at', 'next_action_done_at']);
     }
 
-    /** @param  array<string, mixed>  $opts @return \Illuminate\Support\Collection<int, Quotation> */
-    private function quotationRows(User $user, array $opts, CarbonImmutable $start, CarbonImmutable $end)
+    /**
+     * @param  array<string, mixed>  $opts
+     * @return Collection<int, Quotation>
+     */
+    private function quotationRows(User $user, array $opts, CarbonImmutable $start, CarbonImmutable $end): Collection
     {
         $query = Quotation::query()->whereNotNull('issued_at')->whereBetween('issued_at', [$start, $end]);
         $this->scope->restrict($query, $user, $opts);

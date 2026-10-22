@@ -11,6 +11,7 @@ use Illuminate\Validation\Rule;
 
 class BranchRequest extends FormRequest
 {
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $branch = $this->route('branch');

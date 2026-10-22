@@ -11,7 +11,11 @@ use Illuminate\Support\Facades\DB;
 /** Respuestas rápidas del chat: personales o compartidas por supervisión. */
 class QuickReplies
 {
-    /** Activas: las propias y las compartidas. */
+    /**
+     * Activas: las propias y las compartidas.
+     *
+     * @return Collection<int, \stdClass>
+     */
     public function visibleTo(User $user): Collection
     {
         return DB::table('quick_replies as q')->join('users as u', 'u.id', '=', 'q.user_id')->where('q.is_active', true)
@@ -30,7 +34,11 @@ class QuickReplies
         return DB::table('quick_replies')->where(['id' => $id, 'user_id' => $owner->id])->exists();
     }
 
-    /** Solo la persona dueña puede cambiarla; devuelve false si no existe o no es suya. @param  array<string, mixed>  $data */
+    /**
+     * Solo la persona dueña puede cambiarla; devuelve false si no existe o no es suya.
+     *
+     * @param  array<string, mixed>  $data
+     */
     public function update(User $owner, int $id, array $data): bool
     {
         if (! DB::table('quick_replies')->where(['id' => $id, 'user_id' => $owner->id])->exists()) {

@@ -90,7 +90,11 @@ class CustomerActivity
         return $result;
     }
 
-    /** Primera venta de cada compañía (histórico completo): lo anterior no está en el sistema. */
+    /**
+     * Primera venta de cada compañía (histórico completo): lo anterior no está en el sistema.
+     *
+     * @return array<int, CarbonImmutable>
+     */
     public function historyStarts(): array
     {
         return DB::table('sales_documents')->groupBy('company_id')->selectRaw('company_id, min(issued_on) as starts')->pluck('starts', 'company_id')

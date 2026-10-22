@@ -137,7 +137,10 @@ class DemoSalesSeeder extends Seeder
         ]);
     }
 
-    /** @return array{sellers: array<string, int>, operators: array<string, int>} clave «COMPAÑÍA|nombre» => id */
+    /**
+     * @param  Collection<string, Company>  $companies
+     * @return array{sellers: array<string, int>, operators: array<string, int>} clave «COMPAÑÍA|nombre» => id
+     */
     private function people(Collection $companies): array
     {
         $out = ['sellers' => [], 'operators' => []];
@@ -168,7 +171,11 @@ class DemoSalesSeeder extends Seeder
         ]);
     }
 
-    /** Vincula a los vendedores de demostración con sus usuarios de acceso (para probar «cada vendedor ve lo suyo»). */
+    /**
+     * Vincula a los vendedores de demostración con sus usuarios de acceso (para probar «cada vendedor ve lo suyo»).
+     *
+     * @param  array<string, int>  $sellers
+     */
     private function linkDemoUsers(array $sellers): void
     {
         foreach (['ALFA|Vendedor Uno Demo' => 'vendedor1', 'BETA|Vendedor Dos Demo' => 'vendedor2'] as $key => $username) {

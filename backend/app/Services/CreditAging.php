@@ -18,7 +18,11 @@ class CreditAging
         return $limits;
     }
 
-    /** Claves de los tramos en orden: «current», «1-30», «31-60»…, «121+». @return list<string> */
+    /**
+     * Claves de los tramos en orden: «current», «1-30», «31-60»…, «121+».
+     *
+     * @return list<string>
+     */
     public static function buckets(): array
     {
         $keys = [self::CURRENT];

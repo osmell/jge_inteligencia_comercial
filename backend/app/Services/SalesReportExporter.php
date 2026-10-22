@@ -290,7 +290,10 @@ class SalesReportExporter
         return $this->stats->breakdownCompared($dimension, $from, $to, $filters, 'net_total', self::MAX_ROWS, $this->stats->comparisonRange($from, $to, $compare))['rows'];
     }
 
-    /** @param  array<string, mixed>  $row  @return list<mixed> */
+    /**
+     * @param  array<string, mixed>  $row
+     * @return list<mixed>
+     */
     private function metricValues(array $row): array
     {
         return array_map(fn (string $metric) => $row[$metric], array_keys(self::METRICS));

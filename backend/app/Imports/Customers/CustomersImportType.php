@@ -77,7 +77,7 @@ final class CustomersImportType implements ImportType
     {
         $optional = config('imports.customers.optional', []);
 
-        return collect(config('imports.customers.columns'))
+        return collect((array) config('imports.customers.columns'))
             ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, $aliases, required: ! in_array($key, $optional, true), hint: self::HINTS[$key] ?? null))
             ->values()->all();
     }

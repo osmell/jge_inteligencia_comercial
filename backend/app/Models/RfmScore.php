@@ -47,7 +47,11 @@ class RfmScore extends Model
         return ['first_purchase' => 'date:Y-m-d', 'last_purchase' => 'date:Y-m-d', 'gross' => 'decimal:4', 'returns' => 'decimal:4', 'monetary' => 'decimal:4'];
     }
 
-    /** Solo los clientes que el usuario puede ver (un vendedor, los suyos): el alcance del modelo Customer. */
+    /**
+     * Solo los clientes que el usuario puede ver (un vendedor, los suyos): el alcance del modelo Customer.
+     *
+     * @param  Builder<RfmScore>  $query
+     */
     public function scopeVisibleCustomers(Builder $query): void
     {
         $query->whereExists(Customer::query()->selectRaw('1')->whereColumn('customers.company_id', 'rfm_scores.company_id')->whereColumn('customers.code', 'rfm_scores.customer_code')->toBase());

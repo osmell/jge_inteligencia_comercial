@@ -52,7 +52,10 @@ class WhatsappInbound
         return $saved;
     }
 
-    /** @param array<string, mixed> $m @param array<string, string> $names */
+    /**
+     * @param  array<string, mixed>  $m
+     * @param  array<string, string>  $names
+     */
     private function store(array $m, array $names): bool
     {
         $waId = (string) ($m['id'] ?? '');
@@ -98,7 +101,10 @@ class WhatsappInbound
         }
     }
 
-    /** @param array<string, mixed> $m @return array{0: string, 1: string, 2: string|null, 3: string|null} tipo, texto, id de archivo, nombre de archivo */
+    /**
+     * @param  array<string, mixed>  $m
+     * @return array{0: string, 1: string, 2: string|null, 3: string|null} tipo, texto, id de archivo, nombre de archivo
+     */
     private function content(array $m): array
     {
         $type = (string) ($m['type'] ?? '');

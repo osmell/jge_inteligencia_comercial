@@ -97,7 +97,7 @@ final class InventoryEntriesImportType implements ImportType
     {
         $optional = config('imports.inventory_entries.optional', []);
 
-        return collect(config('imports.inventory_entries.columns'))
+        return collect((array) config('imports.inventory_entries.columns'))
             ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, $aliases, required: ! in_array($key, $optional, true), hint: self::HINTS[$key] ?? null))
             ->values()->all();
     }

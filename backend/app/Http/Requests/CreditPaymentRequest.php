@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 class CreditPaymentRequest extends CreditAllocationRequest
 {
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return $this->baseRules() + [

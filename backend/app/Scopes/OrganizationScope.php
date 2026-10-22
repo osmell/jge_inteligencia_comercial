@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 /**
  * Limita las consultas a las compañías/sucursales del usuario autenticado.
  * Sin usuario autenticado (consola, colas, seeders) no se aplica.
+ *
+ * @implements Scope<Model>
  */
 class OrganizationScope implements Scope
 {

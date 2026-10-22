@@ -17,6 +17,7 @@ class OperatorRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         /** @var Operator|null $operator */

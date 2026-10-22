@@ -50,7 +50,11 @@ class User extends Authenticatable
         ];
     }
 
-    /** Los nombres de usuario se guardan en minúsculas para que sean únicos sin distinguir mayúsculas. */
+    /**
+     * Los nombres de usuario se guardan en minúsculas para que sean únicos sin distinguir mayúsculas.
+     *
+     * @return Attribute<string, string>
+     */
     protected function username(): Attribute
     {
         return Attribute::set(fn (string $value) => mb_strtolower(trim($value)));

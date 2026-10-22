@@ -9,6 +9,7 @@ use App\Models\Seller;
 use App\Models\SellerGoal;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -156,8 +157,12 @@ class SellerGoals
         return $changed;
     }
 
-    /** Vendedores sobre los que el usuario puede ver y fijar metas: compañías a las que tiene acceso completo. */
-    public function sellersQuery(User $user, ?int $companyId)
+    /**
+     * Vendedores sobre los que el usuario puede ver y fijar metas: compañías a las que tiene acceso completo.
+     *
+     * @return Builder<Seller>
+     */
+    public function sellersQuery(User $user, ?int $companyId): Builder
     {
         $query = Seller::query();
         $full = $this->scope->fullCompanyIds($user);
@@ -244,7 +249,10 @@ class SellerGoals
         ];
     }
 
-    /** @param list<array<string, mixed>> $rows @return array<string, mixed> */
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return array<string, mixed>
+     */
     private function totals(array $rows): array
     {
         $withGoal = array_filter($rows, fn ($r) => $r['effective_goal'] !== null && $r['eligible_days'] > 0);

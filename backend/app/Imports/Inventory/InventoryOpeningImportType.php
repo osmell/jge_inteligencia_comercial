@@ -68,7 +68,7 @@ final class InventoryOpeningImportType implements ImportType
 
     public function columns(): array
     {
-        return collect(config('imports.inventory_opening.columns'))
+        return collect((array) config('imports.inventory_opening.columns'))
             ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, $aliases, hint: self::HINTS[$key] ?? null))
             ->values()->all();
     }

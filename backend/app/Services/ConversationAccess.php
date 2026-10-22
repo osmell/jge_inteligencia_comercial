@@ -71,7 +71,7 @@ class ConversationAccess
     }
 
     /** @return \Illuminate\Database\Query\Builder */
-    private function customersOf($sellers)
+    private function customersOf(\Illuminate\Database\Query\Builder $sellers)
     {
         return DB::table('customers')->whereIn('seller_id', $sellers)->select('id');
     }

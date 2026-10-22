@@ -96,7 +96,7 @@ final class SalesImportType implements ImportType
     {
         $optional = config('imports.sales.optional', []);
 
-        return collect(config('imports.sales.columns'))
+        return collect((array) config('imports.sales.columns'))
             ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, $aliases, required: ! in_array($key, $optional, true), hint: self::HINTS[$key] ?? null))
             ->values()->all();
     }
@@ -265,7 +265,7 @@ final class SalesImportType implements ImportType
         }
 
         $rates = config('imports.sales.tax_rates', []);
-        if ($rates && ! collect($rates)->contains(fn ($r) => abs($tax - (int) round($net * (float) $r)) <= $tolerance)) {
+        if ($rates && ! collect((array) $rates)->contains(fn ($r) => abs($tax - (int) round($net * (float) $r)) <= $tolerance)) {
             $pct = implode(' / ', array_map(fn ($r) => rtrim(rtrim(number_format((float) $r * 100, 2), '0'), '.').' %', $rates));
             $row->fail('tax_total', 'tax_rate_mismatch', "«{$row->label('tax_total')}» ({$show($tax)}) no corresponde a «{$row->label('net_total')}» ({$show($net)}) por la tasa de IVA esperada ({$pct}).");
         }
@@ -329,7 +329,10 @@ final class SalesImportType implements ImportType
         return $value;
     }
 
-    /** @param  array<string, string|null>  $amounts */
+    /**
+     * @param  array<string, string|null>  $amounts
+     * @param  array<string, mixed>  $discounts
+     */
     private function collect(Company $company, DateTimeImmutable $issued, ?string $units, array $amounts, ?string $seller, ?string $operator, array $discounts = []): void
     {
         $day = $issued->format('Y-m-d');
@@ -395,7 +398,7 @@ final class SalesImportType implements ImportType
                 'cost_total' => Decimal::format($this->stats['cost']),
                 ...(isset($this->stats['discount_total']) ? ['discount_total' => Decimal::format($this->stats['discount_total'])] : []),
             ],
-            'companies' => collect($this->stats['lines'])->map(fn (array $s, int $id) => [
+            'companies' => collect((array) $this->stats['lines'])->map(fn (array $s, int $id) => [
                 'id' => $id,
                 'name' => $companies[$id]->name ?? "#{$id}",
                 'documents' => $docsPerCompany[$id] ?? 0,

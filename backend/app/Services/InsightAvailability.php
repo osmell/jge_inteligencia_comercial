@@ -71,7 +71,7 @@ class InsightAvailability
     {
         foreach ($this->overview($today) as $c) {
             if ($c['company_id'] === $companyId) {
-                return (bool) collect($c['analyses'])->firstWhere('key', $analysis)['available'];
+                return (bool) collect((array) $c['analyses'])->firstWhere('key', $analysis)['available'];
             }
         }
 

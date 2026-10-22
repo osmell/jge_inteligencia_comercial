@@ -16,6 +16,7 @@ class InventoryStockRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $kardex = $this->routeIs('inventory.kardex') || str_ends_with($this->path(), 'kardex');

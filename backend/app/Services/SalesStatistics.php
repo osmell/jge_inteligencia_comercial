@@ -211,7 +211,10 @@ class SalesStatistics
         ];
     }
 
-    /** @param  array<string, mixed>  $filters  */
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return Builder<SalesLine>
+     */
     private function base(?CarbonImmutable $from, ?CarbonImmutable $to, array $filters): Builder
     {
         $query = SalesLine::query()
@@ -267,6 +270,9 @@ class SalesStatistics
         };
     }
 
+    /**
+     * @param  Builder<SalesLine>  $query
+     */
     private function joinForDimension(Builder $query, string $dimension): void
     {
         $table = ['company' => ['companies', 'sales_lines.company_id'], 'branch' => ['branches', 'sales_lines.branch_id'],
@@ -277,7 +283,10 @@ class SalesStatistics
         }
     }
 
-    /** @param  Builder<SalesLine>  $query  @return array<string, mixed> */
+    /**
+     * @param  Builder<SalesLine>  $query
+     * @return array<string, mixed>
+     */
     private function kpis(Builder $query): array
     {
         return $this->format($query->selectRaw($this->aggregates())->toBase()->first());

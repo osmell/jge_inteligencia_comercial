@@ -14,6 +14,7 @@ class SalesStatsRequest extends FormRequest
     /** Máximo de días por consulta (3 años): acota el costo de las agregaciones. */
     public const MAX_DAYS = 1096;
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         return [
@@ -37,6 +38,7 @@ class SalesStatsRequest extends FormRequest
         ];
     }
 
+    /** @return list<\Closure> */
     public function after(): array
     {
         return [function ($validator) {

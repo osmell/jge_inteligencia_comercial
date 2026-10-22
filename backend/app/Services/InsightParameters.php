@@ -101,7 +101,11 @@ class InsightParameters
         return $after;
     }
 
-    /** Valores guardados en la base de datos (sin caché: el servicio puede vivir más que una petición, p. ej. en la cola). @return array<string, int> */
+    /**
+     * Valores guardados en la base de datos (sin caché: el servicio puede vivir más que una petición, p. ej. en la cola).
+     *
+     * @return array<string, int>
+     */
     private function current(): array
     {
         $values = [];

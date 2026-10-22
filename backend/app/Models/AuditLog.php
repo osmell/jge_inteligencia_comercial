@@ -38,6 +38,10 @@ class AuditLog extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * @return MorphTo<Model, $this>
+     * @return MorphTo<Model, $this>
+     */
     public function auditable(): MorphTo
     {
         return $this->morphTo();

@@ -20,6 +20,7 @@ class UserRequest extends FormRequest
         }
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $user = $this->route('user');
@@ -39,6 +40,7 @@ class UserRequest extends FormRequest
         ];
     }
 
+    /** @return list<\Closure> */
     public function after(): array
     {
         return [function ($validator) {
@@ -47,7 +49,7 @@ class UserRequest extends FormRequest
             }
 
             // Una sucursal solo tiene sentido si su compañía también está asignada.
-            $companyIds = collect($this->input('company_ids'));
+            $companyIds = collect((array) $this->input('company_ids'));
             $orphans = Branch::whereIn('id', $this->input('branch_ids'))
                 ->whereNotIn('company_id', $companyIds)->exists();
 
@@ -63,7 +65,7 @@ class UserRequest extends FormRequest
                 $validator->errors()->add('role_id', 'No puedes asignar el rol Administrador.');
             }
             $assignable = $access->assignableCompanyIds($actor);
-            if ($assignable !== null && collect($this->input('company_ids'))->diff($assignable)->isNotEmpty()) {
+            if ($assignable !== null && collect((array) $this->input('company_ids'))->diff($assignable)->isNotEmpty()) {
                 $validator->errors()->add('company_ids', 'Solo puedes asignar compañías sobre las que tienes acceso completo.');
             }
 

@@ -65,7 +65,7 @@ final class ProductUnitsImportType implements ImportType
     {
         $optional = config('imports.product_units.optional', []);
 
-        return collect(config('imports.product_units.columns'))
+        return collect((array) config('imports.product_units.columns'))
             ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, $aliases, required: ! in_array($key, $optional, true), hint: self::HINTS[$key] ?? null))
             ->values()->all();
     }

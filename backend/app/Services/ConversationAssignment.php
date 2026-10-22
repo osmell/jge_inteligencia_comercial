@@ -24,7 +24,11 @@ class ConversationAssignment
         return DB::table('customers')->whereIn('customers.seller_id', DB::table('sellers')->where('supervisor_id', $supervisor->id)->select('id'));
     }
 
-    /** Clientes del equipo en la misma compañía, filtrados por nombre o código. */
+    /**
+     * Clientes del equipo en la misma compañía, filtrados por nombre o código.
+     *
+     * @return Collection<int, \stdClass>
+     */
     public function candidates(User $supervisor, int $companyId, ?string $search): Collection
     {
         $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], mb_strtolower((string) $search)).'%';

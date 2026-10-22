@@ -132,7 +132,11 @@ class DashboardService
         };
     }
 
-    /** Fecha de la última venta visible y de la última carga de ventas. @return array{last_sale: string|null, last_import: string|null} */
+    /**
+     * Fecha de la última venta visible y de la última carga de ventas.
+     *
+     * @return array{last_sale: string|null, last_import: string|null}
+     */
     public function freshness(): array
     {
         $last = SalesLine::query()->max('issued_on');

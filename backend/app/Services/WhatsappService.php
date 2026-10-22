@@ -68,7 +68,11 @@ class WhatsappService
         }
     }
 
-    /** Consulta el número en Meta con las credenciales guardadas. @return array{ok: bool, message: string} */
+    /**
+     * Consulta el número en Meta con las credenciales guardadas.
+     *
+     * @return array{ok: bool, message: string}
+     */
     public function testConnection(User $user): array
     {
         $s = WhatsappSetting::current();

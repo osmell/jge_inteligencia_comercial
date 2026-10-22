@@ -61,7 +61,7 @@ class RolePermissionController extends Controller
 
         $old = $role->permissions()->pluck('slug')->sort()->values()->all();
         $role->permissions()->sync(Permission::whereIn('slug', $data['permissions'])->pluck('id'));
-        $new = collect($data['permissions'])->sort()->values()->all();
+        $new = collect((array) $data['permissions'])->sort()->values()->all();
 
         if ($old !== $new) {
             $audit->record('role.permissions_changed', $request->user(), auditable: $role, old: ['permissions' => $old], new: ['permissions' => $new]);

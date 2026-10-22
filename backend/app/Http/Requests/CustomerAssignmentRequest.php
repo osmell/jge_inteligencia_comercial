@@ -15,6 +15,7 @@ class CustomerAssignmentRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $company = $this->integer('company_id');

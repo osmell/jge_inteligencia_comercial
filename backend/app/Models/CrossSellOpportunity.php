@@ -38,7 +38,11 @@ class CrossSellOpportunity extends Model
         return $this->belongsTo(CrossSellRule::class, 'rule_id');
     }
 
-    /** Solo los clientes que el usuario puede ver (un vendedor, los suyos). */
+    /**
+     * Solo los clientes que el usuario puede ver (un vendedor, los suyos).
+     *
+     * @param  Builder<CrossSellOpportunity>  $query
+     */
     public function scopeVisibleCustomers(Builder $query): void
     {
         $query->whereExists(Customer::query()->selectRaw('1')->whereColumn('customers.company_id', 'cross_sell_opportunities.company_id')->whereColumn('customers.code', 'cross_sell_opportunities.customer_code')->toBase());

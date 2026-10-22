@@ -15,6 +15,7 @@ class CustomerTypeRequest extends FormRequest
         return true;
     }
 
+    /** @return array<string, mixed> */
     public function rules(): array
     {
         $unique = Rule::unique('customer_types', 'name')->ignore($this->route('customerType'));

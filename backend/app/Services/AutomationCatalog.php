@@ -82,7 +82,7 @@ class AutomationCatalog
             $run = $last[$key] ?? null;
             $rows[] = [
                 'key' => $key, 'label' => $d['label'], 'description' => $d['description'], 'frequency' => $d['frequency'], 'respect_window' => $d['respect_window'], 'available' => $this->available($key), 'enabled' => $this->enabled($key),
-                'params' => collect($d['params'])->map(fn (array $p, string $name) => ['name' => $name, 'label' => $p['label'], 'unit' => $p['unit'], 'help' => $p['help'], 'min' => $p['min'], 'max' => $p['max'], 'default' => $p['default'], 'value' => $params[$name]])->values()->all(),
+                'params' => collect((array) $d['params'])->map(fn (array $p, string $name) => ['name' => $name, 'label' => $p['label'], 'unit' => $p['unit'], 'help' => $p['help'], 'min' => $p['min'], 'max' => $p['max'], 'default' => $p['default'], 'value' => $params[$name]])->values()->all(),
                 'last_run' => $run ? ['status' => $run->status, 'trigger' => $run->trigger, 'started_at' => $run->started_at, 'finished_at' => $run->finished_at, 'attempt' => $run->attempt, 'error' => $run->error, 'result' => json_decode((string) $run->result, true)] : null,
             ];
         }

@@ -86,7 +86,7 @@ final class CreditInvoicesImportType implements ImportType
     {
         $optional = config('imports.credit_invoices.optional', []);
 
-        return collect(config('imports.credit_invoices.columns'))
+        return collect((array) config('imports.credit_invoices.columns'))
             ->map(fn (array $aliases, string $key) => new ColumnDefinition($key, $aliases, required: ! in_array($key, $optional, true), hint: self::HINTS[$key] ?? null))
             ->values()->all();
     }
