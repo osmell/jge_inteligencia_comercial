@@ -160,7 +160,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | Archivos con `strict_types` | 0 % | 100 % |
 | Nivel PHPStan | 5 | 8 |
 | Controladores con `DB::` | 10 → **0** (paso D) | 0 |
-| `app()`/`resolve()` en servicios, importaciones y controladores | 39 → **0** (paso H); quedan 9 en puntos donde Laravel no inyecta (ver paso H) | 0 |
+| `app()`/`resolve()` en servicios, importaciones y controladores | 39 → **0** (paso H); quedan 10 en puntos donde Laravel no inyecta (ver paso H) | 0 |
 | Pruebas unitarias | 0 | ≥ 150 |
 | Policies | 0 | las de recursos con alcance por registro |
 | Servicios > 300 líneas | 4 | 0 |
