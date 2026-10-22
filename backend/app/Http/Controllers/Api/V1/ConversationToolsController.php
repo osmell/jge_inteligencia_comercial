@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\QuickReply;
 use App\Models\Quotation;
-use App\Models\Role;
 use App\Models\WhatsappConversation;
 use App\Services\AuditLogger;
 use App\Services\ConversationAccess;
@@ -51,7 +51,7 @@ class ConversationToolsController extends Controller
         $data = $request->validate(['customer_id' => ['required', 'integer']]);
         abort_unless($this->assignment->assign($request->user(), $c, (int) $data['customer_id']), 422, 'Solo puedes asignarlo a un cliente de tu equipo en la misma compañía.');
 
-        return response()->json(['data' => $this->presenter->conversation($c->refresh()) + ['can_reply' => $this->access->canReply($request->user(), $c)]]);
+        return response()->json(['data' => $this->presenter->conversation($c->refresh()) + ['can_reply' => $request->user()->can('reply', $c)]]);
     }
 
     public function labels(Request $request, int $conversation): JsonResponse
@@ -123,7 +123,9 @@ class ConversationToolsController extends Controller
     {
         $data = $request->validate(['title' => ['required', 'string', 'min:2', 'max:60'], 'body' => ['required', 'string', 'min:1', 'max:1000'], 'shared' => ['sometimes', 'boolean'], 'is_active' => ['sometimes', 'boolean']]);
         $shared = (bool) ($data['shared'] ?? false);
-        abort_if($shared && $request->user()->role->slug !== Role::SUPERVISOR_VENTAS, 403, 'Solo supervisión puede compartir respuestas rápidas con el equipo.');
+        if ($shared) {
+            $this->authorize('share', QuickReply::class);
+        }
 
         return ['title' => $data['title'], 'body' => $data['body'], 'shared' => $shared] + (isset($data['is_active']) ? ['is_active' => (bool) $data['is_active']] : []);
     }
@@ -131,7 +133,7 @@ class ConversationToolsController extends Controller
     private function writable(Request $request, int $id): WhatsappConversation
     {
         $c = $this->access->visible($request->user())->whereKey($id)->firstOrFail();
-        abort_unless($this->access->canReply($request->user(), $c), 403, 'No puedes escribir en esta conversación.');
+        $this->authorize('reply', $c);
 
         return $c;
     }
@@ -140,7 +142,7 @@ class ConversationToolsController extends Controller
     private function unassigned(Request $request, int $id): WhatsappConversation
     {
         $c = $this->access->visible($request->user())->whereKey($id)->firstOrFail();
-        abort_unless($request->user()->role->slug === Role::SUPERVISOR_VENTAS && $request->user()->hasPermission('conversations.reply'), 403, 'Solo supervisión puede asignar números desconocidos.');
+        $this->authorize('assign', $c);
         abort_if($c->customer_id !== null, 422, 'Esta conversación ya tiene un cliente asignado.');
 
         return $c;

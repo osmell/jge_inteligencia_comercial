@@ -1,6 +1,6 @@
 # Propuesta del paso F — Policies de autorización por registro
 
-> Estado: **PROPUESTA, sin implementar.** Este paso toca permisos, así que no se programa nada hasta que el responsable apruebe o corrija cada decisión de la sección 4.
+> Estado: **IMPLEMENTADO (2026-10-21)** con las decisiones D1 a D7 en la opción ★ (sin cambios de comportamiento), según la respuesta del responsable «Todas ★». Ver sección 7.
 > Fecha: 2026-10-21 · Plan general: `docs/24_ANALISIS_CODIGO_Y_GUIA_DESARROLLO.md` (debilidad D6).
 
 ## 1. Qué problema resuelve
@@ -77,3 +77,22 @@ Esfuerzo: medio. Riesgo: medio si se mantienen las opciones ★ (refactor cubier
 
 ## 6. Qué necesito para empezar
 Responder D1 a D7 (basta con «todas ★» para el refactor sin cambios de comportamiento).
+
+## 7. Resultado de la implementación
+Decisiones aplicadas: **D1–D7 = ★** (se mantiene el comportamiento actual; D7 unifica el mensaje de rechazo para escribir y para agregar notas).
+
+| Policy | Acciones | Reemplaza |
+|---|---|---|
+| `WhatsappConversationPolicy` | `view`, `reply`, `assign` | `ConversationAccess::canReply` (5 verificaciones repetidas) y la regla de asignar de `ConversationToolsController` |
+| `QuotationPolicy` | `view`, `manage`, `unlink`, `download` | Verificaciones dispersas en `QuotationController` (ahora `find($id, $ability)` busca en el alcance y autoriza) |
+| `CustomerInteractionPolicy` | `update` | `CustomerInteractionController::canEdit` (también alimenta `can_edit`) |
+| `CustomerPolicy` | `view`, `manage` | Edición de datos y asignación de vendedor/facturador |
+| `SellerPolicy` / `OperatorPolicy` | `update` (404 fuera del acceso completo) | Los `abort_if` con `fullCompanyIds` de `CustomerAssignmentController` |
+| `QuickReplyPolicy` | `share` | Comparación de rol en `ConversationToolsController` |
+| Gate `view-company-analysis` | — | Comparación de rol en `InsightAnalysisController` |
+
+- Los controladores usan `$this->authorize(...)` (el `Controller` base ahora incluye `AuthorizesRequests`); el frontend recibe `can_reply` y `can_edit` de las mismas Policies.
+- El middleware de permisos de ruta y los filtros de listas (`ConversationAccess::visible`, scope de clientes, `DataScope`) **no cambian**.
+- `tests/Feature/PoliciesTest` (10 pruebas) es la especificación viva: cada regla, por rol y situación. Las 664 pruebas anteriores pasan **sin modificarse**. Total: 675.
+- Nueva regla en `ArchitectureTest`: ningún controlador (fuera de Admin) decide acceso comparando `role->slug`.
+- Se creó el modelo `QuickReply` solo como ancla de su Policy; las consultas siguen en el servicio `QuickReplies`.

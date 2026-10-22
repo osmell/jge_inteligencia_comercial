@@ -94,7 +94,7 @@ class CustomerInteractionController extends Controller
     {
         $record = CustomerInteraction::query()->findOrFail($interaction);
         $customer = $this->customerById($record->customer_id);
-        abort_unless($this->canEdit($record, $request->user()), 403, 'Solo quien registró el contacto puede corregirlo.');
+        $this->authorize('update', $record);
 
         $data = $request->safe()->only(['channel', 'direction', 'outcome', 'occurred_at', 'response', 'next_action', 'next_action_at']);
         $this->guardDoNotContact($customer, $data);
@@ -167,11 +167,6 @@ class CustomerInteractionController extends Controller
         return Customer::query()->find($id) ?? abort(404, 'Contacto no encontrado.');
     }
 
-    private function canEdit(CustomerInteraction $record, User $user): bool
-    {
-        return $record->user_id === $user->id || $user->hasPermission('customers.manage');
-    }
-
     /** @return array<string, mixed> */
     private function present(CustomerInteraction $i, User $viewer): array
     {
@@ -181,7 +176,7 @@ class CustomerInteractionController extends Controller
             'next_action' => $i->next_action, 'next_action_at' => $i->next_action_at?->toIso8601String(),
             'next_action_done_at' => $i->next_action_done_at?->toIso8601String(),
             'user' => $i->user ? ['id' => $i->user->id, 'name' => $i->user->name] : null,
-            'can_edit' => $viewer->hasPermission('interactions.manage') && $this->canEdit($i, $viewer),
+            'can_edit' => $viewer->hasPermission('interactions.manage') && $viewer->can('update', $i),
         ];
     }
 

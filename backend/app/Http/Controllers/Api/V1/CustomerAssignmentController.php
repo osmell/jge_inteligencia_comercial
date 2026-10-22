@@ -85,8 +85,7 @@ class CustomerAssignmentController extends Controller
 
     public function updateSeller(SellerUpdateRequest $request, Seller $seller): JsonResponse
     {
-        $full = $this->scope->fullCompanyIds($request->user());
-        abort_if($full !== null && ! in_array($seller->company_id, $full, true), 404, 'Vendedor no encontrado.');
+        $this->authorize('update', $seller);
 
         $fields = ['name', 'is_active', 'branch_id', 'is_default', 'supervisor_id', 'user_id'];
         $before = $seller->only($fields);
@@ -117,8 +116,7 @@ class CustomerAssignmentController extends Controller
 
     public function updateOperator(OperatorRequest $request, Operator $operator): JsonResponse
     {
-        $full = $this->scope->fullCompanyIds($request->user());
-        abort_if($full !== null && ! in_array($operator->company_id, $full, true), 404, 'Facturador no encontrado.');
+        $this->authorize('update', $operator);
 
         $before = $operator->only(['name', 'is_active']);
         $data = $request->validated();
@@ -138,6 +136,7 @@ class CustomerAssignmentController extends Controller
     {
         $customer = Customer::query()->where('company_id', $request->validated('company_id'))->where('code', $request->validated('code'))->first();
         abort_if($customer === null, 404, 'Cliente no encontrado.');
+        $this->authorize('manage', $customer);
 
         $fields = ['name', 'trade_name', 'contact_name', 'phone', 'whatsapp', 'email', 'address', 'branch_id'];
         $before = $customer->only($fields);
@@ -158,6 +157,7 @@ class CustomerAssignmentController extends Controller
     {
         $customer = Customer::query()->where('company_id', $request->validated('company_id'))->where('code', $request->validated('code'))->first();
         abort_if($customer === null, 404, 'Cliente no encontrado.');
+        $this->authorize('manage', $customer);
 
         $before = $customer->only(['seller_id', 'operator_id']);
         $customer->update($request->safe()->only(['seller_id', 'operator_id']));

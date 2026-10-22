@@ -7,12 +7,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\InsightRun;
-use App\Models\Role;
 use App\Services\CohortAnalysis;
 use App\Services\ConcentrationAnalysis;
 use App\Services\SeasonalityAnalysis;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Concentración y cohortes: se leen del último cálculo registrado de la compañía. Son cifras de toda la compañía, así que no se
@@ -63,7 +63,7 @@ class InsightAnalysisController extends Controller
 
     private function guard(Request $request): void
     {
-        abort_if($request->user()->role->slug === Role::VENDEDOR, 403, 'Este análisis es de toda la compañía y no está disponible para vendedores.');
+        Gate::authorize('view-company-analysis');
     }
 
     /** @return array<string, mixed> */

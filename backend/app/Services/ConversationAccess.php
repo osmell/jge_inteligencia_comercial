@@ -16,14 +16,11 @@ use Illuminate\Support\Facades\DB;
  * Quién ve y quién escribe en cada conversación de WhatsApp.
  *  - Vendedor: solo las de sus clientes. Supervisor: las de clientes de los vendedores que supervisa, y las «sin asignar» de sus
  *    compañías (para asignarlas). Administración y gerencia: todas las de su ámbito, **solo lectura**.
- *  - Escribir exige además el permiso de responder y ser vendedor o supervisor con la conversación en su alcance y un cliente asignado.
+ *  - Quién puede escribir lo decide `WhatsappConversationPolicy::reply`.
  * Cuando alguien que no es el vendedor responsable abre una conversación, queda en Auditoría (una vez por hora y conversación).
  */
 class ConversationAccess
 {
-    /** Roles que pueden escribir a clientes; los demás (administración, gerencia) solo leen. */
-    private const WRITERS = [Role::VENDEDOR, Role::SUPERVISOR_VENTAS];
-
     public function __construct(private readonly DataScope $scope, private readonly AuditLogger $audit) {}
 
     /** @return Builder<WhatsappConversation> */
@@ -46,14 +43,6 @@ class ConversationAccess
     public function canView(User $user, WhatsappConversation $conversation): bool
     {
         return $this->visible($user)->whereKey($conversation->id)->exists();
-    }
-
-    public function canReply(User $user, WhatsappConversation $conversation): bool
-    {
-        return $user->hasPermission('conversations.reply')
-            && in_array($user->role->slug, self::WRITERS, true)
-            && $conversation->customer_id !== null
-            && $this->canView($user, $conversation);
     }
 
     /**

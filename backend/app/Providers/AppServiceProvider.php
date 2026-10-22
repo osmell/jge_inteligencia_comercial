@@ -9,7 +9,11 @@ use App\Contracts\WhatsappMediaSource;
 use App\Contracts\WhatsappMessaging;
 use App\Integrations\GraphApiWhatsapp;
 use App\Integrations\HttpWebhookTransport;
+use App\Models\Role;
+use App\Models\User;
 use App\Services\DataScope;
+use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -32,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Análisis de toda la compañía (concentración, estacionalidad…): no disponibles para vendedores.
+        Gate::define('view-company-analysis', fn (User $user) => $user->role->slug !== Role::VENDEDOR
+            ? Response::allow()
+            : Response::deny('Este análisis es de toda la compañía y no está disponible para vendedores.'));
     }
 }

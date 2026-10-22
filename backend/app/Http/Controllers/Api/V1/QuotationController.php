@@ -90,7 +90,7 @@ class QuotationController extends Controller
 
     public function update(QuotationRequest $request, int $quotation): JsonResponse
     {
-        $record = $this->find($quotation);
+        $record = $this->find($quotation, 'manage');
         $data = $request->safe()->only(['amount', 'valid_until', 'description', 'external_reference']);
         if (array_key_exists('amount', $data) && $data['amount'] === null) {
             $data['amount'] = 0;
@@ -102,7 +102,7 @@ class QuotationController extends Controller
     public function status(QuotationStatusRequest $request, int $quotation): JsonResponse
     {
         $record = $this->workflow->changeStatus(
-            $this->find($quotation), $request->user(), $request->validated('status'),
+            $this->find($quotation, 'manage'), $request->user(), $request->validated('status'),
             $request->validated('loss_reason'), $request->validated('loss_note'), $request->validated('note'),
         );
 
@@ -112,7 +112,7 @@ class QuotationController extends Controller
     /** Facturas del cliente que se pueden vincular (misma compañía y cliente, desde la emisión, sin otra cotización). */
     public function documents(Request $request, int $quotation): JsonResponse
     {
-        $record = $this->find($quotation);
+        $record = $this->find($quotation, 'manage');
         $query = SalesDocument::query()
             ->join('sales_lines as sl', 'sl.sales_document_id', '=', 'sales_documents.id')
             ->where('sales_documents.company_id', $record->company_id)
@@ -131,7 +131,7 @@ class QuotationController extends Controller
 
     public function link(QuotationLinkRequest $request, int $quotation): JsonResponse
     {
-        $record = $this->find($quotation);
+        $record = $this->find($quotation, 'manage');
         $document = SalesDocument::query()->find($request->integer('document_id')) ?? abort(404, 'Factura no encontrada.');
 
         return response()->json(['data' => $this->detail($this->workflow->link($record, $request->user(), $document))]);
@@ -139,22 +139,22 @@ class QuotationController extends Controller
 
     public function unlink(Request $request, int $quotation): JsonResponse
     {
-        return response()->json(['data' => $this->detail($this->workflow->unlink($this->find($quotation), $request->user()))]);
+        return response()->json(['data' => $this->detail($this->workflow->unlink($this->find($quotation, 'unlink'), $request->user()))]);
     }
 
     public function attach(QuotationAttachmentRequest $request, int $quotation): JsonResponse
     {
-        return response()->json(['data' => $this->detail($this->workflow->attach($this->find($quotation), $request->user(), $request->file('file')))]);
+        return response()->json(['data' => $this->detail($this->workflow->attach($this->find($quotation, 'manage'), $request->user(), $request->file('file')))]);
     }
 
     public function detach(Request $request, int $quotation): JsonResponse
     {
-        return response()->json(['data' => $this->detail($this->workflow->detach($this->find($quotation), $request->user()))]);
+        return response()->json(['data' => $this->detail($this->workflow->detach($this->find($quotation, 'manage'), $request->user()))]);
     }
 
     public function download(int $quotation): StreamedResponse
     {
-        $record = $this->find($quotation);
+        $record = $this->find($quotation, 'download');
         abort_if($record->attachment_path === null || ! Storage::disk('quotations')->exists($record->attachment_path), 404, 'La cotización no tiene adjunto.');
 
         return Storage::disk('quotations')->download($record->attachment_path, $record->attachment_name, [
@@ -169,9 +169,13 @@ class QuotationController extends Controller
         return Quotation::query()->whereHas('customer');
     }
 
-    private function find(int $id): Quotation
+    /** Busca la cotización dentro del alcance de la persona (404 si no la ve) y comprueba que pueda hacer `$ability` con ella. */
+    private function find(int $id, string $ability = 'view'): Quotation
     {
-        return $this->visible()->with('customer')->find($id) ?? abort(404, 'Cotización no encontrada.');
+        $record = $this->visible()->with('customer')->find($id) ?? abort(404, 'Cotización no encontrada.');
+        $this->authorize($ability, $record);
+
+        return $record;
     }
 
     /** @return array<string, mixed> */

@@ -77,7 +77,7 @@ class ConversationController extends Controller
 
         return response()->json([
             'data' => $page->map(fn (WhatsappMessage $m) => $this->presenter->message($m, $attachments->get($m->id, collect()), $replies->get($m->reply_to_id), $authors[$m->user_id] ?? null))->all(),
-            'meta' => ['has_more' => $rows->count() > self::MESSAGES, 'oldest_id' => $page->first()?->id, 'window_open' => $c->windowOpen(), 'can_reply' => $this->access->canReply($request->user(), $c)],
+            'meta' => ['has_more' => $rows->count() > self::MESSAGES, 'oldest_id' => $page->first()?->id, 'window_open' => $c->windowOpen(), 'can_reply' => $request->user()->can('reply', $c)],
         ]);
     }
 
@@ -85,7 +85,7 @@ class ConversationController extends Controller
     public function reply(Request $request, int $conversation): JsonResponse
     {
         $c = $this->find($request, $conversation);
-        abort_unless($this->access->canReply($request->user(), $c), 403, 'No puedes escribir en esta conversación.');
+        $this->authorize('reply', $c);
         $data = $request->validate([
             'body' => ['nullable', 'string', 'max:4096'], 'file' => ['nullable', 'file', 'max:102400'], 'reply_to_id' => ['nullable', 'integer', 'min:1'],
             'client_key' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{8,64}$/'],
@@ -100,7 +100,7 @@ class ConversationController extends Controller
     {
         $m = WhatsappMessage::query()->findOrFail($message);
         $c = $this->find($request, (int) $m->conversation_id);
-        abort_unless($this->access->canReply($request->user(), $c), 403, 'No puedes escribir en esta conversación.');
+        $this->authorize('reply', $c);
 
         return response()->json(['data' => $this->presenter->one($this->sender->retry($request->user(), $m))]);
     }
@@ -114,7 +114,7 @@ class ConversationController extends Controller
     public function sendTemplate(Request $request, int $conversation): JsonResponse
     {
         $c = $this->find($request, $conversation);
-        abort_unless($this->access->canReply($request->user(), $c), 403, 'No puedes escribir en esta conversación.');
+        $this->authorize('reply', $c);
         $data = $request->validate(['template_id' => ['required', 'integer'], 'params' => ['nullable', 'array', 'max:10'], 'params.*' => ['string', 'max:300']]);
         $customer = Customer::withoutGlobalScopes()->findOrFail($c->customer_id);
         if ($this->wa->number($customer->whatsapp) !== $c->wa_number) {
@@ -150,7 +150,7 @@ class ConversationController extends Controller
     public function storeNote(Request $request, int $conversation): JsonResponse
     {
         $c = $this->find($request, $conversation);
-        abort_unless($this->access->canReply($request->user(), $c), 403, 'No puedes agregar notas en esta conversación.');
+        $this->authorize('reply', $c);
         $data = $request->validate(['body' => ['required', 'string', 'min:1', 'max:2000']]);
         $note = ConversationNote::create(['conversation_id' => $c->id, 'user_id' => $request->user()->id, 'body' => $data['body'], 'created_at' => now()]);
 
@@ -188,7 +188,7 @@ class ConversationController extends Controller
         return [
             'id' => $c->id, 'company_id' => $c->company_id, 'customer' => $customer === null ? null : ['id' => $customer->id, 'code' => $customer->code, 'name' => $customer->name],
             'wa_number' => $c->wa_number, 'profile_name' => $c->profile_name, 'status' => $c->status, 'preview' => $c->last_message_preview,
-            'last_message_at' => $c->last_message_at?->toIso8601String(), 'window_open' => $c->windowOpen(), 'labels' => $labels, 'unread' => $unread, 'can_reply' => $this->access->canReply($user, $c),
+            'last_message_at' => $c->last_message_at?->toIso8601String(), 'window_open' => $c->windowOpen(), 'labels' => $labels, 'unread' => $unread, 'can_reply' => $user->can('reply', $c),
         ];
     }
 }

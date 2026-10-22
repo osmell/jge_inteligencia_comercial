@@ -144,7 +144,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | C | PHPStan nivel 5 → 6 → 8, subiendo uno por vez sin *baseline* | Medio | Bajo |
 | D ✅ | Mover consultas de los 10 controladores con `DB::` a servicios/scopes (empezando por Conversaciones, Notificaciones, Cotizaciones) | Medio | Medio (cubierto por pruebas Feature) |
 | E ✅ | Crear `tests/Unit` con la lógica pura y empezar por RFM, aging, scoring, ventanas | Medio | Bajo |
-| F | Policies para los recursos con alcance por registro (clientes, cotizaciones, conversaciones) | Medio | Medio (toca permisos: confirmar antes) |
+| F ✅ | Policies para los recursos con alcance por registro (clientes, cotizaciones, conversaciones) | Medio | Medio (toca permisos: confirmar antes) |
 | G | Dividir `DashboardService`, `SalesStatistics`, `CustomerInsights`, `SalesReportExporter` y los `ImportType` > 400 líneas | Medio–alto | Medio |
 | H ✅ | Interfaces para puertos externos (WhatsApp, correo, webhook) y eliminar `app()`/`new` de la lógica | Medio | Bajo |
 | I | `Resource` en todas las respuestas + generación de tipos TS (OpenAPI con Scribe/Scramble) | Medio | Bajo |
@@ -162,7 +162,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | Controladores con `DB::` | 10 → **0** (paso D) | 0 |
 | `app()`/`resolve()` en servicios, importaciones y controladores | 39 → **0** (paso H); quedan 10 en puntos donde Laravel no inyecta (ver paso H) | 0 |
 | Pruebas unitarias | 0 | ≥ 150 |
-| Policies | 0 | las de recursos con alcance por registro |
+| Policies | 0 → **6** (paso F) | las de recursos con alcance por registro |
 | Servicios > 300 líneas | 4 | 0 |
 | Páginas con > 8 `useState` | 8 | 0 |
 | CI obligatoria en PR | No | Sí |
@@ -249,3 +249,6 @@ Se creó `backend/tests/Unit` (la suite «Unit» ya estaba declarada en `phpunit
 **Excepciones que se mantienen (Laravel no inyecta ahí)**: 4 `FormRequest` (`app(DataScope|UserAccess)` dentro de reglas), `OrganizationScope` (alcance global del modelo), el trait `Auditable` (eventos de modelo), `ConversationBroadcast` (evento de difusión) y los métodos `failed()` de 2 trabajos en cola. Se revisarán si se cambia a una arquitectura de acciones (paso G).
 
 Resultado: Pint y PHPStan limpios, 664 pruebas pasan (4 nuevas).
+
+### Paso F — Policies de autorización por registro (2026-10-21)
+Implementado según `docs/25_PROPUESTA_POLICIES.md` (decisiones D1–D7 en ★: refactor sin cambio de comportamiento). 6 Policies + 1 Gate, `PoliciesTest` como especificación viva (675 pruebas en total, las 664 anteriores intactas) y una regla de arquitectura que impide comparar roles en controladores.

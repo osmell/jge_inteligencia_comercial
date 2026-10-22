@@ -81,4 +81,11 @@ final class ArchitectureTest extends TestCase
 
         $this->assertSame([], $offenders, 'Las llamadas a sistemas externos van detrás de un puerto en app/Contracts con su implementación en app/Integrations.');
     }
+
+    public function test_controllers_do_not_decide_access_by_comparing_roles(): void
+    {
+        $offenders = array_filter($this->phpFiles('app/Http/Controllers'), fn (string $f) => preg_match('/role->slug\s*(===|!==|==|!=)/', (string) file_get_contents($f)) === 1 && ! str_contains($f, '/Admin/'));
+
+        $this->assertSame([], array_values($offenders), 'Las reglas de acceso a un registro van en una Policy (app/Policies), no en el controlador.');
+    }
 }
