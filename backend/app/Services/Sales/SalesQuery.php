@@ -1,0 +1,134 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Services\Sales;
+
+use App\Models\SalesLine;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
+
+/**
+ * Consultas SQL de las estadísticas de ventas: la consulta base con sus filtros, las dimensiones de desglose, las agregaciones y el
+ * orden. Parte siempre de SalesLine, así el ámbito de compañía/sucursal del usuario autenticado se aplica por el global scope.
+ * Todo fragmento de SQL sale de listas blancas de esta clase; los valores del usuario van siempre como parámetros.
+ */
+class SalesQuery
+{
+    /**
+     * Categoría de una línea: Nivel 3 del catálogo de productos (compañía + código) y, si el producto no está en el
+     * catálogo o no tiene Nivel 3, la categoría que trae el archivo de ventas.
+     */
+    public const CATEGORY_SQL = "coalesce(nullif(pr.level3, ''), sales_lines.category_name)";
+
+    /** Grupo general (Nivel 1) y línea (Nivel 2) del catálogo de productos; sin catálogo o sin ese nivel, «Sin clasificar». */
+    public const GROUP_SQL = "coalesce(nullif(pr.level1, ''), 'Sin clasificar')";
+
+    public const LINE_SQL = "coalesce(nullif(pr.level2, ''), 'Sin clasificar')";
+
+    public const DIMENSIONS = ['company', 'branch', 'seller', 'operator', 'group', 'line', 'category', 'product', 'customer', 'month', 'day'];
+
+    /** Métricas por las que se puede ordenar un desglose. */
+    public const SORTS = ['net_total', 'tax_total', 'grand_total', 'discount_total', 'units', 'documents', 'customers', 'margin'];
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return Builder<SalesLine>
+     */
+    public function base(?CarbonImmutable $from, ?CarbonImmutable $to, array $filters): Builder
+    {
+        $query = SalesLine::query()
+            ->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id')
+            ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'sales_lines.company_id')->on('pr.code', '=', 'sales_lines.product_code'));
+
+        if ($from && $to) {
+            // Medio abierto (>= desde, < hasta + 1 día): incluye el último día aunque el motor guarde la fecha con hora.
+            $query->where('sales_lines.issued_on', '>=', $from->toDateString())
+                ->where('sales_lines.issued_on', '<', $to->addDay()->toDateString());
+        }
+
+        foreach (['company_id' => 'sales_lines.company_id', 'branch_id' => 'sales_lines.branch_id', 'seller_id' => 'sd.seller_id', 'operator_id' => 'sd.operator_id'] as $filter => $column) {
+            if (! empty($filters[$filter])) {
+                $query->where($column, (int) $filters[$filter]);
+            }
+        }
+
+        // Varios vendedores a la vez (equipo de un supervisor); una lista vacía no devuelve nada.
+        if (isset($filters['seller_ids'])) {
+            $query->whereIn('sd.seller_id', $filters['seller_ids']);
+        }
+
+        foreach (['group' => self::GROUP_SQL, 'line' => self::LINE_SQL, 'category' => self::CATEGORY_SQL, 'product_code' => 'sales_lines.product_code', 'customer_code' => 'sd.customer_code'] as $filter => $column) {
+            if (isset($filters[$filter]) && $filters[$filter] !== '') {
+                in_array($filter, ['group', 'line', 'category'], true) ? $query->whereRaw($column.' = ?', [$filters[$filter]]) : $query->where($column, $filters[$filter]);
+            }
+        }
+
+        return $query;
+    }
+
+    /** @return array{0: string, 1: string} */
+    public function dimensionColumns(string $dimension): array
+    {
+        $sqlite = DB::connection()->getDriverName() === 'sqlite';
+        $month = $sqlite ? "strftime('%Y-%m', sales_lines.issued_on)" : "to_char(sales_lines.issued_on, 'YYYY-MM')";
+        $day = $sqlite ? 'date(sales_lines.issued_on)' : "to_char(sales_lines.issued_on, 'YYYY-MM-DD')";
+
+        return match ($dimension) {
+            'company' => ['sales_lines.company_id', 'max(dim.name)'],
+            'branch' => ['sales_lines.branch_id', 'max(dim.name)'],
+            'seller' => ['sd.seller_id', 'max(dim.name)'],
+            'operator' => ['sd.operator_id', 'max(dim.name)'],
+            'group' => [self::GROUP_SQL, 'max('.self::GROUP_SQL.')'],
+            'line' => [self::LINE_SQL, 'max('.self::LINE_SQL.')'],
+            'category' => [self::CATEGORY_SQL, 'max('.self::CATEGORY_SQL.')'],
+            'product' => ['sales_lines.product_code', 'max(sales_lines.product_name)'],
+            'customer' => ['sd.customer_code', 'max(sd.customer_name)'],
+            'month' => [$month, $month],
+            'day' => [$day, $day],
+            default => throw new InvalidArgumentException("Dimensión no soportada: {$dimension}"),
+        };
+    }
+
+    /**
+     * @param  Builder<SalesLine>  $query
+     */
+    public function joinForDimension(Builder $query, string $dimension): void
+    {
+        $table = ['company' => ['companies', 'sales_lines.company_id'], 'branch' => ['branches', 'sales_lines.branch_id'],
+            'seller' => ['sellers', 'sd.seller_id'], 'operator' => ['operators', 'sd.operator_id']][$dimension] ?? null;
+
+        if ($table) {
+            $query->join("{$table[0]} as dim", 'dim.id', '=', $table[1]);
+        }
+    }
+
+    public function aggregates(): string
+    {
+        return implode(', ', [
+            'coalesce(sum(sales_lines.net_total), 0) as net_total',
+            'coalesce(sum(sales_lines.tax_total), 0) as tax_total',
+            'coalesce(sum(sales_lines.grand_total), 0) as grand_total',
+            // Descuento (ya restado de net_total). El % se calcula solo sobre líneas que traen Sub Total.
+            'coalesce(sum(sales_lines.discount_total), 0) as discount_total',
+            'coalesce(sum(case when sales_lines.subtotal is not null then sales_lines.subtotal end), 0) as discounted_gross',
+            'coalesce(sum(case when sales_lines.subtotal is not null then coalesce(sales_lines.discount_total, 0) end), 0) as discounted_amount',
+            'coalesce(sum(sales_lines.units), 0) as units',
+            'count(distinct sales_lines.sales_document_id) as documents',
+            'count(distinct sd.customer_code) as customers',
+            // Margen solo sobre líneas con costo válido (> 0); el costo es el ACTUAL, no el de la fecha de venta.
+            'coalesce(sum(case when sales_lines.line_cost_total > 0 then sales_lines.net_total end), 0) as costed_net',
+            'coalesce(sum(case when sales_lines.line_cost_total > 0 then sales_lines.line_cost_total end), 0) as costed_cost',
+        ]);
+    }
+
+    public function sortExpression(string $sort): string
+    {
+        return $sort === 'margin' ? '(sum(case when sales_lines.line_cost_total > 0 then sales_lines.net_total - sales_lines.line_cost_total end))'
+            : ['net_total' => 'sum(sales_lines.net_total)', 'tax_total' => 'sum(sales_lines.tax_total)', 'grand_total' => 'sum(sales_lines.grand_total)', 'discount_total' => 'sum(sales_lines.discount_total)',
+                'units' => 'sum(sales_lines.units)', 'documents' => 'count(distinct sales_lines.sales_document_id)',
+                'customers' => 'count(distinct sd.customer_code)'][$sort];
+    }
+}
