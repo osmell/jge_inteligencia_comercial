@@ -143,7 +143,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | B ✅ | `strict_types` en todos los archivos (automático con Pint `declare_strict_types`) y revisión de fallos | Bajo–medio | Bajo (las pruebas lo detectan) |
 | C | PHPStan nivel 5 → 6 → 8, subiendo uno por vez sin *baseline* | Medio | Bajo |
 | D | Mover consultas de los 10 controladores con `DB::` a servicios/scopes (empezando por Conversaciones, Notificaciones, Cotizaciones) | Medio | Medio (cubierto por pruebas Feature) |
-| E | Crear `tests/Unit` con la lógica pura y empezar por RFM, aging, scoring, ventanas | Medio | Bajo |
+| E ✅ | Crear `tests/Unit` con la lógica pura y empezar por RFM, aging, scoring, ventanas | Medio | Bajo |
 | F | Policies para los recursos con alcance por registro (clientes, cotizaciones, conversaciones) | Medio | Medio (toca permisos: confirmar antes) |
 | G | Dividir `DashboardService`, `SalesStatistics`, `CustomerInsights`, `SalesReportExporter` y los `ImportType` > 400 líneas | Medio–alto | Medio |
 | H | Interfaces para puertos externos (WhatsApp, correo, webhook) y eliminar `app()`/`new` de la lógica | Medio | Bajo |
@@ -186,3 +186,21 @@ Archivos: `.github/workflows/ci.yml`, `.github/PULL_REQUEST_TEMPLATE.md`, `.gith
 - **Defectos reales descubiertos** (el motivo del paso): `CreditPortfolioController::customer` y `::score` pasaban `company_id` de la URL (texto) a servicios que piden entero; PHP lo convertía en silencio. Se corrigió con `(int)` explícito. Las pruebas existentes lo detectaron (6 fallos antes de la corrección).
 - Resultado: pint + PHPStan limpios, 572 pruebas pasan.
 - **Riesgo residual**: una conversión implícita en una ruta que ninguna prueba recorre (comandos de consola, trabajos en cola poco usados) fallaría con `TypeError` en vez de convertir. Por eso conviene la validación manual de QA y el paso E (pruebas unitarias).
+
+### Paso E — Pruebas unitarias (2026-10-21)
+Se creó `backend/tests/Unit` (la suite «Unit» ya estaba declarada en `phpunit.xml`; la CI la ejecuta con `php artisan test`). **85 pruebas nuevas en 0,5 s** (las 572 de Feature tardan ~48 s). Total: **657 pruebas**.
+
+| Archivo | Lógica protegida |
+|---|---|
+| `Inventory/QuantityTest` | Aritmética de cantidades de 8 decimales sin `float`: conversión, redondeo mitad hacia arriba, ida y vuelta, equivalencias como fracción reducida, valorización sin desbordar 64 bits, rechazo de entradas inválidas |
+| `Imports/DecimalTest` | Importes de 4 decimales: conversión sin redondeo, formato, positivo/negativo/cero |
+| `Imports/ImportHelpersTest` | Normalización de encabezados y unidades, filas vacías, valores en errores de importación |
+| `Services/CreditAgingTest` | Tramos de antigüedad de cartera en los bordes (0, 1, 30, 31, 120, 121) y límites configurables desordenados/duplicados |
+| `Services/RfmSegmentationTest` | Reglas de segmento, quintiles (empates, tope, menor-es-mejor) y frase de explicación |
+| `Services/CsvSafeTest` | Neutralización de fórmulas de Excel (`= + - @`, tab, retorno) |
+| `Services/SellerGoalsMonthTest` | Inicio de mes |
+| `Models/WhatsappConversationWindowTest` | Ventana de 24 h: sin entrante, dentro, exactamente 24 h, valor por omisión |
+
+- No tocan base de datos ni red. Solo las que necesitan `config()` o fechas de prueba usan el `TestCase` de Laravel.
+- Las reglas de RFM son privadas; se prueban por reflexión sin construir el servicio. Es una solución provisional: el paso G (dividir servicios) las extraerá a clases con métodos públicos y estas pruebas pasarán a llamarlas directo.
+- **Alcance pendiente**: `CreditScore`, `SalesStatistics`, `SeasonalityAnalysis` y otros mezclan cálculo con consultas a la base. Su lógica pura solo será probable sin base de datos cuando se separe el cálculo de la consulta (pasos D y G). Meta del plan: ≥ 150 pruebas unitarias.
