@@ -220,7 +220,7 @@ export default function QuotationDetailPage() {
             <h2 className="mb-2 text-sm font-semibold text-ink">Adjunto (PDF o foto)</h2>
             {q.attachment ? (
               <p className="text-sm">
-                {q.attachment.name} <span className="text-ink-muted">({formatBytes(q.attachment.size)})</span>
+                {q.attachment.name} <span className="text-ink-muted">({formatBytes(q.attachment.size ?? 0)})</span>
               </p>
             ) : (
               <p className="text-sm text-ink-muted">Sin adjunto. Se admite PDF, JPG, PNG o WebP de hasta {MAX_ATTACHMENT_MB} MB.</p>

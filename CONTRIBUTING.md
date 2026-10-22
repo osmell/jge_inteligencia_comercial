@@ -23,6 +23,9 @@ docker compose exec -T -u $(id -u) backend vendor/bin/pint app config routes dat
 docker compose exec -T frontend sh -c "npm run typecheck && npm run lint && npm test && npm run build"
 ```
 
+## Contrato de la API
+Las respuestas nuevas usan un `Resource` y el documento `backend/openapi.json` y los tipos `frontend/src/lib/api-types.ts` se **generan** (ver `docs/27_CONTRATO_DE_API.md`). Si cambia una respuesta o una validación: `UPDATE_OPENAPI=1 php artisan test --filter=OpenApiSpecTest`, luego `npm run api:types` en el frontend, y suba los archivos junto con el cambio. La CI lo exige.
+
 ## Pruebas de extremo a extremo
 Los flujos críticos (sesión, barra de comandos, menú por rol, ventas, administración, clientes, cotizaciones) se prueban en un navegador real con Playwright (`e2e/`, ver su README). Corren cada noche y a demanda en GitHub (*Actions → E2E*); un cambio que toque una de esas pantallas debe ejecutarlas antes de fusionarse.
 

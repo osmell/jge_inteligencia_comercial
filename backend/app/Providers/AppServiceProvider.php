@@ -54,6 +54,9 @@ class AppServiceProvider extends ServiceProvider
             Log::error('queue.job_failed', ['job' => $event->job->resolveName(), 'queue' => $event->job->getQueue(), 'attempts' => $event->job->attempts(), 'exception' => $event->exception->getMessage()]);
         });
 
+        // Documentación de la API (/docs/api): solo administración, también fuera de producción.
+        Gate::define('viewApiDocs', fn (?User $user) => $user?->role->slug === Role::ADMINISTRADOR);
+
         // Análisis de toda la compañía (concentración, estacionalidad…): no disponibles para vendedores.
         Gate::define('view-company-analysis', fn (User $user) => $user->role->slug !== Role::VENDEDOR
             ? Response::allow()

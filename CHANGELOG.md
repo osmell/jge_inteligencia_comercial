@@ -14,6 +14,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Pruebas unitarias** (`tests/Unit`) de la aritmética de cantidades e importes, antigüedad de cartera, RFM, ventana de 24 h, reglas de importación y reglas de arquitectura.
 - **Policies** de autorización por registro (conversaciones, cotizaciones, contactos, clientes, vendedores, facturadores, respuestas rápidas).
 - **Puertos** (`app/Contracts`) para WhatsApp y webhooks, con sus integraciones.
+- **Contrato de la API generado** (OpenAPI con Scramble en `backend/openapi.json`, documentación en `/docs/api` para administración y tipos de TypeScript generados) con comprobaciones automáticas de deriva; las cotizaciones usan `Resource` y tipos derivados.
 - **Pruebas de extremo a extremo** con Playwright (`e2e/`): 7 flujos críticos en un navegador real, ejecutados cada noche y a demanda en GitHub.
 - **Hooks del frontend** (`useFilters`, `useSubmit`, `useFormValues`, `useExport`, `useDebounced`, `useFitRows`) que reemplazan filas repetidas de `useState`.
 - **Identificador de petición** (`X-Request-Id`) en cada respuesta y en cada registro, canal de registros `json`, registro estructurado de trabajos en cola fallidos y comando `ops:status` para monitoreo.

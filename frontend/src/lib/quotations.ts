@@ -1,3 +1,5 @@
+import type { components } from './api-types'
+
 export const STATUS_LABEL = {
   draft: 'Borrador',
   issued: 'Emitida',
@@ -36,31 +38,23 @@ export const TRANSITION_LABEL: Record<StoredStatus, string> = {
   cancelled: 'Cancelar',
 }
 
-export interface QuotationRow {
-  id: number
-  number: string
-  external_reference: string | null
+type Schemas = components['schemas']
+
+/** Campos que la API declara como texto pero son listas cerradas: el documento generado no conoce esos valores. */
+interface Narrowed {
   status: StoredStatus
   effective_status: QuotationStatus
-  amount: string
-  valid_until: string | null
-  issued_at: string | null
-  customer: { company_id: number; code: string; name: string; do_not_contact: boolean }
-  seller: string | null
-  user: { id: number; name: string } | null
-  has_attachment: boolean
-  document: { id: number; number: string; issued_on: string } | null
   loss_reason: LossReason | null
 }
 
-export interface QuotationDetail extends QuotationRow {
-  description: string | null
-  loss_note: string | null
-  converted_at: string | null
-  attachment: { name: string; mime: string; size: number } | null
-  transitions: StoredStatus[]
-  events: { from: StoredStatus | null; to: StoredStatus; note: string | null; at: string; user: string | null }[]
-}
+/** Forma de la respuesta, generada desde el backend (`npm run api:types`); aquí solo se precisan las listas cerradas. */
+export type QuotationRow = Omit<Schemas['QuotationResource'], keyof Narrowed> & Narrowed
+
+export type QuotationDetail = Omit<Schemas['QuotationDetailResource'], keyof Narrowed | 'transitions' | 'events'> &
+  Narrowed & {
+    transitions: StoredStatus[]
+    events: (Omit<Schemas['QuotationDetailResource']['events'][number], 'from' | 'to'> & { from: StoredStatus | null; to: StoredStatus })[]
+  }
 
 export interface QuotationList {
   data: QuotationRow[]

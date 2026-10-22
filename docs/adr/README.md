@@ -19,3 +19,4 @@ Un ADR es una nota corta que responde **por qué** el sistema está hecho así, 
 | [009](009-puertos-para-sistemas-externos.md) | Puertos (interfaces) para WhatsApp y webhooks | Aceptado |
 | [010](010-secciones-del-dashboard-enchufables.md) | Dashboard por secciones enchufables | Aceptado |
 | [011](011-calidad-automatizada-phpstan-8.md) | Calidad automatizada: PHPStan nivel 8, `strict_types` y reglas de arquitectura | Aceptado |
+| [012](012-contrato-de-api-generado.md) | Contrato de la API generado del código (OpenAPI) y tipos del frontend derivados | Aceptado |

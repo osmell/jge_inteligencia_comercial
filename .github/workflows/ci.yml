@@ -74,6 +74,10 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - run: npm ci
+      - name: Tipos de la API al día (se generan del documento del backend)
+        run: |
+          npm run api:types
+          git diff --exit-code src/lib/api-types.ts || { echo 'Los tipos generados no coinciden con backend/openapi.json: ejecute npm run api:types y suba el resultado.'; exit 1; }
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test

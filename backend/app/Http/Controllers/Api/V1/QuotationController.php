@@ -10,6 +10,8 @@ use App\Http\Requests\QuotationLinkRequest;
 use App\Http\Requests\QuotationRequest;
 use App\Http\Requests\QuotationsListRequest;
 use App\Http\Requests\QuotationStatusRequest;
+use App\Http\Resources\QuotationDetailResource;
+use App\Http\Resources\QuotationResource;
 use App\Models\Customer;
 use App\Models\Quotation;
 use App\Models\SalesDocument;
@@ -69,15 +71,14 @@ class QuotationController extends Controller
         $page = $request->page();
         $rows = $query->with(['customer', 'user', 'seller', 'document'])->orderByDesc('id')->offset(($page - 1) * self::PAGE_SIZE)->limit(self::PAGE_SIZE + 1)->get();
 
-        return response()->json([
-            'data' => $rows->take(self::PAGE_SIZE)->map(fn (Quotation $q) => $this->present($q, $today))->values()->all(),
-            'meta' => ['page' => $page, 'has_more' => $rows->count() > self::PAGE_SIZE, 'counts' => $counts],
-        ]);
+        return QuotationResource::collection($rows->take(self::PAGE_SIZE)->values())
+            ->additional(['meta' => ['page' => $page, 'has_more' => $rows->count() > self::PAGE_SIZE, 'counts' => $counts]])
+            ->response();
     }
 
     public function show(Request $request, int $quotation): JsonResponse
     {
-        return response()->json(['data' => $this->detail($this->find($quotation))]);
+        return (new QuotationDetailResource($this->find($quotation)))->response();
     }
 
     public function store(QuotationRequest $request): JsonResponse
@@ -85,7 +86,7 @@ class QuotationController extends Controller
         $customer = Customer::query()->where('company_id', $request->integer('company_id'))->where('code', $request->string('code')->toString())->first() ?? abort(404, 'Cliente no encontrado.');
         $data = $request->safe()->only(['amount', 'valid_until', 'description', 'external_reference', 'status']);
 
-        return response()->json(['data' => $this->detail($this->workflow->create($request->user(), $customer, array_filter($data, fn ($v) => $v !== null)))], 201);
+        return (new QuotationDetailResource($this->workflow->create($request->user(), $customer, array_filter($data, fn ($v) => $v !== null))))->response()->setStatusCode(201);
     }
 
     public function update(QuotationRequest $request, int $quotation): JsonResponse
@@ -96,7 +97,7 @@ class QuotationController extends Controller
             $data['amount'] = 0;
         }
 
-        return response()->json(['data' => $this->detail($this->workflow->update($record, $request->user(), $data))]);
+        return (new QuotationDetailResource($this->workflow->update($record, $request->user(), $data)))->response();
     }
 
     public function status(QuotationStatusRequest $request, int $quotation): JsonResponse
@@ -106,7 +107,7 @@ class QuotationController extends Controller
             $request->validated('loss_reason'), $request->validated('loss_note'), $request->validated('note'),
         );
 
-        return response()->json(['data' => $this->detail($record)]);
+        return (new QuotationDetailResource($record))->response();
     }
 
     /** Facturas del cliente que se pueden vincular (misma compañía y cliente, desde la emisión, sin otra cotización). */
@@ -134,22 +135,22 @@ class QuotationController extends Controller
         $record = $this->find($quotation, 'manage');
         $document = SalesDocument::query()->find($request->integer('document_id')) ?? abort(404, 'Factura no encontrada.');
 
-        return response()->json(['data' => $this->detail($this->workflow->link($record, $request->user(), $document))]);
+        return (new QuotationDetailResource($this->workflow->link($record, $request->user(), $document)))->response();
     }
 
     public function unlink(Request $request, int $quotation): JsonResponse
     {
-        return response()->json(['data' => $this->detail($this->workflow->unlink($this->find($quotation, 'unlink'), $request->user()))]);
+        return (new QuotationDetailResource($this->workflow->unlink($this->find($quotation, 'unlink'), $request->user())))->response();
     }
 
     public function attach(QuotationAttachmentRequest $request, int $quotation): JsonResponse
     {
-        return response()->json(['data' => $this->detail($this->workflow->attach($this->find($quotation, 'manage'), $request->user(), $request->file('file')))]);
+        return (new QuotationDetailResource($this->workflow->attach($this->find($quotation, 'manage'), $request->user(), $request->file('file'))))->response();
     }
 
     public function detach(Request $request, int $quotation): JsonResponse
     {
-        return response()->json(['data' => $this->detail($this->workflow->detach($this->find($quotation, 'manage'), $request->user()))]);
+        return (new QuotationDetailResource($this->workflow->detach($this->find($quotation, 'manage'), $request->user())))->response();
     }
 
     public function download(int $quotation): StreamedResponse
@@ -176,36 +177,5 @@ class QuotationController extends Controller
         $this->authorize($ability, $record);
 
         return $record;
-    }
-
-    /** @return array<string, mixed> */
-    private function present(Quotation $q, ?Carbon $today = null): array
-    {
-        return [
-            'id' => $q->id, 'number' => $q->number, 'external_reference' => $q->external_reference,
-            'status' => $q->status, 'effective_status' => $q->effectiveStatus($today), 'amount' => number_format((float) $q->amount, 2, '.', ''),
-            'valid_until' => $q->valid_until?->toDateString(), 'issued_at' => $q->issued_at?->toIso8601String(),
-            'customer' => ['company_id' => $q->company_id, 'code' => $q->customer?->code, 'name' => $q->customer?->name, 'do_not_contact' => $q->customer?->do_not_contact],
-            'seller' => $q->seller?->name, 'user' => $q->user ? ['id' => $q->user->id, 'name' => $q->user->name] : null,
-            'has_attachment' => $q->attachment_path !== null,
-            'document' => $q->document ? ['id' => $q->document->id, 'number' => "{$q->document->series}-{$q->document->number}", 'issued_on' => $q->document->issued_on->toDateString()] : null,
-            'loss_reason' => $q->loss_reason,
-        ];
-    }
-
-    /** @return array<string, mixed> */
-    private function detail(Quotation $q): array
-    {
-        $q->loadMissing(['customer', 'user', 'seller', 'document']);
-        $q->load('events.user');
-
-        return $this->present($q) + [
-            'description' => $q->description, 'loss_note' => $q->loss_note, 'converted_at' => $q->converted_at?->toIso8601String(),
-            'attachment' => $q->attachment_path ? ['name' => $q->attachment_name, 'mime' => $q->attachment_mime, 'size' => $q->attachment_size] : null,
-            'transitions' => array_values(array_diff(Quotation::TRANSITIONS[$q->status] ?? [], ['draft'])),
-            'events' => $q->events->map(fn ($e) => [
-                'from' => $e->from_status, 'to' => $e->to_status, 'note' => $e->note, 'at' => $e->created_at->toIso8601String(), 'user' => $e->user?->name,
-            ])->all(),
-        ];
     }
 }

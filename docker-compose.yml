@@ -42,6 +42,8 @@ services:
     volumes:
       - ./frontend:/app
       - frontend_node_modules:/app/node_modules
+      # Documento de la API generado por el backend: de él salen los tipos de TypeScript (npm run api:types).
+      - ./backend/openapi.json:/api-spec/openapi.json:ro
     environment:
       VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
 

@@ -147,7 +147,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 | F ✅ | Policies para los recursos con alcance por registro (clientes, cotizaciones, conversaciones) | Medio | Medio (toca permisos: confirmar antes) |
 | G ✅ | Dividir `DashboardService`, `SalesStatistics`, `CustomerInsights`, `SalesReportExporter` y los `ImportType` > 400 líneas | Medio–alto | Medio |
 | H ✅ | Interfaces para puertos externos (WhatsApp, correo, webhook) y eliminar `app()`/`new` de la lógica | Medio | Bajo |
-| I | `Resource` en todas las respuestas + generación de tipos TS (OpenAPI con Scribe/Scramble) | Medio | Bajo |
+| I ✅ | `Resource` en todas las respuestas + generación de tipos TS (OpenAPI con Scribe/Scramble) | Medio | Bajo |
 | J ✅ | Hooks para páginas con > 8 estados; Playwright con 5–8 flujos críticos | Medio–alto | Bajo |
 | K ✅ | ADR, `CHANGELOG`, etiquetas, métricas y registros estructurados | Bajo | Nulo |
 
@@ -314,3 +314,11 @@ Pantallas simplificadas: Recomendaciones, Cotizaciones (lista y detalle), Usuari
 - Se validaron contra una instalación aislada (SQLite, puerto aparte) sin tocar la base de desarrollo: **11 de 11 pasan**. Contra la base de desarrollo real pasan las 9 de lectura (las 2 de clientes y cotización se omiten sin el cliente fijo).
 - `.github/workflows/e2e.yml` levanta la aplicación (SQLite + datos de demostración) y las ejecuta cada noche y a demanda. **No se ha ejecutado aún en GitHub**; si falla por diferencias de entorno se corrige en un commit aparte.
 - Hallazgo: en la base de desarrollo actual el rol Gerente General no tiene los permisos de ventas (el dashboard muestra «tu rol todavía no tiene indicadores»); las pruebas usan administración para lo que lee ventas.
+
+### Paso I — Contrato de la API generado y tipos del frontend (2026-10-22)
+Detalle y guía en `docs/27_CONTRATO_DE_API.md` y `docs/adr/012-contrato-de-api-generado.md`.
+- **Scramble** (`dedoc/scramble`) genera `backend/openapi.json` (192 operaciones) desde rutas, `FormRequest`, `Resource` y los servicios; **162 de 192 (84 %)** ya tienen la respuesta completamente tipada.
+- **`openapi-typescript`** genera `frontend/src/lib/api-types.ts`; las cotizaciones (la forma que era opaca) pasaron a `QuotationResource` / `QuotationDetailResource` y sus tipos del frontend se **derivan** de lo generado. El contrato encontró un error real: el tamaño del adjunto puede ser nulo y el tipo manual decía lo contrario.
+- **Deriva imposible de ignorar**: `OpenApiSpecTest` (el documento coincide con el código; también comprueba que cada operación documente una respuesta, que las respuestas sin tipo nunca crezcan y que `/docs/api` sea solo para administración), un paso de la CI que regenera los tipos y falla si difieren, y `tsc` en las pantallas.
+- **Pendiente (30 operaciones con partes sin tipo)**, listadas por módulo en `docs/27`; se migran a `Resource` módulo por módulo al tocarlos, bajando `OPAQUE_BACKLOG`.
+- Pruebas: backend 698 · frontend 250.
