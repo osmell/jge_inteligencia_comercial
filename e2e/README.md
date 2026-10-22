@@ -29,7 +29,7 @@ O, con Node instalado: `cd e2e && npm ci && npx playwright install chromium && n
 
 ## Integración continua
 `.github/workflows/e2e.yml` levanta la aplicación (SQLite, datos de demostración) y ejecuta todas, incluida la que escribe. Corre cada noche y a
-demanda (*Actions → E2E → Run workflow*); no bloquea los Pull Requests porque es más lenta que la CI normal.
+demanda (verificado en GitHub: 11 de 11 en menos de 25 s) (*Actions → E2E → Run workflow*); no bloquea los Pull Requests porque es más lenta que la CI normal.
 
 ## Agregar un flujo
 Un archivo `NN-nombre.spec.ts` por flujo, con `loginOk(page, '<usuario>')` y selectores por **rol y nombre accesible** (no por clases CSS): si una prueba

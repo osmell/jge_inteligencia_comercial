@@ -312,7 +312,7 @@ Pantallas simplificadas: Recomendaciones, Cotizaciones (lista y detalle), Usuari
 **Pruebas de extremo a extremo** (`e2e/`, Playwright 1.64, Chromium): 7 flujos (11 pruebas) — sesión (clave incorrecta, entrada, persistencia al recargar, cierre y pantalla protegida), barra de comandos (tecla `/`, y que escribir en un campo no la roba), menú por rol y bloqueo de URL de administración para un vendedor, tablero de ventas, administración (compañías, usuarios, formulario), ficha de cliente hasta el reporte de ventas por cliente, y creación y cancelación de una cotización.
 - Por omisión **solo leen**; la que crea datos exige `E2E_ALLOW_WRITES=1`. Usan el cliente fijo «Cliente E2E» (`E2eSeeder`).
 - Se validaron contra una instalación aislada (SQLite, puerto aparte) sin tocar la base de desarrollo: **11 de 11 pasan**. Contra la base de desarrollo real pasan las 9 de lectura (las 2 de clientes y cotización se omiten sin el cliente fijo).
-- `.github/workflows/e2e.yml` levanta la aplicación (SQLite + datos de demostración) y las ejecuta cada noche y a demanda. **No se ha ejecutado aún en GitHub**; si falla por diferencias de entorno se corrige en un commit aparte.
+- `.github/workflows/e2e.yml` levanta la aplicación (SQLite + datos de demostración) y las ejecuta cada noche y a demanda. **Ejecutado en GitHub el 2026-10-22 sobre el commit d77aef0: 11 de 11 pasan en 23,7 s** (PHP 8.5, Node 22, Chromium 156, SQLite, datos de demostración).
 - Hallazgo: en la base de desarrollo actual el rol Gerente General no tiene los permisos de ventas (el dashboard muestra «tu rol todavía no tiene indicadores»); las pruebas usan administración para lo que lee ventas.
 
 ### Paso I — Contrato de la API generado y tipos del frontend (2026-10-22)
