@@ -1,7 +1,7 @@
 # JGE Inteligencia Comercial
 
 Plataforma web de inteligencia comercial, seguimiento de clientes, crédito e inventario para JGE Soluciones Integrales.
-Contexto y fases del proyecto: carpeta [`docs/`](docs/README.md). **Estado: Fase 1 (fundación y seguridad).**
+Contexto y fases del proyecto: carpeta [`docs/`](docs/README.md). **Estado: Fases 1 a 12 implementadas (ver `docs/`); en revisión funcional ajuste por ajuste (`docs/23_AJUSTES_REVISION.md`).** Para colaborar: [`CONTRIBUTING.md`](CONTRIBUTING.md) y la guía de desarrollo [`docs/24`](docs/24_ANALISIS_CODIGO_Y_GUIA_DESARROLLO.md).
 
 ## Estructura
 
@@ -49,6 +49,8 @@ Contraseña de todos: `Desarrollo-123` (solo entornos no productivos).
 | `vendedor2` | Vendedor | Beta (Central) |
 
 ## Pruebas y chequeos
+
+La integración continua (`.github/workflows/ci.yml`) ejecuta los mismos chequeos en cada Pull Request y en `main`.
 
 ```bash
 # Backend: estilo (Pint), análisis estático (Larastan) y pruebas

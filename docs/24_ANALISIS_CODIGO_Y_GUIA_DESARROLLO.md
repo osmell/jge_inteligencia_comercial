@@ -139,7 +139,7 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 
 | Paso | Contenido | Esfuerzo | Riesgo |
 |---|---|---|---|
-| A | **CI en GitHub Actions** (Pint, PHPStan, pruebas, typecheck, lint, test, build, audits) + plantilla de PR + `CONTRIBUTING.md` + actualizar `README` | Bajo | Nulo |
+| A ✅ | **CI en GitHub Actions** (Pint, PHPStan, pruebas, typecheck, lint, test, build, audits) + plantilla de PR + `CONTRIBUTING.md` + actualizar `README` | Bajo | Nulo |
 | B | `strict_types` en todos los archivos (automático con Pint `declare_strict_types`) y revisión de fallos | Bajo–medio | Bajo (las pruebas lo detectan) |
 | C | PHPStan nivel 5 → 6 → 8, subiendo uno por vez sin *baseline* | Medio | Bajo |
 | D | Mover consultas de los 10 controladores con `DB::` a servicios/scopes (empezando por Conversaciones, Notificaciones, Cotizaciones) | Medio | Medio (cubierto por pruebas Feature) |
@@ -170,3 +170,12 @@ Jobs/Events        → trabajo asíncrono y notificaciones de dominio
 ## 8. Alcance y límites de este análisis
 - Es un análisis **estático y estadístico** (conteos y lectura de muestras). No se midió cobertura de pruebas, rendimiento ni consultas N+1; eso entra en los pasos C y K.
 - Ninguna de las propuestas cambia el comportamiento aprobado por el cliente: cada paso mantiene las pruebas en verde y se entrega con su reporte.
+
+## 9. Registro de pasos del plan
+
+### Paso A — CI, plantilla de PR y guía de contribución (2026-10-21)
+Archivos: `.github/workflows/ci.yml`, `.github/PULL_REQUEST_TEMPLATE.md`, `.github/dependabot.yml`, `CONTRIBUTING.md`, y `README.md` actualizado (estado y enlace a la guía).
+- **CI** con dos trabajos en paralelo: *backend* (PHP 8.5: Pint, Larastan, pruebas, `composer audit`) y *frontend* (Node 22: tipos, lint, pruebas, build, `npm audit`). Se ejecuta en cada PR y en `main`; cancela ejecuciones obsoletas. Las auditorías informan pero no bloquean (`continue-on-error`), hasta revisar el estado inicial.
+- **Dependabot** mensual y agrupado (Composer, npm, Actions).
+- **Pendiente por el responsable en GitHub** (no se puede hacer desde el repositorio): activar la protección de `main` — exigir PR, 1 revisión y los checks «Backend» y «Frontend» en verde. Hasta que se active, la CI avisa pero no impide fusionar.
+- **Verificación**: los YAML se validaron sintácticamente en local; la primera ejecución real ocurre al subir. Si la CI falla por diferencias de entorno (extensiones de PHP, versión de Node), se corrige en un commit aparte.

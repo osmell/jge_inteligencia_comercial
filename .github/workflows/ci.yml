@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (Pint, PHPStan, pruebas)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_sqlite, zip, intl
+          coverage: none
+          tools: composer:v2
+
+      - name: Caché de Composer
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Preparar entorno
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - name: Estilo (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Análisis estático (Larastan)
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+      - name: Pruebas
+        run: php artisan test
+
+      - name: Auditoría de dependencias
+        run: composer audit --no-interaction
+        continue-on-error: true
+
+  frontend:
+    name: Frontend (tipos, lint, pruebas, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+      - name: Auditoría de dependencias
+        run: npm audit --audit-level=high
+        continue-on-error: true
