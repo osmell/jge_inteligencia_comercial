@@ -45,3 +45,26 @@ Responsabilidad de la VM de base de datos; mínimo recomendado:
 2. Reiniciar `queue` y `reverb` (cargan el código al arrancar).
 3. `php artisan ops:status` en verde.
 4. Revisar la CI del commit desplegado y el `CHANGELOG.md`.
+
+## Empezar con información real: `data:reset`
+
+Borra todo lo que nace de operar el sistema y conserva el maestro, las cuentas y la configuración. **Es irreversible**: haga antes una copia (sección 5: Respaldo y restauración de PostgreSQL).
+
+| Se conserva | Se borra |
+|---|---|
+| Compañías, sucursales, vendedores, facturadores, productos (con sus unidades) | Ventas e importaciones (con sus errores), metas |
+| Usuarios, roles, permisos y a qué compañías/sucursales llega cada cuenta | Clientes y sus interacciones, cotizaciones (y sus PDF), crédito, notas de crédito, promesas de pago |
+| Configuración: correo, WhatsApp (credenciales cifradas, plantillas, respuestas rápidas), webhooks, avisos, automatizaciones, tipos de cliente | Inventario (saldos, movimientos, recepciones, faltantes) |
+| | Análisis (RFM, alertas, ventas cruzadas), avisos, resúmenes, conversaciones de WhatsApp con sus adjuntos y consentimientos, historial de Auditoría |
+
+```bash
+docker compose exec backend php artisan data:reset --dry-run     # solo muestra qué se borraría y qué se conserva
+docker compose exec backend php artisan data:reset               # pide escribir el nombre de la base para continuar
+docker compose exec backend php artisan data:reset --keep-audit  # conserva también la Auditoría
+docker compose exec backend php artisan data:reset --confirm=jge # sin preguntar (scripts); el valor debe ser el nombre de la base
+```
+
+- Se hace en una sola transacción: o queda todo limpio o no se toca nada. Los números de registro vuelven a empezar en 1.
+- Quedan registradas en Auditoría la operación y cuántas filas se borraron (`system.data_reset`).
+- Toda tabla nueva debe clasificarse en `App\Services\DataReset` (conservar o borrar); una prueba falla si falta alguna y el comando se niega a ejecutarse.
+- Tras borrar, vuelva a cargar los clientes y las ventas reales desde Importaciones y ejecute `php artisan insights:refresh` si quiere el análisis al día.

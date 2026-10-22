@@ -21,6 +21,9 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Identificador de petición** (`X-Request-Id`) en cada respuesta y en cada registro, canal de registros `json`, registro estructurado de trabajos en cola fallidos y comando `ops:status` para monitoreo.
 - Documentación para el equipo: análisis del código y guía SOLID (`docs/24`), propuesta de Policies (`docs/25`), operación (`docs/26`) y decisiones de arquitectura (`docs/adr`).
 
+### Añadido
+- `php artisan data:reset`: deja la base lista para información real (conserva compañías, sucursales, vendedores, facturadores, productos, cuentas y configuración). Simulación con `--dry-run`, confirmación escribiendo el nombre de la base, una sola transacción.
+
 ### Seguridad
 - **Cambio de clave obligatorio**: la clave que fija administración (alta o restablecimiento) es temporal; hasta cambiarla, la API solo permite ver el perfil, cambiar la clave y salir. Cualquier persona puede cambiar su clave (pide la actual, con límite de intentos y en Auditoría).
 
