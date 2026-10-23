@@ -2253,6 +2253,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reportContext.show"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/role-permissions": {
         parameters: {
             query?: never;
@@ -2898,6 +2914,18 @@ export interface components {
             username: string;
             password: string;
         };
+        /** Operator */
+        Operator: {
+            id: number;
+            company_id: number;
+            name: string;
+            normalized_name: string;
+            is_active: boolean;
+            /** Format: date-time */
+            created_at: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
+        };
         /**
          * OperatorRequest
          * @description Alta o cambios de un facturador (operador): nombre y estado.
@@ -3040,6 +3068,26 @@ export interface components {
             created_at: string | null;
             /** Format: date-time */
             updated_at: string | null;
+        };
+        /** Seller */
+        Seller: {
+            id: number;
+            company_id: number;
+            name: string;
+            normalized_name: string;
+            user_id: number | null;
+            is_active: boolean;
+            /** Format: date-time */
+            created_at: string | null;
+            /** Format: date-time */
+            updated_at: string | null;
+            /** Format: date-time */
+            starts_on: string | null;
+            /** Format: date-time */
+            ends_on: string | null;
+            branch_id: number | null;
+            is_default: boolean;
+            supervisor_id: number | null;
         };
         /**
          * SellerGoalsRequest
@@ -9281,6 +9329,39 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["QuotationDetailResource"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "reportContext.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            companies: components["schemas"]["Company"][];
+                            branches: components["schemas"]["Branch"][];
+                            sellers: components["schemas"]["Seller"][];
+                            operators: components["schemas"]["Operator"][];
+                            comparison_modes: [
+                                "previous",
+                                "last_year",
+                                "custom"
+                            ];
+                            thresholds: string;
+                        };
                     };
                 };
             };

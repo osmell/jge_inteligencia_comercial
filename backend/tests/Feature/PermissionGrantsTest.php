@@ -49,7 +49,7 @@ class PermissionGrantsTest extends TestCase
 
         $this->actingAs($this->admin, 'sanctum')->getJson('/api/v1/admin/role-permissions')
             ->assertOk()
-            ->assertJsonCount(27, 'data.permissions')
+            ->assertJsonCount(28, 'data.permissions')
             ->assertJsonCount(4, 'data.roles')
             ->assertJsonPath('data.roles.0.locked', true);
     }
@@ -57,7 +57,7 @@ class PermissionGrantsTest extends TestCase
     public function test_each_menu_option_has_its_own_permission(): void
     {
         $this->assertEqualsCanonicalizing(
-            ['companies.manage', 'branches.manage', 'users.manage', 'roles.manage', 'audit.view', 'imports.manage', 'sales.view', 'customers.view', 'customers.manage', 'goals.manage', 'interactions.manage', 'credit.view', 'credit.payments', 'credit.promises', 'credit.notes', 'inventory.view', 'inventory.manage', 'inventory.costs', 'insights.view', 'insights.manage', 'digests.view', 'mail.manage', 'whatsapp.manage', 'conversations.view', 'conversations.reply', 'webhooks.manage', 'automations.manage'],
+            ['companies.manage', 'branches.manage', 'users.manage', 'roles.manage', 'audit.view', 'imports.manage', 'sales.view', 'customers.view', 'customers.manage', 'goals.manage', 'interactions.manage', 'credit.view', 'credit.payments', 'credit.promises', 'credit.notes', 'inventory.view', 'inventory.manage', 'inventory.costs', 'insights.view', 'insights.manage', 'digests.view', 'mail.manage', 'whatsapp.manage', 'conversations.view', 'conversations.reply', 'webhooks.manage', 'automations.manage', 'reports.view'],
             Permission::pluck('slug')->all(),
         );
     }
@@ -86,7 +86,7 @@ class PermissionGrantsTest extends TestCase
             ->putJson('/api/v1/admin/role-permissions/'.Role::where('slug', Role::ADMINISTRADOR)->value('id'), ['permissions' => []])
             ->assertUnprocessable();
 
-        $this->assertSame(27, Role::where('slug', Role::ADMINISTRADOR)->first()->permissions()->count());
+        $this->assertSame(28, Role::where('slug', Role::ADMINISTRADOR)->first()->permissions()->count());
     }
 
     public function test_roles_manage_cannot_be_granted_to_other_roles(): void
@@ -105,7 +105,7 @@ class PermissionGrantsTest extends TestCase
 
         $logs = AuditLog::where('event', 'role.permissions_changed')->get();
         $this->assertCount(1, $logs);
-        $this->assertSame([], $logs[0]->old_values['permissions']);
+        $this->assertSame(['reports.view'], $logs[0]->old_values['permissions'], 'El supervisor nace con el permiso de reportes.');
         $this->assertSame(['audit.view'], $logs[0]->new_values['permissions']);
     }
 
@@ -126,7 +126,7 @@ class PermissionGrantsTest extends TestCase
 
         $this->seed(RolePermissionSeeder::class);
 
-        $this->assertEqualsCanonicalizing(['companies.manage', 'branches.manage'], $role->fresh()->permissions()->pluck('slug')->all());
+        $this->assertEqualsCanonicalizing(['companies.manage', 'branches.manage', 'reports.view'], $role->fresh()->permissions()->pluck('slug')->all());
         $this->assertNull(Permission::where('slug', 'organization.manage')->first());
     }
 

@@ -41,7 +41,7 @@ Responsabilidad de la VM de base de datos; mínimo recomendado:
 - La tabla `audit_logs` es de solo escritura para la aplicación; revocar `UPDATE` y `DELETE` al usuario de la aplicación en la VM (ver README).
 
 ## 6. Después de un despliegue
-1. `php artisan migrate --force`.
+1. `php artisan migrate --force` y `php artisan db:seed --class=RolePermissionSeeder --force` (da de alta los permisos nuevos; es repetible y no devuelve permisos que administración quitó).
 2. Reiniciar `queue` y `reverb` (cargan el código al arrancar).
 3. `php artisan ops:status` en verde.
 4. Revisar la CI del commit desplegado y el `CHANGELOG.md`.

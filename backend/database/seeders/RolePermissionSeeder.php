@@ -39,6 +39,17 @@ class RolePermissionSeeder extends Seeder
         'conversations.reply' => 'Conversaciones de WhatsApp (escribir a clientes de su alcance)',
         'webhooks.manage' => 'Webhook de salida (configurar el destino y consultar los envíos)',
         'automations.manage' => 'Automatizaciones (configurar, pausar y consultar el registro)',
+        'reports.view' => 'Reportes de evaluación (vendedores, operadores, sucursales y conciliación)',
+    ];
+
+    /**
+     * Roles que reciben un permiso la primera vez que se crea (el administrador siempre los tiene todos). Después, «Roles y permisos» manda:
+     * volver a sembrar no devuelve un permiso que administración quitó.
+     *
+     * @var array<string, list<string>>
+     */
+    public const DEFAULT_GRANTS = [
+        'reports.view' => [Role::GERENTE_GENERAL, Role::SUPERVISOR_VENTAS],
     ];
 
     public function run(): void
@@ -57,7 +68,11 @@ class RolePermissionSeeder extends Seeder
         // Un permiso por opción del menú. Los de supervisores están pendientes de definir (decisión #19):
         // se otorgan desde la pantalla «Roles y permisos».
         foreach (self::PERMISSIONS as $slug => $name) {
-            Permission::updateOrCreate(['slug' => $slug], ['name' => $name]);
+            $permission = Permission::updateOrCreate(['slug' => $slug], ['name' => $name]);
+
+            if ($permission->wasRecentlyCreated) {
+                $permission->roles()->syncWithoutDetaching(Role::whereIn('slug', self::DEFAULT_GRANTS[$slug] ?? [])->pluck('id'));
+            }
         }
 
         // Migración del permiso anterior organization.manage → companies.manage + branches.manage.

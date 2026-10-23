@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\PasswordController;
 use App\Http\Controllers\Api\V1\PaymentPromiseController;
 use App\Http\Controllers\Api\V1\QuotationController;
+use App\Http\Controllers\Api\V1\ReportContextController;
 use App\Http\Controllers\Api\V1\Sales\ProductController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
@@ -59,6 +60,11 @@ Route::middleware(['auth:sanctum', 'active', 'password.current'])->group(functio
     // Cualquier usuario autenticado: el contenido se limita a su ámbito.
     Route::get('companies', [OrganizationController::class, 'companies']);
     Route::get('branches', [OrganizationController::class, 'branches']);
+
+    // Reportes de evaluación de vendedores, operadores y sucursales: supervisión, gerencia y administración.
+    Route::middleware('permission:reports.view')->prefix('reports')->group(function () {
+        Route::get('context', [ReportContextController::class, 'show']);
+    });
 
     // Inteligencia de ventas: exige permiso y se limita al ámbito del usuario.
     Route::middleware('permission:sales.view')->prefix('sales')->group(function () {

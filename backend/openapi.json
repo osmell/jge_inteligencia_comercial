@@ -17037,6 +17037,93 @@
                 }
             }
         },
+        "/reports/context": {
+            "get": {
+                "operationId": "reportContext.show",
+                "tags": [
+                    "ReportContext"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "companies": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Company"
+                                                    }
+                                                },
+                                                "branches": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Branch"
+                                                    }
+                                                },
+                                                "sellers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Seller"
+                                                    }
+                                                },
+                                                "operators": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/Operator"
+                                                    }
+                                                },
+                                                "comparison_modes": {
+                                                    "type": "array",
+                                                    "prefixItems": [
+                                                        {
+                                                            "type": "string",
+                                                            "const": "previous"
+                                                        },
+                                                        {
+                                                            "type": "string",
+                                                            "const": "last_year"
+                                                        },
+                                                        {
+                                                            "type": "string",
+                                                            "const": "custom"
+                                                        }
+                                                    ],
+                                                    "minItems": 3,
+                                                    "maxItems": 3
+                                                },
+                                                "thresholds": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "companies",
+                                                "branches",
+                                                "sellers",
+                                                "operators",
+                                                "comparison_modes",
+                                                "thresholds"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/role-permissions": {
             "get": {
                 "operationId": "rolePermission.index",
@@ -22324,6 +22411,50 @@
                 ],
                 "title": "LoginRequest"
             },
+            "Operator": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "company_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "normalized_name": {
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "company_id",
+                    "name",
+                    "normalized_name",
+                    "is_active",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "Operator"
+            },
             "OperatorRequest": {
                 "type": "object",
                 "description": "Alta o cambios de un facturador (operador): nombre y estado.",
@@ -22914,6 +23045,91 @@
                     "updated_at"
                 ],
                 "title": "Role"
+            },
+            "Seller": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "company_id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "normalized_name": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "starts_on": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "ends_on": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "branch_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "is_default": {
+                        "type": "boolean"
+                    },
+                    "supervisor_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "company_id",
+                    "name",
+                    "normalized_name",
+                    "user_id",
+                    "is_active",
+                    "created_at",
+                    "updated_at",
+                    "starts_on",
+                    "ends_on",
+                    "branch_id",
+                    "is_default",
+                    "supervisor_id"
+                ],
+                "title": "Seller"
             },
             "SellerGoalsRequest": {
                 "type": "object",

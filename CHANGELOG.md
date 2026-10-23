@@ -10,6 +10,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 ## [Sin publicar]
 
 ### Añadido
+- **Reportes de evaluación (base)**: permiso `reports.view` (administrador, gerente general y supervisor de ventas), filtros disponibles por compañía (`GET /reports/context`), periodo con comparación (anterior, mismo periodo del año pasado o personalizado), semáforos con umbrales por omisión en `config/reports.php` y auditoría de consulta, exportación y envío por correo (con destinatarios).
 - **Integración continua** en GitHub Actions (estilo, análisis estático, pruebas, tipos, lint y build), plantilla de Pull Request, Dependabot mensual y `CONTRIBUTING.md`.
 - **Pruebas unitarias** (`tests/Unit`) de la aritmética de cantidades e importes, antigüedad de cartera, RFM, ventana de 24 h, reglas de importación y reglas de arquitectura.
 - **Policies** de autorización por registro (conversaciones, cotizaciones, contactos, clientes, vendedores, facturadores, respuestas rápidas).
