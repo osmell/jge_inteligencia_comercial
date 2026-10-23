@@ -112,10 +112,9 @@ class ReportsFoundationTest extends TestCase
     {
         $semaphore = new Semaphore;
 
-        // Más es mejor (cumplimiento de meta: amarillo < 90, rojo < 70).
+        // Más es mejor (cumplimiento de meta: amarillo < 100, rojo < 70, como en Metas).
         $this->assertSame('good', $semaphore->level('goal_attainment', 100.0));
-        $this->assertSame('good', $semaphore->level('goal_attainment', 90.0));
-        $this->assertSame('warn', $semaphore->level('goal_attainment', 89.9));
+        $this->assertSame('warn', $semaphore->level('goal_attainment', 99.9));
         $this->assertSame('bad', $semaphore->level('goal_attainment', 69.9));
         // Menos es mejor (descuento: amarillo ≥ 5, rojo ≥ 10).
         $this->assertSame('good', $semaphore->level('discount_pct', 4.9));

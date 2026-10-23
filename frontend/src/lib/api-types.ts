@@ -2415,6 +2415,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/sellers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sellerReport.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/sellers/{seller}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["sellerReport.documents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/roles": {
         parameters: {
             query?: never;
@@ -2914,18 +2946,6 @@ export interface components {
             username: string;
             password: string;
         };
-        /** Operator */
-        Operator: {
-            id: number;
-            company_id: number;
-            name: string;
-            normalized_name: string;
-            is_active: boolean;
-            /** Format: date-time */
-            created_at: string | null;
-            /** Format: date-time */
-            updated_at: string | null;
-        };
         /**
          * OperatorRequest
          * @description Alta o cambios de un facturador (operador): nombre y estado.
@@ -3068,26 +3088,6 @@ export interface components {
             created_at: string | null;
             /** Format: date-time */
             updated_at: string | null;
-        };
-        /** Seller */
-        Seller: {
-            id: number;
-            company_id: number;
-            name: string;
-            normalized_name: string;
-            user_id: number | null;
-            is_active: boolean;
-            /** Format: date-time */
-            created_at: string | null;
-            /** Format: date-time */
-            updated_at: string | null;
-            /** Format: date-time */
-            starts_on: string | null;
-            /** Format: date-time */
-            ends_on: string | null;
-            branch_id: number | null;
-            is_default: boolean;
-            supervisor_id: number | null;
         };
         /**
          * SellerGoalsRequest
@@ -9351,16 +9351,38 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: {
-                            companies: components["schemas"]["Company"][];
-                            branches: components["schemas"]["Branch"][];
-                            sellers: components["schemas"]["Seller"][];
-                            operators: components["schemas"]["Operator"][];
-                            comparison_modes: [
-                                "previous",
-                                "last_year",
-                                "custom"
-                            ];
-                            thresholds: string;
+                            companies: {
+                                id: number;
+                                code: string;
+                                name: string;
+                            }[];
+                            branches: {
+                                id: number;
+                                company_id: number;
+                                code: string;
+                                name: string;
+                            }[];
+                            sellers: {
+                                id: number;
+                                company_id: number;
+                                branch_id: number | null;
+                                name: string;
+                                is_active: boolean;
+                            }[];
+                            operators: {
+                                id: number;
+                                company_id: number;
+                                name: string;
+                                is_active: boolean;
+                            }[];
+                            comparison_modes: string[];
+                            thresholds: {
+                                [key: string]: {
+                                    higher_is_better: boolean;
+                                    warn: number;
+                                    bad: number;
+                                };
+                            };
                         };
                     };
                 };
@@ -9930,6 +9952,197 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "sellerReport.index": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: {
+                                from: string;
+                                to: string;
+                                days: number;
+                            };
+                            comparison: {
+                                mode: string;
+                                from: string;
+                                to: string;
+                                days: number;
+                                uneven: boolean;
+                            };
+                            rows: {
+                                seller: {
+                                    id: number;
+                                    name: string;
+                                    company_id: number;
+                                    company: string | null;
+                                    branch_id: number | null;
+                                    branch: string | null;
+                                    is_active: boolean;
+                                };
+                                rank: number | null;
+                                sales: {
+                                    net_total: number;
+                                    documents: number;
+                                    customers: number;
+                                    average_ticket: number | null;
+                                    discount_pct: number | null;
+                                    below_list_pct: number | null;
+                                    categories_per_customer: number | null;
+                                    top3_concentration_pct: number | null;
+                                    previous_net_total: number;
+                                    growth_pct: number | null;
+                                    share_pct: number | null;
+                                };
+                                goal: {
+                                    goal: number | null;
+                                    attainment_pct: number | null;
+                                    projected_pct: number | null;
+                                    status: string;
+                                };
+                                portfolio: {
+                                    total: number;
+                                    active: number;
+                                    new: number;
+                                    recovered: number;
+                                    inactive: number;
+                                    lost: number;
+                                    lost_pct: number | null;
+                                };
+                                credit: {
+                                    balance: number;
+                                    overdue: number;
+                                    overdue_pct: number | null;
+                                };
+                                follow_up: {
+                                    quotes_issued: number;
+                                    quotes_converted: number;
+                                    quote_conversion_pct: number | null;
+                                    quotes_amount: number;
+                                    has_user: boolean;
+                                    contacts: number | null;
+                                    actions_due: number | null;
+                                    actions_on_time_pct: number | null;
+                                    overdue_follow_ups: number | null;
+                                };
+                                semaphores: {
+                                    [key: string]: string;
+                                };
+                            }[];
+                            totals: {
+                                sellers: number;
+                                net_total: number;
+                                previous_net_total: number;
+                                growth_pct: number | null;
+                                documents: number;
+                                average_ticket: number | null;
+                                goal: number;
+                                attainment_pct: number | null;
+                                sellers_with_goal: number;
+                                credit_balance: number;
+                                credit_overdue: number;
+                                red_flags: number;
+                            };
+                            reconciliation: {
+                                consolidated_net: number;
+                                sellers_net: number;
+                                net_difference: number;
+                                consolidated_documents: number;
+                                sellers_documents: number;
+                                documents_difference: number;
+                                matches: boolean;
+                            };
+                            notes: string[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "sellerReport.documents": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+            };
+            header?: never;
+            path: {
+                /** @description The seller ID */
+                seller: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            seller: {
+                                id: number;
+                                name: string;
+                            };
+                            rows: {
+                                id: number;
+                                document: string;
+                                issued_on: string;
+                                customer_code: string;
+                                customer_name: string;
+                                branch: string;
+                                operator: string;
+                                lines: number;
+                                net_total: number;
+                                tax_total: number;
+                                grand_total: number;
+                            }[];
+                            totals: {
+                                documents: number;
+                                net_total: number;
+                                tax_total: number;
+                                grand_total: number;
+                            };
+                            page: number;
+                            per_page: number;
+                            last_page: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };

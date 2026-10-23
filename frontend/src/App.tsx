@@ -43,6 +43,7 @@ import QuotationDetailPage from './pages/QuotationDetailPage'
 import QuotationsPage from './pages/QuotationsPage'
 import FollowUpKpisPage from './pages/FollowUpKpisPage'
 import ProductsPage from './pages/ProductsPage'
+import ReportSellersPage from './pages/ReportSellersPage'
 import SellersPage from './pages/SellersPage'
 import CustomersPage from './pages/CustomersPage'
 import GoalsPage from './pages/GoalsPage'
@@ -68,6 +69,9 @@ export default function App() {
                 <Route path="ventas" element={<SalesDashboardPage />} />
                 <Route path="metas" element={<GoalsPage />} />
                 <Route path="productos" element={<ProductsPage />} />
+              </Route>
+              <Route element={<RequirePermission permission="reports.view" />}>
+                <Route path="reportes/vendedores" element={<ReportSellersPage />} />
               </Route>
               <Route element={<RequirePermission permission="customers.view" />}>
                 <Route path="clientes" element={<CustomersPage />} />

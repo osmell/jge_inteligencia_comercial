@@ -42,6 +42,7 @@ use App\Http\Controllers\Api\V1\ReportContextController;
 use App\Http\Controllers\Api\V1\Sales\ProductController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
+use App\Http\Controllers\Api\V1\SellerReportController;
 use App\Http\Controllers\Api\V1\WebhookController;
 use App\Http\Controllers\Api\V1\WhatsappController;
 use Illuminate\Support\Facades\Route;
@@ -64,6 +65,8 @@ Route::middleware(['auth:sanctum', 'active', 'password.current'])->group(functio
     // Reportes de evaluación de vendedores, operadores y sucursales: supervisión, gerencia y administración.
     Route::middleware('permission:reports.view')->prefix('reports')->group(function () {
         Route::get('context', [ReportContextController::class, 'show']);
+        Route::get('sellers', [SellerReportController::class, 'index']);
+        Route::get('sellers/{seller}/documents', [SellerReportController::class, 'documents']);
     });
 
     // Inteligencia de ventas: exige permiso y se limita al ámbito del usuario.

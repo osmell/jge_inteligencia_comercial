@@ -39,7 +39,35 @@ class SalesQuery
      */
     public function base(?CarbonImmutable $from, ?CarbonImmutable $to, array $filters): Builder
     {
-        $query = SalesLine::query()
+        return $this->baseOn(SalesLine::query(), $from, $to, $filters);
+    }
+
+    /**
+     * Igual que `base`, pero limitado solo por compañía (sin el límite de sucursales del usuario): los reportes de evaluación
+     * muestran a cada vendedor, operador y sucursal con TODA su venta en las compañías a las que la persona tiene acceso.
+     *
+     * @param  list<int>|null  $companyIds  null = todas (administración)
+     * @param  array<string, mixed>  $filters
+     * @return Builder<SalesLine>
+     */
+    public function baseForCompanies(?CarbonImmutable $from, ?CarbonImmutable $to, array $filters, ?array $companyIds): Builder
+    {
+        $query = SalesLine::withoutGlobalScopes();
+        if ($companyIds !== null) {
+            $query->whereIn('sales_lines.company_id', $companyIds);
+        }
+
+        return $this->baseOn($query, $from, $to, $filters);
+    }
+
+    /**
+     * @param  Builder<SalesLine>  $query
+     * @param  array<string, mixed>  $filters
+     * @return Builder<SalesLine>
+     */
+    private function baseOn(Builder $query, ?CarbonImmutable $from, ?CarbonImmutable $to, array $filters): Builder
+    {
+        $query
             ->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id')
             ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'sales_lines.company_id')->on('pr.code', '=', 'sales_lines.product_code'));
 

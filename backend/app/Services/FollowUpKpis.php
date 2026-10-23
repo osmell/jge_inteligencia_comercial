@@ -130,7 +130,7 @@ class FollowUpKpis
      * @param  Collection<int, CustomerInteraction>  $rows
      * @return array{on_time: int, late: int, open_overdue: int, upcoming: int}
      */
-    private function classifyActions($rows, CarbonImmutable $now): array
+    public function classifyActions($rows, CarbonImmutable $now): array
     {
         $out = ['on_time' => 0, 'late' => 0, 'open_overdue' => 0, 'upcoming' => 0];
         foreach ($rows as $i) {

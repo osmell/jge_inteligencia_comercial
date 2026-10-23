@@ -201,15 +201,26 @@ class SellerGoals
             ->all();
     }
 
+    /**
+     * Días del mes en que el vendedor trabaja (entre su alta y su baja) y días elegibles (menos las ausencias capturadas).
+     *
+     * @return array{start: CarbonImmutable, end: CarbonImmutable, days: int, eligible: int}
+     */
+    public function window(Seller $seller, ?SellerGoal $goal, CarbonImmutable $start, CarbonImmutable $end): array
+    {
+        $winStart = $seller->starts_on && CarbonImmutable::parse($seller->starts_on)->gt($start) ? CarbonImmutable::parse($seller->starts_on)->startOfDay() : $start;
+        $winEnd = $seller->ends_on && CarbonImmutable::parse($seller->ends_on)->lt($end) ? CarbonImmutable::parse($seller->ends_on)->startOfDay() : $end;
+        $days = $winStart->gt($winEnd) ? 0 : (int) $winStart->diffInDays($winEnd) + 1;
+
+        return ['start' => $winStart, 'end' => $winEnd, 'days' => $days, 'eligible' => max(0, $days - ($goal ? $goal->days_off : 0))];
+    }
+
     /** @return array<string, mixed> */
     private function row(Seller $seller, ?SellerGoal $goal, float $actual, CarbonImmutable $start, CarbonImmutable $end, CarbonImmutable $today, string $state): array
     {
         $dim = $start->daysInMonth;
-        $winStart = $seller->starts_on && CarbonImmutable::parse($seller->starts_on)->gt($start) ? CarbonImmutable::parse($seller->starts_on)->startOfDay() : $start;
-        $winEnd = $seller->ends_on && CarbonImmutable::parse($seller->ends_on)->lt($end) ? CarbonImmutable::parse($seller->ends_on)->startOfDay() : $end;
-        $windowDays = $winStart->gt($winEnd) ? 0 : (int) $winStart->diffInDays($winEnd) + 1;
+        ['start' => $winStart, 'end' => $winEnd, 'days' => $windowDays, 'eligible' => $eligible] = $this->window($seller, $goal, $start, $end);
         $daysOff = $goal ? $goal->days_off : 0;
-        $eligible = max(0, $windowDays - $daysOff);
 
         $amount = $goal ? (float) $goal->amount : null;
         $effective = $amount === null ? null : round($amount * $eligible / $dim, 2);

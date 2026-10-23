@@ -9,8 +9,15 @@ declare(strict_types=1);
  * Todos los porcentajes van de 0 a 100.
  */
 return [
+    /** Días desde la factura a partir de los cuales un saldo se considera vencido (el sistema no guarda plazos de crédito por cliente). */
+    'overdue_after_days' => 30,
+
+    /** Un cliente es de la cartera de un vendedor si su última compra (dentro de esta ventana) la facturó ese vendedor. */
+    'portfolio_window_days' => 365,
+
     'thresholds' => [
-        'goal_attainment' => ['higher_is_better' => true, 'warn' => 90, 'bad' => 70],
+        // Los mismos cortes que la pantalla de Metas: verde desde 100 %, amarillo desde 70 %, rojo por debajo.
+        'goal_attainment' => ['higher_is_better' => true, 'warn' => 100, 'bad' => 70],
         'growth_pct' => ['higher_is_better' => true, 'warn' => 0, 'bad' => -10],
         'discount_pct' => ['higher_is_better' => false, 'warn' => 5, 'bad' => 10],
         'below_list_pct' => ['higher_is_better' => false, 'warn' => 10, 'bad' => 25],
