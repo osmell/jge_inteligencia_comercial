@@ -37,6 +37,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - Mensaje de rechazo único al escribir o agregar notas en una conversación ajena.
 
 ### Corregido
+- **Reportes desbordaban la pantalla**: el texto oculto de los semáforos (para lectores de pantalla) escapaba del recorte de las tablas y ensanchaba y alargaba toda la página, con barras de desplazamiento de la ventana en ambos sentidos. Ahora las tablas se desplazan dentro de su tarjeta (encabezado fijo, barra horizontal a la vista, celdas compactas) y los reportes aprovechan todo el ancho disponible. Una prueba de navegador (`11-reportes-sin-desborde`) lo vigila en 1366×768 y 1920×1080.
 - **Enviar un mensaje desde Conversaciones fallaba en PostgreSQL**: el tipo de mensaje `conversation` (12 caracteres) no cabía en su columna (10). Se amplió; hay que ejecutar `php artisan migrate --force`.
 - Los archivos descargados desde la interfaz (reportes, exportaciones de ventas…) se guardaban con un nombre genérico: el navegador no podía leer el encabezado con el nombre. Se expone en CORS.
 - `company_id` de la URL se pasaba como texto a los servicios de crédito.

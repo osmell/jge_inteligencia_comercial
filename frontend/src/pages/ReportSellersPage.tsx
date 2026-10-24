@@ -82,7 +82,7 @@ export default function ReportSellersPage() {
 
       {rec && <ReconciliationNote rec={rec} who="los vendedores" />}
 
-      <DataTable label="Evaluación de vendedores">
+      <DataTable scroll label="Evaluación de vendedores">
         <thead>
           <tr>
             {GROUPS.map(([title, span], i) => <th key={i} colSpan={span} className={`${th} ${title ? 'border-l border-line text-center' : ''}`}>{title}</th>)}

@@ -291,11 +291,17 @@ export function Badge({ children }: { children: ReactNode }) {
   return <span className="inline-flex items-center rounded-md bg-jge-blue-50 px-2 py-0.5 text-xs font-medium text-jge-blue">{children}</span>
 }
 
-export function DataTable({ children, label }: { children: ReactNode; label: string }) {
+/**
+ * `scroll`: para tablas anchas y largas (reportes). Se desplaza dentro de la propia tarjeta, así la barra horizontal queda a la vista
+ * y el encabezado se queda fijo; celdas compactas y sin saltos de línea. Al imprimir se muestra completa.
+ */
+export function DataTable({ children, label, scroll = false }: { children: ReactNode; label: string; scroll?: boolean }) {
+  const box = 'relative ' + (scroll ? 'max-h-[calc(100dvh-7rem)] overflow-auto print:max-h-none print:overflow-visible' : 'overflow-x-auto print:overflow-visible')
+  const dense = scroll ? ' [&_th]:px-2.5 [&_th]:py-2 [&_td]:whitespace-nowrap [&_td]:px-2.5 [&_td]:py-2 [&_thead_tr:nth-child(2)_th]:top-[33px]' : ''
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto print:overflow-visible">
-        <table className="w-full text-left text-sm print:text-[9px]" aria-label={label}>{children}</table>
+      <div className={box}>
+        <table className={`w-full text-left text-sm print:text-[9px]${dense}`} aria-label={label}>{children}</table>
       </div>
     </Card>
   )

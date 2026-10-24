@@ -84,7 +84,7 @@ export default function ReportBranchesPage() {
 
       {data && <ReconciliationNote rec={data.reconciliation} who="las sucursales" />}
 
-      <DataTable label="Evaluación de sucursales">
+      <DataTable scroll label="Evaluación de sucursales">
         <thead>
           <tr>
             {GROUPS.map(([title, span], i) => <th key={i} colSpan={span} className={`${th} ${title ? 'border-l border-line text-center' : ''}`}>{title}</th>)}

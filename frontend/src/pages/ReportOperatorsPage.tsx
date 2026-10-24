@@ -83,7 +83,7 @@ export default function ReportOperatorsPage() {
 
       {data && <ReconciliationNote rec={data.reconciliation} who="los operadores" />}
 
-      <DataTable label="Evaluación de operadores">
+      <DataTable scroll label="Evaluación de operadores">
         <thead>
           <tr>
             {GROUPS.map(([title, span], i) => <th key={i} colSpan={span} className={`${th} ${title ? 'border-l border-line text-center' : ''}`}>{title}</th>)}

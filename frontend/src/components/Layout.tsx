@@ -171,7 +171,7 @@ export default function Layout() {
           </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-8 print:overflow-visible print:p-0">
-          <div className="mx-auto max-w-6xl print:max-w-none">
+          <div className={`mx-auto print:max-w-none ${pathname.startsWith('/reportes') ? 'max-w-[110rem]' : 'max-w-6xl'}`}>
             <Outlet />
           </div>
         </main>
