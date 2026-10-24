@@ -75,3 +75,20 @@ Una fila por sucursal activa o con venta en el periodo. A diferencia de vendedor
 **Mezcla de categorías** (`GET /reports/branches/mix`): categorías en filas y sucursales en columnas; cada celda es el % de la venta de la sucursal que corresponde a esa categoría y su **índice** frente al conjunto (100 = misma proporción; 200 = el doble; 50 = la mitad; se marcan desde 150 hacia arriba y desde 50 hacia abajo). Se muestran las 15 categorías con más venta.
 
 **Detalle de facturación** (`GET /reports/branches/{id}/documents`): los documentos de la sucursal en el periodo; su total coincide con la fila del reporte.
+
+## Conciliación (`GET /api/v1/reports/conciliation`)
+
+Contrasta la **venta consolidada** del periodo con sus partes y con otras fuentes, y señala dónde hay diferencias. Alcance por compañía (como vendedores y operadores); sin comparación con otro periodo. Todo es sobre lo guardado.
+
+| Bloque | Qué compara | Cuándo hay diferencia |
+|---|---|---|
+| **Sumas por dimensión** | Venta neta y documentos del consolidado contra la suma de las filas por compañía, sucursal, vendedor y operador | La suma no coincide (diferencia > 0.01 o de documentos) |
+| **Integridad de los documentos** | Que cada documento cuadre con sus líneas: número de líneas declarado, documentos sin líneas, líneas de otra compañía, sucursal o fecha, y líneas donde neto + impuesto no suman su total (tolerancia 0.01) | Cualquier documento con el problema; se abre la lista con la descripción de cada uno |
+| **Archivos de ventas importados** | Lo que declaraba cada archivo (documentos nuevos y venta neta) contra lo que hoy hay guardado de ese lote | Los documentos guardados no son los declarados, o la venta neta difiere. **Si el archivo traía documentos ya cargados (duplicados), la venta neta no se compara** (su venta está en el total del archivo pero no en el lote): solo se compara la cantidad de documentos nuevos. Los lotes que incluyen compañías fuera del alcance de la persona no se evalúan. |
+| **Facturas de crédito contra ventas** | Cada factura de crédito enlazada a una venta: mismo cliente, mismo neto (subtotal − descuento) y mismo impuesto, con la tolerancia de las importaciones (`IMPORT_AMOUNT_TOLERANCE`) | Cliente, neto o impuesto distintos. Las no enlazadas se cuentan aparte: aún no hay venta que comparar. |
+
+El **detalle de facturación** de cualquier vendedor, operador o sucursal se abre en la misma pantalla (selector «Ver por»), con los documentos del periodo y su total para contrastarlo.
+
+`GET /reports/conciliation/issues?code=…` lista, paginado, los documentos (o facturas de crédito) con una diferencia concreta. Cada consulta queda en Auditoría.
+
+**Límite:** el contraste entre tablas del propio sistema detecta datos corruptos o importaciones perdidas, pero **no** puede saber si el archivo de origen (el del sistema de facturación) estaba bien; para eso hay que comparar contra el total que da ese sistema.

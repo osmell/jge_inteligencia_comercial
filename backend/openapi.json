@@ -2696,6 +2696,560 @@
                 }
             }
         },
+        "/reports/conciliation": {
+            "get": {
+                "operationId": "conciliation.index",
+                "tags": [
+                    "Conciliation"
+                ],
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "previous",
+                                "last_year",
+                                "custom",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "compare_from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "branch_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "period": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "from": {
+                                                            "type": "string"
+                                                        },
+                                                        "to": {
+                                                            "type": "string"
+                                                        },
+                                                        "days": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "from",
+                                                        "to",
+                                                        "days"
+                                                    ]
+                                                },
+                                                "consolidated": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "net_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "tax_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "grand_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "lines": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "net_total",
+                                                        "tax_total",
+                                                        "grand_total",
+                                                        "documents",
+                                                        "lines"
+                                                    ]
+                                                },
+                                                "breakdowns": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "dimension": {
+                                                                "type": "string"
+                                                            },
+                                                            "rows": {
+                                                                "type": "integer"
+                                                            },
+                                                            "net_total": {
+                                                                "type": "number"
+                                                            },
+                                                            "documents": {
+                                                                "type": "integer"
+                                                            },
+                                                            "net_difference": {
+                                                                "type": "number"
+                                                            },
+                                                            "documents_difference": {
+                                                                "type": "integer"
+                                                            },
+                                                            "matches": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "dimension",
+                                                            "rows",
+                                                            "net_total",
+                                                            "documents",
+                                                            "net_difference",
+                                                            "documents_difference",
+                                                            "matches"
+                                                        ]
+                                                    }
+                                                },
+                                                "integrity": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "code": {
+                                                                "type": "string"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer"
+                                                            },
+                                                            "ok": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "code",
+                                                            "count",
+                                                            "ok"
+                                                        ]
+                                                    }
+                                                },
+                                                "imports": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "batches": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "finished_at": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "date_from": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "date_to": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "declared_documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "registered_documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "declared_net": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "registered_net": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "net_comparable": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "duplicates": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "matches": {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id",
+                                                                    "name",
+                                                                    "finished_at",
+                                                                    "date_from",
+                                                                    "date_to",
+                                                                    "declared_documents",
+                                                                    "registered_documents",
+                                                                    "declared_net",
+                                                                    "registered_net",
+                                                                    "net_comparable",
+                                                                    "duplicates",
+                                                                    "matches"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "matched": {
+                                                            "type": "integer"
+                                                        },
+                                                        "differing": {
+                                                            "type": "integer"
+                                                        },
+                                                        "not_comparable": {
+                                                            "type": "integer"
+                                                        },
+                                                        "out_of_scope": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "batches",
+                                                        "matched",
+                                                        "differing",
+                                                        "not_comparable",
+                                                        "out_of_scope"
+                                                    ]
+                                                },
+                                                "credit": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "linked": {
+                                                            "type": "integer"
+                                                        },
+                                                        "mismatched": {
+                                                            "type": "integer"
+                                                        },
+                                                        "unlinked": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "linked",
+                                                        "mismatched",
+                                                        "unlinked"
+                                                    ]
+                                                },
+                                                "problems": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "period",
+                                                "consolidated",
+                                                "breakdowns",
+                                                "integrity",
+                                                "imports",
+                                                "credit",
+                                                "problems"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/reports/conciliation/issues": {
+            "get": {
+                "operationId": "conciliation.issues",
+                "tags": [
+                    "Conciliation"
+                ],
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "previous",
+                                "last_year",
+                                "custom",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "compare_from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "branch_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000
+                        }
+                    },
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "lines_count_mismatch",
+                                "documents_without_lines",
+                                "line_company_mismatch",
+                                "line_branch_mismatch",
+                                "line_date_mismatch",
+                                "line_total_mismatch",
+                                "credit_invoice_mismatch"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "rows": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "document": {
+                                                                "type": "string"
+                                                            },
+                                                            "issued_on": {
+                                                                "type": "string"
+                                                            },
+                                                            "customer_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "branch": {
+                                                                "type": "string"
+                                                            },
+                                                            "detail": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "document",
+                                                            "issued_on",
+                                                            "customer_name",
+                                                            "branch",
+                                                            "detail"
+                                                        ]
+                                                    }
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                },
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "rows",
+                                                "total",
+                                                "page",
+                                                "per_page",
+                                                "last_page"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/conversations": {
             "get": {
                 "operationId": "conversation.index",

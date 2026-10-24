@@ -59,6 +59,21 @@ export type SellerReport = Body<'/reports/sellers'>['data']
 export type SellerReportRow = SellerReport['rows'][number]
 export type BillingDetail = Body<'/reports/sellers/{seller}/documents'>['data']
 export type BillingDocument = BillingDetail['rows'][number]
+export type Conciliation = Body<'/reports/conciliation'>['data']
+export type ConciliationIssues = Body<'/reports/conciliation/issues'>['data']
+
+export const DIMENSION_LABEL: Record<string, string> = { company: 'Compañías', branch: 'Sucursales', seller: 'Vendedores', operator: 'Operadores' }
+
+export const INTEGRITY_LABEL: Record<string, string> = {
+  lines_count_mismatch: 'Documentos cuyo número de líneas no coincide con el declarado',
+  documents_without_lines: 'Documentos sin ninguna línea',
+  line_company_mismatch: 'Documentos con líneas de otra compañía',
+  line_branch_mismatch: 'Documentos con líneas de otra sucursal',
+  line_date_mismatch: 'Documentos con líneas de otra fecha',
+  line_total_mismatch: 'Documentos con líneas donde neto + impuesto no suman su total',
+  credit_invoice_mismatch: 'Facturas de crédito que no coinciden con su venta',
+}
+
 export type BranchReport = Body<'/reports/branches'>['data']
 export type BranchReportRow = BranchReport['rows'][number]
 export type BranchMix = Body<'/reports/branches/mix'>['data']

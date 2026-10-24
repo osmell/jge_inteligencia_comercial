@@ -95,3 +95,28 @@ test.describe('Reporte de sucursales', () => {
     await expect(page.getByRole('table', { name: 'Evaluación de sucursales' })).toHaveCount(0)
   })
 })
+
+test.describe('Conciliación', () => {
+  test('administración concilia el periodo y consulta el detalle de facturación de un vendedor', async ({ page }) => {
+    await loginOk(page, 'admin')
+    await menu(page).getByRole('link', { name: 'Conciliación' }).click()
+
+    await expect(page.getByRole('heading', { name: 'Conciliación' })).toBeVisible()
+    await page.getByLabel('Periodo').selectOption('ytd')
+    await expect(page.getByRole('table', { name: 'Sumas por dimensión contra el consolidado' })).toBeVisible()
+    await expect(page.getByRole('table', { name: 'Integridad de los documentos de venta' })).toBeVisible()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+
+    await page.getByLabel('Vendedor', { exact: true }).selectOption({ index: 1 })
+    await expect(page.getByRole('table', { name: 'Documentos facturados' })).toBeVisible()
+  })
+
+  test('un vendedor no la ve ni puede abrirla escribiendo la dirección', async ({ page }) => {
+    await loginOk(page, 'vendedor1')
+    await expect(menu(page).getByRole('link', { name: 'Conciliación' })).toHaveCount(0)
+
+    await page.goto('/reportes/conciliacion')
+
+    await expect(page.getByRole('table', { name: 'Sumas por dimensión contra el consolidado' })).toHaveCount(0)
+  })
+})

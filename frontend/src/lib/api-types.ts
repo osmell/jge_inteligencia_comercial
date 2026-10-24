@@ -331,6 +331,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/conciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["conciliation.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/conciliation/issues": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["conciliation.issues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/conversations": {
         parameters: {
             query?: never;
@@ -4251,6 +4283,137 @@ export interface operations {
             };
             401: components["responses"]["AuthenticationException"];
             404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "conciliation.index": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: {
+                                from: string;
+                                to: string;
+                                days: number;
+                            };
+                            consolidated: {
+                                net_total: number;
+                                tax_total: number;
+                                grand_total: number;
+                                documents: number;
+                                lines: number;
+                            };
+                            breakdowns: {
+                                dimension: string;
+                                rows: number;
+                                net_total: number;
+                                documents: number;
+                                net_difference: number;
+                                documents_difference: number;
+                                matches: boolean;
+                            }[];
+                            integrity: {
+                                code: string;
+                                count: number;
+                                ok: boolean;
+                            }[];
+                            imports: {
+                                batches: {
+                                    id: number;
+                                    name: string;
+                                    finished_at: string | null;
+                                    date_from: string | null;
+                                    date_to: string | null;
+                                    declared_documents: number;
+                                    registered_documents: number;
+                                    declared_net: number;
+                                    registered_net: number;
+                                    net_comparable: boolean;
+                                    duplicates: number;
+                                    matches: boolean;
+                                }[];
+                                matched: number;
+                                differing: number;
+                                not_comparable: number;
+                                out_of_scope: number;
+                            };
+                            credit: {
+                                linked: number;
+                                mismatched: number;
+                                unlinked: number;
+                            };
+                            problems: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "conciliation.issues": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+                code: "lines_count_mismatch" | "documents_without_lines" | "line_company_mismatch" | "line_branch_mismatch" | "line_date_mismatch" | "line_total_mismatch" | "credit_invoice_mismatch";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            rows: {
+                                id: number;
+                                document: string;
+                                issued_on: string;
+                                customer_name: string;
+                                branch: string;
+                                detail: string;
+                            }[];
+                            total: number;
+                            page: number;
+                            per_page: number;
+                            last_page: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
             422: components["responses"]["ValidationException"];
         };
     };
