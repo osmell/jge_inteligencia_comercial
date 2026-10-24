@@ -25,6 +25,10 @@ return [
     'atypical_min_documents' => 20,
     'atypical_iqr_factor' => 3,
 
+    /** Correos de reportes: destinatarios por envío y por persona y hora (cada destinatario cuenta). */
+    'email_max_recipients' => 10,
+    'email_per_hour' => 30,
+
     'thresholds' => [
         // Los mismos cortes que la pantalla de Metas: verde desde 100 %, amarillo desde 70 %, rojo por debajo.
         'goal_attainment' => ['higher_is_better' => true, 'warn' => 100, 'bad' => 70],

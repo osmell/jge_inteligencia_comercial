@@ -96,3 +96,24 @@ El **detalle de facturación** de cualquier vendedor, operador o sucursal se abr
 `GET /reports/conciliation/issues?code=…` lista, paginado, los documentos (o facturas de crédito) con una diferencia concreta. Cada consulta queda en Auditoría.
 
 **Límite:** el contraste entre tablas del propio sistema detecta datos corruptos o importaciones perdidas, pero **no** puede saber si el archivo de origen (el del sistema de facturación) estaba bien; para eso hay que comparar contra el total que da ese sistema.
+
+## Salidas: imprimir, Excel, PDF y correo
+
+Los cuatro reportes tienen la misma barra de salidas, sobre el **mismo periodo y filtros** de la pantalla (permiso `reports.view`, mismo alcance):
+
+- **Imprimir**: hoja apaisada sin el menú ni los controles, con quién la imprimió y cuándo. Las tablas se despliegan completas.
+- **Excel** (`GET /reports/{reporte}/export?format=xlsx`): hoja «Resumen» (periodo, comparación, filtros, avisos y cifras clave) y una hoja por tabla. **Las cifras salen como números con formato** para poder sumarlas; cada indicador con semáforo lleva al lado su nivel escrito («Bien», «Atención», «Crítico», «Sin dato»). El texto que viene de los archivos importados y parece fórmula se neutraliza.
+- **PDF** (`format=pdf`): lo mismo, apaisado. Una tabla ancha se **parte en bloques de columnas** que repiten el nombre, para que quepa. Los niveles van escritos, no solo en color.
+- **Correo** (`POST /reports/{reporte}/email`): ver abajo.
+
+Los reportes son `sellers`, `operators`, `branches` (incluye la mezcla de categorías) y `conciliation`. Se exporta el **resumen que se ve en pantalla**; el detalle de facturas de una persona o sucursal no va dentro del archivo (se consulta en pantalla).
+
+### Correo con adjunto
+
+Es lo único irreversible de los reportes: las cifras salen de la empresa. Reglas:
+
+1. **Direcciones escritas a mano** (hasta 10 por envío). Se revisan una por una y hay que **confirmar expresamente** que esas personas pueden recibir las cifras; la API tampoco envía sin `confirmed`.
+2. **Un correo por destinatario**, con el archivo **adjunto** (nunca un enlace); nadie ve a los demás destinatarios.
+3. **Tope por persona y hora** (`reports.email_per_hour`, 30 destinatarios; cada uno cuenta). Sin cupo suficiente no se envía nada.
+4. **Auditoría** (`report.emailed`): quién, qué reporte y formato, con qué filtros, **a qué direcciones** y el resultado de cada envío. Cada correo queda además en el registro de correos (`Correo` en administración).
+5. Si el correo del sistema **no está configurado, no se intenta por otra vía** y no se gasta cupo. Un envío fallido se reporta como fallido en el momento; no se reintenta después sin que nadie lo sepa.

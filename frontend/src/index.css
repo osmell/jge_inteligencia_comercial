@@ -110,3 +110,12 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Impresión de reportes: hoja apaisada y sin el menú ni los controles (marcados con `print:hidden`); el contenido se despliega completo. */
+@media print {
+  @page { size: A4 landscape; margin: 10mm; }
+  html, body, #root { height: auto !important; overflow: visible !important; background: #fff !important; }
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  table { page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+}

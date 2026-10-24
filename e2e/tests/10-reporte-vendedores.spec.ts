@@ -156,3 +156,65 @@ test.describe('Menú desplegable «Reportes»', () => {
     await expect(page.getByRole('option', { name: /Reporte de vendedores/ })).toBeVisible()
   })
 })
+
+test.describe('Salidas de los reportes', () => {
+  test('cada reporte ofrece imprimir, Excel, PDF y correo', async ({ page }) => {
+    await loginOk(page, 'admin')
+    for (const option of ['Vendedores', 'Operadores', 'Sucursales', 'Conciliación'] as const) {
+      await openReport(page, option)
+      const actions = page.getByRole('group', { name: 'Salidas del reporte' })
+      for (const name of ['Imprimir', 'Excel', 'PDF', 'Enviar por correo']) await expect(actions.getByRole('button', { name })).toBeEnabled()
+    }
+  })
+
+  test('descarga el reporte en Excel y en PDF con el periodo en el nombre', async ({ page }) => {
+    await loginOk(page, 'admin')
+    await openReport(page, 'Vendedores')
+    await expect(page.getByRole('heading', { name: 'Reporte de vendedores' })).toBeVisible()
+    await page.getByLabel('Periodo').selectOption('ytd')
+    await expect(page.getByRole('table', { name: 'Evaluación de vendedores' })).toBeVisible()
+
+    const excel = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Excel' }).click()
+    expect((await excel).suggestedFilename()).toMatch(/^reporte-vendedores-\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}\.xlsx$/)
+
+    const pdf = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'PDF' }).click()
+    expect((await pdf).suggestedFilename()).toMatch(/\.pdf$/)
+  })
+
+  test('al imprimir no salen el menú ni los controles, solo el reporte', async ({ page }) => {
+    await loginOk(page, 'admin')
+    await openReport(page, 'Sucursales')
+    await expect(page.getByRole('heading', { name: 'Reporte de sucursales' })).toBeVisible()
+    await page.getByLabel('Periodo').selectOption('ytd')
+    await expect(page.getByRole('table', { name: 'Evaluación de sucursales' })).toBeVisible()
+
+    await page.emulateMedia({ media: 'print' })
+
+    await expect(menu(page)).toBeHidden()
+    await expect(page.getByRole('group', { name: 'Salidas del reporte' })).toBeHidden()
+    await expect(page.getByLabel('Periodo')).toBeHidden()
+    await expect(page.getByRole('table', { name: 'Evaluación de sucursales' })).toBeVisible()
+    expect((await page.pdf({ landscape: true })).length).toBeGreaterThan(1500)
+  })
+
+  test('el correo exige revisar y confirmar los destinatarios, y sin correo configurado no envía nada', async ({ page }) => {
+    await loginOk(page, 'admin')
+    await openReport(page, 'Operadores')
+    await page.getByRole('button', { name: 'Enviar por correo' }).click()
+
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.getByRole('button', { name: 'Revisar destinatarios' })).toBeDisabled()
+    await dialog.getByLabel('Para').fill('jefe@ejemplo.com')
+    await dialog.getByRole('button', { name: 'Revisar destinatarios' }).click()
+
+    await expect(dialog.getByRole('region', { name: 'Destinatarios' })).toContainText('jefe@ejemplo.com')
+    await expect(dialog.getByRole('button', { name: 'Enviar ahora' })).toBeDisabled()
+    await dialog.getByRole('checkbox', { name: /Confirmo/ }).check()
+    await dialog.getByRole('button', { name: 'Enviar ahora' }).click()
+
+    // La instalación de pruebas no tiene el correo configurado: se dice, y no se intenta enviar por otra vía.
+    await expect(dialog.getByText(/El correo no está activado o configurado/)).toBeVisible()
+  })
+})

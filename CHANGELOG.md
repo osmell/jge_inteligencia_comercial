@@ -10,6 +10,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 ## [Sin publicar]
 
 ### Añadido
+- **Salidas de los reportes**: imprimir, Excel (cifras como números, nivel de cada semáforo escrito), PDF (las tablas anchas se parten en bloques) y envío por correo con adjunto. El correo exige revisar y confirmar los destinatarios, envía un correo por persona, tiene un tope por persona y hora y deja en Auditoría las direcciones.
 - **Menú desplegable «Reportes»**: agrupa Vendedores, Operadores, Sucursales y Conciliación; cerrado por omisión, se abre solo dentro de sus pantallas y recuerda cómo se dejó. La barra de comandos y el encabezado usan el nombre completo de cada reporte.
 - **Conciliación** (`/reportes/conciliacion`): contrasta la venta consolidada con sus sumas por compañía, sucursal, vendedor y operador, comprueba que cada documento cuadre con sus líneas, compara lo que declaraba cada archivo de ventas importado contra lo guardado y las facturas de crédito contra sus ventas; abre la lista de documentos con diferencias y el detalle de facturación de cualquier vendedor, operador o sucursal.
 - **Reporte de sucursales** (`/reportes/sucursales`): resultado y crecimiento, dependencia de un vendedor y de pocos clientes, cartera de clientes, cobranza, existencias en productos (sin costos) y mezcla de categorías por sucursal, con detalle de facturación.

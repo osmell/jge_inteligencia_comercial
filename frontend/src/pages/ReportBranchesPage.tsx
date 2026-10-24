@@ -3,6 +3,7 @@ import BillingTable from '../components/reports/BillingTable'
 import BranchMixTable from '../components/reports/BranchMixTable'
 import LevelValue from '../components/reports/LevelValue'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
+import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
 import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr } from '../components/ui'
 import { formatMoney } from '../lib/format'
@@ -65,6 +66,7 @@ export default function ReportBranchesPage() {
     <section>
       <PageHeader title="Reporte de sucursales" description="Resultado, dependencia de personas y clientes, cartera, cobranza, existencias y mezcla de categorías de cada sucursal, con semáforo por indicador." />
       <ReportFilters filters={filters} />
+      <ReportActions report="branches" filters={filters} />
       <FormError message={filters.contextError ?? report.error ?? mix.error} />
       {!filters.valid && <div className="mb-3"><Alert tone="warning">Indica un periodo válido (y, si comparas con otro periodo, sus dos fechas): la fecha inicial no puede ser posterior a la final.</Alert></div>}
       {data && <PeriodLine data={data} />}

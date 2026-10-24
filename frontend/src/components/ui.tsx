@@ -294,8 +294,8 @@ export function Badge({ children }: { children: ReactNode }) {
 export function DataTable({ children, label }: { children: ReactNode; label: string }) {
   return (
     <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm" aria-label={label}>{children}</table>
+      <div className="overflow-x-auto print:overflow-visible">
+        <table className="w-full text-left text-sm print:text-[9px]" aria-label={label}>{children}</table>
       </div>
     </Card>
   )

@@ -3,6 +3,7 @@ import BillingTable from '../components/reports/BillingTable'
 import LevelValue from '../components/reports/LevelValue'
 import OperatorDistributionView from '../components/reports/OperatorDistributionView'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
+import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
 import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr } from '../components/ui'
 import { formatMoney } from '../lib/format'
@@ -64,6 +65,7 @@ export default function ReportOperatorsPage() {
     <section>
       <PageHeader title="Reporte de operadores" description="Producción y control de captura de quienes facturan: documentos, descuentos, líneas sin precio y documentos atípicos, con semáforo por indicador." />
       <ReportFilters filters={filters} />
+      <ReportActions report="operators" filters={filters} />
       <FormError message={filters.contextError ?? report.error} />
       {!filters.valid && <div className="mb-3"><Alert tone="warning">Indica un periodo válido (y, si comparas con otro periodo, sus dos fechas): la fecha inicial no puede ser posterior a la final.</Alert></div>}
       {data && <PeriodLine data={data} />}

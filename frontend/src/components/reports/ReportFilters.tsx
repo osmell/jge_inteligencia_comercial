@@ -9,7 +9,7 @@ export default function ReportFilters({ filters, comparison = true }: { filters:
   const branches = (context?.branches ?? []).filter((b) => !v.company_id || String(b.company_id) === v.company_id)
 
   return (
-    <div className="mb-4 flex flex-wrap items-end gap-3">
+    <div className="mb-4 flex flex-wrap items-end gap-3 print:hidden">
       <SelectField id="report-preset" label="Periodo" value={v.preset} onChange={(e) => setPreset(e.target.value as Preset)}>
         {(Object.keys(PRESET_LABEL) as Preset[]).map((p) => <option key={p} value={p}>{PRESET_LABEL[p]}</option>)}
       </SelectField>

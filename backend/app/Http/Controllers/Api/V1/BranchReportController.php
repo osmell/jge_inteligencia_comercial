@@ -43,15 +43,11 @@ class BranchReportController extends Controller
     /**
      * @response array{data: array{branches: list<array{id: int, name: string}>, categories: list<array{name: string, net_total: float, share_pct: float, cells: list<array{branch_id: int, net_total: float, share_pct: float, index: int|null}>}>, shown: int, total_categories: int}}
      */
-    public function mix(ReportDetailRequest $request, BranchCategoryMix $mix): JsonResponse
+    public function mix(ReportDetailRequest $request, BranchCategoryMix $mix, BranchReport $report): JsonResponse
     {
         $this->audit->viewed($request->user(), 'branch_mix', $request->auditFilters());
         $companyIds = $this->scope->companyIds($request->user(), $request->companyId());
-        $branchIds = Branch::query()
-            ->when($companyIds !== null, fn ($q) => $q->whereIn('company_id', (array) $companyIds))
-            ->when($request->validated('branch_id') !== null, fn ($q) => $q->whereKey((int) $request->validated('branch_id')))
-            ->pluck('id')->all();
 
-        return response()->json(['data' => $mix->build($companyIds, $request->from(), $request->to(), ['branch_ids' => $branchIds])]);
+        return response()->json(['data' => $mix->build($companyIds, $request->from(), $request->to(), ['branch_ids' => $report->visibleBranchIds($companyIds, $request->salesFilters())])]);
     }
 }

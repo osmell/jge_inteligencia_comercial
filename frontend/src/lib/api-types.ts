@@ -2397,6 +2397,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/{report}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reportOutput.export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/{report}/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reportOutput.email"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/role-permissions": {
         parameters: {
             query?: never;
@@ -3206,6 +3238,31 @@ export interface components {
             loss_reason?: "price" | "competitor" | "no_budget" | "no_response" | "availability" | "other" | null;
             loss_note?: string | null;
             note?: string | null;
+        };
+        /**
+         * ReportEmailRequest
+         * @description Envío de un reporte por correo: destinatarios, mensaje y la confirmación expresa de que se revisaron.
+         */
+        ReportEmailRequest: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            /** @enum {string|null} */
+            compare?: "previous" | "last_year" | "custom" | null;
+            /** Format: date */
+            compare_from?: string | null;
+            /** Format: date */
+            compare_to?: string | null;
+            company_id?: number | null;
+            branch_id?: number | null;
+            page?: number | null;
+            /** @enum {string} */
+            format: "xlsx" | "pdf";
+            recipients: string[];
+            message?: string | null;
+            /** @enum {unknown} */
+            confirmed?: "yes" | "on" | "1" | 1 | "true" | true;
         };
         /** Role */
         Role: {
@@ -10128,6 +10185,78 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "reportOutput.export": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+                format: "xlsx" | "pdf";
+            };
+            header?: never;
+            path: {
+                report: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    "Content-Disposition"?: string;
+                    "Cache-Control"?: "private, no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "reportOutput.email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportEmailRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            results: {
+                                to: string;
+                                status: string;
+                                error: string | null;
+                            }[];
+                            sent: number;
+                            failed: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "rolePermission.index": {

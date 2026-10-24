@@ -27,7 +27,9 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    // El navegador solo deja leer a la interfaz (que vive en otro origen) los encabezados que se exponen: sin este, todo archivo que se
+    // descarga perdía el nombre que le da el servidor y se guardaba con uno genérico.
+    'exposed_headers' => ['Content-Disposition'],
 
     'max_age' => 0,
 

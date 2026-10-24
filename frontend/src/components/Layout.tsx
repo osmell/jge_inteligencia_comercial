@@ -103,14 +103,14 @@ export default function Layout() {
   )
 
   return (
-    <div className="flex h-full">
-      <aside className="on-dark hidden w-64 shrink-0 flex-col bg-jge-navy md:flex">
+    <div className="flex h-full print:block print:h-auto">
+      <aside className="on-dark hidden w-64 shrink-0 flex-col bg-jge-navy md:flex print:hidden">
         {brand}
         {nav}
       </aside>
 
       {open && (
-        <div className="fixed inset-0 z-40 md:hidden" role="dialog" aria-modal="true" aria-label="Menú de navegación">
+        <div className="fixed inset-0 z-40 md:hidden print:hidden" role="dialog" aria-modal="true" aria-label="Menú de navegación">
           <button className="absolute inset-0 bg-ink/50" aria-label="Cerrar menú" onClick={() => setOpen(false)} />
           <aside className="on-dark relative flex h-full w-72 max-w-[85%] flex-col bg-jge-navy">
             <button
@@ -126,8 +126,8 @@ export default function Layout() {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line bg-surface px-4 md:px-6">
+      <div className="flex min-w-0 flex-1 flex-col print:block">
+        <header className="flex h-16 shrink-0 print:hidden items-center gap-3 border-b border-line bg-surface px-4 md:px-6">
           <button
             ref={menuButton}
             className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-line-strong text-ink md:hidden"
@@ -170,8 +170,8 @@ export default function Layout() {
             </button>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="mx-auto max-w-6xl">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 print:overflow-visible print:p-0">
+          <div className="mx-auto max-w-6xl print:max-w-none">
             <Outlet />
           </div>
         </main>

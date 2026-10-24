@@ -6,13 +6,15 @@ namespace App\Mail;
 
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
 /** Correo simple del sistema: asunto, texto y, si hay, un enlace a la aplicación. */
 class AppMail extends Mailable
 {
-    public function __construct(private readonly string $mailSubject, private readonly string $text, private readonly ?string $url, private readonly string $fromAddress, private readonly ?string $fromName) {}
+    /** @param  array{data: string, name: string, mime: string}|null  $attachment */
+    public function __construct(private readonly string $mailSubject, private readonly string $text, private readonly ?string $url, private readonly string $fromAddress, private readonly ?string $fromName, private readonly ?array $attachment = null) {}
 
     public function envelope(): Envelope
     {
@@ -22,6 +24,12 @@ class AppMail extends Mailable
     public function content(): Content
     {
         return new Content(htmlString: $this->body(), text: 'mail.plain', with: ['text' => $this->text, 'url' => $this->url]);
+    }
+
+    /** @return list<Attachment> */
+    public function attachments(): array
+    {
+        return $this->attachment === null ? [] : [Attachment::fromData(fn (): string => $this->attachment['data'], $this->attachment['name'])->withMime($this->attachment['mime'])];
     }
 
     private function body(): string

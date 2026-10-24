@@ -2,6 +2,7 @@ import { CircleAlert, CircleCheck } from 'lucide-react'
 import { useState } from 'react'
 import BillingTable from '../components/reports/BillingTable'
 import IssuesModal from '../components/reports/IssuesModal'
+import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
 import { ReportStat } from '../components/reports/ReportParts'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, td, th, tr } from '../components/ui'
@@ -60,6 +61,7 @@ export default function ReportConciliationPage() {
     <section>
       <PageHeader title="Conciliación" description="Contrasta la venta consolidada con sus partes (compañías, sucursales, vendedores y operadores), con lo que declaraba cada archivo importado y con las facturas de crédito, y señala dónde hay diferencias." />
       <ReportFilters filters={filters} comparison={false} />
+      <ReportActions report="conciliation" filters={filters} />
       <FormError message={filters.contextError ?? load.error} />
       {!filters.valid && <div className="mb-3"><Alert tone="warning">Indica un periodo válido: la fecha inicial no puede ser posterior a la final.</Alert></div>}
 

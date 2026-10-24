@@ -42,12 +42,14 @@ use App\Http\Controllers\Api\V1\PasswordController;
 use App\Http\Controllers\Api\V1\PaymentPromiseController;
 use App\Http\Controllers\Api\V1\QuotationController;
 use App\Http\Controllers\Api\V1\ReportContextController;
+use App\Http\Controllers\Api\V1\ReportOutputController;
 use App\Http\Controllers\Api\V1\Sales\ProductController;
 use App\Http\Controllers\Api\V1\Sales\SalesStatsController;
 use App\Http\Controllers\Api\V1\Sales\SellerGoalsController;
 use App\Http\Controllers\Api\V1\SellerReportController;
 use App\Http\Controllers\Api\V1\WebhookController;
 use App\Http\Controllers\Api\V1\WhatsappController;
+use App\Services\Reports\Output\ReportCatalog;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -70,6 +72,8 @@ Route::middleware(['auth:sanctum', 'session.current', 'active', 'password.curren
         Route::get('context', [ReportContextController::class, 'show']);
         Route::get('sellers', [SellerReportController::class, 'index']);
         Route::get('sellers/{seller}/documents', [SellerReportController::class, 'documents']);
+        Route::get('{report}/export', [ReportOutputController::class, 'export'])->whereIn('report', ReportCatalog::REPORTS);
+        Route::post('{report}/email', [ReportOutputController::class, 'email'])->whereIn('report', ReportCatalog::REPORTS);
         Route::get('conciliation', [ConciliationController::class, 'index']);
         Route::get('conciliation/issues', [ConciliationController::class, 'issues']);
         Route::get('branches', [BranchReportController::class, 'index']);

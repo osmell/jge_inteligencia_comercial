@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import LevelValue from '../components/reports/LevelValue'
+import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
 import BillingTable from '../components/reports/BillingTable'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
@@ -63,6 +64,7 @@ export default function ReportSellersPage() {
     <section>
       <PageHeader title="Reporte de vendedores" description="Resultado, cumplimiento de meta, disciplina de precio, cartera, cobranza y seguimiento de cada vendedor, con semáforo por indicador." />
       <ReportFilters filters={filters} />
+      <ReportActions report="sellers" filters={filters} />
       <FormError message={filters.contextError ?? report.error} />
       {!filters.valid && <div className="mb-3"><Alert tone="warning">Indica un periodo válido (y, si comparas con otro periodo, sus dos fechas): la fecha inicial no puede ser posterior a la final.</Alert></div>}
       {data && <PeriodLine data={data} />}

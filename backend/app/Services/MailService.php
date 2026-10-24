@@ -85,6 +85,23 @@ class MailService
     }
 
     /**
+     * Envía ahora un reporte como archivo adjunto a una dirección y lo registra. Es inmediato (la persona espera el resultado) y no se
+     * reintenta: un envío fallido se dice como fallido en vez de salir más tarde sin que nadie lo sepa.
+     *
+     * @param  array{data: string, name: string, mime: string}  $attachment
+     */
+    public function sendReport(User $user, string $to, string $subject, string $body, array $attachment): MailLog
+    {
+        $log = MailLog::create([
+            'user_id' => $user->id, 'to_address' => $to, 'kind' => 'report', 'subject' => $subject, 'body' => $body,
+            'status' => MailLog::SENDING, 'attempt' => 1, 'created_at' => now(),
+        ]);
+        $this->deliver($log, $attachment);
+
+        return $log->refresh();
+    }
+
+    /**
      * Registra el correo de un aviso interno para su destinatario, si lo pidió. Sin correo activado queda como «no enviado».
      */
     public function queueNotice(User $user, UserNotification $notice): ?MailLog
@@ -131,14 +148,15 @@ class MailService
     }
 
     /** Envía un registro con el servidor configurado y anota el resultado; en un fallo programa el reintento o se rinde. */
-    private function deliver(MailLog $log): void
+    /** @param  array{data: string, name: string, mime: string}|null  $attachment */
+    private function deliver(MailLog $log, ?array $attachment = null): void
     {
         $s = MailSetting::current();
         try {
             config(['mail.mailers.app' => [
                 'transport' => 'smtp', 'scheme' => $s->encryption === 'ssl' ? 'smtps' : 'smtp', 'host' => $s->host, 'port' => $s->port, 'username' => $s->username, 'password' => $s->password, 'timeout' => 15,
             ]]);
-            Mail::mailer('app')->to((string) $log->to_address)->send(new AppMail($log->subject, $log->body, $log->action_url, (string) $s->from_address, $s->from_name));
+            Mail::mailer('app')->to((string) $log->to_address)->send(new AppMail($log->subject, $log->body, $log->action_url, (string) $s->from_address, $s->from_name, $attachment));
             $log->forceFill(['status' => MailLog::SENT, 'sent_at' => now(), 'error' => null, 'next_attempt_at' => null])->save();
         } catch (Throwable $e) {
             $message = mb_substr($e->getMessage(), 0, 900);

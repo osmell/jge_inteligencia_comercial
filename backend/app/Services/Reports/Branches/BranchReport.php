@@ -109,6 +109,21 @@ class BranchReport
         ];
     }
 
+    /**
+     * Sucursales que la persona puede evaluar (las asignadas, dentro de las compañías pedidas y, si se eligió una, solo esa).
+     *
+     * @param  list<int>|null  $companyIds
+     * @param  array<string, mixed>  $filters
+     * @return list<int>
+     */
+    public function visibleBranchIds(?array $companyIds, array $filters): array
+    {
+        return array_values(array_map('intval', Branch::query()
+            ->when($companyIds !== null, fn ($q) => $q->whereIn('company_id', (array) $companyIds))
+            ->when(isset($filters['branch_id']), fn ($q) => $q->whereKey((int) $filters['branch_id']))
+            ->pluck('id')->all()));
+    }
+
     /** @return array<string, mixed> */
     private function emptySales(): array
     {

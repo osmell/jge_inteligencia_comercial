@@ -56,6 +56,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+/** La persona con sesión, o null si no hay proveedor (componentes que pueden vivir sin él, como el pie de una impresión). */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useCurrentUser(): AuthUser | null {
+  return useContext(AuthContext)?.user ?? null
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthState {
   const ctx = useContext(AuthContext)
