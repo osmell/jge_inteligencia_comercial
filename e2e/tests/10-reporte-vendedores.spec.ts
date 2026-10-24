@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { loginOk, menu } from './helpers'
+import { loginOk, menu, openReport, reportsList } from './helpers'
 
 test.describe('Reporte de vendedores', () => {
   test('administración evalúa a los vendedores y abre el detalle de facturación', async ({ page }) => {
     await loginOk(page, 'admin')
-    await menu(page).getByRole('link', { name: 'Reporte de vendedores' }).click()
+    await openReport(page, 'Vendedores')
 
     await expect(page.getByRole('heading', { name: 'Reporte de vendedores' })).toBeVisible()
     await page.getByLabel('Periodo').selectOption('ytd')
@@ -23,7 +23,7 @@ test.describe('Reporte de vendedores', () => {
 
   test('un vendedor no ve el reporte ni puede abrirlo escribiendo la dirección', async ({ page }) => {
     await loginOk(page, 'vendedor1')
-    await expect(menu(page).getByRole('link', { name: 'Reporte de vendedores' })).toHaveCount(0)
+    await expect(menu(page).getByRole('button', { name: 'Reportes' })).toHaveCount(0)
 
     await page.goto('/reportes/vendedores')
 
@@ -33,7 +33,7 @@ test.describe('Reporte de vendedores', () => {
   test('gerencia y supervisión sí lo ven', async ({ page }) => {
     for (const who of ['gerente', 'supervisor'] as const) {
       await loginOk(page, who)
-      await expect(menu(page).getByRole('link', { name: 'Reporte de vendedores' })).toBeVisible()
+      await expect(menu(page).getByRole('button', { name: 'Reportes' })).toBeVisible()
       await page.getByRole('button', { name: 'Cerrar sesión' }).click()
       await expect(page).toHaveURL(/\/login/)
     }
@@ -43,7 +43,7 @@ test.describe('Reporte de vendedores', () => {
 test.describe('Reporte de operadores', () => {
   test('administración evalúa a los operadores y abre su detalle', async ({ page }) => {
     await loginOk(page, 'admin')
-    await menu(page).getByRole('link', { name: 'Reporte de operadores' }).click()
+    await openReport(page, 'Operadores')
 
     await expect(page.getByRole('heading', { name: 'Reporte de operadores' })).toBeVisible()
     await page.getByLabel('Periodo').selectOption('ytd')
@@ -61,7 +61,7 @@ test.describe('Reporte de operadores', () => {
 
   test('un vendedor no lo ve ni puede abrirlo escribiendo la dirección', async ({ page }) => {
     await loginOk(page, 'vendedor1')
-    await expect(menu(page).getByRole('link', { name: 'Reporte de operadores' })).toHaveCount(0)
+    await expect(menu(page).getByRole('button', { name: 'Reportes' })).toHaveCount(0)
 
     await page.goto('/reportes/operadores')
 
@@ -72,7 +72,7 @@ test.describe('Reporte de operadores', () => {
 test.describe('Reporte de sucursales', () => {
   test('administración evalúa las sucursales, ve la mezcla de categorías y abre su facturación', async ({ page }) => {
     await loginOk(page, 'admin')
-    await menu(page).getByRole('link', { name: 'Reporte de sucursales' }).click()
+    await openReport(page, 'Sucursales')
 
     await expect(page.getByRole('heading', { name: 'Reporte de sucursales' })).toBeVisible()
     await page.getByLabel('Periodo').selectOption('ytd')
@@ -88,7 +88,7 @@ test.describe('Reporte de sucursales', () => {
 
   test('un vendedor no lo ve ni puede abrirlo escribiendo la dirección', async ({ page }) => {
     await loginOk(page, 'vendedor1')
-    await expect(menu(page).getByRole('link', { name: 'Reporte de sucursales' })).toHaveCount(0)
+    await expect(menu(page).getByRole('button', { name: 'Reportes' })).toHaveCount(0)
 
     await page.goto('/reportes/sucursales')
 
@@ -99,7 +99,7 @@ test.describe('Reporte de sucursales', () => {
 test.describe('Conciliación', () => {
   test('administración concilia el periodo y consulta el detalle de facturación de un vendedor', async ({ page }) => {
     await loginOk(page, 'admin')
-    await menu(page).getByRole('link', { name: 'Conciliación' }).click()
+    await openReport(page, 'Conciliación')
 
     await expect(page.getByRole('heading', { name: 'Conciliación' })).toBeVisible()
     await page.getByLabel('Periodo').selectOption('ytd')
@@ -113,10 +113,46 @@ test.describe('Conciliación', () => {
 
   test('un vendedor no la ve ni puede abrirla escribiendo la dirección', async ({ page }) => {
     await loginOk(page, 'vendedor1')
-    await expect(menu(page).getByRole('link', { name: 'Conciliación' })).toHaveCount(0)
+    await expect(menu(page).getByRole('button', { name: 'Reportes' })).toHaveCount(0)
 
     await page.goto('/reportes/conciliacion')
 
     await expect(page.getByRole('table', { name: 'Sumas por dimensión contra el consolidado' })).toHaveCount(0)
+  })
+})
+
+test.describe('Menú desplegable «Reportes»', () => {
+  test('empieza cerrado, se abre con el botón y recuerda que se dejó abierto', async ({ page }) => {
+    await loginOk(page, 'admin')
+    const group = menu(page).getByRole('button', { name: 'Reportes' })
+
+    await expect(group).toHaveAttribute('aria-expanded', 'false')
+    await expect(reportsList(page).getByRole('link', { name: 'Vendedores', exact: true })).toHaveCount(0)
+
+    await group.click()
+    await expect(group).toHaveAttribute('aria-expanded', 'true')
+    for (const option of ['Vendedores', 'Operadores', 'Sucursales', 'Conciliación']) {
+      await expect(reportsList(page).getByRole('link', { name: option, exact: true })).toBeVisible()
+    }
+
+    await page.reload()
+    await expect(menu(page).getByRole('button', { name: 'Reportes' })).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  test('al entrar directo a un reporte el menú queda abierto y marca la opción', async ({ page }) => {
+    await loginOk(page, 'admin')
+    await page.goto('/reportes/operadores')
+
+    await expect(menu(page).getByRole('button', { name: 'Reportes' })).toHaveAttribute('aria-expanded', 'true')
+    await expect(reportsList(page).getByRole('link', { name: 'Operadores', exact: true })).toHaveAttribute('aria-current', 'page')
+    await expect(page.getByRole('heading', { name: 'Reporte de operadores' })).toBeVisible()
+  })
+
+  test('la barra de comandos encuentra los reportes por su nombre completo', async ({ page }) => {
+    await loginOk(page, 'admin')
+    await page.keyboard.press('/')
+    await page.getByRole('combobox', { name: /Ir a una pantalla/ }).fill('reporte de vend')
+
+    await expect(page.getByRole('option', { name: /Reporte de vendedores/ })).toBeVisible()
   })
 })

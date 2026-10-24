@@ -7,6 +7,7 @@ import { onConversationEvent, startRealtime } from '../lib/realtime'
 import { playMessageSound } from '../lib/sound'
 import { useUnreadConversations } from '../lib/useUnread'
 import CommandBar from './CommandBar'
+import NavGroupView from './NavGroupView'
 import NotificationBell from './NotificationBell'
 import { NAV_GROUPS, NAV_ITEMS } from './navigation'
 
@@ -61,36 +62,34 @@ export default function Layout() {
         const items = group.items.filter((i) => can(i.permission))
         if (items.length === 0) return null
         return (
-          <div key={group.title}>
-            <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-white/60">{group.title}</p>
-            <ul className="space-y-0.5">
-              {items.map((item) => (
-                <li key={item.to}>
-                  <NavLink
-                    to={item.to}
-                    end={item.to === '/' || item.to === '/inventario'}
-                    onClick={() => setOpen(false)}
-                    className={({ isActive }) =>
-                      `group relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150 ${
-                        isActive ? 'bg-white/12 text-white' : 'text-white/80 hover:bg-white/8 hover:text-white'
-                      }`
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        {isActive && <span className="absolute left-0 top-2 h-7 w-1 rounded-r bg-jge-red" aria-hidden="true" />}
-                        <item.icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
-                        {item.label}
-                        {item.to === '/conversaciones' && unreadChats > 0 && (
-                          <span className="tabular ml-auto flex min-w-5 items-center justify-center rounded-full bg-jge-red px-1.5 text-[11px] font-semibold leading-5 text-white" aria-label={`${unreadChats} conversaciones sin leer`}>{unreadChats > 99 ? '99+' : unreadChats}</span>
-                        )}
-                      </>
+          <NavGroupView
+            key={group.title}
+            group={group}
+            items={items}
+            renderItem={(item) => (
+              <NavLink
+                to={item.to}
+                end={item.to === '/' || item.to === '/inventario'}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `group relative flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors duration-150 ${
+                    isActive ? 'bg-white/12 text-white' : 'text-white/80 hover:bg-white/8 hover:text-white'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && <span className="absolute left-0 top-2 h-7 w-1 rounded-r bg-jge-red" aria-hidden="true" />}
+                    <item.icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+                    {item.label}
+                    {item.to === '/conversaciones' && unreadChats > 0 && (
+                      <span className="tabular ml-auto flex min-w-5 items-center justify-center rounded-full bg-jge-red px-1.5 text-[11px] font-semibold leading-5 text-white" aria-label={`${unreadChats} conversaciones sin leer`}>{unreadChats > 99 ? '99+' : unreadChats}</span>
                     )}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
+                  </>
+                )}
+              </NavLink>
+            )}
+          />
         )
       })}
     </nav>
@@ -139,7 +138,7 @@ export default function Layout() {
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
           <BrandEmblem className="h-8 w-8 md:hidden" />
-          <p className="hidden shrink-0 truncate text-sm font-medium text-ink-muted lg:block">{current?.label ?? ''}</p>
+          <p className="hidden shrink-0 truncate text-sm font-medium text-ink-muted lg:block">{current?.title ?? current?.label ?? ''}</p>
           <CommandBar />
 
           <div className="ml-auto flex shrink-0 items-center gap-3">

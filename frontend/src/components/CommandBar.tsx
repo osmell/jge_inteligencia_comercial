@@ -28,9 +28,9 @@ export default function CommandBar() {
   const items = useMemo(() => NAV_GROUPS.flatMap((g) => g.items.filter((i) => can(i.permission)).map((i) => ({ ...i, group: g.title }))), [can])
   const query = plain(text.trim().replace(/^\/+/, ''))
   const results = useMemo(() => {
-    const found = items.filter((i) => !query || plain(i.label).includes(query) || plain(i.to).includes(query))
+    const found = items.filter((i) => !query || plain(i.title ?? i.label).includes(query) || plain(i.label).includes(query) || plain(i.to).includes(query))
     // Primero las que empiezan por lo escrito.
-    return found.sort((a, b) => Number(plain(b.label).startsWith(query)) - Number(plain(a.label).startsWith(query)))
+    return found.sort((a, b) => Number(plain(b.title ?? b.label).startsWith(query)) - Number(plain(a.title ?? a.label).startsWith(query)))
   }, [items, query])
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function CommandBar() {
             <li key={r.to} id={`command-${i}`} role="option" aria-selected={i === active} onMouseDown={(e) => { e.preventDefault(); go(r.to) }} onMouseEnter={() => setActive(i)}
               className={`flex cursor-pointer items-center gap-3 px-4 py-2 text-sm ${i === active ? 'bg-jge-blue-50 text-ink' : 'text-ink'}`}>
               <r.icon className="h-4 w-4 shrink-0 text-jge-blue" aria-hidden="true" />
-              <span className="flex-1 truncate">{r.label}</span>
+              <span className="flex-1 truncate">{r.title ?? r.label}</span>
               <span className="hidden shrink-0 text-xs text-ink-subtle sm:inline">{r.group}</span>
               {i === active && <CornerDownLeft className="h-3.5 w-3.5 shrink-0 text-ink-subtle" aria-hidden="true" />}
             </li>

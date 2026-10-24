@@ -20,3 +20,13 @@ export async function loginOk(page: Page, username: Dev) {
 }
 
 export const menu = (page: Page) => page.getByRole('navigation', { name: 'Principal' })
+
+/** La lista de opciones del desplegable: «Sucursales» también existe en Administración, así que se busca dentro de ella. */
+export const reportsList = (page: Page) => menu(page).getByRole('list', { name: 'Reportes' })
+
+/** Abre el menú desplegable «Reportes» (si está cerrado) y entra a una de sus opciones. */
+export async function openReport(page: Page, option: 'Vendedores' | 'Operadores' | 'Sucursales' | 'Conciliación') {
+  const group = menu(page).getByRole('button', { name: 'Reportes' })
+  if ((await group.getAttribute('aria-expanded')) !== 'true') await group.click()
+  await reportsList(page).getByRole('link', { name: option, exact: true }).click()
+}

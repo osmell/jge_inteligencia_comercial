@@ -3,6 +3,8 @@ import { Scale, Store, ScanLine, ClipboardCheck, BarChart3, CalendarCheck, Clipb
 export interface NavItem {
   to: string
   label: string
+  /** Nombre completo, cuando el del menú es corto (dentro de un grupo que ya lo aclara): lo usan el encabezado y la barra de comandos. */
+  title?: string
   icon: LucideIcon
   /** Permiso requerido para ver el elemento; sin permiso, visible para todo usuario autenticado. */
   permission?: string
@@ -11,6 +13,8 @@ export interface NavItem {
 export interface NavGroup {
   title: string
   items: NavItem[]
+  /** Se muestra como un menú desplegable (cerrado salvo que se esté dentro de él) en vez de una lista siempre abierta. */
+  collapsible?: boolean
 }
 
 export const NAV_GROUPS: NavGroup[] = [
@@ -37,11 +41,12 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: 'Reportes',
+    collapsible: true,
     items: [
-      { to: '/reportes/vendedores', label: 'Reporte de vendedores', icon: ClipboardCheck, permission: 'reports.view' },
-      { to: '/reportes/operadores', label: 'Reporte de operadores', icon: ScanLine, permission: 'reports.view' },
-      { to: '/reportes/sucursales', label: 'Reporte de sucursales', icon: Store, permission: 'reports.view' },
-      { to: '/reportes/conciliacion', label: 'Conciliación', icon: Scale, permission: 'reports.view' },
+      { to: '/reportes/vendedores', label: 'Vendedores', title: 'Reporte de vendedores', icon: ClipboardCheck, permission: 'reports.view' },
+      { to: '/reportes/operadores', label: 'Operadores', title: 'Reporte de operadores', icon: ScanLine, permission: 'reports.view' },
+      { to: '/reportes/sucursales', label: 'Sucursales', title: 'Reporte de sucursales', icon: Store, permission: 'reports.view' },
+      { to: '/reportes/conciliacion', label: 'Conciliación', title: 'Conciliación de ventas', icon: Scale, permission: 'reports.view' },
     ],
   },
   {

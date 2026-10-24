@@ -2,6 +2,10 @@
 
 Reportes para evaluar el desempeño de **vendedores, operadores y sucursales**, y conciliar las cifras consolidadas con el detalle de facturación. Para supervisión, gerencia y administración (permiso `reports.view`; el vendedor no los ve). Plan de entrega por pasos: 1 base · 2 vendedores · 3 operadores · 4 sucursales · 5 conciliación · 6 menú desplegable «Reportes» · 7 salidas (imprimir, Excel, PDF y correo) · 8 cierre.
 
+## Menú
+
+Los reportes están en un menú desplegable **«Reportes»** (Vendedores, Operadores, Sucursales y Conciliación). Empieza cerrado, se abre con el botón (con teclado y lector de pantalla: `aria-expanded`), se abre solo al entrar a cualquiera de sus pantallas y recuerda en el navegador si se dejó abierto. Solo aparece para quien tiene el permiso `reports.view`. La barra de comandos (tecla `/`) los encuentra por su nombre completo («Reporte de vendedores»). Los cuatro comparten la misma barra de periodo, comparación, compañía y sucursal.
+
 ## Reglas comunes
 
 - **Alcance por compañía, no por sucursal.** Quien tiene el permiso ve a TODOS los vendedores y operadores de cada compañía suya, con toda su venta, aunque tenga asignadas pocas sucursales. Nunca ve otra compañía: pedirla a mano no devuelve nada (y abrir el detalle de un vendedor ajeno da 404).
