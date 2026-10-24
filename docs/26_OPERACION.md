@@ -46,6 +46,17 @@ Responsabilidad de la VM de base de datos; mínimo recomendado:
 3. `php artisan ops:status` en verde.
 4. Revisar la CI del commit desplegado y el `CHANGELOG.md`.
 
+## Pruebas en PostgreSQL
+
+La aplicación corre sobre PostgreSQL y SQLite no impone el largo de las columnas ni conserva el orden de las claves de `jsonb`, así que la suite completa se repite contra PostgreSQL (en la CI como «Backend (pruebas en PostgreSQL)»). En local:
+
+```bash
+docker compose exec postgres psql -U jge -d postgres -c "create database jge_test"   # una sola vez
+docker compose exec backend composer test:pgsql
+```
+
+Usa **solo** la base `jge_test` (la configuración la fija y las pruebas se niegan a correr contra una base cuyo nombre no termine en `_test`, porque borran y recrean todas las tablas). Nunca la apunte a la base de trabajo.
+
 ## Empezar con información real: `data:reset`
 
 Borra todo lo que nace de operar el sistema y conserva el maestro, las cuentas y la configuración. **Es irreversible**: haga antes una copia (sección 5: Respaldo y restauración de PostgreSQL).

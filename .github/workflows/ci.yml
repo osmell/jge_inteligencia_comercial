@@ -56,6 +56,60 @@ jobs:
       - name: Auditoría de dependencias (bloquea ante cualquier vulnerabilidad conocida)
         run: composer audit --no-interaction
 
+  # La aplicación corre sobre PostgreSQL y SQLite no impone el largo de las columnas ni conserva el orden de las claves de jsonb: las mismas
+  # pruebas se repiten contra PostgreSQL (así apareció, por ejemplo, un tipo de mensaje de WhatsApp más largo que su columna).
+  backend-pgsql:
+    name: Backend (pruebas en PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: jge
+          POSTGRES_PASSWORD: jge
+          POSTGRES_DB: jge_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U jge -d jge_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: '5432'
+      DB_USERNAME: jge
+      DB_PASSWORD: jge
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_pgsql, zip, intl
+          coverage: none
+          tools: composer:v2
+
+      - name: Caché de Composer
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/composer/files
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Preparar entorno
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - name: Pruebas en PostgreSQL
+        run: vendor/bin/phpunit -c phpunit.pgsql.xml
+
   frontend:
     name: Frontend (tipos, lint, pruebas, build)
     runs-on: ubuntu-latest

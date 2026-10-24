@@ -117,3 +117,19 @@ Es lo único irreversible de los reportes: las cifras salen de la empresa. Regla
 3. **Tope por persona y hora** (`reports.email_per_hour`, 30 destinatarios; cada uno cuenta). Sin cupo suficiente no se envía nada.
 4. **Auditoría** (`report.emailed`): quién, qué reporte y formato, con qué filtros, **a qué direcciones** y el resultado de cada envío. Cada correo queda además en el registro de correos (`Correo` en administración).
 5. Si el correo del sistema **no está configurado, no se intenta por otra vía** y no se gasta cupo. Un envío fallido se reporta como fallido en el momento; no se reintenta después sin que nadie lo sepa.
+
+## Verificación y rendimiento
+
+- **Pruebas**: cada indicador se comprueba contra ventas, cartera, crédito, inventario y seguimiento declarados a mano (más de 150 pruebas del apartado), además de las matrices de acceso, sesión revocada y clave temporal que recorren todas las rutas.
+- **PostgreSQL**: todas las pruebas del sistema (930) pasan **también en PostgreSQL** (`composer test:pgsql`, y como trabajo propio en la CI), no solo en SQLite.
+- **Rendimiento** (PostgreSQL, 25 000 documentos y 150 000 líneas en un año, sin índices nuevos): cada reporte responde en 0,2–1,3 s (el de un mes, la mitad); el detalle de facturas y de a quién factura un operador, en menos de 0,1 s; Excel y PDF tardan 1,4–2,9 s. Con mucho más volumen conviene volver a medir.
+- **Seguridad**: ver `docs/28_SEGURIDAD.md` (revisión del apartado de Reportes) y `docs/adr/015-reportes-de-evaluacion.md`.
+
+## Decisiones pendientes de validar con el cliente
+
+1. **Umbrales de los semáforos** (`config/reports.php`): son valores iniciales.
+2. **Definición de «vencido»**: facturas emitidas hace más de 30 días (el sistema no guarda plazos de crédito por cliente).
+3. **Alcance de un supervisor limitado a una sucursal**: ve a todo el equipo de su compañía en vendedores, operadores y conciliación, pero solo sus sucursales en el reporte de sucursales.
+4. **Anulaciones por operador**: el sistema no sabe quién anuló o corrigió un documento; si el cliente lo necesita, hay que decidir cómo registrarlo.
+5. **Promesas de pago cumplidas y tiempo de respuesta en WhatsApp por vendedor**: aún no están en el reporte de vendedores (falta decidir a quién se atribuye cada una).
+6. **Correo a direcciones libres**: decisión del cliente; si se quisiera más control, una lista de dominios permitidos o aprobación de un administrador para direcciones nuevas.

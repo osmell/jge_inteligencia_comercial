@@ -49,8 +49,8 @@ Las dos advertencias y la información que reporta:
 Cómo repetirlo: `e2e/tools/zap-api-scan.sh <API> <origen de la interfaz>` (solo contra una instalación desechable).
 
 ## 4. Lo que se comprobó que ya estaba bien
-- **Autenticación**: 189 de las 192 rutas de la API exigen sesión; las 3 públicas son el inicio de sesión y los dos webhooks de Meta, y estos últimos rechazan lo que no trae firma válida.
-- **Autorización**: toda ruta con permiso rechaza (403) a quien está conectado pero no lo tiene; 173 de las 192 exigen un permiso concreto; las 16 que solo exigen sesión están enumeradas y revisadas, y agregar una nueva falla la prueba hasta revisarla.
+- **Autenticación**: 207 de las 210 rutas de la API exigen sesión; las 3 públicas son el inicio de sesión y los dos webhooks de Meta, y estos últimos rechazan lo que no trae firma válida.
+- **Autorización**: toda ruta con permiso rechaza (403) a quien está conectado pero no lo tiene; 189 de las 210 exigen un permiso concreto; las 18 que solo exigen sesión están enumeradas y revisadas, y agregar una nueva falla la prueba hasta revisarla.
 - **Aislamiento entre compañías y entre vendedores**: más de 80 combinaciones de ruta × registro ajeno (cotizaciones, crédito, conversaciones, clientes, contactos, importaciones, administración…) responden 403/404 sin filtrar datos; ninguna lista contiene datos ajenos, tampoco pidiendo otra compañía con `company_id`.
 - **CSRF**: una petición con sesión pero sin el token se rechaza (419); con un origen ajeno la sesión ni se reconoce (401). CORS permite solo el origen de la interfaz.
 - **Inicio de sesión**: mismo mensaje para usuario inexistente y clave errónea; la sesión se regenera al entrar y se invalida al salir; contraseña mínima de 10 caracteres.
@@ -124,3 +124,27 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 - `composer audit` y `npm audit` bloquean la CI ante vulnerabilidades conocidas; Dependabot propone las actualizaciones cada mes.
 - Repetir el escaneo de ZAP antes de cada entrega importante (sección 3) y tras cambiar autenticación, archivos o llamadas salientes.
 - Una vulnerabilidad nueva se registra aquí (tabla de hallazgos) con su prueba automática.
+
+
+## Revisión del apartado de Reportes (2026-10-23)
+
+Se revisó el apartado completo (4 reportes, sus detalles y sus salidas) con `tests/Feature/Security/ReportsSecurityTest.php` y las matrices de acceso existentes, que recorren **todas** las rutas nuevas automáticamente.
+
+| Control | Resultado |
+|---|---|
+| Identificadores de otra compañía (vendedor, operador, sucursal) en todos los detalles | 404; también con identificadores que no existen |
+| Compañía pedida a mano fuera del alcance | No devuelve nada (reportes y descargas) |
+| Parámetros hostiles (SQL, listas, negativos, cero, páginas enormes, fechas con SQL) | 422 antes de llegar a la base, en todos los reportes y en el detalle |
+| Costos, margen o valuación en las respuestas | Ninguna clave de esa familia en ninguna respuesta (las existencias son cantidades de productos) |
+| Rastro en Auditoría | Toda consulta, descarga y envío deja un registro; una prueba falla si se agrega una ruta de reportes que la revisión no recorre |
+| Texto de los archivos importados en las salidas | Excel: fórmulas neutralizadas; PDF: HTML escapado; sin recursos remotos ni PHP en el PDF |
+| Correo: direcciones con saltos de línea, `Bcc:`, comas, nombres o bytes nulos | Rechazadas (422): no se envía nada |
+| Correo: texto del mensaje con encabezados | Solo va al cuerpo: no agrega destinatarios ni cabeceras |
+| Correo: confirmación de destinatarios, tope por persona y hora, correo sin configurar | Exigida por la API; el tope cuenta cada destinatario; sin correo configurado no se intenta ni se gasta cupo |
+| Sesión revocada, clave temporal, usuario inactivo | 401 / 403 en todas las rutas (matrices de acceso) |
+
+**Hallazgos de la revisión** (corregidos):
+- **H13 · Los archivos descargados perdían su nombre**: el navegador no podía leer `Content-Disposition` entre orígenes distintos y guardaba todo con un nombre genérico (afectaba también a las exportaciones de ventas). Se expone el encabezado en CORS.
+- **H14 · Enviar un mensaje desde Conversaciones fallaba en PostgreSQL**: el tipo `conversation` mide 12 caracteres y la columna admitía 10. SQLite no impone el largo y las pruebas no lo veían. Se amplió la columna y **toda la suite se ejecuta ahora también en PostgreSQL** (con una guarda que impide que esas pruebas toquen una base que no termine en `_test`).
+
+**Riesgo residual R4 · el correo de reportes sale a direcciones libres.** Fue una decisión del cliente (con confirmación, tope y Auditoría). Una cuenta con `reports.view` comprometida podría enviar cifras hasta el tope por hora. Mitigaciones posibles si se quisiera más control: lista de dominios permitidos (`@empresa.com`) o aprobación de un administrador para direcciones nuevas.

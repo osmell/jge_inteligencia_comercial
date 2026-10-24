@@ -6,7 +6,7 @@ El contrato entre el backend (Laravel) y el frontend (React) deja de ser «lo qu
 Resource / FormRequest / servicios  ──(Scramble)──►  backend/openapi.json  ──(openapi-typescript)──►  frontend/src/lib/api-types.ts
 ```
 
-- **`backend/openapi.json`**: documento OpenAPI 3.1 de las 192 operaciones, generado por [Scramble](https://scramble.dedoc.co) leyendo rutas, `FormRequest` (entradas), `Resource` y arreglos devueltos (salidas). No se edita a mano.
+- **`backend/openapi.json`**: documento OpenAPI 3.1 de las operaciones de la API (206 documentadas), generado por [Scramble](https://scramble.dedoc.co) leyendo rutas, `FormRequest` (entradas), `Resource` y arreglos devueltos (salidas). No se edita a mano.
 - **`frontend/src/lib/api-types.ts`**: tipos de TypeScript generados del documento (`npm run api:types`). No se edita a mano; está excluido del lint.
 - **Documentación navegable**: `/docs/api` (y `/docs/api.json`) en el backend, **solo para administración** (`Gate viewApiDocs`), también en producción.
 

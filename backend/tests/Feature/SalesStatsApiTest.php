@@ -524,7 +524,7 @@ class SalesStatsApiTest extends TestCase
         $this->assertEquals(200.0, $sheets['Resumen'][array_search('Venta neta', array_column($sheets['Resumen'], 0))][2]);
 
         $log = AuditLog::where('event', 'sales.exported')->latest('id')->first();
-        $this->assertSame(['from' => '2026-10-03', 'to' => '2026-10-09'], $log->new_values['compare']);
+        $this->assertEquals(['from' => '2026-10-03', 'to' => '2026-10-09'], $log->new_values['compare']);   // jsonb no conserva el orden de las claves
     }
 
     public function test_category_comes_from_product_level_3_and_falls_back_to_the_sales_file(): void

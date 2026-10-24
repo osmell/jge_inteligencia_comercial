@@ -53,6 +53,10 @@
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
         ],
+        "test:pgsql": [
+            "@php artisan config:clear --ansi @no_additional_args",
+            "vendor/bin/phpunit -c phpunit.pgsql.xml"
+        ],
         "test": [
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"

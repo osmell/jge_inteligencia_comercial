@@ -111,7 +111,8 @@ class SalesImportTest extends TestCase
         $this->assertSame('2026-10-01', $batch->summary['date_from']);
         $this->assertSame('2026-10-03', $batch->summary['date_to']);
         $this->assertSame('130.0000', $batch->summary['totals']['net_total']);
-        $this->assertSame([['id' => $this->alfa->id, 'name' => 'Compañía Alfa', 'documents' => 2, 'lines' => 3, 'net_total' => '130.0000']], $batch->summary['companies']);
+        // jsonb de PostgreSQL no conserva el orden de las claves: se compara el contenido, no el orden.
+        $this->assertEquals([['id' => $this->alfa->id, 'name' => 'Compañía Alfa', 'documents' => 2, 'lines' => 3, 'net_total' => '130.0000']], $batch->summary['companies']);
         $this->assertSame(['María López'], $batch->summary['new_sellers']);
         $this->assertEqualsCanonicalizing(['Caja 1', 'Caja 2'], $batch->summary['new_operators']);
         $this->assertSame(0, SalesDocument::withoutGlobalScopes()->count()); // validar no escribe

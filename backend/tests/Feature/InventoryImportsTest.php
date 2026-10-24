@@ -226,7 +226,8 @@ class InventoryImportsTest extends TestCase
         $this->assertSame($this->unit('galon'), $oil2->fresh()->base_unit_id);
         $factors = $oil2->equivalences()->get()->mapWithKeys(fn ($e) => [Unit::find($e->unit_id)->code => $e->factorText()])->all();
         $this->assertEquals(['barril' => '55', 'cubeta' => '5', '1_16' => '0.0625'], $factors);
-        $this->assertSame(['bases_set' => 1, 'new' => 3, 'updated' => 0, 'unchanged' => 0], $batch->summary['units']);
+        // jsonb de PostgreSQL no conserva el orden de las claves: se compara el contenido, no el orden.
+        $this->assertEquals(['bases_set' => 1, 'new' => 3, 'updated' => 0, 'unchanged' => 0], $batch->summary['units']);
 
         // Repetir el mismo archivo no cambia nada; cambiar un factor actualiza.
         $again = $this->imported('product_units', self::UNITS, [$this->unitsRow(['Codigo Producto' => '400', 'Unidad' => 'Cubeta', 'Factor' => 5]), $this->unitsRow(['Codigo Producto' => '400', 'Unidad' => 'Litro', 'Factor' => '0.264172'])]);

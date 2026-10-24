@@ -27,31 +27,31 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Hooks del frontend** (`useFilters`, `useSubmit`, `useFormValues`, `useExport`, `useDebounced`, `useFitRows`) que reemplazan filas repetidas de `useState`.
 - **Identificador de petición** (`X-Request-Id`) en cada respuesta y en cada registro, canal de registros `json`, registro estructurado de trabajos en cola fallidos y comando `ops:status` para monitoreo.
 - Documentación para el equipo: análisis del código y guía SOLID (`docs/24`), propuesta de Policies (`docs/25`), operación (`docs/26`) y decisiones de arquitectura (`docs/adr`).
-
-### Añadido
 - `php artisan data:reset`: deja la base lista para información real (conserva compañías, sucursales, vendedores, facturadores, productos, cuentas y configuración). Simulación con `--dry-run`, confirmación escribiendo el nombre de la base, una sola transacción.
-
-### Seguridad
-- **Época de sesión**: cerrar sesión, cambiar o restablecer la clave y desactivar una cuenta invalidan todas las sesiones anteriores de la persona, incluso una que reviva por una petición en curso. Cerrar sesión en un equipo cierra todos los de esa persona. Una respuesta 401 devuelve a la pantalla de ingreso.
-- **Cambio de clave obligatorio**: la clave que fija administración (alta o restablecimiento) es temporal; hasta cambiarla, la API solo permite ver el perfil, cambiar la clave y salir. Cualquier persona puede cambiar su clave (pide la actual, con límite de intentos y en Auditoría).
+- **La suite de pruebas se ejecuta también en PostgreSQL** (`composer test:pgsql` y un trabajo propio en la CI), con una guarda que impide que toque una base que no termine en `_test`.
+- **Revisión de seguridad del apartado de Reportes** (`docs/28_SEGURIDAD.md`) y `ADR-015`.
 
 ### Cambiado
 - Todo el backend usa `declare(strict_types=1)`; PHPStan sube del nivel 5 al **8** sin *baseline*.
 - Las consultas y transacciones salieron de los controladores hacia servicios; el dashboard, las estadísticas de ventas, la ficha de clientes y los reportes se dividieron en clases por responsabilidad. Sin cambios de comportamiento.
 - Mensaje de rechazo único al escribir o agregar notas en una conversación ajena.
 
+### Corregido
+- **Enviar un mensaje desde Conversaciones fallaba en PostgreSQL**: el tipo de mensaje `conversation` (12 caracteres) no cabía en su columna (10). Se amplió; hay que ejecutar `php artisan migrate --force`.
+- Los archivos descargados desde la interfaz (reportes, exportaciones de ventas…) se guardaban con un nombre genérico: el navegador no podía leer el encabezado con el nombre. Se expone en CORS.
+- `company_id` de la URL se pasaba como texto a los servicios de crédito.
+- La descarga CSV ante un fallo al abrir la salida seguía con un recurso inválido; ahora falla con un mensaje claro.
+- El listado de facturas de un cliente ejecutaba consultas cuyo resultado no usaba.
+- Un mes de metas con formato inválido devolvía `null` en silencio.
+
 ### Seguridad
+- **Época de sesión**: cerrar sesión, cambiar o restablecer la clave y desactivar una cuenta invalidan todas las sesiones anteriores de la persona, incluso una que reviva por una petición en curso. Cerrar sesión en un equipo cierra todos los de esa persona. Una respuesta 401 devuelve a la pantalla de ingreso.
+- **Cambio de clave obligatorio**: la clave que fija administración (alta o restablecimiento) es temporal; hasta cambiarla, la API solo permite ver el perfil, cambiar la clave y salir. Cualquier persona puede cambiar su clave (pide la actual, con límite de intentos y en Auditoría).
 - Un vendedor ya no puede cancelar promesas de pago de clientes de otro vendedor.
 - Límite general de peticiones y límite de intentos de inicio de sesión por dirección; cabeceras de seguridad; sin `X-Powered-By` ni página de bienvenida.
 - Las cuentas desactivadas dejan de ver `/auth/me` y de recibir tiempo real aunque conserven la sesión.
 - Descarga de archivos de WhatsApp solo desde dominios de Meta; destino del webhook sin acceso a la red interna.
 - Cookie de sesión `Secure` por omisión en producción; auditoría de dependencias que bloquea la CI.
-
-### Corregido
-- `company_id` de la URL se pasaba como texto a los servicios de crédito.
-- La descarga CSV ante un fallo al abrir la salida seguía con un recurso inválido; ahora falla con un mensaje claro.
-- El listado de facturas de un cliente ejecutaba consultas cuyo resultado no usaba.
-- Un mes de metas con formato inválido devolvía `null` en silencio.
 
 ## [0.12.0] — 2026-10-21 · Fase 12: barra de comandos
 ### Añadido
