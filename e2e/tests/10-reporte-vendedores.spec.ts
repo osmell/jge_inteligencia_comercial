@@ -68,3 +68,30 @@ test.describe('Reporte de operadores', () => {
     await expect(page.getByRole('table', { name: 'Evaluación de operadores' })).toHaveCount(0)
   })
 })
+
+test.describe('Reporte de sucursales', () => {
+  test('administración evalúa las sucursales, ve la mezcla de categorías y abre su facturación', async ({ page }) => {
+    await loginOk(page, 'admin')
+    await menu(page).getByRole('link', { name: 'Reporte de sucursales' }).click()
+
+    await expect(page.getByRole('heading', { name: 'Reporte de sucursales' })).toBeVisible()
+    await page.getByLabel('Periodo').selectOption('ytd')
+    const table = page.getByRole('table', { name: 'Evaluación de sucursales' })
+    await expect(table).toBeVisible()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await expect(page.getByText(/coincide con la suma de las sucursales|no coincide con la suma de las sucursales/)).toBeVisible()
+    await expect(page.getByRole('table', { name: 'Mezcla de categorías por sucursal' })).toBeVisible()
+
+    await table.getByRole('button', { name: /Ver la facturación de/ }).first().click()
+    await expect(page.getByRole('table', { name: /Documentos facturados en/ })).toBeVisible()
+  })
+
+  test('un vendedor no lo ve ni puede abrirlo escribiendo la dirección', async ({ page }) => {
+    await loginOk(page, 'vendedor1')
+    await expect(menu(page).getByRole('link', { name: 'Reporte de sucursales' })).toHaveCount(0)
+
+    await page.goto('/reportes/sucursales')
+
+    await expect(page.getByRole('table', { name: 'Evaluación de sucursales' })).toHaveCount(0)
+  })
+})

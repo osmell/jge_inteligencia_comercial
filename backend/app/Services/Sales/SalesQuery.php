@@ -83,6 +83,11 @@ class SalesQuery
             }
         }
 
+        // Varias sucursales a la vez (las que una persona puede ver en los reportes); una lista vacía no devuelve nada.
+        if (isset($filters['branch_ids'])) {
+            $query->whereIn('sales_lines.branch_id', $filters['branch_ids']);
+        }
+
         // Varios vendedores a la vez (equipo de un supervisor); una lista vacía no devuelve nada.
         if (isset($filters['seller_ids'])) {
             $query->whereIn('sd.seller_id', $filters['seller_ids']);

@@ -59,6 +59,9 @@ export type SellerReport = Body<'/reports/sellers'>['data']
 export type SellerReportRow = SellerReport['rows'][number]
 export type BillingDetail = Body<'/reports/sellers/{seller}/documents'>['data']
 export type BillingDocument = BillingDetail['rows'][number]
+export type BranchReport = Body<'/reports/branches'>['data']
+export type BranchReportRow = BranchReport['rows'][number]
+export type BranchMix = Body<'/reports/branches/mix'>['data']
 export type OperatorReport = Body<'/reports/operators'>['data']
 export type OperatorReportRow = OperatorReport['rows'][number]
 export type OperatorDistribution = Body<'/reports/operators/{operator}/distribution'>['data']
@@ -72,5 +75,6 @@ export const REPORT_NOTE: Record<string, string> = {
   portfolio_and_credit_as_of_today: 'La cartera de clientes y la cobranza son a la fecha de hoy, no del periodo elegido.',
   goal_not_comparable_with_branch_filter: 'Con una sucursal elegida no se califica la meta: la venta es parcial y la meta es de toda la compañía.',
   uneven_comparison: 'El periodo de comparación dura distinto que el elegido: los cambios no son directamente comparables.',
+  portfolio_credit_inventory_as_of_today: 'La cartera de clientes, la cobranza y las existencias son a la fecha de hoy, no del periodo elegido. Las existencias se cuentan en productos, sin costos ni valuación.',
   no_operator_cancellations: 'El sistema no sabe qué operador anuló o corrigió un documento: el control de captura se basa solo en lo que traen los archivos de venta (descuentos, líneas sin precio, documentos atípicos y negativos).',
 }

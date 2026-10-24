@@ -10,6 +10,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 ## [Sin publicar]
 
 ### Añadido
+- **Reporte de sucursales** (`/reportes/sucursales`): resultado y crecimiento, dependencia de un vendedor y de pocos clientes, cartera de clientes, cobranza, existencias en productos (sin costos) y mezcla de categorías por sucursal, con detalle de facturación.
 - **Reporte de operadores** (`/reportes/operadores`): producción y control de captura de quienes facturan (descuentos altos, líneas sin precio, documentos atípicos y negativos, venta directa), con detalle de facturas y de a quién y cuándo factura cada operador. El cálculo de cifras de venta, el contraste y el listado de documentos son ahora piezas comunes a todos los reportes de evaluación.
 - **Reporte de vendedores** (`/reportes/vendedores`, `docs/29_REPORTES.md`): venta, crecimiento, cumplimiento de meta, disciplina de precio, concentración, cartera de clientes, cobranza y seguimiento de cada vendedor, con semáforos, contraste con la venta consolidada y detalle de facturación por vendedor.
 - **Reportes de evaluación (base)**: permiso `reports.view` (administrador, gerente general y supervisor de ventas), filtros disponibles por compañía (`GET /reports/context`), periodo con comparación (anterior, mismo periodo del año pasado o personalizado), semáforos con umbrales por omisión en `config/reports.php` y auditoría de consulta, exportación y envío por correo (con destinatarios).

@@ -2,35 +2,40 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Reports\Sellers;
+namespace App\Services\Reports;
 
 use App\Services\CustomerActivity;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Cartera de clientes de cada vendedor A LA FECHA (no depende del periodo del reporte). Un cliente es de quien le facturó la última
+ * Cartera de clientes de cada vendedor o sucursal A LA FECHA (no depende del periodo del reporte). Un cliente es de quien le facturó la última
  * vez, si fue dentro de la ventana de `config('reports.portfolio_window_days')`; su estado (activo, nuevo, recuperado, inactivo,
  * perdido) usa las mismas reglas y plazos que la pantalla de Clientes.
  */
-class SellerPortfolioFigures
+class PortfolioFigures
 {
+    /** Columna del documento por la que se atribuye cada cliente (lista blanca). */
+    private const COLUMNS = ['seller' => 'seller_id', 'branch' => 'branch_id'];
+
     public function __construct(private readonly CustomerActivity $activity) {}
 
     /**
      * @param  list<int>|null  $companyIds
-     * @return array<int, array<string, mixed>> vendedor → conteos por estado
+     * @param  'seller'|'branch'  $dimension
+     * @return array<int, array<string, mixed>> id del evaluado → conteos por estado
      */
-    public function snapshot(?array $companyIds, CarbonImmutable $today): array
+    public function snapshot(?array $companyIds, CarbonImmutable $today, string $dimension = 'seller'): array
     {
+        $column = self::COLUMNS[$dimension];
         $since = $today->subDays((int) config('reports.portfolio_window_days'))->toDateString();
 
         $documents = DB::table('sales_documents')
             ->when($companyIds !== null, fn ($q) => $q->whereIn('company_id', (array) $companyIds))
             ->where('issued_on', '>=', $since)->where('issued_on', '<=', $today->toDateString())
-            ->selectRaw('company_id, customer_code, seller_id, row_number() over (partition by company_id, customer_code order by issued_on desc, id desc) as rn');
+            ->selectRaw("company_id, customer_code, {$column} as owner_id, row_number() over (partition by company_id, customer_code order by issued_on desc, id desc) as rn");
 
-        $owners = DB::query()->fromSub($documents, 'd')->where('rn', 1)->get(['company_id', 'customer_code', 'seller_id']);
+        $owners = DB::query()->fromSub($documents, 'd')->where('rn', 1)->get(['company_id', 'customer_code', 'owner_id']);
 
         $rules = $this->activity->rules();
         $starts = $this->activity->historyStarts();
@@ -40,7 +45,7 @@ class SellerPortfolioFigures
             $company = (int) $owner->company_id;
             $facts[$company] ??= $this->activity->facts($company)[$company] ?? [];
             $status = $this->activity->classify($facts[$company][$owner->customer_code] ?? null, $starts[$company] ?? null, $today, $rules);
-            $counts[(int) $owner->seller_id][$status] = ($counts[(int) $owner->seller_id][$status] ?? 0) + 1;
+            $counts[(int) $owner->owner_id][$status] = ($counts[(int) $owner->owner_id][$status] ?? 0) + 1;
         }
 
         $out = [];

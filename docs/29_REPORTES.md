@@ -55,3 +55,23 @@ Quienes **facturan**. Una fila por operador activo o con facturación en el peri
 **Lo que el sistema NO sabe y el reporte no inventa:** qué operador anuló o corrigió un documento (los archivos de venta no lo informan; las notas de crédito del sistema se registran por usuario, no por operador). El control de captura se basa solo en lo que traen los archivos.
 
 Los parámetros (`high_discount_line_pct`, `atypical_min_documents`, `atypical_iqr_factor` y los umbrales de semáforo) están en `config/reports.php` y son valores iniciales pendientes de validar con el cliente.
+
+## Reporte de sucursales (`GET /api/v1/reports/branches`)
+
+Una fila por sucursal activa o con venta en el periodo. A diferencia de vendedores y operadores, **cada persona ve las sucursales que tiene asignadas** (una sucursal es una unidad del negocio, no una persona del equipo): el consolidado de contraste se limita a esas mismas sucursales para que coincida.
+
+| Indicador | Definición | Semáforo |
+|---|---|---|
+| Venta neta, documentos, ticket, clientes | Del periodo, por sucursal, con crecimiento de venta y de documentos contra la comparación | `growth_pct` |
+| Descuento y ventas bajo precio normal | Igual que en vendedores | `discount_pct`, `below_list_pct` |
+| Concentración en clientes | % de la venta de la sucursal que sale de sus 3 mejores clientes | `top3_concentration_pct` |
+| **Dependencia de una persona** | % de la venta de la sucursal que aporta el vendedor que más vende. **No cuenta a los vendedores «Tienda …»** (ventas de mostrador que el sistema crea por omisión): una sucursal que solo vende de mostrador no depende de nadie. | `top_seller_dependency_pct` |
+| Cartera de clientes (**a hoy**) | Un cliente es de la sucursal que le facturó la última vez (últimos 365 días); mismos estados y plazos que Clientes | `lost_customers_pct` |
+| Cobranza (**a hoy**) | Saldo por cobrar de las facturas de la sucursal y % vencido (emitidas hace más de 30 días) | `overdue_pct` |
+| Existencias (**a hoy**) | Productos con existencia; **sin rotación** (con existencia y sin ventas en 60 días); **agotados con demanda** (vendidos en los últimos 90 días y hoy sin existencia); **faltantes abiertos** (ventas que superaron la existencia y siguen sin resolver) | `no_rotation_pct`, `stockout_demand_pct`, `open_shortfalls` |
+
+**Solo cantidades de productos: ningún importe, costo ni valuación** (eso exige el permiso `inventory.costs`, que este reporte no otorga). Una sucursal sin inventario cargado queda «sin dato».
+
+**Mezcla de categorías** (`GET /reports/branches/mix`): categorías en filas y sucursales en columnas; cada celda es el % de la venta de la sucursal que corresponde a esa categoría y su **índice** frente al conjunto (100 = misma proporción; 200 = el doble; 50 = la mitad; se marcan desde 150 hacia arriba y desde 50 hacia abajo). Se muestran las 15 categorías con más venta.
+
+**Detalle de facturación** (`GET /reports/branches/{id}/documents`): los documentos de la sucursal en el periodo; su total coincide con la fila del reporte.

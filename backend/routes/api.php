@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\AutomationController;
+use App\Http\Controllers\Api\V1\BranchReportController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\ConversationToolsController;
 use App\Http\Controllers\Api\V1\CreditInvoiceController;
@@ -68,6 +69,9 @@ Route::middleware(['auth:sanctum', 'session.current', 'active', 'password.curren
         Route::get('context', [ReportContextController::class, 'show']);
         Route::get('sellers', [SellerReportController::class, 'index']);
         Route::get('sellers/{seller}/documents', [SellerReportController::class, 'documents']);
+        Route::get('branches', [BranchReportController::class, 'index']);
+        Route::get('branches/mix', [BranchReportController::class, 'mix']);
+        Route::get('branches/{branch}/documents', [BranchReportController::class, 'documents']);
         Route::get('operators', [OperatorReportController::class, 'index']);
         Route::get('operators/{operator}/documents', [OperatorReportController::class, 'documents']);
         Route::get('operators/{operator}/distribution', [OperatorReportController::class, 'distribution']);

@@ -234,6 +234,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/branches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["branchReport.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/branches/mix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["branchReport.mix"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/branches/{branch}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["branchReport.documents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/broadcasting/auth": {
         parameters: {
             query?: never;
@@ -3817,6 +3865,246 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["Branch"];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "branchReport.index": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: {
+                                from: string;
+                                to: string;
+                                days: number;
+                            };
+                            comparison: {
+                                mode: string;
+                                from: string;
+                                to: string;
+                                days: number;
+                                uneven: boolean;
+                            };
+                            rows: {
+                                branch: {
+                                    id: number;
+                                    name: string;
+                                    code: string;
+                                    company_id: number;
+                                    company: string;
+                                    is_active: boolean;
+                                };
+                                rank: number | null;
+                                sales: {
+                                    net_total: number;
+                                    documents: number;
+                                    customers: number;
+                                    average_ticket: number | null;
+                                    discount_pct: number | null;
+                                    below_list_pct: number | null;
+                                    categories_per_customer: number | null;
+                                    top3_concentration_pct: number | null;
+                                    previous_net_total: number;
+                                    growth_pct: number | null;
+                                    previous_documents: number;
+                                    documents_growth_pct: number | null;
+                                    share_pct: number | null;
+                                };
+                                dependency: {
+                                    sellers_count: number;
+                                    top_seller: string | null;
+                                    top_seller_pct: number | null;
+                                };
+                                portfolio: {
+                                    total: number;
+                                    active: number;
+                                    new: number;
+                                    recovered: number;
+                                    inactive: number;
+                                    lost: number;
+                                    lost_pct: number | null;
+                                };
+                                credit: {
+                                    balance: number;
+                                    overdue: number;
+                                    overdue_pct: number | null;
+                                };
+                                inventory: {
+                                    products_in_stock: number;
+                                    no_rotation: number;
+                                    no_rotation_pct: number | null;
+                                    sold_products: number;
+                                    stockout_with_demand: number;
+                                    stockout_demand_pct: number | null;
+                                    open_shortfalls: number;
+                                };
+                                semaphores: {
+                                    [key: string]: string;
+                                };
+                            }[];
+                            totals: {
+                                branches: number;
+                                net_total: number;
+                                previous_net_total: number;
+                                growth_pct: number | null;
+                                documents: number;
+                                average_ticket: number | null;
+                                credit_balance: number;
+                                credit_overdue: number;
+                                no_rotation: number;
+                                stockout_with_demand: number;
+                                open_shortfalls: number;
+                                red_flags: number;
+                            };
+                            reconciliation: {
+                                consolidated_net: number;
+                                rows_net: number;
+                                net_difference: number;
+                                consolidated_documents: number;
+                                rows_documents: number;
+                                documents_difference: number;
+                                matches: boolean;
+                            };
+                            notes: string[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "branchReport.mix": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            branches: {
+                                id: number;
+                                name: string;
+                            }[];
+                            categories: {
+                                name: string;
+                                net_total: number;
+                                share_pct: number;
+                                cells: {
+                                    branch_id: number;
+                                    net_total: number;
+                                    share_pct: number;
+                                    index: number | null;
+                                }[];
+                            }[];
+                            shown: number;
+                            total_categories: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "branchReport.documents": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+            };
+            header?: never;
+            path: {
+                /** @description The branch ID */
+                branch: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            subject: {
+                                id: number;
+                                name: string;
+                            };
+                            rows: {
+                                id: number;
+                                document: string;
+                                issued_on: string;
+                                customer_code: string;
+                                customer_name: string;
+                                branch: string;
+                                operator: string;
+                                seller: string;
+                                lines: number;
+                                net_total: number;
+                                tax_total: number;
+                                grand_total: number;
+                            }[];
+                            totals: {
+                                documents: number;
+                                net_total: number;
+                                tax_total: number;
+                                grand_total: number;
+                            };
+                            page: number;
+                            per_page: number;
+                            last_page: number;
+                        };
                     };
                 };
             };

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services\Reports\Sellers;
 
 use App\Models\Seller;
+use App\Services\Reports\CreditFigures;
+use App\Services\Reports\PortfolioFigures;
 use App\Services\Reports\Reconciliation;
 use App\Services\Reports\ReportPeriod;
 use App\Services\Reports\SalesFigures;
@@ -20,8 +22,8 @@ class SellerReport
     public function __construct(
         private readonly SalesFigures $sales,
         private readonly SellerGoalFigures $goals,
-        private readonly SellerPortfolioFigures $portfolio,
-        private readonly SellerCreditFigures $credit,
+        private readonly PortfolioFigures $portfolio,
+        private readonly CreditFigures $credit,
         private readonly SellerFollowUpFigures $followUp,
         private readonly Semaphore $semaphore,
         private readonly Reconciliation $reconciliation,
