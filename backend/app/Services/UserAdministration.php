@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 /** Alta y edición de usuarios con su alcance (compañías y sucursales); los cambios de alcance quedan en Auditoría. */
 class UserAdministration
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(private readonly AuditLogger $audit, private readonly SessionEpoch $epoch) {}
 
     /**
      * @param  array<string, mixed>  $attributes
@@ -48,7 +48,17 @@ class UserAdministration
                 $attributes += ['must_change_password' => true, 'password_changed_at' => null];
                 $this->audit->record('user.password_reset', $actor, auditable: $user, companyId: null);
             }
+            $passwordChanged = isset($attributes['password']);
+            $deactivated = $user->is_active && array_key_exists('is_active', $attributes) && ! $attributes['is_active'];
             $user->update($attributes);
+            if ($passwordChanged || $deactivated) {
+                // Una clave nueva o una cuenta desactivada cierran todas las sesiones abiertas de esa persona; la de quien se edita a sí mismo se conserva.
+                $this->epoch->bump($user);
+                if ($actor->is($user) && $passwordChanged && ! $deactivated) {
+                    $this->epoch->adopt($user);
+                    $actor->refresh();   // la sesión recalcula la huella de la clave a partir de este modelo: debe tener la clave nueva
+                }
+            }
             $this->syncScope($actor, $user, $companyIds, $branchIds);
         });
 

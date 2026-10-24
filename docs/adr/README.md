@@ -21,3 +21,4 @@ Un ADR es una nota corta que responde **por qué** el sistema está hecho así, 
 | [011](011-calidad-automatizada-phpstan-8.md) | Calidad automatizada: PHPStan nivel 8, `strict_types` y reglas de arquitectura | Aceptado |
 | [012](012-contrato-de-api-generado.md) | Contrato de la API generado del código (OpenAPI) y tipos del frontend derivados | Aceptado |
 | [013](013-cambio-de-clave-obligatorio.md) | Cambio de clave obligatorio con clave temporal | Aceptado |
+| [014](014-epoca-de-sesion.md) | Época de sesión por usuario: el cierre de sesión siempre cierra | Aceptado |

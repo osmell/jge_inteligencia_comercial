@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsurePasswordIsCurrent;
 use App\Http\Middleware\EnsurePermission;
+use App\Http\Middleware\EnsureSessionIsCurrent;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -22,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     // Autorización de los canales privados del tiempo real (sesión de la SPA).
-    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum', 'active', 'password.current']])
+    ->withBroadcasting(__DIR__.'/../routes/channels.php', ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum', 'session.current', 'active', 'password.current']])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
         // Detrás de un balanceador o proxy: sin esto todas las peticiones parecen venir de la misma dirección y los límites de intentos
@@ -45,10 +46,16 @@ return Application::configure(basePath: dirname(__DIR__))
             before: EnsurePermission::class,
             prepend: EnsurePasswordIsCurrent::class,
         );
+        // Una sesión revocada se rechaza antes que todo lo demás (siempre 401 con `session_revoked`).
+        $middleware->prependToPriorityList(
+            before: EnsurePasswordIsCurrent::class,
+            prepend: EnsureSessionIsCurrent::class,
+        );
         $middleware->alias([
             'permission' => EnsurePermission::class,
             'active' => EnsureUserIsActive::class,
             'password.current' => EnsurePasswordIsCurrent::class,
+            'session.current' => EnsureSessionIsCurrent::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

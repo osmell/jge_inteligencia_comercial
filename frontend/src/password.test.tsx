@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AuthProvider } from './auth/AuthContext'
+import { SESSION_EXPIRED_EVENT } from './lib/api'
 import type { AuthUser } from './auth/types'
 import { RequireAuth, RequireSession } from './components/RouteGuards'
 import { ToastProvider } from './components/toast'
@@ -121,5 +122,19 @@ describe('cambio de clave obligatorio', () => {
     expect(await screen.findByText(/La clave actual no es correcta/)).toBeInTheDocument()
     expect(screen.getByText(/La nueva clave debe ser distinta/)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Crea tu clave' })).toBeInTheDocument()
+  })
+})
+
+describe('sesión revocada en medio del uso', () => {
+  it('si el servidor deja de reconocer la sesión, la persona vuelve a la pantalla de ingreso', async () => {
+    me = { ...base, must_change_password: false }
+    renderApp('/')
+    expect(await screen.findByText('Inicio del sistema')).toBeInTheDocument()
+
+    act(() => {
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+    })
+
+    expect(await screen.findByText('Pantalla de ingreso')).toBeInTheDocument()
   })
 })

@@ -23,3 +23,17 @@ test.describe('Inicio y cierre de sesión', () => {
     await expect(page).toHaveURL(/\/login/)     // sin sesión, una pantalla protegida manda a iniciar sesión
   })
 })
+
+test('cerrar sesión en un equipo cierra también los demás de esa persona', async ({ browser }) => {
+  const laptop = await (await browser.newContext()).newPage()
+  const phone = await (await browser.newContext()).newPage()
+  await loginOk(laptop, 'supervisor')
+  await loginOk(phone, 'supervisor')
+
+  await laptop.getByRole('button', { name: 'Cerrar sesión' }).click()
+  await expect(laptop).toHaveURL(/\/login/)
+
+  // El otro equipo seguía con una sesión abierta: ya no vale.
+  await phone.goto('/ventas')
+  await expect(phone).toHaveURL(/\/login/)
+})

@@ -21,6 +21,9 @@ async function ensureCsrfCookie(): Promise<void> {
   await fetch(`${new URL(API_URL).origin}/sanctum/csrf-cookie`, { credentials: 'include' })
 }
 
+/** Se emite cuando el servidor responde 401: quien escuche (AuthProvider) manda a iniciar sesión. */
+export const SESSION_EXPIRED_EVENT = 'auth:expired'
+
 export async function api<T>(path: string, options: { method?: string; body?: unknown } = {}): Promise<T> {
   const method = options.method ?? 'GET'
   const headers: Record<string, string> = { Accept: 'application/json' }
@@ -43,6 +46,7 @@ export async function api<T>(path: string, options: { method?: string; body?: un
   if (response.status === 204) return undefined as T
 
   const data = await response.json().catch(() => ({}))
+  if (response.status === 401) window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))   // la sesión ya no vale (cerrada en otro equipo, clave cambiada, cuenta desactivada…)
   if (!response.ok) {
     const message = response.status === 429 ? 'Demasiadas solicitudes seguidas: espera unos segundos e inténtalo de nuevo.' : (data.message ?? 'Ocurrió un error inesperado.')
     throw new ApiError(response.status, message, data.errors)

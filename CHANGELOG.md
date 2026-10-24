@@ -28,6 +28,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - `php artisan data:reset`: deja la base lista para información real (conserva compañías, sucursales, vendedores, facturadores, productos, cuentas y configuración). Simulación con `--dry-run`, confirmación escribiendo el nombre de la base, una sola transacción.
 
 ### Seguridad
+- **Época de sesión**: cerrar sesión, cambiar o restablecer la clave y desactivar una cuenta invalidan todas las sesiones anteriores de la persona, incluso una que reviva por una petición en curso. Cerrar sesión en un equipo cierra todos los de esa persona. Una respuesta 401 devuelve a la pantalla de ingreso.
 - **Cambio de clave obligatorio**: la clave que fija administración (alta o restablecimiento) es temporal; hasta cambiarla, la API solo permite ver el perfil, cambiar la clave y salir. Cualquier persona puede cambiar su clave (pide la actual, con límite de intentos y en Auditoría).
 
 ### Cambiado

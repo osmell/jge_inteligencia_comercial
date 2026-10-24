@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property int $role_id
  * @property bool $is_active
  * @property bool $must_change_password
+ * @property int $session_epoch
  * @property Carbon|null $password_changed_at
  * @property Carbon|null $last_login_at
  * @property Role $role

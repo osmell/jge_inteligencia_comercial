@@ -9,6 +9,7 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\SessionEpoch;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +20,7 @@ class AuthController extends Controller
 {
     private const MAX_ATTEMPTS = 5;
 
-    public function login(LoginRequest $request, AuditLogger $audit): UserResource
+    public function login(LoginRequest $request, AuditLogger $audit, SessionEpoch $epoch): UserResource
     {
         $username = mb_strtolower(trim($request->validated('username')));
         $throttleKey = $username.'|'.$request->ip();
@@ -59,15 +60,18 @@ class AuthController extends Controller
         /** @var User $user */
         $user = Auth::guard('web')->user();
         $user->forceFill(['last_login_at' => now()])->save();
+        $epoch->adopt($user);
         $audit->record('auth.login', $user);
 
         return new UserResource($user->load('role.permissions', 'companies', 'branches'));
     }
 
-    public function logout(Request $request, AuditLogger $audit): JsonResponse
+    public function logout(Request $request, AuditLogger $audit, SessionEpoch $epoch): JsonResponse
     {
         $audit->record('auth.logout', $request->user());
 
+        // Subir la época cierra TODAS las sesiones de la persona y mata cualquier sesión que una petición en curso reviva después.
+        $epoch->bump($request->user());
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { api, ApiError } from '../lib/api'
+import { api, ApiError, SESSION_EXPIRED_EVENT } from '../lib/api'
 import type { AuthUser } from './types'
 
 interface AuthState {
@@ -25,6 +25,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!(e instanceof ApiError && (e.status === 401 || e.status === 403))) console.error(e)
       })
       .finally(() => setLoading(false))
+  }, [])
+
+  // Una respuesta 401 en cualquier pantalla (sesión cerrada desde otro equipo, clave cambiada…) devuelve a iniciar sesión.
+  useEffect(() => {
+    const expired = () => setUser(null)
+    window.addEventListener(SESSION_EXPIRED_EVENT, expired)
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, expired)
   }, [])
 
   const login = useCallback(async (username: string, password: string) => {

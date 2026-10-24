@@ -10,6 +10,7 @@ use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as LaravelRoute;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
@@ -151,6 +152,32 @@ class AccessMatrixTest extends TestCase
         foreach (['GET api/v1/auth/me'] as $allowed) {
             $this->actingAs($user, 'sanctum')->getJson('/api/v1/auth/me')->assertOk();
         }
+    }
+
+    public function test_a_revoked_session_is_refused_by_every_route_that_needs_a_session(): void
+    {
+        $this->seed(RolePermissionSeeder::class);
+        $this->withHeader('Origin', 'http://localhost:5173')->withHeader('Referer', 'http://localhost:5173/');
+        // Con todos los permisos: si una ruta responde 401 es por la sesión caducada y si no, es que no la revisa.
+        $user = User::factory()->role(Role::ADMINISTRADOR)->create(['session_epoch' => 3]);
+
+        $checked = 0;
+        foreach ($this->apiRoutes() as $route) {
+            $key = $this->methodOf($route).' '.$route->uri();
+            // El cierre de sesión debe poder ejecutarse siempre, aunque la sesión ya no valga.
+            if (in_array($route->uri(), self::PUBLIC, true) || $key === 'POST api/v1/auth/logout') {
+                continue;
+            }
+            $this->flushSession();
+            $this->withSession(['session_epoch' => 2]);
+            Auth::forgetGuards();
+            $response = $this->actingAs($user, 'sanctum')->json($this->methodOf($route), $this->url($route));
+            $this->assertSame(401, $response->getStatusCode(), "$key aceptó una sesión revocada (respondió {$response->getStatusCode()}).");
+            $this->assertSame('session_revoked', $response->json('code'), "$key no devolvió el código session_revoked.");
+            $checked++;
+        }
+
+        $this->assertGreaterThan(170, $checked);
     }
 
     public function test_the_whatsapp_webhook_refuses_unsigned_calls(): void
