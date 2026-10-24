@@ -43,6 +43,7 @@ import QuotationDetailPage from './pages/QuotationDetailPage'
 import QuotationsPage from './pages/QuotationsPage'
 import FollowUpKpisPage from './pages/FollowUpKpisPage'
 import ProductsPage from './pages/ProductsPage'
+import ReportOperatorsPage from './pages/ReportOperatorsPage'
 import ReportSellersPage from './pages/ReportSellersPage'
 import SellersPage from './pages/SellersPage'
 import CustomersPage from './pages/CustomersPage'
@@ -72,6 +73,7 @@ export default function App() {
               </Route>
               <Route element={<RequirePermission permission="reports.view" />}>
                 <Route path="reportes/vendedores" element={<ReportSellersPage />} />
+                <Route path="reportes/operadores" element={<ReportOperatorsPage />} />
               </Route>
               <Route element={<RequirePermission permission="customers.view" />}>
                 <Route path="clientes" element={<CustomersPage />} />

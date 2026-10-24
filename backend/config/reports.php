@@ -15,6 +15,16 @@ return [
     /** Un cliente es de la cartera de un vendedor si su última compra (dentro de esta ventana) la facturó ese vendedor. */
     'portfolio_window_days' => 365,
 
+    /** Una línea cuenta como «descuento alto» cuando el descuento es al menos este porcentaje de su subtotal. */
+    'high_discount_line_pct' => 20,
+
+    /**
+     * Un documento es «atípico» si su venta neta supera Q3 + factor × (Q3 − Q1) de los documentos de su compañía en el periodo
+     * (cota de valores extremos de Tukey). Con menos documentos que el mínimo no se evalúa: no hay base para decir qué es normal.
+     */
+    'atypical_min_documents' => 20,
+    'atypical_iqr_factor' => 3,
+
     'thresholds' => [
         // Los mismos cortes que la pantalla de Metas: verde desde 100 %, amarillo desde 70 %, rojo por debajo.
         'goal_attainment' => ['higher_is_better' => true, 'warn' => 100, 'bad' => 70],
@@ -26,6 +36,9 @@ return [
         'overdue_pct' => ['higher_is_better' => false, 'warn' => 15, 'bad' => 30],
         'promise_kept_pct' => ['higher_is_better' => true, 'warn' => 80, 'bad' => 60],
         'quote_conversion_pct' => ['higher_is_better' => true, 'warn' => 25, 'bad' => 10],
+        'high_discount_lines_pct' => ['higher_is_better' => false, 'warn' => 5, 'bad' => 15],
+        'zero_price_lines_pct' => ['higher_is_better' => false, 'warn' => 0.5, 'bad' => 2],
+        'atypical_documents_pct' => ['higher_is_better' => false, 'warn' => 2, 'bad' => 5],
         'overdue_follow_ups' => ['higher_is_better' => false, 'warn' => 3, 'bad' => 10],
         'whatsapp_response_minutes' => ['higher_is_better' => false, 'warn' => 30, 'bad' => 120],
     ],

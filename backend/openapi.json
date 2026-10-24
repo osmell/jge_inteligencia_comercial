@@ -15471,6 +15471,1041 @@
                 }
             }
         },
+        "/reports/operators": {
+            "get": {
+                "operationId": "operatorReport.index",
+                "tags": [
+                    "OperatorReport"
+                ],
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "previous",
+                                "last_year",
+                                "custom",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "compare_from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "branch_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "period": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "from": {
+                                                            "type": "string"
+                                                        },
+                                                        "to": {
+                                                            "type": "string"
+                                                        },
+                                                        "days": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "from",
+                                                        "to",
+                                                        "days"
+                                                    ]
+                                                },
+                                                "comparison": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "mode": {
+                                                            "type": "string"
+                                                        },
+                                                        "from": {
+                                                            "type": "string"
+                                                        },
+                                                        "to": {
+                                                            "type": "string"
+                                                        },
+                                                        "days": {
+                                                            "type": "integer"
+                                                        },
+                                                        "uneven": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "mode",
+                                                        "from",
+                                                        "to",
+                                                        "days",
+                                                        "uneven"
+                                                    ]
+                                                },
+                                                "rows": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "operator": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "company_id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "company": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id",
+                                                                    "name",
+                                                                    "company_id",
+                                                                    "company",
+                                                                    "is_active"
+                                                                ]
+                                                            },
+                                                            "rank": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "sales": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "average_ticket": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "discount_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "below_list_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "categories_per_customer": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "top3_concentration_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "previous_net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "growth_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "previous_documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "documents_growth_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "net_total",
+                                                                    "documents",
+                                                                    "customers",
+                                                                    "average_ticket",
+                                                                    "discount_pct",
+                                                                    "below_list_pct",
+                                                                    "categories_per_customer",
+                                                                    "top3_concentration_pct",
+                                                                    "previous_net_total",
+                                                                    "growth_pct",
+                                                                    "previous_documents",
+                                                                    "documents_growth_pct",
+                                                                    "share_pct"
+                                                                ]
+                                                            },
+                                                            "production": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "lines": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "lines_per_document": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "active_days": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "documents_per_active_day": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "timed_documents_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "lines",
+                                                                    "lines_per_document",
+                                                                    "active_days",
+                                                                    "documents_per_active_day",
+                                                                    "timed_documents_pct"
+                                                                ]
+                                                            },
+                                                            "control": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "high_discount_lines": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "high_discount_lines_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "zero_price_lines": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "zero_price_lines_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "atypical_documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "atypical_documents_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "negative_documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "direct_sales_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "high_discount_lines",
+                                                                    "high_discount_lines_pct",
+                                                                    "zero_price_lines",
+                                                                    "zero_price_lines_pct",
+                                                                    "atypical_documents",
+                                                                    "atypical_documents_pct",
+                                                                    "negative_documents",
+                                                                    "direct_sales_pct"
+                                                                ]
+                                                            },
+                                                            "semaphores": {
+                                                                "type": "object",
+                                                                "additionalProperties": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "operator",
+                                                            "rank",
+                                                            "sales",
+                                                            "production",
+                                                            "control",
+                                                            "semaphores"
+                                                        ]
+                                                    }
+                                                },
+                                                "totals": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "operators": {
+                                                            "type": "integer"
+                                                        },
+                                                        "net_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "previous_net_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "growth_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "lines": {
+                                                            "type": "integer"
+                                                        },
+                                                        "average_ticket": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "high_discount_lines": {
+                                                            "type": "integer"
+                                                        },
+                                                        "zero_price_lines": {
+                                                            "type": "integer"
+                                                        },
+                                                        "atypical_documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "negative_documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "red_flags": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "operators",
+                                                        "net_total",
+                                                        "previous_net_total",
+                                                        "growth_pct",
+                                                        "documents",
+                                                        "lines",
+                                                        "average_ticket",
+                                                        "high_discount_lines",
+                                                        "zero_price_lines",
+                                                        "atypical_documents",
+                                                        "negative_documents",
+                                                        "red_flags"
+                                                    ]
+                                                },
+                                                "reconciliation": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "consolidated_net": {
+                                                            "type": "number"
+                                                        },
+                                                        "rows_net": {
+                                                            "type": "number"
+                                                        },
+                                                        "net_difference": {
+                                                            "type": "number"
+                                                        },
+                                                        "consolidated_documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "rows_documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "documents_difference": {
+                                                            "type": "integer"
+                                                        },
+                                                        "matches": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "consolidated_net",
+                                                        "rows_net",
+                                                        "net_difference",
+                                                        "consolidated_documents",
+                                                        "rows_documents",
+                                                        "documents_difference",
+                                                        "matches"
+                                                    ]
+                                                },
+                                                "notes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "period",
+                                                "comparison",
+                                                "rows",
+                                                "totals",
+                                                "reconciliation",
+                                                "notes"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/reports/operators/{operator}/documents": {
+            "get": {
+                "operationId": "operatorReport.documents",
+                "tags": [
+                    "OperatorReport"
+                ],
+                "parameters": [
+                    {
+                        "name": "operator",
+                        "in": "path",
+                        "required": true,
+                        "description": "The operator ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "previous",
+                                "last_year",
+                                "custom",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "compare_from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "branch_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "subject": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name"
+                                                    ]
+                                                },
+                                                "rows": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "document": {
+                                                                "type": "string"
+                                                            },
+                                                            "issued_on": {
+                                                                "type": "string"
+                                                            },
+                                                            "customer_code": {
+                                                                "type": "string"
+                                                            },
+                                                            "customer_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "branch": {
+                                                                "type": "string"
+                                                            },
+                                                            "operator": {
+                                                                "type": "string"
+                                                            },
+                                                            "seller": {
+                                                                "type": "string"
+                                                            },
+                                                            "lines": {
+                                                                "type": "integer"
+                                                            },
+                                                            "net_total": {
+                                                                "type": "number"
+                                                            },
+                                                            "tax_total": {
+                                                                "type": "number"
+                                                            },
+                                                            "grand_total": {
+                                                                "type": "number"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "document",
+                                                            "issued_on",
+                                                            "customer_code",
+                                                            "customer_name",
+                                                            "branch",
+                                                            "operator",
+                                                            "seller",
+                                                            "lines",
+                                                            "net_total",
+                                                            "tax_total",
+                                                            "grand_total"
+                                                        ]
+                                                    }
+                                                },
+                                                "totals": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "net_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "tax_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "grand_total": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "documents",
+                                                        "net_total",
+                                                        "tax_total",
+                                                        "grand_total"
+                                                    ]
+                                                },
+                                                "page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "required": [
+                                                "subject",
+                                                "rows",
+                                                "totals",
+                                                "page",
+                                                "per_page",
+                                                "last_page"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/reports/operators/{operator}/distribution": {
+            "get": {
+                "operationId": "operatorReport.distribution",
+                "tags": [
+                    "OperatorReport"
+                ],
+                "parameters": [
+                    {
+                        "name": "operator",
+                        "in": "path",
+                        "required": true,
+                        "description": "The operator ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "previous",
+                                "last_year",
+                                "custom",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "compare_from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "branch_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "operator": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name"
+                                                    ]
+                                                },
+                                                "sellers": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "net_total": {
+                                                                "type": "number"
+                                                            },
+                                                            "share_pct": {
+                                                                "type": [
+                                                                    "number",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "direct": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "name",
+                                                            "net_total",
+                                                            "share_pct",
+                                                            "direct"
+                                                        ]
+                                                    }
+                                                },
+                                                "sellers_count": {
+                                                    "type": "integer"
+                                                },
+                                                "branches": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "net_total": {
+                                                                "type": "number"
+                                                            },
+                                                            "share_pct": {
+                                                                "type": [
+                                                                    "number",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "name",
+                                                            "net_total",
+                                                            "share_pct"
+                                                        ]
+                                                    }
+                                                },
+                                                "documents": {
+                                                    "type": "integer"
+                                                },
+                                                "timed_documents": {
+                                                    "type": "integer"
+                                                },
+                                                "by_hour": {
+                                                    "type": [
+                                                        "array",
+                                                        "null"
+                                                    ],
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "by_weekday": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer"
+                                                    }
+                                                },
+                                                "daily": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string"
+                                                            },
+                                                            "documents": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "date",
+                                                            "documents"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "operator",
+                                                "sellers",
+                                                "sellers_count",
+                                                "branches",
+                                                "documents",
+                                                "timed_documents",
+                                                "by_hour",
+                                                "by_weekday",
+                                                "daily"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/companies": {
             "get": {
                 "operationId": "organization.companies",
@@ -20111,7 +21146,7 @@
                                                         "consolidated_net": {
                                                             "type": "number"
                                                         },
-                                                        "sellers_net": {
+                                                        "rows_net": {
                                                             "type": "number"
                                                         },
                                                         "net_difference": {
@@ -20120,7 +21155,7 @@
                                                         "consolidated_documents": {
                                                             "type": "integer"
                                                         },
-                                                        "sellers_documents": {
+                                                        "rows_documents": {
                                                             "type": "integer"
                                                         },
                                                         "documents_difference": {
@@ -20132,10 +21167,10 @@
                                                     },
                                                     "required": [
                                                         "consolidated_net",
-                                                        "sellers_net",
+                                                        "rows_net",
                                                         "net_difference",
                                                         "consolidated_documents",
-                                                        "sellers_documents",
+                                                        "rows_documents",
                                                         "documents_difference",
                                                         "matches"
                                                     ]
@@ -20291,7 +21326,7 @@
                                         "data": {
                                             "type": "object",
                                             "properties": {
-                                                "seller": {
+                                                "subject": {
                                                     "type": "object",
                                                     "properties": {
                                                         "id": {
@@ -20332,6 +21367,9 @@
                                                             "operator": {
                                                                 "type": "string"
                                                             },
+                                                            "seller": {
+                                                                "type": "string"
+                                                            },
                                                             "lines": {
                                                                 "type": "integer"
                                                             },
@@ -20353,6 +21391,7 @@
                                                             "customer_name",
                                                             "branch",
                                                             "operator",
+                                                            "seller",
                                                             "lines",
                                                             "net_total",
                                                             "tax_total",
@@ -20394,7 +21433,7 @@
                                                 }
                                             },
                                             "required": [
-                                                "seller",
+                                                "subject",
                                                 "rows",
                                                 "totals",
                                                 "page",

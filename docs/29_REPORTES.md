@@ -33,3 +33,25 @@ Una fila por vendedor activo o con ventas en el periodo. Con una sucursal elegid
 **Contraste.** Debajo de los totales se compara la venta consolidada (sin agrupar) con la suma de los vendedores; si no coinciden se muestra la diferencia. Al hacer clic en un vendedor se abre el **detalle de facturación**: cada documento del periodo (`GET /reports/sellers/{id}/documents`), paginado, cuyo total coincide con la fila del reporte.
 
 **Pendiente para pasos posteriores:** promesas de pago cumplidas y tiempo de respuesta en WhatsApp por vendedor (requieren definir a quién se atribuye cada promesa y conversación).
+
+## Reporte de operadores (`GET /api/v1/reports/operators`)
+
+Quienes **facturan**. Una fila por operador activo o con facturación en el periodo (con una sucursal elegida, solo los que facturaron en ella). Mismo periodo, comparación, alcance por compañía, semáforos, contraste con lo consolidado y auditoría que el de vendedores.
+
+| Indicador | Definición | Semáforo |
+|---|---|---|
+| Venta neta, documentos, ticket | Del periodo, por quien facturó; con su crecimiento (venta y documentos) contra la comparación | `growth_pct` |
+| Líneas y líneas por documento | Cantidad de líneas facturadas | — |
+| Días activos y documentos por día activo | Días con al menos una línea facturada | — |
+| Descuento y ventas bajo precio normal | Igual que en vendedores | `discount_pct`, `below_list_pct` |
+| Descuento alto | Líneas cuyo descuento es al menos el 20 % de su subtotal (`high_discount_line_pct`) | `high_discount_lines_pct` |
+| Sin precio | Líneas con cantidad cuyo precio unitario o venta neta es cero (regaladas o mal capturadas). Las devoluciones (negativas) no cuentan. | `zero_price_lines_pct` |
+| Documentos atípicos | Documentos cuya venta neta supera Q3 + 3 × (Q3 − Q1) de **todos** los documentos de su compañía en el periodo (cota de valores extremos de Tukey). Con menos de 20 documentos en la compañía no se evalúa: no hay base para decir qué es normal. | `atypical_documents_pct` |
+| Documentos negativos | Venta neta menor que cero | — |
+| Venta directa | % de su venta cuyo vendedor se llama igual que el operador (el facturador vendió y facturó) | — |
+
+**Detalle del operador** (al hacer clic): sus facturas del periodo (`GET /reports/operators/{id}/documents`) y *a quién y cuándo factura* (`GET /reports/operators/{id}/distribution`): vendedores y sucursales con su porcentaje, y documentos por día de la semana y por hora. **La hora solo existe en los documentos cuyo archivo la traía**; si ninguno la trae, se dice en vez de mostrar una gráfica vacía.
+
+**Lo que el sistema NO sabe y el reporte no inventa:** qué operador anuló o corrigió un documento (los archivos de venta no lo informan; las notas de crédito del sistema se registran por usuario, no por operador). El control de captura se basa solo en lo que traen los archivos.
+
+Los parámetros (`high_discount_line_pct`, `atypical_min_documents`, `atypical_iqr_factor` y los umbrales de semáforo) están en `config/reports.php` y son valores iniciales pendientes de validar con el cliente.

@@ -1,18 +1,21 @@
 import { useState } from 'react'
-import { formatMoney } from '../../lib/format'
 import { formatDate } from '../../lib/customers'
+import { formatMoney } from '../../lib/format'
 import type { BillingDetail } from '../../lib/reports'
 import { useLoad } from '../../lib/useLoad'
-import { Button, DataTable, EmptyRow, FormError, Modal, TableSkeleton, td, th, tr } from '../ui'
+import { Button, DataTable, EmptyRow, FormError, TableSkeleton, td, th, tr } from '../ui'
 
-/** Detalle de facturación de un vendedor: cada documento del periodo, para contrastarlo con la cifra del reporte. */
-export default function SellerBillingModal({ sellerId, name, query, onClose }: { sellerId: number; name: string; query: string; onClose: () => void }) {
+/**
+ * Detalle de facturación de un vendedor, operador o sucursal: cada documento del periodo, para contrastarlo con la cifra del reporte.
+ * `path` es el recurso del evaluado (`/reports/sellers/3/documents`) y `query` el periodo y los filtros del reporte.
+ */
+export default function BillingTable({ path, query, label }: { path: string; query: string; label: string }) {
   const [page, setPage] = useState(1)
-  const detail = useLoad<{ data: BillingDetail }>(`/reports/sellers/${sellerId}/documents?${query}&page=${page}`)
+  const detail = useLoad<{ data: BillingDetail }>(`${path}?${query}&page=${page}`)
   const data = detail.data?.data
 
   return (
-    <Modal title={`Facturación de ${name}`} onClose={onClose} wide>
+    <>
       <FormError message={detail.error} />
       {data && (
         <p className="mb-3 text-sm text-ink-muted">
@@ -20,13 +23,14 @@ export default function SellerBillingModal({ sellerId, name, query, onClose }: {
           IVA <span className="tabular">{formatMoney(data.totals.tax_total)}</span> · total <span className="tabular">{formatMoney(data.totals.grand_total)}</span>
         </p>
       )}
-      <DataTable label={`Documentos facturados por ${name}`}>
+      <DataTable label={label}>
         <thead>
           <tr>
             <th className={th}>Documento</th>
             <th className={th}>Fecha</th>
             <th className={th}>Cliente</th>
             <th className={th}>Sucursal</th>
+            <th className={th}>Vendedor</th>
             <th className={th}>Facturó</th>
             <th className={`${th} text-right`}>Líneas</th>
             <th className={`${th} text-right`}>Venta neta</th>
@@ -34,14 +38,15 @@ export default function SellerBillingModal({ sellerId, name, query, onClose }: {
           </tr>
         </thead>
         <tbody>
-          {detail.loading && !data && <TableSkeleton cols={8} />}
-          {data && data.rows.length === 0 && <EmptyRow cols={8}>No hay documentos en el periodo.</EmptyRow>}
+          {detail.loading && !data && <TableSkeleton cols={9} />}
+          {data && data.rows.length === 0 && <EmptyRow cols={9}>No hay documentos en el periodo.</EmptyRow>}
           {data?.rows.map((d) => (
             <tr key={d.id} className={tr}>
               <td className={`${td} font-medium`}>{d.document}</td>
               <td className={td}>{formatDate(d.issued_on)}</td>
               <td className={td}>{d.customer_name}<span className="block text-xs text-ink-muted">{d.customer_code}</span></td>
               <td className={td}>{d.branch}</td>
+              <td className={td}>{d.seller}</td>
               <td className={td}>{d.operator}</td>
               <td className={`${td} tabular text-right`}>{d.lines}</td>
               <td className={`${td} tabular text-right`}>{formatMoney(d.net_total)}</td>
@@ -59,6 +64,6 @@ export default function SellerBillingModal({ sellerId, name, query, onClose }: {
           </div>
         </div>
       )}
-    </Modal>
+    </>
   )
 }

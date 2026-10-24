@@ -2012,6 +2012,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/operators": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["operatorReport.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/operators/{operator}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["operatorReport.documents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/operators/{operator}/distribution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["operatorReport.distribution"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/companies": {
         parameters: {
             query?: never;
@@ -8689,6 +8737,247 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
         };
     };
+    "operatorReport.index": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: {
+                                from: string;
+                                to: string;
+                                days: number;
+                            };
+                            comparison: {
+                                mode: string;
+                                from: string;
+                                to: string;
+                                days: number;
+                                uneven: boolean;
+                            };
+                            rows: {
+                                operator: {
+                                    id: number;
+                                    name: string;
+                                    company_id: number;
+                                    company: string | null;
+                                    is_active: boolean;
+                                };
+                                rank: number | null;
+                                sales: {
+                                    net_total: number;
+                                    documents: number;
+                                    customers: number;
+                                    average_ticket: number | null;
+                                    discount_pct: number | null;
+                                    below_list_pct: number | null;
+                                    categories_per_customer: number | null;
+                                    top3_concentration_pct: number | null;
+                                    previous_net_total: number;
+                                    growth_pct: number | null;
+                                    previous_documents: number;
+                                    documents_growth_pct: number | null;
+                                    share_pct: number | null;
+                                };
+                                production: {
+                                    lines: number;
+                                    lines_per_document: number | null;
+                                    active_days: number;
+                                    documents_per_active_day: number | null;
+                                    timed_documents_pct: number | null;
+                                };
+                                control: {
+                                    high_discount_lines: number;
+                                    high_discount_lines_pct: number | null;
+                                    zero_price_lines: number;
+                                    zero_price_lines_pct: number | null;
+                                    atypical_documents: number;
+                                    atypical_documents_pct: number | null;
+                                    negative_documents: number;
+                                    direct_sales_pct: number | null;
+                                };
+                                semaphores: {
+                                    [key: string]: string;
+                                };
+                            }[];
+                            totals: {
+                                operators: number;
+                                net_total: number;
+                                previous_net_total: number;
+                                growth_pct: number | null;
+                                documents: number;
+                                lines: number;
+                                average_ticket: number | null;
+                                high_discount_lines: number;
+                                zero_price_lines: number;
+                                atypical_documents: number;
+                                negative_documents: number;
+                                red_flags: number;
+                            };
+                            reconciliation: {
+                                consolidated_net: number;
+                                rows_net: number;
+                                net_difference: number;
+                                consolidated_documents: number;
+                                rows_documents: number;
+                                documents_difference: number;
+                                matches: boolean;
+                            };
+                            notes: string[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "operatorReport.documents": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+            };
+            header?: never;
+            path: {
+                /** @description The operator ID */
+                operator: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            subject: {
+                                id: number;
+                                name: string;
+                            };
+                            rows: {
+                                id: number;
+                                document: string;
+                                issued_on: string;
+                                customer_code: string;
+                                customer_name: string;
+                                branch: string;
+                                operator: string;
+                                seller: string;
+                                lines: number;
+                                net_total: number;
+                                tax_total: number;
+                                grand_total: number;
+                            }[];
+                            totals: {
+                                documents: number;
+                                net_total: number;
+                                tax_total: number;
+                                grand_total: number;
+                            };
+                            page: number;
+                            per_page: number;
+                            last_page: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "operatorReport.distribution": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                page?: number | null;
+            };
+            header?: never;
+            path: {
+                /** @description The operator ID */
+                operator: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            operator: {
+                                id: number;
+                                name: string;
+                            };
+                            sellers: {
+                                id: number;
+                                name: string;
+                                net_total: number;
+                                share_pct: number | null;
+                                direct: boolean;
+                            }[];
+                            sellers_count: number;
+                            branches: {
+                                id: number;
+                                name: string;
+                                net_total: number;
+                                share_pct: number | null;
+                            }[];
+                            documents: number;
+                            timed_documents: number;
+                            by_hour: number[] | null;
+                            by_weekday: number[];
+                            daily: {
+                                date: string;
+                                documents: number;
+                            }[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "organization.companies": {
         parameters: {
             query?: never;
@@ -10067,10 +10356,10 @@ export interface operations {
                             };
                             reconciliation: {
                                 consolidated_net: number;
-                                sellers_net: number;
+                                rows_net: number;
                                 net_difference: number;
                                 consolidated_documents: number;
-                                sellers_documents: number;
+                                rows_documents: number;
                                 documents_difference: number;
                                 matches: boolean;
                             };
@@ -10111,7 +10400,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: {
-                            seller: {
+                            subject: {
                                 id: number;
                                 name: string;
                             };
@@ -10123,6 +10412,7 @@ export interface operations {
                                 customer_name: string;
                                 branch: string;
                                 operator: string;
+                                seller: string;
                                 lines: number;
                                 net_total: number;
                                 tax_total: number;

@@ -41,6 +41,7 @@ test('una cuenta con clave temporal debe crear la suya antes de usar el sistema'
 
   // La clave temporal ya no sirve y la nueva sí.
   await page.getByRole('button', { name: 'Cerrar sesión' }).click()
+  await expect(page).toHaveURL(/\/login/)       // esperar a que termine el cierre antes de navegar (si no, la navegación lo cancela)
   await login(page, 'primer.ingreso' as never, PASSWORD)
   await expect(page.getByRole('alert')).toBeVisible()
   await login(page, 'primer.ingreso' as never, NEW)

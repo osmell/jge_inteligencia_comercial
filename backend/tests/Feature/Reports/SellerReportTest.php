@@ -300,7 +300,7 @@ class SellerReportTest extends TestCase
 
         $this->assertTrue($reconciliation['matches']);
         $this->assertEquals(1250.5, $reconciliation['consolidated_net']);
-        $this->assertEquals(1250.5, $reconciliation['sellers_net']);
+        $this->assertEquals(1250.5, $reconciliation['rows_net']);
         $this->assertEquals(0.0, $reconciliation['net_difference']);
         $this->assertSame(2, $reconciliation['consolidated_documents']);
     }
@@ -320,6 +320,8 @@ class SellerReportTest extends TestCase
         $this->assertSame(['Norte', 'Centro'], array_column($detail['rows'], 'branch'));
         $this->assertSame([1, 2], array_column($detail['rows'], 'lines'));
         $this->assertSame($this->rowOf($this->report(), $ana)['sales']['net_total'], $detail['totals']['net_total']);
+        $this->assertSame('Ana', $detail['subject']['name']);
+        $this->assertSame(['Ana', 'Ana'], array_column($detail['rows'], 'seller'));
     }
 
     public function test_the_billing_detail_is_paginated(): void

@@ -26,7 +26,7 @@ const report = (over: Record<string, unknown> = {}) => ({
   comparison: { mode: 'previous', from: '2026-08-31', to: '2026-09-30', days: 31, uneven: false },
   rows: [row(1, 'Ana'), row(2, 'Luis')],
   totals: { sellers: 2, net_total: 3000, previous_net_total: 2000, growth_pct: 50, documents: 4, average_ticket: 750, goal: 4000, attainment_pct: 75, sellers_with_goal: 2, credit_balance: 2000, credit_overdue: 800, red_flags: 2 },
-  reconciliation: { consolidated_net: 3000, sellers_net: 3000, net_difference: 0, consolidated_documents: 4, sellers_documents: 4, documents_difference: 0, matches: true },
+  reconciliation: { consolidated_net: 3000, rows_net: 3000, net_difference: 0, consolidated_documents: 4, rows_documents: 4, documents_difference: 0, matches: true },
   notes: ['portfolio_and_credit_as_of_today'],
   ...over,
 })
@@ -74,7 +74,7 @@ describe('reporte de vendedores', () => {
   })
 
   it('alerta con la diferencia cuando no coincide', async () => {
-    payload = report({ reconciliation: { consolidated_net: 3100, sellers_net: 3000, net_difference: 100, consolidated_documents: 5, sellers_documents: 4, documents_difference: 1, matches: false } })
+    payload = report({ reconciliation: { consolidated_net: 3100, rows_net: 3000, net_difference: 100, consolidated_documents: 5, rows_documents: 4, documents_difference: 1, matches: false } })
     renderPage()
 
     expect(await screen.findByText(/no coincide con la suma de los vendedores/)).toBeInTheDocument()

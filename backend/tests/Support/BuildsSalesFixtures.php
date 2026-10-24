@@ -31,14 +31,14 @@ trait BuildsSalesFixtures
     /**
      * @param  list<array{net: float, qty?: float, price?: float, normal?: float|null, subtotal?: float|null, discount?: float|null, category?: string}>  $lines
      */
-    protected function sale(Seller $seller, Operator $operator, Branch $branch, string $date, string $customer, array $lines): int
+    protected function sale(Seller $seller, Operator $operator, Branch $branch, string $date, string $customer, array $lines, ?string $at = null): int
     {
         $this->batchId ??= ImportBatch::factory()->create()->id;
         $this->documentNumber++;
         $now = now();
 
         $id = DB::table('sales_documents')->insertGetId([
-            'company_id' => $branch->company_id, 'branch_id' => $branch->id, 'series' => 'A', 'number' => (string) $this->documentNumber, 'issued_on' => $date,
+            'company_id' => $branch->company_id, 'branch_id' => $branch->id, 'series' => 'A', 'number' => (string) $this->documentNumber, 'issued_on' => $date, 'issued_at' => $at,
             'customer_code' => $customer, 'customer_name' => 'Cliente '.$customer, 'seller_id' => $seller->id, 'operator_id' => $operator->id,
             'import_batch_id' => $this->batchId, 'lines_count' => count($lines), 'content_hash' => hash('sha256', "doc{$this->documentNumber}"),
             'created_at' => $now, 'updated_at' => $now,

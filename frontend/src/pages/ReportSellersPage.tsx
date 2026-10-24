@@ -1,27 +1,17 @@
-import { CircleAlert, CircleCheck } from 'lucide-react'
 import { useState } from 'react'
 import LevelValue from '../components/reports/LevelValue'
 import ReportFilters from '../components/reports/ReportFilters'
-import SellerBillingModal from '../components/reports/SellerBillingModal'
-import { Alert, Card, DataTable, EmptyRow, FormError, PageHeader, TableSkeleton, td, th, tr } from '../components/ui'
-import { formatDate } from '../lib/customers'
+import BillingTable from '../components/reports/BillingTable'
+import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
+import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr } from '../components/ui'
 import { formatMoney } from '../lib/format'
-import { REPORT_NOTE, type SellerReport, type SellerReportRow } from '../lib/reports'
+import type { SellerReport, SellerReportRow } from '../lib/reports'
 import { formatPct } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
 import { useReportFilters } from '../lib/useReportFilters'
 
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-    </Card>
-  )
-}
-
 const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('es'))
+const dec = (v: number | null) => (v === null ? '—' : v.toLocaleString('es', { maximumFractionDigits: 2 }))
 
 const GROUPS: [string, number][] = [['', 2], ['Resultado', 3], ['Meta', 1], ['Disciplina de precio', 3], ['Cartera de clientes (hoy)', 3], ['Cobranza (hoy)', 2], ['Seguimiento', 3]]
 
@@ -40,7 +30,7 @@ function Row({ r, onOpen }: { r: SellerReportRow; onOpen: () => void }) {
         <span className="block text-xs"><LevelValue level={s.growth_pct}>{r.sales.growth_pct === null ? '—' : `${r.sales.growth_pct > 0 ? '+' : ''}${formatPct(r.sales.growth_pct)}`}</LevelValue></span>
       </td>
       <td className={`${td} tabular text-right`}>{n(r.sales.documents)}<span className="block text-xs text-ink-muted">ticket {formatMoney(r.sales.average_ticket)}</span></td>
-      <td className={`${td} tabular text-right`}>{n(r.sales.customers)}<span className="block text-xs text-ink-muted">{r.sales.categories_per_customer ?? '—'} cat./cliente</span></td>
+      <td className={`${td} tabular text-right`}>{n(r.sales.customers)}<span className="block text-xs text-ink-muted">{dec(r.sales.categories_per_customer)} cat./cliente</span></td>
       <td className={`${td} text-right`}>
         <LevelValue level={s.goal_attainment}>{formatPct(r.goal.attainment_pct)}</LevelValue>
         {r.goal.goal !== null && <span className="block text-xs text-ink-muted">meta {formatMoney(r.goal.goal)}{r.goal.projected_pct !== null ? ` · proyecta ${formatPct(r.goal.projected_pct)}` : ''}</span>}
@@ -75,32 +65,20 @@ export default function ReportSellersPage() {
       <ReportFilters filters={filters} />
       <FormError message={filters.contextError ?? report.error} />
       {!filters.valid && <div className="mb-3"><Alert tone="warning">Indica un periodo válido (y, si comparas con otro periodo, sus dos fechas): la fecha inicial no puede ser posterior a la final.</Alert></div>}
-      {data && (
-        <p className="mb-3 text-sm text-ink-muted">
-          Periodo {formatDate(data.period.from)} – {formatDate(data.period.to)} ({data.period.days} días) · comparado con {formatDate(data.comparison.from)} – {formatDate(data.comparison.to)} ({data.comparison.days} días)
-        </p>
-      )}
-      {data?.notes.map((note) => <div key={note} className="mb-2"><Alert tone="info">{REPORT_NOTE[note] ?? note}</Alert></div>)}
+      {data && <PeriodLine data={data} />}
+      {data && <ReportNotes notes={data.notes} />}
 
       {t && (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-5">
-          <Stat label="Venta neta" value={formatMoney(t.net_total)} hint={t.growth_pct === null ? 'sin periodo anterior' : `${t.growth_pct > 0 ? '+' : ''}${formatPct(t.growth_pct)} vs. comparación`} />
-          <Stat label="Documentos" value={n(t.documents)} hint={`ticket ${formatMoney(t.average_ticket)}`} />
-          <Stat label="Cumplimiento de meta" value={formatPct(t.attainment_pct)} hint={`${t.sellers_with_goal} de ${t.sellers} vendedores con meta`} />
-          <Stat label="Saldo vencido" value={formatMoney(t.credit_overdue)} hint={`de ${formatMoney(t.credit_balance)} por cobrar`} />
-          <Stat label="Indicadores críticos" value={n(t.red_flags)} hint="suma de rojos entre todos los vendedores" />
+          <ReportStat label="Venta neta" value={formatMoney(t.net_total)} hint={t.growth_pct === null ? 'sin periodo anterior' : `${t.growth_pct > 0 ? '+' : ''}${formatPct(t.growth_pct)} vs. comparación`} />
+          <ReportStat label="Documentos" value={n(t.documents)} hint={`ticket ${formatMoney(t.average_ticket)}`} />
+          <ReportStat label="Cumplimiento de meta" value={formatPct(t.attainment_pct)} hint={`${t.sellers_with_goal} de ${t.sellers} vendedores con meta`} />
+          <ReportStat label="Saldo vencido" value={formatMoney(t.credit_overdue)} hint={`de ${formatMoney(t.credit_balance)} por cobrar`} />
+          <ReportStat label="Indicadores críticos" value={n(t.red_flags)} hint="suma de rojos entre todos los vendedores" />
         </div>
       )}
 
-      {rec && (
-        <div className="mb-4">
-          {rec.matches ? (
-            <p className="flex items-center gap-2 text-sm text-success"><CircleCheck className="h-4 w-4" aria-hidden="true" />Contraste: la venta consolidada ({formatMoney(rec.consolidated_net)}, {n(rec.consolidated_documents)} documentos) coincide con la suma de los vendedores.</p>
-          ) : (
-            <Alert tone="danger">La venta consolidada ({formatMoney(rec.consolidated_net)}) no coincide con la suma de los vendedores ({formatMoney(rec.sellers_net)}): diferencia de {formatMoney(rec.net_difference)} y {rec.documents_difference} documentos.</Alert>
-          )}
-        </div>
-      )}
+      {rec && <ReconciliationNote rec={rec} who="los vendedores" />}
 
       <DataTable label="Evaluación de vendedores">
         <thead>
@@ -134,13 +112,13 @@ export default function ReportSellersPage() {
         </tbody>
       </DataTable>
 
-      <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-muted">
-        <span className="inline-flex items-center gap-1"><CircleAlert className="h-3.5 w-3.5 text-danger" aria-hidden="true" />Crítico</span>
-        <span>Los umbrales de cada semáforo son valores iniciales por omisión.</span>
-        <span>Toda cifra de venta es neta (sin IVA). Haz clic en un vendedor para ver sus facturas.</span>
-      </p>
+      <ReportLegend><span>Haz clic en un vendedor para ver sus facturas.</span></ReportLegend>
 
-      {open && <SellerBillingModal sellerId={open.seller.id} name={open.seller.name} query={filters.query()} onClose={() => setOpen(null)} />}
+      {open && (
+        <Modal title={`Facturación de ${open.seller.name}`} onClose={() => setOpen(null)} wide>
+          <BillingTable path={`/reports/sellers/${open.seller.id}/documents`} query={filters.query()} label={`Documentos facturados por ${open.seller.name}`} />
+        </Modal>
+      )}
     </section>
   )
 }

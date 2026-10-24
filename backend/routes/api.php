@@ -34,6 +34,7 @@ use App\Http\Controllers\Api\V1\InventoryStockController;
 use App\Http\Controllers\Api\V1\InventoryUnitController;
 use App\Http\Controllers\Api\V1\MailController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\OperatorReportController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\PasswordController;
 use App\Http\Controllers\Api\V1\PaymentPromiseController;
@@ -67,6 +68,9 @@ Route::middleware(['auth:sanctum', 'active', 'password.current'])->group(functio
         Route::get('context', [ReportContextController::class, 'show']);
         Route::get('sellers', [SellerReportController::class, 'index']);
         Route::get('sellers/{seller}/documents', [SellerReportController::class, 'documents']);
+        Route::get('operators', [OperatorReportController::class, 'index']);
+        Route::get('operators/{operator}/documents', [OperatorReportController::class, 'documents']);
+        Route::get('operators/{operator}/distribution', [OperatorReportController::class, 'distribution']);
     });
 
     // Inteligencia de ventas: exige permiso y se limita al ámbito del usuario.

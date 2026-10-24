@@ -14,7 +14,7 @@ test('recorrer las pantallas principales no produce ninguna violación de la pol
   page.on('pageerror', (e) => violations.push(`error de página: ${e.message}`))
 
   await loginOk(page, 'admin')
-  for (const path of ['/', '/ventas', '/metas', '/clientes', '/cotizaciones', '/credito', '/inteligencia', '/inventario', '/inventario/unidades', '/conversaciones', '/admin/usuarios', '/importaciones', '/reportes/vendedores']) {
+  for (const path of ['/', '/ventas', '/metas', '/clientes', '/cotizaciones', '/credito', '/inteligencia', '/inventario', '/inventario/unidades', '/conversaciones', '/admin/usuarios', '/importaciones', '/reportes/vendedores', '/reportes/operadores']) {
     await page.goto(path)
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible()
   }

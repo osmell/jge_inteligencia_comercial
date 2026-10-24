@@ -1,4 +1,4 @@
-import { ClipboardCheck, BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Mail, Webhook, MessageCircle, MessagesSquare, Newspaper, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
+import { ScanLine, ClipboardCheck, BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Mail, Webhook, MessageCircle, MessagesSquare, Newspaper, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -37,7 +37,10 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     title: 'Reportes',
-    items: [{ to: '/reportes/vendedores', label: 'Reporte de vendedores', icon: ClipboardCheck, permission: 'reports.view' }],
+    items: [
+      { to: '/reportes/vendedores', label: 'Reporte de vendedores', icon: ClipboardCheck, permission: 'reports.view' },
+      { to: '/reportes/operadores', label: 'Reporte de operadores', icon: ScanLine, permission: 'reports.view' },
+    ],
   },
   {
     title: 'Datos',

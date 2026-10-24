@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
-/** Reporte de vendedores; el detalle de facturación de un vendedor añade la página. */
-class SellerReportRequest extends ReportPeriodRequest
+/** Periodo y filtros de un reporte de evaluación; el detalle de facturación añade la página. */
+class ReportDetailRequest extends ReportPeriodRequest
 {
     /** @return array<string, mixed> */
     public function rules(): array

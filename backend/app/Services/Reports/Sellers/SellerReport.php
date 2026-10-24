@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Services\Reports\Sellers;
 
 use App\Models\Seller;
+use App\Services\Reports\Reconciliation;
 use App\Services\Reports\ReportPeriod;
+use App\Services\Reports\SalesFigures;
 use App\Services\Reports\Semaphore;
-use App\Services\Sales\SalesQuery;
 use Carbon\CarbonImmutable;
 
 /**
@@ -17,13 +18,13 @@ use Carbon\CarbonImmutable;
 class SellerReport
 {
     public function __construct(
-        private readonly SellerSalesFigures $sales,
+        private readonly SalesFigures $sales,
         private readonly SellerGoalFigures $goals,
         private readonly SellerPortfolioFigures $portfolio,
         private readonly SellerCreditFigures $credit,
         private readonly SellerFollowUpFigures $followUp,
         private readonly Semaphore $semaphore,
-        private readonly SalesQuery $query,
+        private readonly Reconciliation $reconciliation,
     ) {}
 
     /**
@@ -101,7 +102,10 @@ class SellerReport
             ...$period->toArray(),
             'rows' => $rows,
             'totals' => $this->totals($rows, $previous),
-            'reconciliation' => $this->reconciliation($companyIds, $period, $filters, $rows),
+            'reconciliation' => $this->reconciliation->between(
+                $companyIds, $period, $filters,
+                array_sum(array_column(array_column($rows, 'sales'), 'net_total')), array_sum(array_column(array_column($rows, 'sales'), 'documents')),
+            ),
             'notes' => array_values(array_filter([
                 'portfolio_and_credit_as_of_today',
                 $branchFiltered ? 'goal_not_comparable_with_branch_filter' : null,
@@ -143,33 +147,6 @@ class SellerReport
             'credit_balance' => round(array_sum(array_column(array_column($rows, 'credit'), 'balance')), 2),
             'credit_overdue' => round(array_sum(array_column(array_column($rows, 'credit'), 'overdue')), 2),
             'red_flags' => array_sum(array_map(fn (array $r) => count(array_filter($r['semaphores'], fn (string $l) => $l === Semaphore::BAD)), $rows)),
-        ];
-    }
-
-    /**
-     * Contraste: la venta consolidada (sin agrupar por vendedor) contra la suma de las filas. Deben coincidir; si no, hay ventas
-     * de vendedores que el reporte no muestra.
-     *
-     * @param  list<int>|null  $companyIds
-     * @param  array<string, mixed>  $filters
-     * @param  list<array<string, mixed>>  $rows
-     * @return array<string, mixed>
-     */
-    private function reconciliation(?array $companyIds, ReportPeriod $period, array $filters, array $rows): array
-    {
-        $all = $this->query->baseForCompanies($period->from, $period->to, $filters, $companyIds)
-            ->selectRaw('coalesce(sum(sales_lines.net_total), 0) as net, count(distinct sales_lines.sales_document_id) as documents')
-            ->toBase()->first();
-
-        $net = round((float) ($all->net ?? 0), 2);
-        $documents = (int) ($all->documents ?? 0);
-        $sellersNet = round(array_sum(array_column(array_column($rows, 'sales'), 'net_total')), 2);
-        $sellersDocuments = array_sum(array_column(array_column($rows, 'sales'), 'documents'));
-
-        return [
-            'consolidated_net' => $net, 'sellers_net' => $sellersNet, 'net_difference' => round($net - $sellersNet, 2),
-            'consolidated_documents' => $documents, 'sellers_documents' => $sellersDocuments, 'documents_difference' => $documents - $sellersDocuments,
-            'matches' => abs($net - $sellersNet) < 0.01 && $documents === $sellersDocuments,
         ];
     }
 }
