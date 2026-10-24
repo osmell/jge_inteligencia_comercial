@@ -45,6 +45,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - Un mes de metas con formato inválido devolvía `null` en silencio.
 
 ### Seguridad
+- **PHP2Shell (CVE-2026-109618 y CVE-2026-109619, ejecución remota sin autenticación)**: la imagen del backend se reconstruyó con PHP 8.5.12 y una prueba (`PhpVersionTest`) hace fallar la suite y la CI si PHP es anterior a la versión corregida. En producción hay que actualizar PHP y reiniciar los procesos.
 - **Época de sesión**: cerrar sesión, cambiar o restablecer la clave y desactivar una cuenta invalidan todas las sesiones anteriores de la persona, incluso una que reviva por una petición en curso. Cerrar sesión en un equipo cierra todos los de esa persona. Una respuesta 401 devuelve a la pantalla de ingreso.
 - **Cambio de clave obligatorio**: la clave que fija administración (alta o restablecimiento) es temporal; hasta cambiarla, la API solo permite ver el perfil, cambiar la clave y salir. Cualquier persona puede cambiar su clave (pide la actual, con límite de intentos y en Auditoría).
 - Un vendedor ya no puede cancelar promesas de pago de clientes de otro vendedor.

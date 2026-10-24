@@ -148,3 +148,11 @@ Se revisó el apartado completo (4 reportes, sus detalles y sus salidas) con `te
 - **H14 · Enviar un mensaje desde Conversaciones fallaba en PostgreSQL**: el tipo `conversation` mide 12 caracteres y la columna admitía 10. SQLite no impone el largo y las pruebas no lo veían. Se amplió la columna y **toda la suite se ejecuta ahora también en PostgreSQL** (con una guarda que impide que esas pruebas toquen una base que no termine en `_test`).
 
 **Riesgo residual R4 · el correo de reportes sale a direcciones libres.** Fue una decisión del cliente (con confirmación, tope y Auditoría). Una cuenta con `reports.view` comprometida podría enviar cifras hasta el tope por hora. Mitigaciones posibles si se quisiera más control: lista de dominios permitidos (`@empresa.com`) o aprobación de un administrador para direcciones nuevas.
+
+## Vulnerabilidad de PHP «PHP2Shell» (2026-10-24)
+
+CVE-2026-109618 y CVE-2026-109619 (CVSS 9.2): ejecución remota de código sin autenticación en el propio PHP, con explotación activa reportada. Se corrigen en **8.5.12**, 8.4.27, 8.3.36 y 8.2.35; ninguna configuración las mitiga por completo.
+
+- El entorno de desarrollo corría 8.5.11 (imagen en caché de `php:8.5-cli`). Se reconstruyó con `--pull --no-cache` y ahora reporta 8.5.12.
+- `backend/tests/Unit/PhpVersionTest.php` falla si PHP es menor que la versión corregida de su rama; corre en la CI y en el contenedor.
+- **Producción**: actualizar PHP (imagen o paquete), reiniciar FPM/contenedores y revisar los registros del servidor desde el 20 de octubre por peticiones anómalas. Reconstruir con `docker compose build --pull --no-cache` para no usar capas viejas.
