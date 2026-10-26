@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TextField, td, th, tr } from '../components/ui'
+import { Alert, Badge, Button, Card, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TextField, td, th, tr, Th } from '../components/ui'
 import { api } from '../lib/api'
 import { formatDateTime } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
@@ -108,7 +108,7 @@ export default function MailSettingsPage() {
 
       <h2 className="mb-2 mt-6 text-sm font-semibold text-ink">Registro de envíos</h2>
       <DataTable label="Registro de envíos">
-        <thead><tr><th className={th}>Fecha</th><th className={th}>Para</th><th className={th}>Asunto</th><th className={th}>Estado</th><th className={th}>Detalle</th></tr></thead>
+        <thead><tr><th className={th}>Fecha</th><th className={th}>Para</th><th className={th}>Asunto</th><Th info={{ text: 'Resultado del envío del correo. El detalle explica el motivo si no se pudo enviar.' }}>Estado</Th><th className={th}>Detalle</th></tr></thead>
         <tbody>
           {(log.data?.data ?? []).length === 0 ? <EmptyRow cols={5}>Todavía no se ha enviado ningún correo.</EmptyRow> : (log.data?.data ?? []).map((l) => (
             <tr key={l.id} className={tr}>

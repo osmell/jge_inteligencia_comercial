@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useToast } from '../components/toast'
-import { Button, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Button, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Th } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import type { SellerRow } from '../lib/customers'
 import type { Branch, Company } from '../lib/types'
@@ -91,9 +91,9 @@ export default function SellersPage() {
           <tr>
             <th className={th}>Vendedor</th>
             <th className={th}>Sucursal</th>
-            <th className={th}>Tienda por defecto</th>
-            <th className={th}>Supervisor</th>
-            <th className={th}>Usuario vinculado</th>
+            <Th info={{ text: 'Vendedor que recibe los clientes sin vendedor asignado de su sucursal. Solo puede haber uno por sucursal.' }}>Tienda por defecto</Th>
+            <Th info={{ text: 'Persona que supervisa al vendedor. Un supervisor ve la información de su equipo.' }}>Supervisor</Th>
+            <Th info={{ text: 'Usuario del sistema que corresponde al vendedor. Sus contactos, acciones y cotizaciones se atribuyen al vendedor.' }}>Usuario vinculado</Th>
             <th className={th}>Estado</th>
           </tr>
         </thead>

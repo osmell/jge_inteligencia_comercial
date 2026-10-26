@@ -39,6 +39,8 @@ const SCREENS: [string, number][] = [
   ['/reportes/vendedores', 5], ['/reportes/operadores', 5], ['/reportes/sucursales', 5], ['/reportes/productos', 3], ['/reportes/conciliacion', 3],
   ['/inteligencia', 0], ['/inteligencia/segmentos', 0], ['/inteligencia/concentracion', 0], ['/inteligencia/alertas', 0], ['/inteligencia/estacionalidad', 0], ['/inteligencia/venta-cruzada', 0],
   ['/inventario', 1], ['/inventario/rotacion', 1], ['/inventario/faltantes', 1], ['/inventario/movimientos', 1],
+  ['/clientes', 3], ['/clientes/reporte', 3], ['/clientes/vendedores', 2], ['/clientes/facturadores', 1], ['/productos', 4], ['/agenda', 3],
+  ['/importaciones', 2], ['/admin/usuarios', 2], ['/admin/auditoria', 2], ['/admin/automatizaciones', 0],
 ]
 const MAX_PER_PAGE = 25
 

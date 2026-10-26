@@ -1,3 +1,4 @@
+import { InfoTip } from './InfoTip'
 import { BAND_LABEL, type CreditScore } from '../lib/credit'
 import { useLoad } from '../lib/useLoad'
 import { FormError } from './ui'
@@ -20,7 +21,7 @@ export default function CustomerCreditScore({ companyId, code }: { companyId: st
           </p>
           <div className="mt-2 overflow-x-auto">
             <table className="w-full text-sm" aria-label="Factores de la calificación">
-              <thead><tr className="text-left text-xs text-ink-muted"><th className="py-1 pr-3">Factor</th><th className="py-1 pr-3 text-right">Puntos</th><th className="py-1 pr-3 text-right">Peso aplicado</th><th className="py-1">Por qué</th></tr></thead>
+              <thead><tr className="text-left text-xs text-ink-muted"><th className="py-1 pr-3"><span className="inline-flex items-center gap-1">Factor<InfoTip info={{ text: 'Aspecto del comportamiento de pago que entra en la calificación.' }} label="Factor" /></span></th><th className="py-1 pr-3 text-right"><span className="inline-flex items-center gap-1">Puntos<InfoTip info={{ text: 'Calificación del factor, de 0 a 100. Más alto es mejor.' }} label="Puntos" /></span></th><th className="py-1 pr-3 text-right"><span className="inline-flex items-center gap-1">Peso aplicado<InfoTip info={{ text: 'Qué parte de la calificación final representa el factor. Un factor sin datos no suma ni resta: su peso se reparte entre los demás.' }} label="Peso aplicado" /></span></th><th className="py-1"><span className="inline-flex items-center gap-1">Por qué<InfoTip info={{ text: 'Dato concreto con el que se calificó el factor.' }} label="Por qué" /></span></th></tr></thead>
               <tbody>
                 {s.factors.map((f) => (
                   <tr key={f.key} className="border-t border-line align-top">

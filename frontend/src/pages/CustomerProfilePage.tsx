@@ -11,7 +11,7 @@ import CustomerCrossSell from '../components/CustomerCrossSell'
 import CustomerSegment from '../components/CustomerSegment'
 import CustomerInteractions from '../components/CustomerInteractions'
 import CustomerQuotations from '../components/CustomerQuotations'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat, Th } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { ABC_HINT, ACTIVITY_LABEL, formatDate, sinceLabel, type CustomerProfile, type CustomerType, type CustomerMaster, type OperatorRow, type SellerRow, type CustomerPurchase, type DocumentLine } from '../lib/customers'
@@ -24,7 +24,7 @@ function TopTable({ title, label, rows }: { title: string; label: string; rows: 
     <div>
       <h2 className="mb-2 text-sm font-semibold text-ink">{title}</h2>
       <DataTable label={title}>
-        <thead><tr><th className={th}>{label}</th><th className={`${th} text-right`}>Venta neta</th><th className={`${th} text-right`}>Unidades</th></tr></thead>
+        <thead><tr><th className={th}>{label}</th><Th right info="sales_net">Venta neta</Th><Th right info="sales_units">Unidades</Th></tr></thead>
         <tbody>
           {rows.length === 0 && <EmptyRow cols={3}>Sin datos.</EmptyRow>}
           {rows.map((r) => (
@@ -258,21 +258,24 @@ export default function CustomerProfilePage() {
           </div>
 
           <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
-            <Stat label="Venta neta total" value={formatMoney(p.totals.net_total)} />
-            <Stat label="Documentos" value={String(p.totals.documents)} />
-            <Stat label="Ticket promedio" value={formatMoney(p.totals.average_ticket)} />
+            <Stat label="Venta neta total" info="sales_net" value={formatMoney(p.totals.net_total)} />
+            <Stat label="Documentos" info="sales_documents" value={String(p.totals.documents)} />
+            <Stat label="Ticket promedio" info="sales_ticket" value={formatMoney(p.totals.average_ticket)} />
             <Stat
               label="Última compra"
+              info={{ text: 'Fecha de la última compra del cliente y días transcurridos desde entonces.' }}
               value={p.last_purchase ? formatDate(p.last_purchase) : '—'}
               hint={p.days_since_last_purchase === null ? undefined : sinceLabel(p.days_since_last_purchase)}
             />
             <Stat
               label="Frecuencia"
+              info={{ text: 'Cada cuántos días compra en promedio el cliente, según sus días con compra.', formula: 'Frecuencia = Días entre la primera y la última compra ÷ (Días con compra − 1)' }}
               value={p.frequency.average_days_between === null ? '—' : `cada ${String(p.frequency.average_days_between).replace('.', ',')} días`}
               hint={`${p.frequency.purchase_days} días con compra`}
             />
             <Stat
               label="Margen estimado"
+              info="sales_margin"
               value={p.totals.estimated_margin === null ? '—' : formatMoney(p.totals.estimated_margin)}
               hint="Con costo actual, no histórico"
             />
@@ -302,10 +305,10 @@ export default function CustomerProfilePage() {
             <th className={th}>Documento</th>
             <th className={th}>Sucursal</th>
             <th className={th}>Vendedor</th>
-            <th className={th}>Facturó</th>
-            <th className={`${th} text-right`}>Líneas</th>
-            <th className={`${th} text-right`}>Venta neta</th>
-            <th className={`${th} text-right`}>Total facturado</th>
+            <Th info={{ text: 'Operador que facturó el documento.' }}>Facturó</Th>
+            <Th right info={{ text: 'Líneas del documento.' }}>Líneas</Th>
+            <Th right info="sales_net">Venta neta</Th>
+            <Th right info="sales_grand">Total facturado</Th>
           </tr>
         </thead>
         <tbody>

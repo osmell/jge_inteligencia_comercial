@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TextField, td, th, tr, type FieldErrors } from '../components/ui'
+import { Alert, Badge, Button, Card, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TextField, td, th, tr, type FieldErrors, Th } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import { FREQUENCY_LABEL, RUN_STATUS_LABEL, TRIGGER_LABEL, describeResult, type Automation, type AutomationList, type AutomationRunRow } from '../lib/automations'
 import { formatDateTime } from '../lib/format'
@@ -143,7 +143,7 @@ export default function AutomationsPage() {
           </SelectField>
         </div>
         <DataTable label="Registro de ejecuciones">
-          <thead><tr><th className={th}>Inicio</th><th className={th}>Automatización</th><th className={th}>Origen</th><th className={th}>Resultado</th><th className={th}>Detalle</th></tr></thead>
+          <thead><tr><th className={th}>Inicio</th><th className={th}>Automatización</th><Th info={{ text: 'Cómo se ejecutó: programada (automática, a su hora) o manual (alguien la lanzó).' }}>Origen</Th><Th info={{ text: 'Cómo terminó la ejecución. El detalle explica el motivo si no salió bien.' }}>Resultado</Th><th className={th}>Detalle</th></tr></thead>
           <tbody>
             {(runs.data?.data ?? []).length === 0 ? <EmptyRow cols={5}>Todavía no hay ejecuciones.</EmptyRow> : (runs.data?.data ?? []).map((r) => (
               <tr key={r.id} className={tr}>

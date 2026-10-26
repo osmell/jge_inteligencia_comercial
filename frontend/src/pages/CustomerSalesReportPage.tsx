@@ -1,7 +1,7 @@
 import { Download } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Alert, Button, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Alert, Button, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Th } from '../components/ui'
 import { download } from '../lib/api'
 import { currentMonthRange, formatDate, profileUrl, type CustomerSalesRow, type ReportPerson } from '../lib/customers'
 import { formatMoney } from '../lib/format'
@@ -82,13 +82,13 @@ export default function CustomerSalesReportPage() {
         <thead>
           <tr>
             <th className={th}>Cliente</th>
-            <th className={th}>Vendedor asignado</th>
-            <th className={`${th} text-right`}>Venta neta</th>
-            <th className={`${th} text-right`}>Documentos</th>
-            <th className={th}>Última compra</th>
-            <th className={th}>Quién vendió</th>
-            <th className={th}>Quién facturó</th>
-            <th className={`${th} text-right`}>Venta directa del facturador</th>
+            <Th info={{ text: 'Vendedor que tiene asignado el cliente en el catálogo de clientes. «Por defecto» indica que se le asignó el vendedor por omisión.' }}>Vendedor asignado</Th>
+            <Th right info="sales_net">Venta neta</Th>
+            <Th right info="sales_documents">Documentos</Th>
+            <Th info={{ text: 'Fecha de la última compra del cliente.' }}>Última compra</Th>
+            <Th info={{ text: 'Vendedores que le vendieron al cliente en el periodo.' }}>Quién vendió</Th>
+            <Th info={{ text: 'Operadores que le facturaron al cliente en el periodo.' }}>Quién facturó</Th>
+            <Th right info="customer_direct">Venta directa del facturador</Th>
           </tr>
         </thead>
         <tbody>

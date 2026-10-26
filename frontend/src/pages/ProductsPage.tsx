@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { Alert, Button, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat } from '../components/ui'
+import { Alert, Button, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat, Th } from '../components/ui'
 import type { MissingProductRow, ProductCoverage, ProductLevels, ProductRow } from '../lib/customers'
 import { formatMoney } from '../lib/format'
 import type { Company } from '../lib/types'
@@ -116,8 +116,8 @@ export default function ProductsPage() {
             <thead>
               <tr>
                 <th className={th}>Compañía</th><th className={th}>Código</th><th className={th}>Producto</th>
-                <th className={th}>Grupo</th><th className={th}>Línea</th><th className={th}>Categoría</th>
-                <th className={`${th} text-right`}>Venta 12 meses</th>
+                <Th info={{ text: 'Nivel 1 del catálogo de productos.' }}>Grupo</Th><Th info={{ text: 'Nivel 2 del catálogo de productos.' }}>Línea</Th><Th info={{ text: 'Nivel 3 del catálogo de productos.' }}>Categoría</Th>
+                <Th right info={{ text: 'Venta neta del producto en los últimos 12 meses.' }}>Venta 12 meses</Th>
               </tr>
             </thead>
             <tbody>
@@ -147,7 +147,7 @@ export default function ProductsPage() {
             <thead>
               <tr>
                 <th className={th}>Compañía</th><th className={th}>Código</th><th className={th}>Producto (según ventas)</th>
-                <th className={th}>Categoría (según ventas)</th><th className={`${th} text-right`}>Venta 12 meses</th>
+                <Th info={{ text: 'Categoría que trae el archivo de ventas para el producto; como no está en el catálogo, se toma de las ventas.' }}>Categoría (según ventas)</Th><Th right info={{ text: 'Venta neta del producto en los últimos 12 meses.' }}>Venta 12 meses</Th>
               </tr>
             </thead>
             <tbody>

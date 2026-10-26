@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { Button, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Button, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Th } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import { ABC_HINT, ACTIVITY_LABEL, SORT_LABEL, formatDate, profileUrl, type CustomerListRow, type CustomerSort, type ActivityStatus, type CustomerType } from '../lib/customers'
 import type { Company } from '../lib/types'
@@ -73,14 +73,14 @@ export default function CustomersPage() {
             <th className={th}>Compañía</th>
             <th className={th}>Código</th>
             <th className={th}>Nombre</th>
-            <th className={th}>Tipo</th>
-            <th className={th}>Vendedor</th>
-            <th className={th}>Estado</th>
-            <th className={th}><abbr title="Clasificación ABC por venta de los últimos 12 meses">ABC</abbr></th>
-            <th className={`${th} text-right`}>Documentos</th>
-            <th className={`${th} text-right`}>Venta neta</th>
-            <th className={th}>Primera compra</th>
-            <th className={th}>Última compra</th>
+            <Th info={{ text: 'Tipo de cliente según el catálogo de tipos de cliente.' }}>Tipo</Th>
+            <Th info={{ text: 'Vendedor asignado al cliente.' }}>Vendedor</Th>
+            <Th info="customer_status">Estado</Th>
+            <Th info="customer_abc">ABC</Th>
+            <Th right info="sales_documents">Documentos</Th>
+            <Th right info="sales_net">Venta neta</Th>
+            <Th info={{ text: 'Fecha de la primera compra del cliente dentro del historial cargado.' }}>Primera compra</Th>
+            <Th info={{ text: 'Fecha de la última compra del cliente.' }}>Última compra</Th>
           </tr>
         </thead>
         <tbody>

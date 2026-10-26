@@ -9,7 +9,7 @@ import type { ImportBatch, ImportType, Page } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 import { ImportStatusBadge } from '../components/ImportStatusBadge'
 import { IN_PROGRESS } from '../lib/importStatus'
-import { Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr, Th } from '../components/ui'
 
 const MAX_MB = 20
 
@@ -148,7 +148,7 @@ export default function ImportsPage() {
             <tr>
               <th className={th}>Fecha</th><th className={th}>Archivo</th><th className={th}>Tipo</th>
               {isAdmin && <th className={th}>Usuario</th>}
-              <th className={th}>Estado</th><th className={th}>Documentos</th><th className={th}>Errores</th>
+              <Th info={{ text: 'Etapa del archivo: en cola, validando, validado (listo para confirmar), rechazado (con errores), importando, importado, descartado o con falla.' }}>Estado</Th><Th info={{ text: 'Documentos (o registros) que trae el archivo y que se cargaron o se cargarán.' }}>Documentos</Th><Th info={{ text: 'Errores que impiden importar el archivo. Un archivo con errores se rechaza y no se importa nada.' }}>Errores</Th>
               <th className={th}><span className="sr-only">Acciones</span></th>
             </tr>
           </thead>

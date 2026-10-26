@@ -146,6 +146,18 @@ export const GLOSSARY = {
     formula: 'Agotados % = Productos vendidos sin existencia hoy ÷ Productos vendidos en 90 días × 100',
   },
   rep_shortfalls: { text: 'Ventas que superaron la existencia y siguen sin resolver.' },
+  // ───── Clientes ─────
+  customer_status: {
+    text: 'Situación del cliente según sus días sin comprar. Nuevo: primera compra reciente. Recuperado: volvió a comprar tras pasar el plazo de inactividad. Activo: compró dentro de ese plazo. Inactivo: pasó el plazo de inactividad. Perdido: pasó el plazo de pérdida. Sin ventas: nunca ha comprado. Los plazos se configuran.',
+  },
+  customer_abc: {
+    text: 'Clasificación por venta neta de los últimos 12 meses, de mayor a menor cliente: A hasta el 80 % acumulado de la venta, B hasta el 95 % y C el resto. Sin compras en el periodo no tiene clase.',
+    formula: 'Clase por Venta acumulada % antes del cliente: A < 80 %, B < 95 %, C el resto',
+  },
+  customer_direct: {
+    text: 'Venta del cliente en el periodo cuyo vendedor se llama igual que quien facturó, es decir, quien facturó fue también quien vendió.',
+    formula: 'Venta directa = suma de la venta neta de las líneas con vendedor igual al facturador',
+  },
 } as const satisfies Record<string, InfoContent>
 
 export type InfoKey = keyof typeof GLOSSARY

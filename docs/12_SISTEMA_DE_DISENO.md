@@ -28,3 +28,10 @@ Originales en `branding/originals/`. Derivados en `frontend/src/assets/brand/` (
 - Confirmar con JGE qué tono es oficial: el de `logo_large.png` (rojo `#B01C14`, azul `#00508C`, usado hoy) o el de las versiones 2024 (`#E00410`, `#00549C`). Cambiarlo son los tokens de `index.css`.
 - Versión del logo en blanco o monocromática para fondos oscuros, si JGE la tiene (evitaría la placa blanca).
 - Modo oscuro: opcional según la decisión #20; los tokens están centralizados para añadirlo después.
+
+## Explicación de los datos («i»)
+- Toda columna de tabla o tarjeta de indicador que sea **calculada, de estado o de significado no evidente** lleva `Th` o `Stat` con la propiedad `info`; las columnas obvias (nombre, correo, teléfono) no la llevan.
+- El texto va en `lib/glossary.ts` si el dato se repite en varias pantallas (por ejemplo «Venta neta») y en la propia pantalla (`info={{ text, formula }}`) si es propio de ella.
+- Una explicación describe lo que el sistema **hace de verdad**: se verifica contra el código del servicio o el documento de la fase antes de escribirla. La fórmula solo va en datos calculados y se escribe con palabras del negocio.
+- Una cadena suelta no sirve como `info`: o es una clave del glosario o es un objeto `{ text, formula? }` (el compilador lo exige).
+- La prueba de navegador `e2e/tests/13-info-tooltips.spec.ts` abre las «i» de cada pantalla y comprueba que el globo queda dentro de la ventana y que no cambia el ancho de la página. Una pantalla nueva con datos se agrega a su lista `SCREENS`.

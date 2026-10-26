@@ -7,10 +7,7 @@ import { useLoad } from '../lib/useLoad'
 import { submitForm } from '../lib/saveForm'
 import type { AdminUser, Branch, Company, Role } from '../lib/types'
 import { useToast } from '../components/toast'
-import {
-  Badge, Button, CheckField, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, StatusBadge,
-  TableSkeleton, TextField, td, th, tr, type FieldErrors,
-} from '../components/ui'
+import { Badge, Button, CheckField, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, StatusBadge, TableSkeleton, TextField, td, th, tr, type FieldErrors, Th } from '../components/ui'
 
 interface Catalogs {
   roles: Role[]
@@ -131,8 +128,8 @@ export default function UsersPage() {
       <DataTable label="Usuarios">
         <thead>
           <tr>
-            <th className={th}>Usuario</th><th className={th}>Nombre</th><th className={th}>Rol</th><th className={th}>Ámbito</th>
-            <th className={th}>Estado</th><th className={th}>Último acceso</th><th className={th}><span className="sr-only">Acciones</span></th>
+            <th className={th}>Usuario</th><th className={th}>Nombre</th><Th info={{ text: 'Rol asignado: define qué puede hacer la persona dentro del sistema.' }}>Rol</Th><Th info={{ text: 'A qué datos tiene acceso: «Todo» para administradores, o el número de compañías asignadas. «Sin ámbito» no ve datos de ninguna compañía.' }}>Ámbito</Th>
+            <th className={th}>Estado</th><Th info={{ text: 'Fecha y hora del último inicio de sesión de la persona.' }}>Último acceso</Th><th className={th}><span className="sr-only">Acciones</span></th>
           </tr>
         </thead>
         <tbody>

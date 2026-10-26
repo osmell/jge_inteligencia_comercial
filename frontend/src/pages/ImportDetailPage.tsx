@@ -107,9 +107,9 @@ function MasterSummary({ batch }: { batch: ImportBatch }) {
     <section>
       <PageHeader level={2} title="Resumen" description={MASTER_LABEL[batch.type]?.description} />
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Nuevos" value={c.new} />
-        <Stat label="Se actualizarán" value={c.updated} hint="Con lo que trae el archivo; una celda vacía borra ese dato" />
-        <Stat label="Sin cambios" value={c.unchanged} />
+        <Stat label="Nuevos" info={{ text: 'Registros del archivo que todavía no existen y se crearán al confirmar.' }} value={c.new} />
+        <Stat label="Se actualizarán" info={{ text: 'Registros que ya existen y cambian con lo que trae el archivo. Una celda vacía borra ese dato.' }} value={c.updated} hint="Con lo que trae el archivo; una celda vacía borra ese dato" />
+        <Stat label="Sin cambios" info={{ text: 'Registros que ya existen con exactamente el mismo contenido: se omiten.' }} value={c.unchanged} />
       </div>
     </section>
   )
@@ -124,15 +124,15 @@ function CreditSummary({ batch }: { batch: ImportBatch }) {
     <section>
       <PageHeader level={2} title="Resumen" description={s?.date_from ? `Facturas de crédito del ${s.date_from} al ${s.date_to}` : undefined} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Subtotal" value={formatMoney(c.totals.subtotal)} />
-        <Stat label="Descuento" value={formatMoney(c.totals.discount_total)} />
-        <Stat label="Impuesto" value={formatMoney(c.totals.tax_total)} />
-        <Stat label="Total a crédito" value={formatMoney(c.totals.total)} hint="Moneda única (NIO); abre el saldo de cada factura" />
+        <Stat label="Subtotal" info={{ text: 'Suma del valor de las facturas de crédito antes del descuento.' }} value={formatMoney(c.totals.subtotal)} />
+        <Stat label="Descuento" info={{ text: 'Suma de los descuentos de las facturas de crédito.' }} value={formatMoney(c.totals.discount_total)} />
+        <Stat label="Impuesto" value={formatMoney(c.totals.tax_total)} info={{ text: 'Suma del impuesto de las facturas de crédito.' }} />
+        <Stat label="Total a crédito" info={{ text: 'Suma del total de las facturas de crédito del archivo, con impuesto.' }} value={formatMoney(c.totals.total)} hint="Moneda única (NIO); abre el saldo de cada factura" />
       </div>
       <div className="mt-4 grid gap-4 sm:grid-cols-3">
-        <Stat label="Enlazadas con su venta" value={c.linked_to_sales} hint="La factura de venta ya está cargada" />
-        <Stat label="Sin venta cargada" value={c.without_sales} hint="Se enlazan cuando se importen las ventas" />
-        <Stat label="Diferencias con la venta" value={c.mismatches} hint="Avisos: importes o cliente distintos" />
+        <Stat label="Enlazadas con su venta" info={{ text: 'Facturas de crédito cuya factura de venta ya está cargada: se pueden comparar con ella.' }} value={c.linked_to_sales} hint="La factura de venta ya está cargada" />
+        <Stat label="Sin venta cargada" info={{ text: 'Facturas de crédito cuya factura de venta todavía no se ha importado.' }} value={c.without_sales} hint="Se enlazan cuando se importen las ventas" />
+        <Stat label="Diferencias con la venta" info={{ text: 'Facturas de crédito enlazadas cuyo cliente, valor neto o impuesto no coincide con el de la venta. Es un aviso, no impide importar.' }} value={c.mismatches} hint="Avisos: importes o cliente distintos" />
       </div>
       {c.companies.length > 0 && (
         <div className="mt-4">
@@ -164,9 +164,9 @@ function InventorySummary({ batch }: { batch: ImportBatch }) {
     <section>
       <PageHeader level={2} title="Resumen" description="Inventario inicial: cada fila es un movimiento «inicial» en la unidad base del producto, con su costo." />
       <div className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Se cargarán" value={i.new} hint="Productos por unidad y sucursal" />
-        <Stat label="Ya cargados" value={i.unchanged} hint="Se omiten: mismo contenido" />
-        <Stat label="Con conflicto" value={i.conflicts} hint="Ya tienen inventario inicial distinto" />
+        <Stat label="Se cargarán" info={{ text: 'Productos por unidad y sucursal que se cargarán como inventario inicial.' }} value={i.new} hint="Productos por unidad y sucursal" />
+        <Stat label="Ya cargados" value={i.unchanged} info={{ text: 'Inventario inicial que ya está cargado con el mismo contenido: se omite.' }} hint="Se omiten: mismo contenido" />
+        <Stat label="Con conflicto" info={{ text: 'Productos que ya tienen un inventario inicial distinto al del archivo. Cuentan como error: no se sobrescribe; un cambio se registra como ajuste.' }} value={i.conflicts} hint="Ya tienen inventario inicial distinto" />
       </div>
       {i.branches.length > 0 && (
         <div className="mt-4">
@@ -188,10 +188,10 @@ function EntriesSummary({ batch }: { batch: ImportBatch }) {
     <section>
       <PageHeader level={2} title="Resumen" description="Entradas de inventario: cada línea es un movimiento de entrada en la unidad base, valorado con el Sub Total (sin IVA)." />
       <div className="grid gap-4 sm:grid-cols-4">
-        <Stat label="Documentos nuevos" value={e.new} />
-        <Stat label="Ya cargados" value={e.unchanged} hint="Se omiten: mismo contenido" />
-        <Stat label="Líneas" value={e.lines} />
-        <Stat label="Omitidos por el corte" value={e.skipped_before_cutoff} hint="Fecha anterior o igual al inventario inicial" />
+        <Stat label="Documentos nuevos" info={{ text: 'Documentos de movimientos de inventario que todavía no existen y se cargarán.' }} value={e.new} />
+        <Stat label="Ya cargados" value={e.unchanged} info={{ text: 'Documentos que ya están cargados con el mismo contenido: se omiten.' }} hint="Se omiten: mismo contenido" />
+        <Stat label="Líneas" info={{ text: 'Líneas de los documentos nuevos del archivo.' }} value={e.lines} />
+        <Stat label="Omitidos por el corte" info={{ text: 'Documentos con fecha anterior o igual a la del inventario inicial: no se cargan.' }} value={e.skipped_before_cutoff} hint="Fecha anterior o igual al inventario inicial" />
       </div>
       {e.branches_without_opening.length > 0 && (
         <div className="mt-4"><Alert tone="warning">Sin inventario inicial en <strong>{e.branches_without_opening.join(', ')}</strong>: las entradas se cargan, pero la existencia será parcial hasta cargarlo.</Alert></div>
@@ -208,8 +208,8 @@ function UnitsSummary({ batch }: { batch: ImportBatch }) {
     <section>
       <PageHeader level={2} title="Resumen" description="Unidad base y equivalencias por producto. Se agregan y actualizan; no se borra lo que el archivo no menciona." />
       <div className="grid gap-4 sm:grid-cols-4">
-        <Stat label="Unidades base a fijar" value={u.bases_set} />
-        <Stat label="Equivalencias nuevas" value={u.new} />
+        <Stat label="Unidades base a fijar" info={{ text: 'Productos a los que el archivo les fija su unidad base, que es la unidad en la que se lleva su existencia.' }} value={u.bases_set} />
+        <Stat label="Equivalencias nuevas" info={{ text: 'Equivalencias entre unidades (por ejemplo, 1 caja = 12 piezas) que todavía no existen.' }} value={u.new} />
         <Stat label="Se actualizarán" value={u.updated} />
         <Stat label="Sin cambios" value={u.unchanged} />
       </div>
@@ -230,10 +230,10 @@ function SummarySection({ batch }: { batch: ImportBatch }) {
     <section>
       <PageHeader level={2} title="Resumen" description={s.date_from ? `Ventas del ${s.date_from} al ${s.date_to}` : undefined} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Total neto" value={formatMoney(s.totals.net_total)} />
-        <Stat label="Impuesto" value={formatMoney(s.totals.tax_total)} />
-        <Stat label="Gran total" value={formatMoney(s.totals.grand_total)} />
-        <Stat label="Costo" value={formatMoney(s.totals.cost_total)} hint="Costo unitario actual" />
+        <Stat label="Total neto" info="net_total" value={formatMoney(s.totals.net_total)} />
+        <Stat label="Impuesto" value={formatMoney(s.totals.tax_total)} info="tax_total" />
+        <Stat label="Gran total" info={{ text: 'Total facturado de las líneas del archivo. El sistema no lee el «Gran Total» del archivo: lo calcula.', formula: 'Gran total = Total neto + Total impuesto' }} value={formatMoney(s.totals.grand_total)} />
+        <Stat label="Costo" info={{ text: 'Costo de las líneas con el costo unitario actual del producto, no el costo histórico.', formula: 'Costo = Unidades × Costo unitario actual' }} value={formatMoney(s.totals.cost_total)} hint="Costo unitario actual" />
       </div>
 
       {s.companies && s.companies.length > 0 && (
@@ -354,14 +354,14 @@ export default function ImportDetailPage() {
 
       {!IN_PROGRESS.includes(batch.status) && batch.status !== 'discarded' && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Filas leídas" value={batch.rows_total} hint={batch.summary?.rows_invalid ? `${batch.summary.rows_invalid} con errores` : undefined} />
+          <Stat label="Filas leídas" info={{ text: 'Filas de datos que el sistema leyó del archivo.' }} value={batch.rows_total} hint={batch.summary?.rows_invalid ? `${batch.summary.rows_invalid} con errores` : undefined} />
           <Stat
             label={isMaster(batch.type) ? (batch.type === 'products' ? 'Productos' : 'Clientes') : 'Documentos'}
             value={batch.documents_total}
             hint={batch.status === 'rejected' ? undefined : `${batch.documents_new} nuevos · ${batch.documents_duplicate} ${isMaster(batch.type) ? 'sin cambios' : 'ya importados'}`}
           />
-          <Stat label="Errores" value={batch.errors_total} />
-          <Stat label="Advertencias" value={batch.warnings_total} />
+          <Stat label="Errores" info={{ text: 'Filas con errores que impiden importar. Un archivo con errores se rechaza.' }} value={batch.errors_total} />
+          <Stat label="Advertencias" info={{ text: 'Avisos que no impiden importar pero conviene revisar, como líneas omitidas por estar en cero.' }} value={batch.warnings_total} />
         </div>
       )}
 

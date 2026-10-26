@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, CheckField, DataTable, EmptyRow, FormError, PageHeader, TextField, td, th, tr } from '../components/ui'
+import { Alert, Badge, Button, Card, CheckField, DataTable, EmptyRow, FormError, PageHeader, TextField, td, th, tr, Th } from '../components/ui'
 import { api } from '../lib/api'
 import { formatDateTime } from '../lib/format'
 import { useLoad } from '../lib/useLoad'
@@ -73,7 +73,7 @@ export default function WebhookSettingsPage() {
       {config.data && <ConfigForm key={`${config.data.data.url}${config.data.data.enabled}${config.data.data.has_secret}${config.data.data.events.join()}`} config={config.data.data} onSaved={reload} />}
       <h2 className="mb-2 mt-6 text-sm font-semibold text-ink">Registro de envíos</h2>
       <DataTable label="Registro de envíos del webhook">
-        <thead><tr><th className={th}>Fecha</th><th className={th}>Evento</th><th className={th}>Estado</th><th className={th}>Detalle</th></tr></thead>
+        <thead><tr><th className={th}>Fecha</th><th className={th}>Evento</th><Th info={{ text: 'Resultado de la llamada a la dirección configurada. El detalle explica el motivo si falló.' }}>Estado</Th><th className={th}>Detalle</th></tr></thead>
         <tbody>
           {(log.data?.data ?? []).length === 0 ? <EmptyRow cols={4}>Todavía no se ha enviado ningún evento.</EmptyRow> : (log.data?.data ?? []).map((d) => (
             <tr key={d.id} className={tr}><td className={td}>{formatDateTime(d.created_at)}</td><td className={td}>{d.event}</td><td className={td}><Badge>{STATUS[d.status]}</Badge></td><td className={td}>{d.error ?? (d.attempt > 1 ? `${d.attempt} intentos` : '')}</td></tr>

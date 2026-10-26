@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Filter, ScrollText } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useLoad } from '../lib/useLoad'
 import type { AuditLog, Page } from '../lib/types'
-import { Button, DataTable, EmptyRow, FormError, PageHeader, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Button, DataTable, EmptyRow, FormError, PageHeader, TableSkeleton, TextField, td, th, tr, Th } from '../components/ui'
 
 export default function AuditPage() {
   const [event, setEvent] = useState('')
@@ -32,7 +32,7 @@ export default function AuditPage() {
 
       <FormError message={logs.error} />
       <DataTable label="Registros de auditoría">
-        <thead><tr><th className={th}>Fecha</th><th className={th}>Usuario</th><th className={th}>Evento</th><th className={th}>Registro</th><th className={th}>IP</th><th className={th}>Detalle</th></tr></thead>
+        <thead><tr><th className={th}>Fecha</th><th className={th}>Usuario</th><Th info={{ text: 'Acción que quedó registrada, por ejemplo crear, cambiar o exportar. Las contraseñas y credenciales nunca se guardan; solo se anota que cambiaron.' }}>Evento</Th><Th info={{ text: 'Tipo y número del registro sobre el que se hizo la acción.' }}>Registro</Th><Th info={{ text: 'Dirección de red desde la que se hizo la acción.' }}>IP</Th><th className={th}>Detalle</th></tr></thead>
         <tbody>
           {logs.loading && !page && <TableSkeleton cols={6} />}
           {(page?.data ?? []).map((l) => (

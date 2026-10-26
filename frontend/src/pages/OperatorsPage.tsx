@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useToast } from '../components/toast'
-import { Button, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Button, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Th } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import type { OperatorRow } from '../lib/customers'
 import type { Company } from '../lib/types'
@@ -69,7 +69,7 @@ export default function OperatorsPage() {
 
       <FormError message={error ?? operators.error} />
       <DataTable label="Facturadores">
-        <thead><tr><th className={th}>Facturador</th><th className={th}>Compañía</th><th className={th}>Estado</th></tr></thead>
+        <thead><tr><Th info={{ text: 'Persona que factura los documentos, tomada del archivo de ventas.' }}>Facturador</Th><th className={th}>Compañía</th><th className={th}>Estado</th></tr></thead>
         <tbody>
           {operators.loading && !operators.data && <TableSkeleton cols={3} />}
           {!operators.loading && rows.length === 0 && <EmptyRow cols={3}>Aún no hay facturadores. Se crean al importar ventas.</EmptyRow>}

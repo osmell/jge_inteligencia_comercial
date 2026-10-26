@@ -1,8 +1,10 @@
+import { InfoTip } from '../components/InfoTip'
+import type { Info } from '../lib/glossary'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Button, Card, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, CheckField, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { api } from '../lib/api'
 import { PROMISE_LABEL, type PaymentPromiseRow } from '../lib/credit'
 import { formatMoney } from '../lib/format'
@@ -15,10 +17,10 @@ const NO_CONTACT = [15, 30, 60, 90] as const
 
 const profileLink = (companyId: number, code: string) => `/clientes/ficha?codigo=${encodeURIComponent(code)}&compania=${companyId}`
 
-function Stat({ label, value, hint, tone }: { label: string; value: number; hint?: string; tone?: 'danger' }) {
+function Stat({ label, value, hint, tone, info }: { label: string; value: number; hint?: string; tone?: 'danger'; info?: Info }) {
   return (
     <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
+      <p className="flex items-center gap-1 text-sm text-ink-muted">{label}{info && <InfoTip info={info} label={label} />}</p>
       <p className={`tabular mt-0.5 text-2xl font-semibold tracking-tight ${tone === 'danger' && value > 0 ? 'text-danger' : ''}`}>{value.toLocaleString('es')}</p>
       {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
     </Card>
@@ -32,8 +34,8 @@ function ActionsTable({ title, rows, total, loading, onDone, overdue }: { title:
       <DataTable label={title}>
         <thead>
           <tr>
-            <th className={th}>Cliente</th><th className={th}>Próxima acción</th><th className={th}>Fecha</th>
-            <th className={th}>Vendedor</th><th className={th}>Lo registró</th><th className={th}><span className="sr-only">Acciones</span></th>
+            <th className={th}>Cliente</th><Th info={{ text: 'Acción de seguimiento programada con el cliente.' }}>Próxima acción</Th><th className={th}>Fecha</th>
+            <th className={th}>Vendedor</th><Th info={{ text: 'Usuario que registró el contacto o la acción.' }}>Lo registró</Th><th className={th}><span className="sr-only">Acciones</span></th>
           </tr>
         </thead>
         <tbody>
@@ -71,7 +73,7 @@ function PromisesTable({ rows, loading }: { rows: PaymentPromiseRow[]; loading: 
       <p className="mb-2 text-xs text-ink-muted">Pendientes dentro del plazo elegido e incumplidas en los últimos 30 días. Una promesa se cumple con los abonos registrados hasta su fecha.</p>
       <DataTable label="Promesas de pago">
         <thead>
-          <tr><th className={th}>Cliente</th><th className={`${th} text-right`}>Prometido</th><th className={`${th} text-right`}>Abonado</th><th className={th}>Fecha prometida</th><th className={th}>Estado</th><th className={th}>Lo registró</th></tr>
+          <tr><th className={th}>Cliente</th><Th right info={{ text: 'Monto que el cliente se comprometió a pagar.' }}>Prometido</Th><Th right info={{ text: 'Parte de lo prometido que ya se abonó.' }}>Abonado</Th><Th info={{ text: 'Fecha en que el cliente prometió pagar.' }}>Fecha prometida</Th><Th info={{ text: 'Situación de la promesa: abierta, cumplida o incumplida (venció sin pago completo).' }}>Estado</Th><th className={th}>Lo registró</th></tr>
         </thead>
         <tbody>
           {loading ? <TableSkeleton cols={6} /> : rows.length === 0 ? (
@@ -100,8 +102,8 @@ function ReactivateTable({ rows, total, loading, days }: { rows: ReactivateRow[]
       <DataTable label="Clientes por reactivar">
         <thead>
           <tr>
-            <th className={th}>Cliente</th><th className={th}>Estado</th><th className={th}>Última compra</th>
-            <th className={th}>Vendedor</th><th className={th}>Último contacto</th>
+            <th className={th}>Cliente</th><Th info="customer_status">Estado</Th><Th info={{ text: 'Fecha de la última compra del cliente.' }}>Última compra</Th>
+            <th className={th}>Vendedor</th><Th info={{ text: 'Fecha del último contacto registrado con el cliente.' }}>Último contacto</Th>
           </tr>
         </thead>
         <tbody>
@@ -187,9 +189,9 @@ export default function AgendaPage() {
       {a?.meta.truncated && <div className="mb-3"><Alert tone="info">Hay más resultados de los que se muestran; usa los filtros para acotar la agenda.</Alert></div>}
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3" aria-busy={agenda.loading}>
-        <Stat label="Acciones vencidas" value={a?.meta.overdue_total ?? 0} tone="danger" hint="Pendientes con fecha pasada" />
-        <Stat label="Acciones próximas" value={a?.meta.upcoming_total ?? 0} hint={horizon === 0 ? 'Hasta el final de hoy' : `En los próximos ${horizon} días`} />
-        <Stat label="Clientes por reactivar" value={a?.meta.reactivate_total ?? 0} hint={`Sin contacto en ${noContact} días`} />
+        <Stat label="Acciones vencidas" info={{ text: 'Acciones de seguimiento programadas con fecha ya pasada y sin cumplir.' }} value={a?.meta.overdue_total ?? 0} tone="danger" hint="Pendientes con fecha pasada" />
+        <Stat label="Acciones próximas" info={{ text: 'Acciones de seguimiento programadas dentro del horizonte elegido.' }} value={a?.meta.upcoming_total ?? 0} hint={horizon === 0 ? 'Hasta el final de hoy' : `En los próximos ${horizon} días`} />
+        <Stat label="Clientes por reactivar" info={{ text: 'Clientes inactivos o perdidos que aceptan comunicaciones y llevan más días sin contacto que el límite elegido.' }} value={a?.meta.reactivate_total ?? 0} hint={`Sin contacto en ${noContact} días`} />
       </div>
 
       <div className="space-y-6">
