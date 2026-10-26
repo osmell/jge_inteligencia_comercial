@@ -158,7 +158,7 @@ class InventoryImportsTest extends TestCase
     public function test_row_validations(): void
     {
         $rows = [
-            $this->opening(['Fecha Corte' => '2026-10-25']),                                    // futura
+            $this->opening(['Fecha Corte' => '2099-01-01']),                                    // futura
             $this->opening(['Codigo Producto' => '999']),                                         // no existe
             $this->opening(['Unidad de Medida' => 'quintal']),                                    // unidad desconocida
             $this->opening(['Codigo Producto' => '200', 'Unidad de Medida' => 'Galón']),          // sin equivalencia

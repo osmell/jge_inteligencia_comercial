@@ -29,7 +29,7 @@ trait BuildsSalesFixtures
     }
 
     /**
-     * @param  list<array{net: float, qty?: float, price?: float, normal?: float|null, subtotal?: float|null, discount?: float|null, category?: string}>  $lines
+     * @param  list<array{net: float, qty?: float, price?: float, normal?: float|null, subtotal?: float|null, discount?: float|null, category?: string, code?: string, name?: string}>  $lines
      */
     protected function sale(Seller $seller, Operator $operator, Branch $branch, string $date, string $customer, array $lines, ?string $at = null): int
     {
@@ -49,7 +49,7 @@ trait BuildsSalesFixtures
             $tax = round($line['net'] * 0.1, 4);
             DB::table('sales_lines')->insert([
                 'sales_document_id' => $id, 'company_id' => $branch->company_id, 'branch_id' => $branch->id, 'issued_on' => $date, 'line_number' => $i + 1,
-                'product_code' => 'P'.($i + 1), 'product_name' => 'Producto '.($i + 1), 'category_name' => $line['category'] ?? 'Categoría A',
+                'product_code' => $line['code'] ?? 'P'.($i + 1), 'product_name' => $line['name'] ?? 'Producto '.($i + 1), 'category_name' => $line['category'] ?? 'Categoría A',
                 'units' => $qty, 'unit_cost' => 0, 'line_cost_total' => 0, 'unit_price' => $line['price'] ?? $line['net'] / $qty,
                 'normal_price' => $line['normal'] ?? null, 'subtotal' => $line['subtotal'] ?? null, 'discount_total' => $line['discount'] ?? null,
                 'net_total' => $line['net'], 'tax_total' => $tax, 'sale_plus_tax' => $line['net'] + $tax, 'grand_total' => $line['net'] + $tax,

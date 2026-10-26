@@ -19015,6 +19015,1301 @@
                 }
             }
         },
+        "/reports/products": {
+            "get": {
+                "operationId": "productMixReport.index",
+                "tags": [
+                    "ProductMixReport"
+                ],
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "previous",
+                                "last_year",
+                                "custom",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "compare_from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "branch_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "subject",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "seller",
+                                "operator",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "level",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "product",
+                                "category",
+                                "line",
+                                "group",
+                                null
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "period": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "from": {
+                                                            "type": "string"
+                                                        },
+                                                        "to": {
+                                                            "type": "string"
+                                                        },
+                                                        "days": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "from",
+                                                        "to",
+                                                        "days"
+                                                    ]
+                                                },
+                                                "comparison": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "mode": {
+                                                            "type": "string"
+                                                        },
+                                                        "from": {
+                                                            "type": "string"
+                                                        },
+                                                        "to": {
+                                                            "type": "string"
+                                                        },
+                                                        "days": {
+                                                            "type": "integer"
+                                                        },
+                                                        "uneven": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "mode",
+                                                        "from",
+                                                        "to",
+                                                        "days",
+                                                        "uneven"
+                                                    ]
+                                                },
+                                                "subject": {
+                                                    "type": "string"
+                                                },
+                                                "level": {
+                                                    "type": "string"
+                                                },
+                                                "ranking": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "items": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "units": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "rank": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "previous_net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "growth_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "name",
+                                                                    "net_total",
+                                                                    "units",
+                                                                    "documents",
+                                                                    "customers",
+                                                                    "rank",
+                                                                    "share_pct",
+                                                                    "previous_net_total",
+                                                                    "growth_pct"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "total_items": {
+                                                            "type": "integer"
+                                                        },
+                                                        "truncated": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "net_total": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "items",
+                                                        "total_items",
+                                                        "truncated",
+                                                        "net_total"
+                                                    ]
+                                                },
+                                                "rows": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "subject": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "company_id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "is_active": {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id",
+                                                                    "name",
+                                                                    "company_id",
+                                                                    "is_active"
+                                                                ]
+                                                            },
+                                                            "rank": {
+                                                                "type": [
+                                                                    "integer",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "net_total": {
+                                                                "type": "number"
+                                                            },
+                                                            "share_pct": {
+                                                                "type": [
+                                                                    "number",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "documents": {
+                                                                "type": "integer"
+                                                            },
+                                                            "products_sold": {
+                                                                "type": "integer"
+                                                            },
+                                                            "categories_sold": {
+                                                                "type": "integer"
+                                                            },
+                                                            "categories_catalog": {
+                                                                "type": "integer"
+                                                            },
+                                                            "category_coverage_pct": {
+                                                                "type": [
+                                                                    "number",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "lines_sold": {
+                                                                "type": "integer"
+                                                            },
+                                                            "lines_catalog": {
+                                                                "type": "integer"
+                                                            },
+                                                            "line_coverage_pct": {
+                                                                "type": [
+                                                                    "number",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "groups_sold": {
+                                                                "type": "integer"
+                                                            },
+                                                            "top5_share_pct": {
+                                                                "type": [
+                                                                    "number",
+                                                                    "null"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "subject",
+                                                            "rank",
+                                                            "net_total",
+                                                            "share_pct",
+                                                            "documents",
+                                                            "products_sold",
+                                                            "categories_sold",
+                                                            "categories_catalog",
+                                                            "category_coverage_pct",
+                                                            "lines_sold",
+                                                            "lines_catalog",
+                                                            "line_coverage_pct",
+                                                            "groups_sold",
+                                                            "top5_share_pct"
+                                                        ]
+                                                    }
+                                                },
+                                                "totals": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "people": {
+                                                            "type": "integer"
+                                                        },
+                                                        "net_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "catalog_categories": {
+                                                            "type": "integer"
+                                                        },
+                                                        "catalog_lines": {
+                                                            "type": "integer"
+                                                        },
+                                                        "average_category_coverage_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "below_half_coverage": {
+                                                            "type": "integer"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "people",
+                                                        "net_total",
+                                                        "catalog_categories",
+                                                        "catalog_lines",
+                                                        "average_category_coverage_pct",
+                                                        "below_half_coverage"
+                                                    ]
+                                                },
+                                                "reconciliation": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "consolidated_net": {
+                                                            "type": "number"
+                                                        },
+                                                        "rows_net": {
+                                                            "type": "number"
+                                                        },
+                                                        "net_difference": {
+                                                            "type": "number"
+                                                        },
+                                                        "consolidated_documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "rows_documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "documents_difference": {
+                                                            "type": "integer"
+                                                        },
+                                                        "matches": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "consolidated_net",
+                                                        "rows_net",
+                                                        "net_difference",
+                                                        "consolidated_documents",
+                                                        "rows_documents",
+                                                        "documents_difference",
+                                                        "matches"
+                                                    ]
+                                                },
+                                                "notes": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "period",
+                                                "comparison",
+                                                "subject",
+                                                "level",
+                                                "ranking",
+                                                "rows",
+                                                "totals",
+                                                "reconciliation",
+                                                "notes"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/reports/products/sellers/{seller}": {
+            "get": {
+                "operationId": "productMixReport.seller",
+                "tags": [
+                    "ProductMixReport"
+                ],
+                "parameters": [
+                    {
+                        "name": "seller",
+                        "in": "path",
+                        "required": true,
+                        "description": "The seller ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "previous",
+                                "last_year",
+                                "custom",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "compare_from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "branch_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "subject",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "seller",
+                                "operator",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "level",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "product",
+                                "category",
+                                "line",
+                                "group",
+                                null
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "subject": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "company_id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "kind": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name",
+                                                        "company_id",
+                                                        "kind"
+                                                    ]
+                                                },
+                                                "level": {
+                                                    "type": "string"
+                                                },
+                                                "summary": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "additionalProperties": {}
+                                                },
+                                                "ranking": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "items": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "units": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "rank": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "previous_net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "growth_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "team_share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "mix_index": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "name",
+                                                                    "net_total",
+                                                                    "units",
+                                                                    "documents",
+                                                                    "customers",
+                                                                    "rank",
+                                                                    "share_pct",
+                                                                    "previous_net_total",
+                                                                    "growth_pct",
+                                                                    "team_share_pct",
+                                                                    "mix_index"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "total_items": {
+                                                            "type": "integer"
+                                                        },
+                                                        "truncated": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "net_total": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "items",
+                                                        "total_items",
+                                                        "truncated",
+                                                        "net_total"
+                                                    ]
+                                                },
+                                                "gaps": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "categories": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "name",
+                                                                    "net_total",
+                                                                    "share_pct",
+                                                                    "customers"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "lines": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "name",
+                                                                    "net_total",
+                                                                    "share_pct",
+                                                                    "customers"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "categories",
+                                                        "lines"
+                                                    ]
+                                                },
+                                                "star_products": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "top": {
+                                                            "type": "integer"
+                                                        },
+                                                        "sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "missing": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "units": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "name",
+                                                                    "net_total",
+                                                                    "units",
+                                                                    "documents",
+                                                                    "customers"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "top",
+                                                        "sold",
+                                                        "missing"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "subject",
+                                                "level",
+                                                "summary",
+                                                "ranking",
+                                                "gaps",
+                                                "star_products"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/reports/products/operators/{operator}": {
+            "get": {
+                "operationId": "productMixReport.operator",
+                "tags": [
+                    "ProductMixReport"
+                ],
+                "parameters": [
+                    {
+                        "name": "operator",
+                        "in": "path",
+                        "required": true,
+                        "description": "The operator ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "previous",
+                                "last_year",
+                                "custom",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "compare_from",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "compare_to",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "company_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "branch_id",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "integer",
+                                "null"
+                            ],
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "subject",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "seller",
+                                "operator",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "level",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "product",
+                                "category",
+                                "line",
+                                "group",
+                                null
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "subject": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "company_id": {
+                                                            "type": "integer"
+                                                        },
+                                                        "kind": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name",
+                                                        "company_id",
+                                                        "kind"
+                                                    ]
+                                                },
+                                                "level": {
+                                                    "type": "string"
+                                                },
+                                                "summary": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "additionalProperties": {}
+                                                },
+                                                "ranking": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "items": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "units": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "rank": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "previous_net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "growth_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "team_share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "mix_index": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "name",
+                                                                    "net_total",
+                                                                    "units",
+                                                                    "documents",
+                                                                    "customers",
+                                                                    "rank",
+                                                                    "share_pct",
+                                                                    "previous_net_total",
+                                                                    "growth_pct",
+                                                                    "team_share_pct",
+                                                                    "mix_index"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "total_items": {
+                                                            "type": "integer"
+                                                        },
+                                                        "truncated": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "net_total": {
+                                                            "type": "number"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "items",
+                                                        "total_items",
+                                                        "truncated",
+                                                        "net_total"
+                                                    ]
+                                                },
+                                                "gaps": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "categories": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "name",
+                                                                    "net_total",
+                                                                    "share_pct",
+                                                                    "customers"
+                                                                ]
+                                                            }
+                                                        },
+                                                        "lines": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "share_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "name",
+                                                                    "net_total",
+                                                                    "share_pct",
+                                                                    "customers"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "categories",
+                                                        "lines"
+                                                    ]
+                                                },
+                                                "star_products": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "top": {
+                                                            "type": "integer"
+                                                        },
+                                                        "sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "missing": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "net_total": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "units": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "customers": {
+                                                                        "type": "integer"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "name",
+                                                                    "net_total",
+                                                                    "units",
+                                                                    "documents",
+                                                                    "customers"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "top",
+                                                        "sold",
+                                                        "missing"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "subject",
+                                                "level",
+                                                "summary",
+                                                "ranking",
+                                                "gaps",
+                                                "star_products"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/quotations": {
             "get": {
                 "operationId": "quotation.index",

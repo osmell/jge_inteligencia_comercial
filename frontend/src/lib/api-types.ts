@@ -2284,6 +2284,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["productMixReport.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/products/sellers/{seller}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["productMixReport.seller"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/products/operators/{operator}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["productMixReport.operator"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/quotations": {
         parameters: {
             query?: never;
@@ -9816,6 +9864,300 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "productMixReport.index": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                subject?: "seller" | "operator" | null;
+                level?: "product" | "category" | "line" | "group" | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: {
+                                from: string;
+                                to: string;
+                                days: number;
+                            };
+                            comparison: {
+                                mode: string;
+                                from: string;
+                                to: string;
+                                days: number;
+                                uneven: boolean;
+                            };
+                            subject: string;
+                            level: string;
+                            ranking: {
+                                items: {
+                                    key: string;
+                                    name: string;
+                                    net_total: number;
+                                    units: number;
+                                    documents: number;
+                                    customers: number;
+                                    rank: number;
+                                    share_pct: number | null;
+                                    previous_net_total: number;
+                                    growth_pct: number | null;
+                                }[];
+                                total_items: number;
+                                truncated: boolean;
+                                net_total: number;
+                            };
+                            rows: {
+                                subject: {
+                                    id: number;
+                                    name: string;
+                                    company_id: number;
+                                    is_active: boolean;
+                                };
+                                rank: number | null;
+                                net_total: number;
+                                share_pct: number | null;
+                                documents: number;
+                                products_sold: number;
+                                categories_sold: number;
+                                categories_catalog: number;
+                                category_coverage_pct: number | null;
+                                lines_sold: number;
+                                lines_catalog: number;
+                                line_coverage_pct: number | null;
+                                groups_sold: number;
+                                top5_share_pct: number | null;
+                            }[];
+                            totals: {
+                                people: number;
+                                net_total: number;
+                                catalog_categories: number;
+                                catalog_lines: number;
+                                average_category_coverage_pct: number | null;
+                                below_half_coverage: number;
+                            };
+                            reconciliation: {
+                                consolidated_net: number;
+                                rows_net: number;
+                                net_difference: number;
+                                consolidated_documents: number;
+                                rows_documents: number;
+                                documents_difference: number;
+                                matches: boolean;
+                            };
+                            notes: string[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "productMixReport.seller": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                subject?: "seller" | "operator" | null;
+                level?: "product" | "category" | "line" | "group" | null;
+            };
+            header?: never;
+            path: {
+                /** @description The seller ID */
+                seller: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            subject: {
+                                id: number;
+                                name: string;
+                                company_id: number;
+                                kind: string;
+                            };
+                            level: string;
+                            summary: {
+                                [key: string]: unknown;
+                            } | null;
+                            ranking: {
+                                items: {
+                                    key: string;
+                                    name: string;
+                                    net_total: number;
+                                    units: number;
+                                    documents: number;
+                                    customers: number;
+                                    rank: number;
+                                    share_pct: number | null;
+                                    previous_net_total: number;
+                                    growth_pct: number | null;
+                                    team_share_pct: number | null;
+                                    mix_index: number | null;
+                                }[];
+                                total_items: number;
+                                truncated: boolean;
+                                net_total: number;
+                            };
+                            gaps: {
+                                categories: {
+                                    key: string;
+                                    name: string;
+                                    net_total: number;
+                                    share_pct: number | null;
+                                    customers: number;
+                                }[];
+                                lines: {
+                                    key: string;
+                                    name: string;
+                                    net_total: number;
+                                    share_pct: number | null;
+                                    customers: number;
+                                }[];
+                            };
+                            star_products: {
+                                top: number;
+                                sold: number;
+                                missing: {
+                                    key: string;
+                                    name: string;
+                                    net_total: number;
+                                    units: number;
+                                    documents: number;
+                                    customers: number;
+                                }[];
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "productMixReport.operator": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                subject?: "seller" | "operator" | null;
+                level?: "product" | "category" | "line" | "group" | null;
+            };
+            header?: never;
+            path: {
+                /** @description The operator ID */
+                operator: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            subject: {
+                                id: number;
+                                name: string;
+                                company_id: number;
+                                kind: string;
+                            };
+                            level: string;
+                            summary: {
+                                [key: string]: unknown;
+                            } | null;
+                            ranking: {
+                                items: {
+                                    key: string;
+                                    name: string;
+                                    net_total: number;
+                                    units: number;
+                                    documents: number;
+                                    customers: number;
+                                    rank: number;
+                                    share_pct: number | null;
+                                    previous_net_total: number;
+                                    growth_pct: number | null;
+                                    team_share_pct: number | null;
+                                    mix_index: number | null;
+                                }[];
+                                total_items: number;
+                                truncated: boolean;
+                                net_total: number;
+                            };
+                            gaps: {
+                                categories: {
+                                    key: string;
+                                    name: string;
+                                    net_total: number;
+                                    share_pct: number | null;
+                                    customers: number;
+                                }[];
+                                lines: {
+                                    key: string;
+                                    name: string;
+                                    net_total: number;
+                                    share_pct: number | null;
+                                    customers: number;
+                                }[];
+                            };
+                            star_products: {
+                                top: number;
+                                sold: number;
+                                missing: {
+                                    key: string;
+                                    name: string;
+                                    net_total: number;
+                                    units: number;
+                                    documents: number;
+                                    customers: number;
+                                }[];
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
         };
     };
     "quotation.index": {

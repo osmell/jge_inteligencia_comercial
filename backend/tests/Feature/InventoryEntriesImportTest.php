@@ -174,7 +174,7 @@ class InventoryEntriesImportTest extends TestCase
     {
         $this->opening();
         $batch = $this->validate([
-            $this->line(['Fecha' => '2026-10-25']),
+            $this->line(['Fecha' => '2099-01-01']),
             $this->line(['Documento' => 'C-2', 'Codigo Producto' => '999']),
             $this->line(['Documento' => 'C-3', 'Unidad Medida' => 'quintal']),
             $this->line(['Documento' => 'C-4', 'Codigo Producto' => '200', 'Unidad Medida' => 'Galón', 'Costo' => 60]),    // sin equivalencia

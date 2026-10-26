@@ -40,6 +40,7 @@ use App\Http\Controllers\Api\V1\OperatorReportController;
 use App\Http\Controllers\Api\V1\OrganizationController;
 use App\Http\Controllers\Api\V1\PasswordController;
 use App\Http\Controllers\Api\V1\PaymentPromiseController;
+use App\Http\Controllers\Api\V1\ProductMixReportController;
 use App\Http\Controllers\Api\V1\QuotationController;
 use App\Http\Controllers\Api\V1\ReportContextController;
 use App\Http\Controllers\Api\V1\ReportOutputController;
@@ -79,6 +80,9 @@ Route::middleware(['auth:sanctum', 'session.current', 'active', 'password.curren
         Route::get('branches', [BranchReportController::class, 'index']);
         Route::get('branches/mix', [BranchReportController::class, 'mix']);
         Route::get('branches/{branch}/documents', [BranchReportController::class, 'documents']);
+        Route::get('products', [ProductMixReportController::class, 'index']);
+        Route::get('products/sellers/{seller}', [ProductMixReportController::class, 'seller']);
+        Route::get('products/operators/{operator}', [ProductMixReportController::class, 'operator']);
         Route::get('operators', [OperatorReportController::class, 'index']);
         Route::get('operators/{operator}/documents', [OperatorReportController::class, 'documents']);
         Route::get('operators/{operator}/distribution', [OperatorReportController::class, 'distribution']);

@@ -20,6 +20,7 @@ parameters:
                 - app/Services/SalesStatistics.php
                 - app/Services/Reports/SalesFigures.php
                 - app/Services/Reports/Branches/BranchCategoryMix.php
+                - app/Services/Reports/Products/ProductFigures.php
         # `$request->user()` nunca es nulo en controladores y peticiones: las rutas que lo usan están detrás de `auth:sanctum` y del
         # middleware de permisos (las públicas —inicio de sesión, webhooks— no lo usan). Solo se admite en estas dos carpetas.
         -
