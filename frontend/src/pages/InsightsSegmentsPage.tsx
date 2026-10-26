@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { api, download } from '../lib/api'
 import { formatDateTime, formatMoney } from '../lib/format'
 import type { RfmList, RfmSegment } from '../lib/insights'
@@ -110,8 +110,8 @@ export default function InsightsSegmentsPage() {
           <DataTable label="Clientes por segmento">
             <thead>
               <tr>
-                <th className={th}>Cliente</th><th className={th}>Segmento</th><th className={th}>Última compra</th><th className={`${th} text-right`}>Días con compra</th>
-                <th className={`${th} text-right`}>Venta neta</th><th className={`${th} text-center`}>R · F · V</th>
+                <th className={th}>Cliente</th><Th info={{ text: 'Grupo que se asigna al cliente con reglas fijas sobre sus puntuaciones R, F y V: Nuevos, Campeones, Leales, Prometedores, En riesgo, Dormidos o Perdidos.' }}>Segmento</Th><Th info={{ text: 'Fecha de la última compra del cliente.' }}>Última compra</Th><Th right info={{ text: 'Frecuencia: días distintos con compra en los últimos 12 meses.' }}>Días con compra</Th>
+                <Th right info={{ text: 'Valor: venta neta menos devoluciones vigentes (notas de crédito no anuladas) en los últimos 12 meses.' }}>Venta neta</Th><Th className="text-center" info={{ text: 'Puntuaciones de 1 a 5 de Recencia (qué tan reciente compró), Frecuencia (cuántos días compró) y Valor (cuánto compró). Se calculan por quintiles entre los clientes de la compañía.' }}>R · F · V</Th>
               </tr>
             </thead>
             <tbody>

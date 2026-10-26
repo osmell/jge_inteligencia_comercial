@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Alert, Badge, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr, Stat } from '../components/ui'
+import { Alert, Badge, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr, Stat, Th } from '../components/ui'
 import type { StockList } from '../lib/inventory'
 import { formatMoney } from '../lib/format'
 import type { Branch, Company } from '../lib/types'
@@ -40,8 +40,8 @@ export default function InventoryStockPage() {
       <PageHeader title="Existencias" description="Existencias por sucursal, en la unidad base de cada producto. Se calculan con los movimientos del libro de inventario." />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2" aria-busy={stock.loading}>
-        <Stat label="Productos" value={meta ? meta.totals.products.toLocaleString('es') : '—'} hint="Según los filtros elegidos" />
-        {costs && <Stat label="Valor del inventario" value={meta?.totals.value ? formatMoney(meta.totals.value) : '—'} hint="A costo promedio ponderado" />}
+        <Stat label="Productos" info={{ text: 'Productos con movimientos de inventario que cumplen los filtros elegidos.' }} value={meta ? meta.totals.products.toLocaleString('es') : '—'} hint="Según los filtros elegidos" />
+        {costs && <Stat label="Valor del inventario" info={{ text: 'Valor de todas las existencias del filtro a costo promedio ponderado.', formula: 'Valor = suma de (Existencia × Costo promedio)' }} value={meta?.totals.value ? formatMoney(meta.totals.value) : '—'} hint="A costo promedio ponderado" />}
       </div>
 
       <Card className="mb-4 p-4">
@@ -74,8 +74,8 @@ export default function InventoryStockPage() {
       <DataTable label="Existencias por sucursal">
         <thead>
           <tr>
-            <th className={th}>Producto</th><th className={th}>Sucursal</th><th className={`${th} text-right`}>Existencia</th><th className={th}>Unidad base</th>
-            {costs && <><th className={`${th} text-right`}>Costo promedio</th><th className={`${th} text-right`}>Valor</th></>}
+            <th className={th}>Producto</th><th className={th}>Sucursal</th><Th right info={{ text: 'Unidades que hay hoy en la sucursal, en la unidad base del producto. Se calcula con los movimientos del libro de inventario: entradas menos salidas.', formula: 'Existencia = Entradas − Salidas' }}>Existencia</Th><Th info={{ text: 'Unidad en la que se lleva la existencia del producto. Las demás unidades se convierten a esta con sus equivalencias.' }}>Unidad base</Th>
+            {costs && <><Th right info={{ text: 'Costo por unidad base, promediado entre las entradas con costo.', formula: 'Costo promedio = Valor del saldo ÷ Existencia' }}>Costo promedio</Th><Th right info={{ text: 'Valor de las existencias a costo promedio ponderado. Solo lo ve quien tiene el permiso de costos.', formula: 'Valor = Existencia × Costo promedio' }}>Valor</Th></>}
             <th className={th}><span className="sr-only">Kárdex</span></th>
           </tr>
         </thead>

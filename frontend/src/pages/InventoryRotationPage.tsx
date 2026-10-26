@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { download } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { ROTATION_LABEL, type RotationReport, type RotationStatus } from '../lib/inventory'
@@ -81,9 +81,9 @@ export default function InventoryRotationPage() {
       <DataTable label="Rotación y reposición">
         <thead>
           <tr>
-            <th className={th}>Producto</th><th className={th}>Sucursal</th><th className={`${th} text-right`}>Existencia</th><th className={`${th} text-right`}>Demanda diaria</th>
-            <th className={`${th} text-right`}>Cobertura (días)</th><th className={`${th} text-right`}>Rotación</th><th className={`${th} text-right`}>Mín. / Máx.</th>
-            {costs && <th className={`${th} text-right`}>Valor</th>}<th className={th}>Estado</th>
+            <th className={th}>Producto</th><th className={th}>Sucursal</th><Th right info={{ text: 'Unidades que hay hoy en la sucursal, en la unidad base del producto.' }}>Existencia</Th><Th right info={{ text: 'Unidades vendidas por día en la ventana de demanda configurada. Solo cuentan las ventas; no los traslados ni los ajustes.', formula: 'Demanda diaria = Unidades vendidas en la ventana ÷ Días de la ventana' }}>Demanda diaria</Th>
+            <Th right info={{ text: 'Cuántos días alcanza la existencia al ritmo actual de ventas.', formula: 'Cobertura = Existencia ÷ Demanda diaria' }}>Cobertura (días)</Th><Th right info={{ text: 'Cuántas veces se renovó la existencia en la ventana de demanda.', formula: 'Rotación = Unidades vendidas en la ventana ÷ Existencia promedio (promedio entre la existencia al inicio y la actual)' }}>Rotación</Th><Th right info={{ text: 'Mínimo: la existencia por debajo de la cual hay que reponer. Máximo: la existencia por encima de la cual hay sobreinventario. Los días son configurables.', formula: 'Mínimo = Demanda diaria × (Días de reposición + Días de seguridad); Máximo = Mínimo + Demanda diaria × Ciclo de compra' }}>Mín. / Máx.</Th>
+            {costs && <Th right info={{ text: 'Valor inmovilizado de la existencia a costo promedio. Solo lo ve quien tiene el permiso de costos.' }}>Valor</Th>}<Th info={{ text: 'Situación del producto, por prioridad: agotado (sin existencia pero con demanda), bajo el mínimo, sin rotación (existencia sin ventas en los últimos días configurados), sobre el máximo o normal.' }}>Estado</Th>
           </tr>
         </thead>
         <tbody>

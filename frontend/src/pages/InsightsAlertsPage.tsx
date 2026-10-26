@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, TableSkeleton, TextAreaField, TextField, td, th, tr } from '../components/ui'
+import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SearchInput, SelectField, TableSkeleton, TextAreaField, TextField, td, th, tr, Th } from '../components/ui'
 import { api } from '../lib/api'
 import type { SellerRow } from '../lib/customers'
 import { formatDateTime } from '../lib/format'
@@ -149,7 +149,7 @@ export default function InsightsAlertsPage() {
       {alerts.data && rows.length === 0 && f.status === 'open' && !f.type && !f.severity && !f.text && !f.sellerId && <div className="mb-3"><Alert tone="info">No hay recomendaciones abiertas. Se calculan cada noche con el historial de ventas; si una compañía no tiene historial suficiente, aparece como «Falta historial» en Inteligencia.</Alert></div>}
 
       <DataTable label="Recomendaciones">
-        <thead><tr><th className={th}>Cliente</th><th className={th}>Recomendación</th><th className={th}>Gravedad</th><th className={th}>{f.status === 'open' ? 'Detectada' : 'Cierre'}</th>{cols === 5 && <th className={th}><span className="sr-only">Acciones</span></th>}</tr></thead>
+        <thead><tr><th className={th}>Cliente</th><Th info={{ text: 'Qué detectó el análisis y por qué, en palabras. Es una sugerencia para conversar con el cliente; no registra ningún contacto por sí sola.' }}>Recomendación</Th><Th info={{ text: 'Prioridad con la que conviene atender la recomendación (alta, media o baja), según el análisis que la generó.' }}>Gravedad</Th><th className={th}>{f.status === 'open' ? 'Detectada' : 'Cierre'}</th>{cols === 5 && <th className={th}><span className="sr-only">Acciones</span></th>}</tr></thead>
         <tbody>
           {alerts.loading && !alerts.data ? <TableSkeleton cols={cols} /> : rows.length === 0 ? <EmptyRow cols={cols}>No hay recomendaciones con estos filtros.</EmptyRow> : rows.map((a) => (
             <tr key={a.id} className={tr}>

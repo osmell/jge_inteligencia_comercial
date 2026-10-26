@@ -5,7 +5,7 @@ import OperatorDistributionView from '../components/reports/OperatorDistribution
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
 import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
-import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import type { OperatorReport, OperatorReportRow } from '../lib/reports'
 import { formatPct } from '../lib/sales'
@@ -89,20 +89,20 @@ export default function ReportOperatorsPage() {
             {GROUPS.map(([title, span], i) => <th key={i} colSpan={span} className={`${th} ${title ? 'border-l border-line text-center' : ''}`}>{title}</th>)}
           </tr>
           <tr>
-            <th className={`${th} text-right`}>#</th>
+            <Th right info="rep_rank">#</Th>
             <th className={th}>Operador</th>
-            <th className={`${th} text-right`}>Venta neta</th>
-            <th className={`${th} text-right`}>Documentos</th>
-            <th className={`${th} text-right`}>Líneas</th>
-            <th className={`${th} text-right`}>Días activos</th>
-            <th className={`${th} text-right`}>Ticket</th>
-            <th className={`${th} border-l border-line text-right`}>Descuento</th>
-            <th className={`${th} text-right`}>Bajo precio normal</th>
-            <th className={`${th} border-l border-line text-right`}>Descuento alto</th>
-            <th className={`${th} text-right`}>Sin precio</th>
-            <th className={`${th} text-right`}>Atípicos</th>
-            <th className={`${th} text-right`}>Negativos</th>
-            <th className={`${th} border-l border-line text-right`}>Venta directa</th>
+            <Th right info="sales_net">Venta neta</Th>
+            <Th right info="sales_documents">Documentos</Th>
+            <Th right info="rep_lines">Líneas</Th>
+            <Th right info="rep_active_days">Días activos</Th>
+            <Th right info="sales_ticket">Ticket</Th>
+            <Th right className="border-l border-line" info="rep_discount">Descuento</Th>
+            <Th right info="rep_below_list">Bajo precio normal</Th>
+            <Th right className="border-l border-line" info="rep_high_discount">Descuento alto</Th>
+            <Th right info="rep_zero_price">Sin precio</Th>
+            <Th right info="rep_atypical">Atípicos</Th>
+            <Th right info="rep_negative">Negativos</Th>
+            <Th right className="border-l border-line" info="rep_direct">Venta directa</Th>
           </tr>
         </thead>
         <tbody>

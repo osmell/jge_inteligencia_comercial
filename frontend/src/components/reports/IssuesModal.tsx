@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { formatDate } from '../../lib/customers'
 import { INTEGRITY_LABEL, type ConciliationIssues } from '../../lib/reports'
 import { useLoad } from '../../lib/useLoad'
-import { Button, DataTable, EmptyRow, FormError, Modal, TableSkeleton, td, th, tr } from '../ui'
+import { Button, DataTable, EmptyRow, FormError, Modal, TableSkeleton, td, th, tr, Th } from '../ui'
 
 /** Documentos (o facturas de crédito) que tienen una diferencia de conciliación concreta, con la descripción del problema. */
 export default function IssuesModal({ code, query, onClose }: { code: string; query: string; onClose: () => void }) {
@@ -21,7 +21,7 @@ export default function IssuesModal({ code, query, onClose }: { code: string; qu
             <th className={th}>Fecha</th>
             <th className={th}>Cliente</th>
             <th className={th}>Sucursal</th>
-            <th className={th}>Qué pasa</th>
+            <Th info={{ text: 'Descripción de la diferencia encontrada en el documento.' }}>Qué pasa</Th>
           </tr>
         </thead>
         <tbody>

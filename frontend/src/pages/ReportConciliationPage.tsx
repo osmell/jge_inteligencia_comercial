@@ -5,7 +5,7 @@ import IssuesModal from '../components/reports/IssuesModal'
 import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
 import { ReportStat } from '../components/reports/ReportParts'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, td, th, tr, Th } from '../components/ui'
 import { formatDate } from '../lib/customers'
 import { formatMoney } from '../lib/format'
 import { DIMENSION_LABEL, INTEGRITY_LABEL, type Conciliation } from '../lib/reports'
@@ -87,12 +87,12 @@ export default function ReportConciliationPage() {
             <thead>
               <tr>
                 <th className={th}>Desglose</th>
-                <th className={`${th} text-right`}>Filas</th>
-                <th className={`${th} text-right`}>Venta neta</th>
-                <th className={`${th} text-right`}>Documentos</th>
-                <th className={`${th} text-right`}>Diferencia neta</th>
-                <th className={`${th} text-right`}>Diferencia documentos</th>
-                <th className={th}>Estado</th>
+                <Th right info={{ text: 'Cantidad de filas (compañías, sucursales, vendedores u operadores) que suman en ese desglose.' }}>Filas</Th>
+                <Th right info="sales_net">Venta neta</Th>
+                <Th right info="sales_documents">Documentos</Th>
+                <Th right info={{ text: 'Venta neta del consolidado menos la suma de las filas del desglose. Cuadra si la diferencia no pasa de 0,01.', formula: 'Diferencia = Venta neta consolidada − Suma de las filas' }}>Diferencia neta</Th>
+                <Th right info={{ text: 'Documentos del consolidado menos la suma de los documentos de las filas. Cuadra si es cero.', formula: 'Diferencia = Documentos consolidados − Suma de las filas' }}>Diferencia documentos</Th>
+                <Th info={{ text: '«Cuadra» si el desglose suma lo mismo que el consolidado; «Diferencia» si no.' }}>Estado</Th>
               </tr>
             </thead>
             <tbody>
@@ -112,7 +112,7 @@ export default function ReportConciliationPage() {
 
           <h2 className="mb-2 mt-8 text-sm font-semibold">Integridad de los documentos</h2>
           <DataTable label="Integridad de los documentos de venta">
-            <thead><tr><th className={th}>Comprobación</th><th className={`${th} text-right`}>Documentos</th><th className={th}>Estado</th><th className={th} /></tr></thead>
+            <thead><tr><Th info={{ text: 'Cada documento debe cuadrar con sus líneas: número de líneas declarado, documentos sin líneas, líneas de otra compañía, sucursal o fecha, y neto + impuesto igual al total (tolerancia 0,01).' }}>Comprobación</Th><th className={`${th} text-right`}>Documentos</th><th className={th}>Estado</th><th className={th} /></tr></thead>
             <tbody>
               {d.integrity.map((c) => (
                 <tr key={c.code} className={tr}>
@@ -130,10 +130,10 @@ export default function ReportConciliationPage() {
             <thead>
               <tr>
                 <th className={th}>Archivo</th>
-                <th className={`${th} text-right`}>Documentos nuevos (archivo)</th>
-                <th className={`${th} text-right`}>Guardados</th>
-                <th className={`${th} text-right`}>Venta neta (archivo)</th>
-                <th className={`${th} text-right`}>Guardada</th>
+                <Th right info={{ text: 'Documentos nuevos que declaraba el archivo al importarlo. Si traía documentos ya cargados (duplicados), no se compara la venta, solo esta cantidad.' }}>Documentos nuevos (archivo)</Th>
+                <Th right info={{ text: 'Documentos de ese archivo que hoy están guardados en el sistema.' }}>Guardados</Th>
+                <Th right info={{ text: 'Venta neta total que declaraba el archivo al importarlo.' }}>Venta neta (archivo)</Th>
+                <Th right info={{ text: 'Venta neta de ese archivo que hoy está guardada en el sistema.' }}>Guardada</Th>
                 <th className={th}>Estado</th>
               </tr>
             </thead>

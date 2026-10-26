@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { api } from '../lib/api'
 import { formatDay } from '../lib/quotations'
 import { SHORTFALL_REASON, type ShortfallList } from '../lib/inventory'
@@ -81,8 +81,8 @@ export default function InventoryShortfallsPage() {
       <DataTable label="Faltantes por conciliar">
         <thead>
           <tr>
-            <th className={th}>Venta</th><th className={th}>Producto</th><th className={th}>Sucursal</th>
-            <th className={`${th} text-right`}>Vendido</th><th className={`${th} text-right`}>Descontado</th><th className={`${th} text-right`}>Falta</th><th className={th}>Motivo</th>
+            <Th info={{ text: 'Factura en la que se vendió más de lo que había en existencia.' }}>Venta</Th><th className={th}>Producto</th><th className={th}>Sucursal</th>
+            <Th right info={{ text: 'Unidades que pedía la línea de venta.' }}>Vendido</Th><Th right info={{ text: 'Unidades que sí se pudieron descontar de la existencia.' }}>Descontado</Th><Th right info={{ text: 'Unidades vendidas sin existencia que las respaldara. Sigue abierto hasta que se resuelve.', formula: 'Falta = Vendido − Descontado' }}>Falta</Th><Th info={{ text: 'Por qué no se pudo descontar: existencias insuficientes, producto fuera del catálogo o producto sin unidad base.' }}>Motivo</Th>
             {manage && <th className={th}><span className="sr-only">Acciones</span></th>}
           </tr>
         </thead>

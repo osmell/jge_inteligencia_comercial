@@ -2,7 +2,7 @@ import { formatMoney } from '../../lib/format'
 import type { OperatorDistribution } from '../../lib/reports'
 import { formatPct } from '../../lib/sales'
 import { useLoad } from '../../lib/useLoad'
-import { Badge, DataTable, FormError, TableSkeleton, td, th, tr } from '../ui'
+import { Badge, DataTable, FormError, TableSkeleton, td, th, tr, Th } from '../ui'
 
 const WEEKDAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
@@ -35,7 +35,7 @@ export default function OperatorDistributionView({ operatorId, query }: { operat
       <FormError message={load.error} />
       <div className="grid gap-4 lg:grid-cols-2">
         <DataTable label="Vendedores a los que factura">
-          <thead><tr><th className={th}>Vendedor</th><th className={`${th} text-right`}>Venta neta</th><th className={`${th} text-right`}>%</th></tr></thead>
+          <thead><tr><th className={th}>Vendedor</th><Th right info="sales_net">Venta neta</Th><Th right info={{ text: 'Parte de la venta del operador que corresponde a esa fila.', formula: '% = Venta neta de la fila ÷ Venta neta del operador × 100' }}>%</Th></tr></thead>
           <tbody>
             {!d && load.loading && <TableSkeleton cols={3} />}
             {d?.sellers.map((s) => (
@@ -48,7 +48,7 @@ export default function OperatorDistributionView({ operatorId, query }: { operat
           </tbody>
         </DataTable>
         <DataTable label="Sucursales en las que factura">
-          <thead><tr><th className={th}>Sucursal</th><th className={`${th} text-right`}>Venta neta</th><th className={`${th} text-right`}>%</th></tr></thead>
+          <thead><tr><th className={th}>Sucursal</th><Th right info="sales_net">Venta neta</Th><Th right info={{ text: 'Parte de la venta del operador que corresponde a esa fila.', formula: '% = Venta neta de la fila ÷ Venta neta del operador × 100' }}>%</Th></tr></thead>
           <tbody>
             {!d && load.loading && <TableSkeleton cols={3} />}
             {d?.branches.map((b) => (

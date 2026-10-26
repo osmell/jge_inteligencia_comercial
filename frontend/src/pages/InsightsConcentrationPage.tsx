@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { BarChart } from '../components/charts'
+import { InfoTip } from '../components/InfoTip'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, DataTable, FormError, PageHeader, SelectField, td, th, tr, Stat } from '../components/ui'
+import { Alert, Badge, Button, Card, DataTable, FormError, PageHeader, SelectField, td, th, tr, Stat, Th } from '../components/ui'
 import { api } from '../lib/api'
 import { formatDateTime, formatMoney } from '../lib/format'
 import type { AnalysisRun, CohortSummary, ConcentrationBlock, ConcentrationSummary } from '../lib/insights'
@@ -26,10 +27,10 @@ function Block({ title, kind, data }: { title: string; kind: 'clientes' | 'produ
     <section aria-label={title} className="mt-6">
       <h2 className="mb-2 text-sm font-semibold text-ink">{title}</h2>
       <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label={kind === 'clientes' ? 'Peso del cliente principal' : 'Peso del producto principal'} value={pct(data.top1_pct)} />
-        <Stat label={`Peso de los ${Math.min(10, data.count)} principales`} value={pct(data.top10_pct)} />
-        <Stat label="Suman el 80 % de la venta" value={`${data.n80.toLocaleString('es')} ${kind}`} hint={`${pct(data.n80_pct)} de ${data.count.toLocaleString('es')}`} />
-        <Stat label="Índice de concentración (HHI)" value={data.hhi.toLocaleString('es')} hint="0 a 10.000; más alto = más concentrado" />
+        <Stat label={kind === 'clientes' ? 'Peso del cliente principal' : 'Peso del producto principal'} info={{ text: 'Parte de la venta de los últimos 12 meses que aporta el principal.', formula: 'Peso % = Venta del principal ÷ Venta total × 100' }} value={pct(data.top1_pct)} />
+        <Stat label={`Peso de los ${Math.min(10, data.count)} principales`} info={{ text: 'Parte de la venta de los últimos 12 meses que aportan los 10 principales juntos.', formula: 'Peso % = Venta de los 10 principales ÷ Venta total × 100' }} value={pct(data.top10_pct)} />
+        <Stat label="Suman el 80 % de la venta" info={{ text: 'Cuántos hacen falta, de mayor a menor venta, para llegar al 80 % de la venta (curva de Pareto). Entre paréntesis, qué parte del total son.' }} value={`${data.n80.toLocaleString('es')} ${kind}`} hint={`${pct(data.n80_pct)} de ${data.count.toLocaleString('es')}`} />
+        <Stat label="Índice de concentración (HHI)" info={{ text: 'Mide qué tan concentrada está la venta. Va de 0 (muy repartida) a 10.000 (todo en uno).', formula: 'HHI = suma de (Peso % de cada uno)²' }} value={data.hhi.toLocaleString('es')} hint="0 a 10.000; más alto = más concentrado" />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4">
@@ -38,7 +39,7 @@ function Block({ title, kind, data }: { title: string; kind: 'clientes' | 'produ
           <p className="mt-1 text-xs text-ink-muted">Cada barra: % acumulado de la venta que suma ese % de {kind}, de los mayores a los menores.</p>
         </Card>
         <DataTable label={`Principales ${kind}`}>
-          <thead><tr><th className={th}>{kind === 'clientes' ? 'Cliente' : 'Producto'}</th><th className={`${th} text-right`}>Venta neta</th><th className={`${th} text-right`}>Peso</th><th className={`${th} text-right`}>Acumulado</th></tr></thead>
+          <thead><tr><th className={th}>{kind === 'clientes' ? 'Cliente' : 'Producto'}</th><Th right info="sales_net">Venta neta</Th><Th right info={{ text: 'Parte de la venta de los últimos 12 meses que representa esta fila. La venta de clientes es neta de devoluciones.', formula: 'Peso % = Venta de la fila ÷ Venta total × 100' }}>Peso</Th><Th right info={{ text: 'Suma de los pesos desde el principal hasta esta fila (curva de Pareto).' }}>Acumulado</Th></tr></thead>
           <tbody>
             {data.top.map((t) => (
               <tr key={t.code} className={tr}>
@@ -64,7 +65,7 @@ function Cohorts({ summary }: { summary: CohortSummary }) {
       <div className="mb-2 overflow-x-auto">
         <table className="w-full min-w-max text-sm" aria-label="Retención por cohorte">
           <thead>
-            <tr className="text-left text-xs text-ink-muted"><th className="py-1 pr-3">Primera compra</th><th className="py-1 pr-3 text-right">Clientes</th>{cols.map((k) => <th key={k} className="px-2 py-1 text-right">Mes {k}</th>)}</tr>
+            <tr className="text-left text-xs text-ink-muted"><th className="py-1 pr-3"><span className="inline-flex items-center gap-1">Primera compra<InfoTip info={{ text: 'Mes en que el cliente compró por primera vez. El primer mes del historial agrupa a clientes que ya existían antes de que hubiera datos y no entra en el promedio.' }} label="Primera compra" /></span></th><th className="py-1 pr-3 text-right">Clientes</th>{cols.map((k) => <th key={k} className="px-2 py-1 text-right"><span className="inline-flex items-center gap-1">Mes {k}<InfoTip info={{ text: `Porcentaje de los clientes del grupo que volvieron a comprar ${k} ${k === 1 ? 'mes' : 'meses'} después de su primera compra. Las celdas que todavía no se pueden observar quedan vacías.`, formula: 'Retención % = Clientes del grupo que compraron en ese mes ÷ Clientes del grupo × 100' }} label={`Mes ${k}`} /></span></th>)}</tr>
           </thead>
           <tbody>
             {summary.cohorts.map((c) => (

@@ -4,7 +4,7 @@ import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
 import BillingTable from '../components/reports/BillingTable'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
-import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, Th, td, th, tr } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import type { SellerReport, SellerReportRow } from '../lib/reports'
 import { formatPct } from '../lib/sales'
@@ -88,23 +88,23 @@ export default function ReportSellersPage() {
             {GROUPS.map(([title, span], i) => <th key={i} colSpan={span} className={`${th} ${title ? 'border-l border-line text-center' : ''}`}>{title}</th>)}
           </tr>
           <tr>
-            <th className={`${th} text-right`}>#</th>
+            <Th right info="rep_rank">#</Th>
             <th className={th}>Vendedor</th>
-            <th className={`${th} text-right`}>Venta neta</th>
-            <th className={`${th} text-right`}>Documentos</th>
-            <th className={`${th} text-right`}>Clientes</th>
-            <th className={`${th} border-l border-line text-right`}>Cumplimiento</th>
-            <th className={`${th} border-l border-line text-right`}>Descuento</th>
-            <th className={`${th} text-right`}>Bajo precio normal</th>
-            <th className={`${th} text-right`}>Top 3 clientes</th>
-            <th className={`${th} border-l border-line text-right`}>Clientes</th>
-            <th className={`${th} text-right`}>Inactivos</th>
-            <th className={`${th} text-right`}>Perdidos</th>
-            <th className={`${th} border-l border-line text-right`}>Por cobrar</th>
-            <th className={`${th} text-right`}>Vencido</th>
-            <th className={`${th} border-l border-line text-right`}>Conversión cot.</th>
-            <th className={`${th} text-right`}>Contactos</th>
-            <th className={`${th} text-right`}>Pendientes vencidos</th>
+            <Th right info="sales_net">Venta neta</Th>
+            <Th right info="sales_documents">Documentos</Th>
+            <Th right info="sales_customers">Clientes</Th>
+            <Th right className="border-l border-line" info="rep_goal">Cumplimiento</Th>
+            <Th right className="border-l border-line" info="rep_discount">Descuento</Th>
+            <Th right info="rep_below_list">Bajo precio normal</Th>
+            <Th right info="rep_top3">Top 3 clientes</Th>
+            <Th right className="border-l border-line" info="rep_portfolio">Clientes</Th>
+            <Th right info="rep_inactive">Inactivos</Th>
+            <Th right info="rep_lost">Perdidos</Th>
+            <Th right className="border-l border-line" info="rep_receivable">Por cobrar</Th>
+            <Th right info="rep_overdue">Vencido</Th>
+            <Th right className="border-l border-line" info="rep_quote_conversion">Conversión cot.</Th>
+            <Th right info="rep_contacts">Contactos</Th>
+            <Th right info="rep_pending">Pendientes vencidos</Th>
           </tr>
         </thead>
         <tbody>

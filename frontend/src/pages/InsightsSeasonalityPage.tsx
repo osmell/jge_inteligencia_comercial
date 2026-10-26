@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { BarChart } from '../components/charts'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, DataTable, FormError, PageHeader, SelectField, td, th, tr } from '../components/ui'
+import { Alert, Badge, Button, Card, DataTable, FormError, PageHeader, SelectField, td, th, tr, Th } from '../components/ui'
 import { api } from '../lib/api'
 import { formatDateTime, formatMoney } from '../lib/format'
 import { MONTH_NAMES, type AnalysisRun, type SeasonalIndex, type SeasonalitySummary } from '../lib/insights'
@@ -77,7 +77,7 @@ export default function InsightsSeasonalityPage() {
             <p className="mb-2 text-sm"><Verdict s={summary.company} points={summary.marked_points} /></p>
             <BarChart points={summary.company.indices.map((v, i) => ({ key: MONTH_NAMES[i].slice(0, 3), value: v ?? 0 }))} label="Índice estacional de la venta por mes del año" />
             <DataTable label="Índice estacional por mes">
-              <thead><tr><th className={th}>Mes</th><th className={`${th} text-right`}>Índice</th><th className={`${th} text-right`}>Frente al mes promedio</th><th className={`${th} text-right`}>Años observados</th></tr></thead>
+              <thead><tr><th className={th}>Mes</th><Th right info={{ text: 'Peso del mes frente al mes promedio: 100 = el mes promedio; 120 = 20 % por encima. Se calcula quitando la tendencia de crecimiento, para no confundir temporada con crecimiento.' }}>Índice</Th><Th right info={{ text: 'Cuánto se aparta el mes del mes promedio.', formula: 'Frente al promedio % = Índice − 100' }}>Frente al mes promedio</Th><Th right info={{ text: 'Años con datos completos de ese mes. Cada mes necesita al menos dos.' }}>Años observados</Th></tr></thead>
               <tbody>
                 {summary.company.indices.map((v, i) => (
                   <tr key={MONTH_NAMES[i]} className={tr}>
@@ -95,7 +95,7 @@ export default function InsightsSeasonalityPage() {
             <section aria-label="Estacionalidad por línea" className="mb-4">
               <h2 className="mb-2 text-sm font-semibold text-ink">Por línea (las de mayor venta)</h2>
               <DataTable label="Índice estacional por línea">
-                <thead><tr><th className={th}>Línea</th>{MONTH_NAMES.map((m) => <th key={m} className={`${th} text-right`}>{m.slice(0, 3)}</th>)}<th className={th}>Lectura</th></tr></thead>
+                <thead><tr><th className={th}>Línea</th>{MONTH_NAMES.map((m) => <th key={m} className={`${th} text-right`}>{m.slice(0, 3)}</th>)}<Th info={{ text: 'Mejor y peor mes de la línea y si la temporada es marcada (20 puntos o más de diferencia entre el mejor y el peor).' }}>Lectura</Th></tr></thead>
                 <tbody>
                   {summary.lines.map((l) => (
                     <tr key={l.name} className={tr}>
@@ -113,7 +113,7 @@ export default function InsightsSeasonalityPage() {
             <section aria-label="Comparación con el año anterior" className="mb-4">
               <h2 className="mb-2 text-sm font-semibold text-ink">Contra el mismo mes del año anterior</h2>
               <DataTable label="Comparación con el mismo mes del año anterior">
-                <thead><tr><th className={th}>Mes</th><th className={`${th} text-right`}>Venta neta</th><th className={`${th} text-right`}>Un año antes</th><th className={`${th} text-right`}>Cambio</th></tr></thead>
+                <thead><tr><th className={th}>Mes</th><Th right info="sales_net">Venta neta</Th><Th right info={{ text: 'Venta neta del mismo mes del año anterior.' }}>Un año antes</Th><Th right info={{ text: 'Cambio frente al mismo mes del año anterior.', formula: 'Cambio % = (Venta del mes − Venta de un año antes) ÷ Venta de un año antes × 100' }}>Cambio</Th></tr></thead>
                 <tbody>
                   {summary.yoy.map((y) => (
                     <tr key={y.month} className={tr}>

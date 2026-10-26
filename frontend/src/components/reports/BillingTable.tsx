@@ -3,7 +3,7 @@ import { formatDate } from '../../lib/customers'
 import { formatMoney } from '../../lib/format'
 import type { BillingDetail } from '../../lib/reports'
 import { useLoad } from '../../lib/useLoad'
-import { Button, DataTable, EmptyRow, FormError, TableSkeleton, td, th, tr } from '../ui'
+import { Button, DataTable, EmptyRow, FormError, TableSkeleton, td, th, tr, Th } from '../ui'
 
 /**
  * Detalle de facturación de un vendedor, operador o sucursal: cada documento del periodo, para contrastarlo con la cifra del reporte.
@@ -30,11 +30,11 @@ export default function BillingTable({ path, query, label }: { path: string; que
             <th className={th}>Fecha</th>
             <th className={th}>Cliente</th>
             <th className={th}>Sucursal</th>
-            <th className={th}>Vendedor</th>
-            <th className={th}>Facturó</th>
-            <th className={`${th} text-right`}>Líneas</th>
-            <th className={`${th} text-right`}>Venta neta</th>
-            <th className={`${th} text-right`}>Total</th>
+            <Th info={{ text: 'Vendedor del documento.' }}>Vendedor</Th>
+            <Th info={{ text: 'Operador que facturó el documento.' }}>Facturó</Th>
+            <Th right info={{ text: 'Líneas del documento.' }}>Líneas</Th>
+            <Th right info="sales_net">Venta neta</Th>
+            <Th right info="sales_grand">Total</Th>
           </tr>
         </thead>
         <tbody>

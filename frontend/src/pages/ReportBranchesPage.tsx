@@ -5,7 +5,7 @@ import LevelValue from '../components/reports/LevelValue'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
 import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
-import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import type { BranchMix, BranchReport, BranchReportRow } from '../lib/reports'
 import { formatPct } from '../lib/sales'
@@ -90,24 +90,24 @@ export default function ReportBranchesPage() {
             {GROUPS.map(([title, span], i) => <th key={i} colSpan={span} className={`${th} ${title ? 'border-l border-line text-center' : ''}`}>{title}</th>)}
           </tr>
           <tr>
-            <th className={`${th} text-right`}>#</th>
+            <Th right info="rep_rank">#</Th>
             <th className={th}>Sucursal</th>
-            <th className={`${th} text-right`}>Venta neta</th>
-            <th className={`${th} text-right`}>Documentos</th>
-            <th className={`${th} text-right`}>Ticket</th>
-            <th className={`${th} text-right`}>Clientes</th>
-            <th className={`${th} border-l border-line text-right`}>Descuento</th>
-            <th className={`${th} text-right`}>Bajo precio normal</th>
-            <th className={`${th} border-l border-line text-right`}>Vendedor principal</th>
-            <th className={`${th} text-right`}>Clientes principales</th>
-            <th className={`${th} border-l border-line text-right`}>Clientes</th>
-            <th className={`${th} text-right`}>Perdidos</th>
-            <th className={`${th} border-l border-line text-right`}>Por cobrar</th>
-            <th className={`${th} text-right`}>Vencido</th>
-            <th className={`${th} border-l border-line text-right`}>Con existencia</th>
-            <th className={`${th} text-right`}>Sin rotación</th>
-            <th className={`${th} text-right`}>Agotados con demanda</th>
-            <th className={`${th} text-right`}>Faltantes abiertos</th>
+            <Th right info="sales_net">Venta neta</Th>
+            <Th right info="sales_documents">Documentos</Th>
+            <Th right info="sales_ticket">Ticket</Th>
+            <Th right info="sales_customers">Clientes</Th>
+            <Th right className="border-l border-line" info="rep_discount">Descuento</Th>
+            <Th right info="rep_below_list">Bajo precio normal</Th>
+            <Th right className="border-l border-line" info="rep_top_seller">Vendedor principal</Th>
+            <Th right info="rep_top3">Clientes principales</Th>
+            <Th right className="border-l border-line" info="rep_portfolio">Clientes</Th>
+            <Th right info="rep_lost">Perdidos</Th>
+            <Th right className="border-l border-line" info="rep_receivable">Por cobrar</Th>
+            <Th right info="rep_overdue">Vencido</Th>
+            <Th right className="border-l border-line" info="rep_stock_products">Con existencia</Th>
+            <Th right info="rep_no_rotation">Sin rotación</Th>
+            <Th right info="rep_stockout">Agotados con demanda</Th>
+            <Th right info="rep_shortfalls">Faltantes abiertos</Th>
           </tr>
         </thead>
         <tbody>

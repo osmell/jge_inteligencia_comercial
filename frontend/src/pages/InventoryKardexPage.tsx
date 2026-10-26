@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Alert, Card, DataTable, EmptyRow, FormError, PageHeader, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Alert, Card, DataTable, EmptyRow, FormError, PageHeader, TableSkeleton, TextField, td, th, tr, Th } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import { MOVEMENT_TYPE_LABEL, type Kardex } from '../lib/inventory'
 import { formatDay } from '../lib/quotations'
@@ -47,9 +47,9 @@ export default function InventoryKardexPage() {
           <DataTable label="Movimientos del producto">
             <thead>
               <tr>
-                <th className={th}>Fecha</th><th className={th}>Movimiento</th><th className={`${th} text-right`}>Cantidad</th><th className={th}>Capturado</th>
-                {costs && <th className={`${th} text-right`}>Valor</th>}
-                <th className={`${th} text-right`}>Saldo</th>{costs && <th className={`${th} text-right`}>Valor del saldo</th>}
+                <th className={th}>Fecha</th><Th info={{ text: 'Tipo de movimiento: entrada o salida del producto.' }}>Movimiento</Th><Th right info={{ text: 'Unidades del movimiento, en la unidad base del producto.' }}>Cantidad</Th><Th info={{ text: 'Fecha y hora en que se registró el movimiento en el sistema.' }}>Capturado</Th>
+                {costs && <Th right info={{ text: 'Valor del movimiento: las entradas llevan su costo y las salidas se valoran a costo promedio ponderado.' }}>Valor</Th>}
+                <Th right info={{ text: 'Existencia después de este movimiento.', formula: 'Saldo = Saldo anterior ± Cantidad' }}>Saldo</Th>{costs && <Th right info={{ text: 'Valor de la existencia después de este movimiento: las entradas suman su costo y las salidas restan a costo promedio ponderado.' }}>Valor del saldo</Th>}
                 <th className={th}>Referencia y nota</th><th className={th}>Registró</th>
               </tr>
             </thead>

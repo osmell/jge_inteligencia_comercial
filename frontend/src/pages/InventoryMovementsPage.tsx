@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import InventoryMovementModal from '../components/InventoryMovementModal'
 import { useToast } from '../components/toast'
-import { Alert, Button, Card, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SelectField, TableSkeleton, TextAreaField, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, SelectField, TableSkeleton, TextAreaField, td, th, tr, Th } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { MOVEMENT_TYPE_LABEL, REASON_LABEL, type InventoryMovementType, type MovementList, type MovementRow } from '../lib/inventory'
@@ -85,8 +85,8 @@ export default function InventoryMovementsPage() {
       <DataTable label="Movimientos de inventario">
         <thead>
           <tr>
-            <th className={th}>Fecha</th><th className={th}>Movimiento</th><th className={th}>Producto</th><th className={th}>Sucursal</th>
-            <th className={`${th} text-right`}>Cantidad</th>{costs && <th className={`${th} text-right`}>Valor</th>}
+            <th className={th}>Fecha</th><Th info={{ text: 'Tipo de movimiento. Entradas: apertura, compra, devolución de cliente, traslado recibido y ajuste a favor. Salidas: venta, devolución a proveedor, traslado enviado y ajuste en contra.' }}>Movimiento</Th><th className={th}>Producto</th><th className={th}>Sucursal</th>
+            <Th right info={{ text: 'Unidades del movimiento, en la unidad base del producto. Las entradas suman y las salidas restan a la existencia.' }}>Cantidad</Th>{costs && <Th right info={{ text: 'Valor del movimiento. Las entradas llevan su costo y las salidas se valoran a costo promedio ponderado. Solo lo ve quien tiene el permiso de costos.' }}>Valor</Th>}
             <th className={th}>Motivo y nota</th><th className={th}>Registró</th><th className={th}><span className="sr-only">Acciones</span></th>
           </tr>
         </thead>

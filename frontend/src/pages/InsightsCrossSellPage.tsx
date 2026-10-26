@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { api } from '../lib/api'
 import { formatDateTime } from '../lib/format'
 import type { CrossSellOpportunity, CrossSellRule, CrossSellRun } from '../lib/insights'
@@ -87,7 +87,7 @@ export default function InsightsCrossSellPage() {
 
           <h2 className="mb-2 text-sm font-semibold text-ink">Oportunidades por cliente{opportunities.data ? ` (${opportunities.data.meta.total.toLocaleString('es')})` : ''}</h2>
           <DataTable label="Oportunidades de venta cruzada">
-            <thead><tr><th className={th}>Cliente</th><th className={th}>Ofrecer</th><th className={th}>Porque compra</th><th className={`${th} text-right`}>Confianza</th><th className={`${th} text-right`}>Clientes que lo respaldan</th></tr></thead>
+            <thead><tr><th className={th}>Cliente</th><Th info={{ text: 'Categoría que se sugiere ofrecer al cliente: la compran otros clientes que compran lo mismo que él.' }}>Ofrecer</Th><Th info={{ text: 'Categoría que el cliente ya compra y de la que sale la regla.' }}>Porque compra</Th><Th right info={{ text: 'De los clientes que compran la categoría de origen (A), qué porcentaje compra también la categoría sugerida (B).', formula: 'Confianza % = Clientes que compran A y B ÷ Clientes que compran A × 100' }}>Confianza</Th><Th right info={{ text: 'Clientes que compran las dos categorías y sustentan la regla. Se exige un mínimo de clientes para guardarla.' }}>Clientes que lo respaldan</Th></tr></thead>
             <tbody>
               {opportunities.loading && !opportunities.data ? <TableSkeleton cols={5} /> : (opportunities.data?.data ?? []).length === 0 ? <EmptyRow cols={5}>No hay oportunidades con estos filtros.</EmptyRow> : (opportunities.data?.data ?? []).map((o) => (
                 <tr key={`${o.code}-${o.suggestion}`} className={tr}>
@@ -111,7 +111,7 @@ export default function InsightsCrossSellPage() {
 
           <h2 className="mb-2 mt-8 text-sm font-semibold text-ink">Reglas de asociación</h2>
           <DataTable label="Reglas de asociación">
-            <thead><tr><th className={th}>Si compra…</th><th className={th}>…también compra</th><th className={`${th} text-right`}>Confianza</th><th className={`${th} text-right`}>Elevación</th><th className={`${th} text-right`}>Clientes</th></tr></thead>
+            <thead><tr><Th info={{ text: 'Categoría de origen de la regla (A).' }}>Si compra…</Th><Th info={{ text: 'Categoría que suelen comprar también esos clientes (B).' }}>…también compra</Th><Th right info={{ text: 'De los clientes que compran la categoría de origen (A), qué porcentaje compra también la categoría sugerida (B).', formula: 'Confianza % = Clientes que compran A y B ÷ Clientes que compran A × 100' }}>Confianza</Th><Th right info={{ text: 'Cuántas veces más compra B quien compra A que el cliente promedio. Mayor que 1 indica una asociación real.', formula: 'Elevación = Confianza ÷ % de clientes que compran B' }}>Elevación</Th><Th right info={{ text: 'Clientes que compran A y B.' }}>Clientes</Th></tr></thead>
             <tbody>
               {(rules.data?.data ?? []).length === 0 ? <EmptyRow cols={5}>No hay asociaciones que cumplan los umbrales.</EmptyRow> : (rules.data?.data ?? []).map((r) => (
                 <tr key={r.id} className={tr} title={r.explanation}>

@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import type { BranchMix } from '../../lib/reports'
 import { formatPct } from '../../lib/sales'
-import { DataTable, td, th, tr } from '../ui'
+import { DataTable, td, th, tr, Th } from '../ui'
 
 /** Índice de venta de una categoría en una sucursal frente al conjunto: 100 = igual, 200 = el doble, 50 = la mitad. */
 const HIGH = 150
@@ -37,8 +37,8 @@ export default function BranchMixTable({ mix }: { mix: BranchMix }) {
         <thead>
           <tr>
             <th className={th}>Categoría</th>
-            <th className={`${th} text-right`}>% del total</th>
-            {mix.branches.map((b) => <th key={b.id} className={`${th} text-right`}>{b.name}</th>)}
+            <Th right info={{ text: 'Parte de la venta total del periodo que corresponde a la categoría.', formula: '% del total = Venta neta de la categoría ÷ Venta neta total × 100' }}>% del total</Th>
+            {mix.branches.map((b) => <Th key={b.id} right info={{ text: `Parte de la venta de ${b.name} que corresponde a cada categoría y, entre paréntesis, su índice frente al conjunto de sucursales.`, formula: 'Índice = % de la categoría en la sucursal ÷ % de la categoría en el total × 100' }}>{b.name}</Th>)}
           </tr>
         </thead>
         <tbody>

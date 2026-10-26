@@ -81,6 +81,71 @@ export const GLOSSARY = {
   },
   credit_age: { text: 'Días transcurridos desde la fecha de emisión de la factura. Se agrupa en tramos (al día, 1–30, 31–60…).', formula: 'Antigüedad = Hoy − Fecha de emisión' },
   credit_oldest: { text: 'Antigüedad, en días, de la factura con saldo más antigua del cliente.' },
+  // ───── Reportes de evaluación ─────
+  rep_rank: { text: 'Puesto según la venta neta del periodo (1 = la mayor).' },
+  rep_goal: {
+    text: 'Venta del periodo frente a la meta del periodo. La meta de cada mes se prorratea por los días que trabajó el vendedor. Si algún mes en que trabajó no tiene meta, o se eligió una sucursal, no se califica («sin dato»).',
+    formula: 'Cumplimiento % = Venta neta ÷ Meta del periodo × 100',
+  },
+  rep_discount: {
+    text: 'Descuento sobre el Sub total, solo de las líneas que informan Sub total. Ya está restado de la venta neta.',
+    formula: 'Descuento % = Descuento ÷ Sub total × 100',
+  },
+  rep_below_list: {
+    text: 'Parte de la venta, de las líneas que traen precio normal, que se vendió con un precio unitario menor al normal.',
+    formula: 'Bajo precio normal % = Venta de las líneas con precio menor al normal ÷ Venta de las líneas con precio normal × 100',
+  },
+  rep_top3: { text: 'Cuánto de la venta depende de sus tres mejores clientes. Más alto, más dependencia de pocos clientes.', formula: 'Top 3 % = Venta de los 3 mejores clientes ÷ Venta neta × 100' },
+  rep_portfolio: { text: 'Clientes de la cartera a hoy. Un cliente pertenece a quien le facturó la última vez, si fue en los últimos 365 días.' },
+  rep_inactive: { text: 'Clientes de la cartera sin compra por más del plazo de inactividad configurado en Clientes, pero que aún no se consideran perdidos.' },
+  rep_lost: {
+    text: 'Clientes de la cartera sin compra por más del plazo de pérdida configurado en Clientes. El porcentaje se compara con el total de la cartera.',
+    formula: 'Perdidos % = Clientes perdidos ÷ Clientes de la cartera × 100',
+  },
+  rep_receivable: { text: 'Saldo por cobrar a hoy de las facturas de crédito, según las facturas que se atribuyen a esta fila.' },
+  rep_overdue: {
+    text: 'Parte del saldo que está en facturas emitidas hace más de 30 días; el sistema no guarda plazos por cliente. Es distinto del «saldo vencido» de Crédito, que cuenta desde 1 día.',
+    formula: 'Vencido % = Saldo de facturas con más de 30 días ÷ Saldo por cobrar × 100',
+  },
+  rep_quote_conversion: {
+    text: 'Cotizaciones emitidas en el periodo que ya se convirtieron en venta.',
+    formula: 'Conversión % = Cotizaciones convertidas ÷ Cotizaciones emitidas × 100',
+  },
+  rep_contacts: { text: 'Contactos con clientes que registró en el periodo el usuario vinculado al vendedor. Sin usuario vinculado se muestra «sin usuario».' },
+  rep_pending: { text: 'Acciones de seguimiento sin atender cuya fecha ya pasó, a hoy.' },
+  rep_lines: { text: 'Líneas facturadas en el periodo.' },
+  rep_active_days: { text: 'Días del periodo en que el operador facturó al menos una línea.' },
+  rep_high_discount: {
+    text: 'Líneas cuyo descuento es al menos el 20 % de su Sub total, sobre el total de líneas del operador.',
+    formula: 'Descuento alto % = Líneas con descuento ≥ 20 % del Sub total ÷ Líneas × 100',
+  },
+  rep_zero_price: {
+    text: 'Líneas con cantidad cuyo precio unitario o venta neta es cero (regaladas o mal capturadas). Las devoluciones no cuentan.',
+    formula: 'Sin precio % = Líneas con precio o venta neta en cero ÷ Líneas × 100',
+  },
+  rep_atypical: {
+    text: 'Documentos cuya venta neta supera el límite de valores extremos de todos los documentos de su compañía en el periodo. Con menos de 20 documentos en la compañía no se evalúa.',
+    formula: 'Límite = Q3 + 3 × (Q3 − Q1) de la venta neta por documento; Atípicos % = Documentos sobre el límite ÷ Documentos × 100',
+  },
+  rep_negative: { text: 'Documentos del operador con venta neta menor que cero (devoluciones o notas de crédito).' },
+  rep_direct: {
+    text: 'Parte de la venta cuyo vendedor se llama igual que el operador, es decir, quien facturó fue quien vendió.',
+    formula: 'Venta directa % = Venta con vendedor igual al operador ÷ Venta neta × 100',
+  },
+  rep_top_seller: {
+    text: 'Parte de la venta de la sucursal que aporta el vendedor que más vende. No cuenta a los vendedores «Tienda …» (ventas de mostrador creadas por omisión).',
+    formula: 'Vendedor principal % = Venta del vendedor que más vende ÷ Venta neta de la sucursal × 100',
+  },
+  rep_stock_products: { text: 'Productos con existencia hoy en la sucursal. Solo cantidades de productos, sin importes ni costos.' },
+  rep_no_rotation: {
+    text: 'Productos con existencia y sin ventas en los últimos 60 días, sobre los productos con existencia.',
+    formula: 'Sin rotación % = Productos con existencia sin ventas en 60 días ÷ Productos con existencia × 100',
+  },
+  rep_stockout: {
+    text: 'Productos vendidos en los últimos 90 días que hoy no tienen existencia, sobre los productos vendidos.',
+    formula: 'Agotados % = Productos vendidos sin existencia hoy ÷ Productos vendidos en 90 días × 100',
+  },
+  rep_shortfalls: { text: 'Ventas que superaron la existencia y siguen sin resolver.' },
 } as const satisfies Record<string, InfoContent>
 
 export type InfoKey = keyof typeof GLOSSARY

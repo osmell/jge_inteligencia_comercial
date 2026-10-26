@@ -3,7 +3,7 @@ import ProductMixDetailView from '../components/reports/ProductMixDetailView'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
 import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
-import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, SelectField, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import { MIX_LEVEL_LABEL, MIX_SUBJECT_LABEL, type MixLevel, type MixSubject, type ProductMixReport, type ProductMixRow } from '../lib/reports'
 import { formatPct } from '../lib/sales'
@@ -92,14 +92,14 @@ export default function ReportProductsPage() {
       <DataTable scroll label={`Lo más facturado por ${levelName}`}>
         <thead>
           <tr>
-            <th className={`${th} text-right`}>#</th>
+            <Th right info="rep_rank">#</Th>
             <th className={th}>{MIX_LEVEL_LABEL[level]}</th>
-            <th className={`${th} text-right`}>Venta neta</th>
-            <th className={`${th} text-right`}>% del total</th>
-            <th className={`${th} text-right`}>Cambio</th>
-            <th className={`${th} text-right`}>Unidades</th>
-            <th className={`${th} text-right`}>Documentos</th>
-            <th className={`${th} text-right`}>Clientes</th>
+            <Th right info="sales_net">Venta neta</Th>
+            <Th right info={{ text: 'Peso de la fila en la venta neta total del periodo.', formula: 'Peso % = Venta neta de la fila ÷ Venta neta total × 100' }}>% del total</Th>
+            <Th right info="sales_vs_compared">Cambio</Th>
+            <Th right info="sales_units">Unidades</Th>
+            <Th right info="sales_documents">Documentos</Th>
+            <Th right info="sales_customers">Clientes</Th>
           </tr>
         </thead>
         <tbody>
@@ -125,14 +125,14 @@ export default function ReportProductsPage() {
       <DataTable scroll label={`Amplitud de catálogo por ${who}`}>
         <thead>
           <tr>
-            <th className={`${th} text-right`}>#</th>
+            <Th right info="rep_rank">#</Th>
             <th className={th}>{subject === 'seller' ? 'Vendedor' : 'Operador'}</th>
-            <th className={`${th} text-right`}>Venta neta</th>
-            <th className={`${th} text-right`}>Productos distintos</th>
-            <th className={`${th} border-l border-line text-right`}>Categorías vendidas</th>
-            <th className={`${th} text-right`}>Líneas vendidas</th>
-            <th className={`${th} text-right`}>Grupos</th>
-            <th className={`${th} border-l border-line text-right`}>Top 5 productos</th>
+            <Th right info="sales_net">Venta neta</Th>
+            <Th right info={{ text: 'Productos distintos con venta neta positiva en el periodo. Una devolución no cuenta como haber vendido.' }}>Productos distintos</Th>
+            <Th right className="border-l border-line" info={{ text: 'Categorías del catálogo de la compañía con venta neta positiva, frente al total de categorías del catálogo (por ejemplo «3 de 4»). El porcentaje es la cobertura.', formula: 'Cobertura % = Categorías vendidas ÷ Categorías del catálogo × 100' }}>Categorías vendidas</Th>
+            <Th right info={{ text: 'Líneas del catálogo de la compañía con venta neta positiva, frente al total de líneas del catálogo.', formula: 'Cobertura % = Líneas vendidas ÷ Líneas del catálogo × 100' }}>Líneas vendidas</Th>
+            <Th right info={{ text: 'Grupos del catálogo (nivel 1) en los que tuvo venta neta positiva.' }}>Grupos</Th>
+            <Th right className="border-l border-line" info={{ text: 'Dependencia: parte de su venta que sale de sus 5 productos principales. Más alto, más repite lo mismo.', formula: 'Top 5 % = Venta de sus 5 productos principales ÷ Venta neta × 100' }}>Top 5 productos</Th>
           </tr>
         </thead>
         <tbody>

@@ -2,7 +2,7 @@ import { formatMoney } from '../../lib/format'
 import { MIX_LEVEL_LABEL, type MixLevel, type MixSubject, type ProductMixDetail } from '../../lib/reports'
 import { formatPct } from '../../lib/sales'
 import { useLoad } from '../../lib/useLoad'
-import { DataTable, EmptyRow, FormError, TableSkeleton, td, th, tr } from '../ui'
+import { DataTable, EmptyRow, FormError, TableSkeleton, td, th, tr, Th } from '../ui'
 import { ReportStat } from './ReportParts'
 
 const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('es'))
@@ -23,7 +23,7 @@ function Gaps({ title, items, empty }: { title: string; items: ProductMixDetail[
     <section className="min-w-0">
       <h3 className="mb-1 text-sm font-semibold">{title}</h3>
       <DataTable label={title}>
-        <thead><tr><th className={th}>Nombre</th><th className={`${th} text-right`}>Lo que vendió el equipo</th><th className={`${th} text-right`}>% del equipo</th><th className={`${th} text-right`}>Clientes</th></tr></thead>
+        <thead><tr><th className={th}>Nombre</th><Th right info={{ text: 'Venta neta de esa categoría o línea en el equipo (compañeros del mismo tipo en la misma compañía), donde esta persona no vendió nada.' }}>Lo que vendió el equipo</Th><Th right info={{ text: 'Peso de esa categoría o línea en la venta del equipo.', formula: '% del equipo = Venta del equipo en la fila ÷ Venta neta del equipo × 100' }}>% del equipo</Th><Th right info="sales_customers">Clientes</Th></tr></thead>
         <tbody>
           {items.length === 0 && <EmptyRow cols={4}>{empty}</EmptyRow>}
           {items.map((g) => (
@@ -67,8 +67,8 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
       <DataTable label={`Lo que más factura por ${MIX_LEVEL_LABEL[level].toLowerCase()}`}>
         <thead>
           <tr>
-            <th className={`${th} text-right`}>#</th><th className={th}>{MIX_LEVEL_LABEL[level]}</th><th className={`${th} text-right`}>Venta neta</th><th className={`${th} text-right`}>% de su venta</th>
-            <th className={`${th} text-right`}>% en el equipo</th><th className={`${th} text-right`}>Índice</th><th className={`${th} text-right`}>Cambio</th><th className={`${th} text-right`}>Clientes</th>
+            <Th right info="rep_rank">#</Th><th className={th}>{MIX_LEVEL_LABEL[level]}</th><Th right info="sales_net">Venta neta</Th><Th right info={{ text: 'Peso de la fila en la venta de esta persona.', formula: '% de su venta = Venta neta de la fila ÷ Venta neta de la persona × 100' }}>% de su venta</Th>
+            <Th right info={{ text: 'Peso de la misma fila en la venta del equipo.', formula: '% en el equipo = Venta del equipo en la fila ÷ Venta neta del equipo × 100' }}>% en el equipo</Th><Th right info={{ text: 'Qué tanto pesa la fila en esta persona frente al equipo. 100 = pesa igual; 200 = el doble; 50 = la mitad. Se marca desde 150 hacia arriba (▲) y desde 50 hacia abajo (▼).', formula: 'Índice = % de su venta ÷ % en el equipo × 100' }}>Índice</Th><Th right info="sales_vs_compared">Cambio</Th><Th right info="sales_customers">Clientes</Th>
           </tr>
         </thead>
         <tbody>
@@ -106,7 +106,7 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
           </p>
           {d.star_products.missing.length > 0 && (
             <DataTable label="Productos estrella que no vendió">
-              <thead><tr><th className={th}>Código</th><th className={th}>Producto</th><th className={`${th} text-right`}>Lo que vendió el equipo</th><th className={`${th} text-right`}>Clientes</th></tr></thead>
+              <thead><tr><th className={th}>Código</th><th className={th}>Producto</th><Th right info={{ text: 'Venta neta de ese producto en el equipo (compañeros del mismo tipo en la misma compañía) en el periodo.' }}>Lo que vendió el equipo</Th><Th right info="sales_customers">Clientes</Th></tr></thead>
               <tbody>
                 {d.star_products.missing.map((p) => (
                   <tr key={p.key} className={tr}>

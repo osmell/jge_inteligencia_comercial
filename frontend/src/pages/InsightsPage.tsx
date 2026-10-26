@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, TextField, td, th, tr, type FieldErrors } from '../components/ui'
+import { Alert, Badge, Button, Card, DataTable, EmptyRow, FormError, PageHeader, TextField, td, th, tr, type FieldErrors, Th } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import { formatDateTime } from '../lib/format'
 import type { InsightCompany, InsightParameter, InsightRunRow } from '../lib/insights'
@@ -117,7 +117,7 @@ export default function InsightsPage() {
       <section aria-labelledby="runs-title" className="mt-8">
         <h2 id="runs-title" className="mb-2 text-sm font-semibold text-ink">Últimos cálculos</h2>
         <DataTable label="Registro de cálculos">
-          <thead><tr><th className={th}>Fecha de cálculo</th><th className={th}>Compañía</th><th className={th}>Análisis</th><th className={th}>Periodo</th><th className={th}>Resultado</th></tr></thead>
+          <thead><tr><th className={th}>Fecha de cálculo</th><th className={th}>Compañía</th><Th info={{ text: 'Tipo de análisis calculado: segmentos RFM, concentración, cohortes, estacionalidad, venta cruzada o alertas.' }}>Análisis</Th><th className={th}>Periodo</th><Th info={{ text: 'Resumen del cálculo o la razón por la que quedó «insuficiente» (por ejemplo, poco historial).' }}>Resultado</Th></tr></thead>
           <tbody>
             {(runs.data?.data ?? []).length === 0 ? <EmptyRow cols={5}>Todavía no se ha calculado ningún análisis.</EmptyRow> : (runs.data?.data ?? []).map((r) => (
               <tr key={r.id} className={tr}>
