@@ -3191,7 +3191,7 @@ export interface components {
          * @description Opciones del menú que se le ocultan a una persona (lista vacía: ve todo lo que su rol permite).
          */
         MenuAccessRequest: {
-            hidden: ("sales" | "goals" | "customers" | "conversations" | "agenda" | "follow_up" | "quotations" | "credit" | "digests" | "insights" | "products" | "stock" | "rotation" | "movements" | "units" | "report_sellers" | "report_operators" | "report_branches" | "report_products" | "report_conciliation" | "imports" | "companies" | "branches" | "users" | "roles" | "automations" | "mail" | "whatsapp" | "webhook" | "audit")[];
+            hidden: ("conversations" | "agenda" | "users" | "roles" | "audit" | "automations" | "mail" | "whatsapp" | "webhook" | "companies" | "branches" | "customers" | "products" | "units" | "sales" | "goals" | "follow_up" | "quotations" | "credit" | "digests" | "insights" | "stock" | "rotation" | "movements" | "report_sellers" | "report_operators" | "report_branches" | "report_products" | "report_conciliation" | "imports")[];
         };
         /**
          * OperatorRequest
