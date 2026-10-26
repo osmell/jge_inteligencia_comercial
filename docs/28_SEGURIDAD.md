@@ -149,6 +149,12 @@ Se revisó el apartado completo (4 reportes, sus detalles y sus salidas) con `te
 
 **Riesgo residual R4 · el correo de reportes sale a direcciones libres.** Fue una decisión del cliente (con confirmación, tope y Auditoría). Una cuenta con `reports.view` comprometida podría enviar cifras hasta el tope por hora. Mitigaciones posibles si se quisiera más control: lista de dominios permitidos (`@empresa.com`) o aprobación de un administrador para direcciones nuevas.
 
+## Revisión de la mezcla de productos (2026-10-25)
+
+Las tres rutas nuevas (`/reports/products`, `/products/sellers/{id}`, `/products/operators/{id}`) entran en las mismas pruebas de `ReportsSecurityTest`: un identificador de otra compañía responde 404, la compañía pedida fuera de alcance no devuelve nada, ninguna respuesta trae costos ni margen, y toda consulta y descarga deja rastro. Además: `level` y `subject` solo aceptan sus listas fijas (los valores hostiles se rechazan con 422 y las columnas SQL salen de listas blancas), y los parámetros hostiles comunes también se rechazan.
+
+- **H15 · El PDF de una tabla larga agotaba la memoria de PHP** (500 con unas 300 filas, p. ej. el ranking de categorías de un año). Se recorta a 100 filas por tabla con aviso; Excel, correo y pantalla conservan todas. Medido: ~35 MB por PDF con el tope.
+
 ## Vulnerabilidad de PHP «PHP2Shell» (2026-10-24)
 
 CVE-2026-109618 y CVE-2026-109619 (CVSS 9.2): ejecución remota de código sin autenticación en el propio PHP, con explotación activa reportada. Se corrigen en **8.5.12**, 8.4.27, 8.3.36 y 8.2.35; ninguna configuración las mitiga por completo.

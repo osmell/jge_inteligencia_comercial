@@ -97,6 +97,19 @@ El **detalle de facturación** de cualquier vendedor, operador o sucursal se abr
 
 **Límite:** el contraste entre tablas del propio sistema detecta datos corruptos o importaciones perdidas, pero **no** puede saber si el archivo de origen (el del sistema de facturación) estaba bien; para eso hay que comparar contra el total que da ese sistema.
 
+## Mezcla de productos (`GET /api/v1/reports/products`)
+
+Responde a «¿el vendedor y el operador ofrecen todo el catálogo, o qué línea, categoría o producto es lo que más se mueve?». Menú **Reportes → Productos** (`/reportes/productos`). Se elige **a quién se evalúa** (`subject`: vendedores u operadores) y **por qué nivel** se ve la venta (`level`: producto, categoría —por omisión—, línea o grupo; son los niveles 3, 2 y 1 del catálogo de productos).
+
+- **Lo más facturado**: ranking de mayor a menor venta neta con peso en el total, cambio frente a la comparación, unidades, documentos y clientes distintos. A nivel producto se listan los 200 principales y se indica cuántos hay en total; los otros niveles se listan completos.
+- **Amplitud de catálogo por persona**: venta y peso; productos distintos; **cobertura** (categorías y líneas del catálogo de su compañía con venta neta positiva, como «3 de 4» y porcentaje); grupos tocados; y **dependencia** (porcentaje de su venta que sale de sus 5 productos principales: más alto = repite lo mismo).
+- **Detalle de una persona** (`GET /reports/products/sellers/{id}` y `/operators/{id}`): su ranking con el **índice de mezcla** frente a su equipo (100 = pesa igual; ▲ 150 o más, ▼ 50 o menos), los **huecos** (categorías y líneas con venta en el equipo y ninguna en esa persona, de mayor a menor, hasta 15 de cada una; se excluye «Sin clasificar») y cuántos de los **20 productos estrella** del equipo no vendió. El equipo son sus compañeros del mismo tipo en la misma compañía.
+- **Qué cuenta como vendido**: venta neta positiva en el periodo; una devolución o nota de crédito no cuenta como haber vendido esa categoría.
+- **Lo que no sabe**: el sistema solo ve lo facturado. «No vendió» no prueba que no lo haya ofrecido (el reporte lo dice en pantalla y en las salidas). Las cotizaciones podrían sumar una señal de «cotizó pero no cerró»: queda para una segunda etapa si el cliente la quiere.
+- **Catálogo**: los productos no tienen estado activo/inactivo, así que la cobertura se mide contra todas las categorías y líneas del catálogo de la compañía, incluidas las de productos que ya no se manejen.
+- Sin costos, margen ni valuación. Mismo permiso (`reports.view`), alcance por compañía y auditoría (`report.viewed`, `report.exported`, `report.emailed`) que los demás.
+- Salidas: imprimir, Excel y correo traen todas las filas; **el PDF muestra como máximo 100 filas por tabla** (`reports.pdf_max_rows`) y lo avisa en la propia tabla, porque Dompdf agota los 128 MB de memoria de PHP con unas 300 filas.
+
 ## Salidas: imprimir, Excel, PDF y correo
 
 Los cuatro reportes tienen la misma barra de salidas, sobre el **mismo periodo y filtros** de la pantalla (permiso `reports.view`, mismo alcance):
@@ -122,6 +135,7 @@ Es lo único irreversible de los reportes: las cifras salen de la empresa. Regla
 
 - **Pruebas**: cada indicador se comprueba contra ventas, cartera, crédito, inventario y seguimiento declarados a mano (más de 150 pruebas del apartado), además de las matrices de acceso, sesión revocada y clave temporal que recorren todas las rutas.
 - **PostgreSQL**: todas las pruebas del sistema (930) pasan **también en PostgreSQL** (`composer test:pgsql`, y como trabajo propio en la CI), no solo en SQLite.
+- **Mezcla de productos** (PostgreSQL, 25 000 documentos, 150 000 líneas y 6 000 productos en 299 días): el reporte responde en 1,3–1,8 s con el año a la fecha y 0,3 s con un mes; el detalle de una persona, en 1,3–1,4 s; Excel en menos de 0,1 s y PDF en 0,8 s. Sin índices nuevos. El PDF sin recorte agotaba la memoria con ~300 filas; con el tope de 100 filas usa unos 35 MB.
 - **Rendimiento** (PostgreSQL, 25 000 documentos y 150 000 líneas en un año, sin índices nuevos): cada reporte responde en 0,2–1,3 s (el de un mes, la mitad); el detalle de facturas y de a quién factura un operador, en menos de 0,1 s; Excel y PDF tardan 1,4–2,9 s. Con mucho más volumen conviene volver a medir.
 - **Seguridad**: ver `docs/28_SEGURIDAD.md` (revisión del apartado de Reportes) y `docs/adr/015-reportes-de-evaluacion.md`.
 
@@ -132,4 +146,5 @@ Es lo único irreversible de los reportes: las cifras salen de la empresa. Regla
 3. **Alcance de un supervisor limitado a una sucursal**: ve a todo el equipo de su compañía en vendedores, operadores y conciliación, pero solo sus sucursales en el reporte de sucursales.
 4. **Anulaciones por operador**: el sistema no sabe quién anuló o corrigió un documento; si el cliente lo necesita, hay que decidir cómo registrarlo.
 5. **Promesas de pago cumplidas y tiempo de respuesta en WhatsApp por vendedor**: aún no están en el reporte de vendedores (falta decidir a quién se atribuye cada una).
-6. **Correo a direcciones libres**: decisión del cliente; si se quisiera más control, una lista de dominios permitidos o aprobación de un administrador para direcciones nuevas.
+6. **Mezcla de productos**: (a) la cobertura se mide contra todo el catálogo; si el cliente retira productos conviene un estado activo/inactivo; (b) incluir cotizaciones («cotizó pero no cerró») como señal de lo ofrecido; (c) umbrales de semáforo para cobertura y dependencia (hoy se muestran sin semáforo); (d) si el PDF debe traer más de 100 filas por tabla hay que aumentar la memoria de PHP.
+7. **Correo a direcciones libres**: decisión del cliente; si se quisiera más control, una lista de dominios permitidos o aprobación de un administrador para direcciones nuevas.

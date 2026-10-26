@@ -18,11 +18,27 @@ class ReportPdf
         $options->set('defaultFont', 'DejaVu Sans');
 
         $pdf = new Dompdf($options);
-        $pdf->loadHtml(view('pdf.report', ['document' => $document, 'levels' => ReportNotes::levelLabels(), 'generatedBy' => $generatedBy, 'generatedAt' => now()->format('Y-m-d H:i')])->render());
+        $pdf->loadHtml(view('pdf.report', ['document' => $this->limited($document), 'levels' => ReportNotes::levelLabels(), 'generatedBy' => $generatedBy, 'generatedAt' => now()->format('Y-m-d H:i')])->render());
         $pdf->setPaper('A4', 'landscape');
         $pdf->render();
 
         return (string) $pdf->output();
+    }
+
+    /** Dompdf guarda cada celda en memoria: las tablas largas se recortan (con aviso) y el Excel conserva todas las filas. */
+    public function limited(ReportDocument $document): ReportDocument
+    {
+        $max = (int) config('reports.pdf_max_rows');
+        $sections = array_map(function (ReportSection $s) use ($max): ReportSection {
+            if (count($s->rows) <= $max) {
+                return $s;
+            }
+            $cut = "El PDF muestra las primeras {$max} filas de ".number_format(count($s->rows), 0, ',', '.').'; el Excel trae todas.';
+
+            return new ReportSection($s->title, $s->columns, array_slice($s->rows, 0, $max), trim(($s->note ?? '').' '.$cut), $s->anchors);
+        }, $document->sections);
+
+        return new ReportDocument($document->title, $document->slug, $document->lines, $document->notes, $document->stats, $sections);
     }
 
     /** Cómo se escribe un valor en el PDF (coma decimal y punto de millares, como el resto de los PDF del sistema). */

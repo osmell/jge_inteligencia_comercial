@@ -11,6 +11,8 @@ use App\Models\Operator;
 use App\Models\Role;
 use App\Models\Seller;
 use App\Models\User;
+use App\Services\Reports\Output\Documents\ProductMixDocument;
+use App\Services\Reports\Output\ReportPdf;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -241,5 +243,20 @@ class ProductMixReportTest extends TestCase
         }
         $this->assertStringNotContainsString('Amplitud de catálogo por vend', $text);
         $this->assertTrue(AuditLog::query()->where('event', 'report.exported')->where('new_values->report', 'products')->exists());
+    }
+
+    public function test_the_pdf_cuts_long_tables_and_says_so_while_excel_keeps_every_row(): void
+    {
+        config(['reports.pdf_max_rows' => 2]);
+        $document = (new ProductMixDocument)->build($this->report(['level' => 'product']), 'Todas');
+
+        $cut = app(ReportPdf::class)->limited($document);
+
+        $this->assertCount(4, $document->sections[0]->rows);
+        $this->assertCount(2, $cut->sections[0]->rows);
+        $this->assertStringContainsString('El PDF muestra las primeras 2 filas de 4', (string) $cut->sections[0]->note);
+        $this->assertCount(2, $cut->sections[1]->rows);   // la tabla de personas tiene 2: no se toca ni se avisa
+        $this->assertStringNotContainsString('El PDF muestra', (string) $cut->sections[1]->note);
+        $this->actingAs($this->manager, 'sanctum')->get('/api/v1/reports/products/export?'.http_build_query(self::PERIOD + ['format' => 'pdf', 'level' => 'product']))->assertOk();
     }
 }

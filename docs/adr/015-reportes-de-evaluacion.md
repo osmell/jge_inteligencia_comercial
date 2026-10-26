@@ -16,6 +16,8 @@ El cliente quiere evaluar con rigor a vendedores, operadores y sucursales, contr
 - **Todo reporte deja rastro** (`report.viewed`, `report.exported`, `report.emailed`).
 - **Contrato**: las respuestas se tipan con `@response` en los controladores y el frontend deriva sus tipos de `openapi.json`.
 
+- **Mezcla de productos** (quinta opción, `ProductFigures`/`ProductMixReport`/`ProductMixDetail`): mide amplitud de catálogo (cobertura de categorías y líneas, dependencia de 5 productos, huecos frente al equipo y productos estrella no vendidos) sin semáforos todavía y sin inventar «lo ofrecido»: solo lo facturado. El PDF recorta las tablas a 100 filas (`reports.pdf_max_rows`) porque Dompdf agota la memoria; el Excel conserva todas.
+
 ## Consecuencias
 - Un supervisor limitado a una sucursal ve, en vendedores, operadores y conciliación, el resultado completo de su compañía; en el reporte de sucursales, solo las suyas. Es una decisión de negocio revisable (`docs/29_REPORTES.md`).
 - La verificación de este apartado incluye ejecutar **toda la suite en PostgreSQL** (`composer test:pgsql`, y un trabajo propio en la CI): al hacerlo apareció un error real fuera de los reportes (un tipo de mensaje de WhatsApp más largo que su columna, que en PostgreSQL impedía enviar mensajes desde Conversaciones). Con SQLite no se veía.

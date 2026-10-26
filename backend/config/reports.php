@@ -25,6 +25,9 @@ return [
     'atypical_min_documents' => 20,
     'atypical_iqr_factor' => 3,
 
+    /** Filas por tabla en el PDF: pasado esto Dompdf agota la memoria (128 MB). Excel y la pantalla traen todas. */
+    'pdf_max_rows' => 100,
+
     /** Correos de reportes: destinatarios por envío y por persona y hora (cada destinatario cuenta). */
     'email_max_recipients' => 10,
     'email_per_hour' => 30,

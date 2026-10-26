@@ -22,6 +22,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as LaravelRoute;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\BuildsSalesFixtures;
@@ -123,7 +124,7 @@ class ReportsSecurityTest extends TestCase
 
     public function test_the_company_filter_cannot_be_used_to_read_another_company(): void
     {
-        foreach (['sellers', 'operators', 'branches', 'branches/mix', 'conciliation'] as $report) {
+        foreach (['sellers', 'operators', 'branches', 'branches/mix', 'conciliation', 'products'] as $report) {
             $data = $this->actingAs($this->manager, 'sanctum')->getJson("/api/v1/reports/$report?".self::PERIOD.'&company_id='.$this->beta->id)->assertOk()->json('data');
             $this->assertStringNotContainsString('Beto', json_encode($data), $report);
             $this->assertStringNotContainsString('9999', json_encode($data), $report);
@@ -161,6 +162,43 @@ class ReportsSecurityTest extends TestCase
         $this->assertSame(1, User::where('id', $this->manager->id)->count(), 'La tabla de usuarios sigue ahí.');
     }
 
+    /** @return array<string, array{string}> */
+    public static function hostileMixValues(): array
+    {
+        return [
+            'nivel con SQL' => ['level=product;drop table products'],
+            'nivel desconocido' => ['level=customer'],
+            'nivel como lista' => ['level[]=product'],
+            'sujeto desconocido' => ['subject=user'],
+            'sujeto con SQL' => ["subject=seller' or '1'='1"],
+        ];
+    }
+
+    /** @return array<string, array{string}> los mismos, sin los de paginación (el reporte de productos no se pagina) */
+    public static function hostileValuesWithoutPage(): array
+    {
+        return array_filter(self::hostileValues(), fn (array $v) => ! str_starts_with($v[0], 'page='));
+    }
+
+    #[DataProvider('hostileValuesWithoutPage')]
+    public function test_the_product_mix_refuses_the_common_hostile_parameters_too(string $hostile): void
+    {
+        foreach (['products', "products/sellers/{$this->ana->id}", "products/operators/{$this->omar->id}"] as $report) {
+            $query = str_starts_with($hostile, 'from=') ? 'to=2026-10-31&'.$hostile : self::PERIOD.'&'.$hostile;
+            $this->actingAs($this->manager, 'sanctum')->getJson("/api/v1/reports/$report?$query")->assertUnprocessable();
+        }
+    }
+
+    #[DataProvider('hostileMixValues')]
+    public function test_the_product_mix_options_only_accept_their_fixed_lists(string $hostile): void
+    {
+        foreach (['products', "products/sellers/{$this->ana->id}", "products/operators/{$this->omar->id}", 'products/export'] as $report) {
+            $extra = $report === 'products/export' ? '&format=xlsx' : '';
+            $this->actingAs($this->manager, 'sanctum')->getJson("/api/v1/reports/$report?".self::PERIOD."&$hostile$extra")->assertUnprocessable();
+        }
+        $this->assertTrue(Schema::hasTable('products'), 'La tabla de productos sigue ahí.');
+    }
+
     public function test_no_report_exposes_costs_margins_or_inventory_values(): void
     {
         $forbidden = ['unit_cost', 'line_cost_total', 'cost', 'costs', 'cost_total', 'margin', 'estimated_margin', 'estimated_margin_pct', 'cost_coverage_pct', 'value', 'inventory_value', 'valuation'];
@@ -193,7 +231,7 @@ class ReportsSecurityTest extends TestCase
 
     public function test_every_download_leaves_a_trace_in_the_audit_log(): void
     {
-        foreach (['sellers', 'operators', 'branches', 'conciliation'] as $report) {
+        foreach (['sellers', 'operators', 'branches', 'conciliation', 'products'] as $report) {
             $before = AuditLog::where('event', 'report.exported')->count();
 
             $this->actingAs($this->manager, 'sanctum')->get("/api/v1/reports/$report/export?".self::PERIOD.'&format=xlsx')->assertOk();
