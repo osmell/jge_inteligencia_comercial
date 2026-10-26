@@ -147,7 +147,7 @@ export default function ReportProductsPage() {
       </ReportLegend>
 
       {open && (
-        <Modal title={`Mezcla de productos de ${open.subject.name}`} onClose={() => setOpen(null)} wide>
+        <Modal title={`Mezcla de productos de ${open.subject.name}`} onClose={() => setOpen(null)} extraWide>
           <ProductMixDetailView subject={subject} id={open.subject.id} query={filters.query()} level={level} />
         </Modal>
       )}

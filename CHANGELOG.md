@@ -38,6 +38,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - Mensaje de rechazo único al escribir o agregar notas en una conversación ajena.
 
 ### Corregido
+- **Mezcla de productos**: la ventana del detalle de un vendedor u operador es más ancha (hasta 72 rem) para leer completas las descripciones de los productos.
 - **Pantallas con filtros mostraban datos viejos**: si se cambiaba un filtro rápido, una respuesta lenta anterior podía llegar después y reemplazar a la nueva. Ahora toda carga descarta las respuestas superadas.
 - **Pruebas que dependían de la fecha de hoy**: dos pruebas de importación de inventario usaban una fecha «futura» fija que ya pasó.
 - **Reportes desbordaban la pantalla**: el texto oculto de los semáforos (para lectores de pantalla) escapaba del recorte de las tablas y ensanchaba y alargaba toda la página, con barras de desplazamiento de la ventana en ambos sentidos. Ahora las tablas se desplazan dentro de su tarjeta (encabezado fijo, barra horizontal a la vista, celdas compactas) y los reportes aprovechan todo el ancho disponible. Una prueba de navegador (`11-reportes-sin-desborde`) lo vigila en 1366×768 y 1920×1080.

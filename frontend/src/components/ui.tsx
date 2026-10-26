@@ -128,7 +128,8 @@ export function FormError({ message }: { message: string | null }) {
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
-export function Modal({ title, onClose, children, wide = false }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
+/** `wide`: tablas medianas; `extraWide`: varias tablas o descripciones largas (hasta 72 rem, sin pasar del ancho de la pantalla). */
+export function Modal({ title, onClose, children, wide = false, extraWide = false }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean; extraWide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
 
@@ -168,7 +169,7 @@ export function Modal({ title, onClose, children, wide = false }: { title: strin
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`my-6 w-full rounded-xl bg-surface shadow-[var(--shadow-pop)] ${wide ? 'max-w-2xl' : 'max-w-lg'}`}
+        className={`my-6 w-full rounded-xl bg-surface shadow-[var(--shadow-pop)] ${extraWide ? 'max-w-6xl' : wide ? 'max-w-2xl' : 'max-w-lg'}`}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
           <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
