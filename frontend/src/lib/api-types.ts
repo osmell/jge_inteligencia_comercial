@@ -1978,6 +1978,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/menu-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["menuAccess.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/menu-access/{user}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["menuAccess.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/notifications/summary": {
         parameters: {
             query?: never;
@@ -3155,6 +3187,13 @@ export interface components {
             password: string;
         };
         /**
+         * MenuAccessRequest
+         * @description Opciones del menú que se le ocultan a una persona (lista vacía: ve todo lo que su rol permite).
+         */
+        MenuAccessRequest: {
+            hidden: ("sales" | "goals" | "customers" | "conversations" | "agenda" | "follow_up" | "quotations" | "credit" | "digests" | "insights" | "products" | "stock" | "rotation" | "movements" | "units" | "report_sellers" | "report_operators" | "report_branches" | "report_products" | "report_conciliation" | "imports" | "companies" | "branches" | "users" | "roles" | "automations" | "mail" | "whatsapp" | "webhook" | "audit")[];
+        };
+        /**
          * OperatorRequest
          * @description Alta o cambios de un facturador (operador): nombre y estado.
          */
@@ -3401,6 +3440,7 @@ export interface components {
                 slug: string;
                 name: string;
             };
+            hidden_menu: string[];
             permissions: unknown[];
             companies: {
                 id: number;
@@ -9030,6 +9070,89 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "menuAccess.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            options: {
+                                key: string;
+                                group: string;
+                                label: string;
+                                permission: string;
+                            }[];
+                            users: {
+                                id: number;
+                                username: string;
+                                name: string;
+                                is_active: boolean;
+                                role: {
+                                    slug: string;
+                                    name: string;
+                                };
+                                available: string[];
+                                hidden: string[];
+                            }[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "menuAccess.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user ID */
+                user: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MenuAccessRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            username: string;
+                            name: string;
+                            is_active: boolean;
+                            role: {
+                                slug: string;
+                                name: string;
+                            };
+                            available: string[];
+                            hidden: string[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };

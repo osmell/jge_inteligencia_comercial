@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\EnsureAdministrator;
+use App\Http\Middleware\EnsureMenuOptionIsVisible;
 use App\Http\Middleware\EnsurePasswordIsCurrent;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureSessionIsCurrent;
@@ -41,10 +43,20 @@ return Application::configure(basePath: dirname(__DIR__))
             before: SubstituteBindings::class,
             prepend: EnsurePermission::class,
         );
+        // «Solo administradores» se comprueba antes de resolver el modelo: un usuario que no lo es recibe 403, nunca 404 (no puede sondear identificadores).
+        $middleware->prependToPriorityList(
+            before: SubstituteBindings::class,
+            prepend: EnsureAdministrator::class,
+        );
         // La clave temporal se comprueba antes que el permiso y que la resolución de modelos: la respuesta es siempre `password_change_required`.
         $middleware->prependToPriorityList(
             before: EnsurePermission::class,
             prepend: EnsurePasswordIsCurrent::class,
+        );
+        // Las opciones del menú que la administración ocultó a una persona se rechazan antes que el permiso y que la resolución de modelos.
+        $middleware->prependToPriorityList(
+            before: EnsurePermission::class,
+            prepend: EnsureMenuOptionIsVisible::class,
         );
         // Una sesión revocada se rechaza antes que todo lo demás (siempre 401 con `session_revoked`).
         $middleware->prependToPriorityList(
@@ -53,6 +65,8 @@ return Application::configure(basePath: dirname(__DIR__))
         );
         $middleware->alias([
             'permission' => EnsurePermission::class,
+            'administrator' => EnsureAdministrator::class,
+            'menu.visible' => EnsureMenuOptionIsVisible::class,
             'active' => EnsureUserIsActive::class,
             'password.current' => EnsurePasswordIsCurrent::class,
             'session.current' => EnsureSessionIsCurrent::class,

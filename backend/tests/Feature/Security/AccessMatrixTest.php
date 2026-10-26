@@ -60,7 +60,9 @@ class AccessMatrixTest extends TestCase
     /** @return list<string> */
     private function permissionsOf(LaravelRoute $route): array
     {
-        return collect($route->gatherMiddleware())->filter(fn ($m) => is_string($m) && str_starts_with($m, 'permission:'))->map(fn ($m) => substr($m, 11))->values()->all();
+        // «administrator» (solo el rol Administrador) cuenta como un requisito más: ninguna cuenta sin permisos puede entrar.
+        return collect($route->gatherMiddleware())->filter(fn ($m) => is_string($m) && (str_starts_with($m, 'permission:') || $m === 'administrator'))
+            ->map(fn ($m) => $m === 'administrator' ? 'rol:administrador' : substr($m, 11))->values()->all();
     }
 
     private function methodOf(LaravelRoute $route): string

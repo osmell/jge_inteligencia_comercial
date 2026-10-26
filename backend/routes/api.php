@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\Admin\BranchController;
 use App\Http\Controllers\Api\V1\Admin\CompanyController;
 use App\Http\Controllers\Api\V1\Admin\ImportController;
+use App\Http\Controllers\Api\V1\Admin\MenuAccessController;
 use App\Http\Controllers\Api\V1\Admin\RolePermissionController;
 use App\Http\Controllers\Api\V1\Admin\UserController;
 use App\Http\Controllers\Api\V1\AuditLogController;
@@ -63,7 +64,7 @@ Route::prefix('auth')->group(function () {
     Route::post('password', [PasswordController::class, 'update'])->middleware(['auth:sanctum', 'session.current', 'active']);
 });
 
-Route::middleware(['auth:sanctum', 'session.current', 'active', 'password.current'])->group(function () {
+Route::middleware(['auth:sanctum', 'session.current', 'active', 'password.current', 'menu.visible'])->group(function () {
     // Cualquier usuario autenticado: el contenido se limita a su ámbito.
     Route::get('companies', [OrganizationController::class, 'companies']);
     Route::get('branches', [OrganizationController::class, 'branches']);
@@ -334,6 +335,12 @@ Route::middleware(['auth:sanctum', 'session.current', 'active', 'password.curren
             Route::get('{batch}/errors.csv', [ImportController::class, 'errorsCsv'])->whereNumber('batch');
             Route::post('{batch}/confirm', [ImportController::class, 'confirm'])->whereNumber('batch');
             Route::post('{batch}/discard', [ImportController::class, 'discard'])->whereNumber('batch');
+        });
+
+        // Qué opciones del menú ve cada persona que no es administradora: solo administradores (no es un permiso que otro rol pueda recibir).
+        Route::middleware('administrator')->prefix('menu-access')->group(function () {
+            Route::get('/', [MenuAccessController::class, 'index']);
+            Route::put('{user}', [MenuAccessController::class, 'update'])->whereNumber('user');
         });
 
         Route::middleware('permission:roles.manage')->group(function () {

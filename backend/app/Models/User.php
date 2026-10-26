@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property int $role_id
  * @property bool $is_active
  * @property bool $must_change_password
+ * @property list<string>|null $hidden_menu
  * @property int $session_epoch
  * @property Carbon|null $password_changed_at
  * @property Carbon|null $last_login_at
@@ -50,6 +51,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'must_change_password' => 'boolean',
+            'hidden_menu' => 'array',
             'password_changed_at' => 'datetime',
             'last_login_at' => 'datetime',
         ];
@@ -92,6 +94,21 @@ class User extends Authenticatable
     public function seesAllOrganizations(): bool
     {
         return $this->hasRole(Role::ADMINISTRADOR);
+    }
+
+    public function isAdministrator(): bool
+    {
+        return $this->hasRole(Role::ADMINISTRADOR);
+    }
+
+    /**
+     * Opciones del menú que la administración le ocultó. Un administrador nunca tiene opciones ocultas.
+     *
+     * @return list<string>
+     */
+    public function hiddenMenu(): array
+    {
+        return $this->isAdministrator() ? [] : array_values(array_filter((array) $this->hidden_menu, 'is_string'));
     }
 
     public function hasPermission(string $slug): bool

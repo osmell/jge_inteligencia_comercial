@@ -16355,6 +16355,233 @@
                 }
             }
         },
+        "/admin/menu-access": {
+            "get": {
+                "operationId": "menuAccess.index",
+                "tags": [
+                    "MenuAccess"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "options": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "key": {
+                                                                "type": "string"
+                                                            },
+                                                            "group": {
+                                                                "type": "string"
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "permission": {
+                                                                "type": "string"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "key",
+                                                            "group",
+                                                            "label",
+                                                            "permission"
+                                                        ]
+                                                    }
+                                                },
+                                                "users": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "username": {
+                                                                "type": "string"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "is_active": {
+                                                                "type": "boolean"
+                                                            },
+                                                            "role": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "slug": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "slug",
+                                                                    "name"
+                                                                ]
+                                                            },
+                                                            "available": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "hidden": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "string"
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "id",
+                                                            "username",
+                                                            "name",
+                                                            "is_active",
+                                                            "role",
+                                                            "available",
+                                                            "hidden"
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "options",
+                                                "users"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/admin/menu-access/{user}": {
+            "put": {
+                "operationId": "menuAccess.update",
+                "tags": [
+                    "MenuAccess"
+                ],
+                "parameters": [
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "description": "The user ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/MenuAccessRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "username": {
+                                                    "type": "string"
+                                                },
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "is_active": {
+                                                    "type": "boolean"
+                                                },
+                                                "role": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "slug": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "slug",
+                                                        "name"
+                                                    ]
+                                                },
+                                                "available": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "hidden": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "username",
+                                                "name",
+                                                "is_active",
+                                                "role",
+                                                "available",
+                                                "hidden"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/notifications/summary": {
             "get": {
                 "operationId": "notification.summary",
@@ -27700,6 +27927,56 @@
                 ],
                 "title": "LoginRequest"
             },
+            "MenuAccessRequest": {
+                "type": "object",
+                "description": "Opciones del menú que se le ocultan a una persona (lista vacía: ve todo lo que su rol permite).",
+                "properties": {
+                    "hidden": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "sales",
+                                "goals",
+                                "customers",
+                                "conversations",
+                                "agenda",
+                                "follow_up",
+                                "quotations",
+                                "credit",
+                                "digests",
+                                "insights",
+                                "products",
+                                "stock",
+                                "rotation",
+                                "movements",
+                                "units",
+                                "report_sellers",
+                                "report_operators",
+                                "report_branches",
+                                "report_products",
+                                "report_conciliation",
+                                "imports",
+                                "companies",
+                                "branches",
+                                "users",
+                                "roles",
+                                "automations",
+                                "mail",
+                                "whatsapp",
+                                "webhook",
+                                "audit"
+                            ]
+                        },
+                        "maxItems": 30,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "hidden"
+                ],
+                "title": "MenuAccessRequest"
+            },
             "OperatorRequest": {
                 "type": "object",
                 "description": "Alta o cambios de un facturador (operador): nombre y estado.",
@@ -28687,6 +28964,12 @@
                             "name"
                         ]
                     },
+                    "hidden_menu": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
                     "permissions": {
                         "type": "array",
                         "items": {}
@@ -28746,6 +29029,7 @@
                     "name",
                     "must_change_password",
                     "role",
+                    "hidden_menu",
                     "permissions",
                     "companies",
                     "branches"
