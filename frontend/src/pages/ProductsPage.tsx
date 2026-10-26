@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Alert, Button, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat } from '../components/ui'
 import type { MissingProductRow, ProductCoverage, ProductLevels, ProductRow } from '../lib/customers'
 import { formatMoney } from '../lib/format'
 import type { Company } from '../lib/types'
@@ -15,16 +15,6 @@ const NONE = '__none__'
 
 const SORTS = { name: 'Nombre', code: 'Código', net_total: 'Venta 12 meses' } as const
 type Sort = keyof typeof SORTS
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-    </Card>
-  )
-}
 
 function Pager({ page, setPage, hasMore, loading }: { page: number; setPage: (page: number) => void; hasMore: boolean; loading: boolean }) {
   return (
@@ -79,10 +69,10 @@ export default function ProductsPage() {
       <FormError message={coverage.error} />
       {c && (
         <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <Stat label="Productos en el catálogo" value={String(c.catalog_products)} />
-          <Stat label="Productos vendidos (12 meses)" value={String(c.sold_products)} />
-          <Stat label="Vendidos sin catálogo" value={String(c.missing_products)} hint={c.missing_products > 0 ? `${formatMoney(c.missing_net_total)} de venta neta` : undefined} />
-          <Stat label="Venta con catálogo" value={c.covered_pct === null ? '—' : `${String(c.covered_pct).replace('.', ',')} %`} hint="de la venta neta de 12 meses" />
+          <Stat label="Productos en el catálogo" value={String(c.catalog_products)} info={{ text: 'Productos registrados en el catálogo de la aplicación (cargados desde el archivo de existencias o creados a mano).' }} />
+          <Stat label="Productos vendidos (12 meses)" value={String(c.sold_products)} info={{ text: 'Productos distintos que aparecen en las líneas de venta de los últimos 12 meses, estén o no en el catálogo.' }} />
+          <Stat label="Vendidos sin catálogo" value={String(c.missing_products)} info={{ text: 'Productos vendidos en los últimos 12 meses que todavía no están en el catálogo. La venta neta que se muestra es la de esos productos.' }}  hint={c.missing_products > 0 ? `${formatMoney(c.missing_net_total)} de venta neta` : undefined} />
+          <Stat label="Venta con catálogo" info={{ text: 'Qué parte de la venta neta de los últimos 12 meses corresponde a productos que sí están en el catálogo.', formula: '(Venta neta − Venta neta de productos sin catálogo) ÷ Venta neta × 100' }} value={c.covered_pct === null ? '—' : `${String(c.covered_pct).replace('.', ',')} %`} hint="de la venta neta de 12 meses" />
         </div>
       )}
       {c && c.missing_products > 0 && (

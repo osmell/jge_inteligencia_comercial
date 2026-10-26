@@ -9,7 +9,7 @@ import { useLoad } from '../lib/useLoad'
 import { ImportStatusBadge } from '../components/ImportStatusBadge'
 import { IN_PROGRESS } from '../lib/importStatus'
 import { useToast } from '../components/toast'
-import { Alert, Button, Card, ConfirmDialog, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, Button, ConfirmDialog, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr, Stat } from '../components/ui'
 
 const STATUS_MESSAGE: Record<string, { tone: 'info' | 'success' | 'danger' | 'warning'; text: string }> = {
   pending: { tone: 'info', text: 'El archivo está en cola para validarse. Si lleva más de un minuto así, el procesador de importaciones podría estar detenido (en desarrollo: docker compose up -d queue).' },
@@ -19,16 +19,6 @@ const STATUS_MESSAGE: Record<string, { tone: 'info' | 'success' | 'danger' | 'wa
   importing: { tone: 'info', text: 'Importando los datos…' },
   imported: { tone: 'success', text: 'Importación completada.' },
   discarded: { tone: 'info', text: 'Este lote fue descartado; el archivo se eliminó.' },
-}
-
-function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="tabular text-2xl font-semibold tracking-tight">{value}</p>
-      {hint && <p className="mt-0.5 text-xs text-ink-muted">{hint}</p>}
-    </Card>
-  )
 }
 
 function ErrorsSection({ batch }: { batch: ImportBatch }) {

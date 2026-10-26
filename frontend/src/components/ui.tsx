@@ -7,7 +7,11 @@ import {
   type ReactNode,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
+  type ThHTMLAttributes,
 } from 'react'
+import { Link } from 'react-router-dom'
+import type { Info as InfoSource } from '../lib/glossary'
+import { InfoTip } from './InfoTip'
 
 export type FieldErrors = Record<string, string[]>
 
@@ -309,8 +313,39 @@ export function DataTable({ children, label, scroll = false }: { children: React
 }
 
 export const th = 'sticky top-0 whitespace-nowrap border-b border-line bg-surface-muted px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-ink-muted'
+/** Encabezado de columna con una «i» opcional que explica el dato (y su fórmula, si es calculado). */
+export function Th({ children, info, right = false, className = '', ...rest }: ThHTMLAttributes<HTMLTableCellElement> & { info?: InfoSource; right?: boolean }) {
+  return (
+    <th className={`${th}${right ? ' text-right' : ''}${className ? ` ${className}` : ''}`} {...rest}>
+      <span className="inline-flex items-center gap-1">
+        {children}
+        {info && <InfoTip info={info} label={typeof children === 'string' ? children : undefined} />}
+      </span>
+    </th>
+  )
+}
+
 export const td = 'border-b border-line px-4 py-3 align-middle'
 export const tr = 'transition-colors hover:bg-surface-muted'
+
+/** Tarjeta de un indicador: título, valor y nota. `info` agrega la «i» con la explicación; `to` la vuelve un enlace. */
+export function Stat({ label, value, hint, tone, info, to }: { label: string; value: ReactNode; hint?: ReactNode; tone?: 'bad' | 'good'; info?: InfoSource; to?: string }) {
+  const card = (
+    <Card className={`h-full p-4 ${to ? 'transition-colors hover:border-jge-blue' : ''}`}>
+      <p className="flex items-center gap-1 text-sm text-ink-muted">{label}{info && !to && <InfoTip info={info} label={label} />}</p>
+      <p className={`tabular mt-0.5 text-2xl font-semibold tracking-tight ${tone === 'bad' ? 'text-danger' : tone === 'good' ? 'text-success' : ''}`}>{value}</p>
+      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
+    </Card>
+  )
+  if (!to) return card
+  // La «i» queda fuera del enlace: un botón dentro de un enlace no es accesible.
+  return (
+    <div className="relative">
+      <Link to={to} className="block h-full">{card}</Link>
+      {info && <span className="absolute right-3 top-3"><InfoTip info={info} label={label} /></span>}
+    </div>
+  )
+}
 
 export function TableSkeleton({ cols, rows = 4 }: { cols: number; rows?: number }) {
   return (

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { BarChart } from '../components/charts'
 import { useToast } from '../components/toast'
-import { Alert, Badge, Button, Card, DataTable, FormError, PageHeader, SelectField, td, th, tr } from '../components/ui'
+import { Alert, Badge, Button, Card, DataTable, FormError, PageHeader, SelectField, td, th, tr, Stat } from '../components/ui'
 import { api } from '../lib/api'
 import { formatDateTime, formatMoney } from '../lib/format'
 import type { AnalysisRun, CohortSummary, ConcentrationBlock, ConcentrationSummary } from '../lib/insights'
@@ -12,16 +12,6 @@ import type { Company } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
 const pct = (v: number | null) => (v === null ? '' : `${v.toLocaleString('es', { maximumFractionDigits: 1 })} %`)
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-    </Card>
-  )
-}
 
 function RunNote<S>({ run }: { run: AnalysisRun<S> | null | undefined }) {
   if (run === undefined) return null

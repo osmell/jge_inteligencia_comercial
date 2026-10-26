@@ -11,23 +11,13 @@ import CustomerCrossSell from '../components/CustomerCrossSell'
 import CustomerSegment from '../components/CustomerSegment'
 import CustomerInteractions from '../components/CustomerInteractions'
 import CustomerQuotations from '../components/CustomerQuotations'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { ABC_HINT, ACTIVITY_LABEL, formatDate, sinceLabel, type CustomerProfile, type CustomerType, type CustomerMaster, type OperatorRow, type SellerRow, type CustomerPurchase, type DocumentLine } from '../lib/customers'
 import type { BreakdownRow } from '../lib/sales'
 import type { Branch } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-    </Card>
-  )
-}
 
 function TopTable({ title, label, rows }: { title: string; label: string; rows: BreakdownRow[] }) {
   return (

@@ -1,22 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Alert, Badge, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Alert, Badge, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr, Stat } from '../components/ui'
 import type { StockList } from '../lib/inventory'
 import { formatMoney } from '../lib/format'
 import type { Branch, Company } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
 const STATUS = [['with', 'Con existencias'], ['zero', 'Agotados'], ['all', 'Todos']] as const
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-    </Card>
-  )
-}
 
 /** Existencias por sucursal en la unidad base de cada producto. Los costos solo los ve quien tiene ese permiso. */
 export default function InventoryStockPage() {

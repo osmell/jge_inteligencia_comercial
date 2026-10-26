@@ -10,7 +10,7 @@ import { formatCompact } from '../lib/sales'
 import { goalTone } from '../lib/tone'
 import { useLoad } from '../lib/useLoad'
 import { BarChart, ChartData, DonutChart, InlineBar, LineChart, ProgressBar } from './charts'
-import { Alert, Button, Card, DataTable, td, th, tr } from './ui'
+import { Alert, Button, Card, DataTable, td, th, tr, Stat } from './ui'
 
 /** Marco de una sección: título, enlace al detalle y estados de carga y error propios (una sección que falla no afecta a las demás). */
 function Frame<T>({ title, detail, path, children }: { title: string; detail?: { to: string; label: string }; path: string; children: (data: T) => ReactNode }) {
@@ -35,17 +35,6 @@ function Frame<T>({ title, detail, path, children }: { title: string; detail?: {
       )}
     </section>
   )
-}
-
-function Stat({ label, value, hint, tone, to }: { label: string; value: ReactNode; hint?: ReactNode; tone?: 'bad' | 'good'; to?: string }) {
-  const body = (
-    <Card className={`h-full p-4 ${to ? 'transition-colors hover:border-jge-blue' : ''}`}>
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className={`tabular mt-0.5 text-2xl font-semibold tracking-tight ${tone === 'bad' ? 'text-danger' : tone === 'good' ? 'text-success' : ''}`}>{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-    </Card>
-  )
-  return to ? <Link to={to} className="block">{body}</Link> : body
 }
 
 export interface BlockProps {

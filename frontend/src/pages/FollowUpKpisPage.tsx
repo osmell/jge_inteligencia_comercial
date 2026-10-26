@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Alert, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat } from '../components/ui'
 import { CHANNEL_LABEL, type FollowUpKpis, type InteractionChannel, type SellerRow } from '../lib/customers'
 import { formatMoney } from '../lib/format'
 import { LOSS_REASON_LABEL, type LossReason } from '../lib/quotations'
@@ -8,16 +8,6 @@ import type { Company } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
 const PRESETS = [['30d', 'Últimos 30 días'], ['month', 'Este mes'], ['last-month', 'Mes anterior'], ['90d', 'Últimos 90 días']] as const
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-    </Card>
-  )
-}
 
 function Group({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (

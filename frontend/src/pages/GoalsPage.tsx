@@ -1,6 +1,6 @@
 import { Download, Pencil, Sparkles } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat } from '../components/ui'
 import { download } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { STATUS_LABEL, STATUS_TONE, currentMonth, type GoalsResponse } from '../lib/goals'
@@ -21,16 +21,6 @@ function Progress({ pct }: { pct: number | null }) {
       </div>
       <span className="tabular text-sm">{pct === null ? '—' : formatPct(pct)}</span>
     </div>
-  )
-}
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
-      <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
-      {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-    </Card>
   )
 }
 
