@@ -18,14 +18,14 @@ function typing(target: EventTarget | null): boolean {
  * barra inicial, p. ej. «/ventas») y Enter va a ella. Solo ofrece lo que la persona puede ver.
  */
 export default function CommandBar() {
-  const { can } = useAuth()
+  const { canSee } = useAuth()
   const navigate = useNavigate()
   const input = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('')
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
 
-  const items = useMemo(() => NAV_GROUPS.flatMap((g) => g.items.filter((i) => can(i.permission)).map((i) => ({ ...i, group: g.title }))), [can])
+  const items = useMemo(() => NAV_GROUPS.flatMap((g) => g.items.filter(canSee).map((i) => ({ ...i, group: g.title }))), [canSee])
   const query = plain(text.trim().replace(/^\/+/, ''))
   const results = useMemo(() => {
     const found = items.filter((i) => !query || plain(i.title ?? i.label).includes(query) || plain(i.label).includes(query) || plain(i.to).includes(query))

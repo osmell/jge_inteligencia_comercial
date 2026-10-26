@@ -1,9 +1,13 @@
-import { PackageSearch, Scale, Store, ScanLine, ClipboardCheck, BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Mail, Webhook, MessageCircle, MessagesSquare, Newspaper, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
+import { ListChecks, PackageSearch, Scale, Store, ScanLine, ClipboardCheck, BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Mail, Webhook, MessageCircle, MessagesSquare, Newspaper, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
   /** Llave de la opción en el catálogo del servidor (`MenuCatalog`): la administración puede ocultarla a una persona. Sin llave, siempre visible (Inicio). */
   key?: string
+  /** Otras direcciones que pertenecen a la misma opción (pantallas sin entrada propia en el menú). */
+  also?: string[]
+  /** Solo el rol Administrador la ve (no se puede conceder por permisos). */
+  adminOnly?: boolean
   label: string
   /** Nombre completo, cuando el del menú es corto (dentro de un grupo que ya lo aclara): lo usan el encabezado y la barra de comandos. */
   title?: string
@@ -31,7 +35,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/agenda', key: 'agenda', label: 'Agenda', icon: CalendarCheck, permission: 'interactions.manage' },
       { to: '/seguimiento', key: 'follow_up', label: 'Seguimiento', icon: ClipboardList, permission: 'interactions.manage' },
       { to: '/cotizaciones', key: 'quotations', label: 'Cotizaciones', icon: FileText, permission: 'customers.view' },
-      { to: '/credito', key: 'credit', label: 'Crédito', icon: Wallet, permission: 'credit.view' },
+      { to: '/credito', key: 'credit', also: ['/cartera'], label: 'Crédito', icon: Wallet, permission: 'credit.view' },
       { to: '/resumenes', key: 'digests', label: 'Resúmenes', icon: Newspaper, permission: 'digests.view' },
       { to: '/inteligencia', key: 'insights', label: 'Inteligencia', icon: Lightbulb, permission: 'insights.view' },
       { to: '/productos', key: 'products', label: 'Productos', icon: Package, permission: 'sales.view' },
@@ -67,6 +71,7 @@ export const NAV_GROUPS: NavGroup[] = [
     title: 'Administración',
     items: [
       { to: '/admin/usuarios', key: 'users', label: 'Usuarios', icon: Users, permission: 'users.manage' },
+      { to: '/admin/menu-usuarios', label: 'Menú por usuario', icon: ListChecks, adminOnly: true },
       { to: '/admin/roles', key: 'roles', label: 'Roles y permisos', icon: KeyRound, permission: 'roles.manage' },
       { to: '/admin/automatizaciones', key: 'automations', label: 'Automatizaciones', icon: Workflow, permission: 'automations.manage' },
       { to: '/admin/correo', key: 'mail', label: 'Correo', icon: Mail, permission: 'mail.manage' },

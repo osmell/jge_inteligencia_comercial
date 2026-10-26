@@ -10,6 +10,8 @@ interface AuthState {
   /** Reemplaza el usuario en memoria (por ejemplo, tras cambiar la clave). */
   replaceUser: (user: AuthUser) => void
   can: (permission?: string) => boolean
+  /** ¿Se muestra esta opción del menú? Exige su permiso, que la administración no la haya ocultado y, si es solo de administración, el rol Administrador. */
+  canSee: (item: { permission?: string; key?: string; adminOnly?: boolean }) => boolean
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -52,7 +54,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Solo oculta controles; la autorización real se aplica en el backend.
   const can = useCallback((permission?: string) => !permission || !!user?.permissions.includes(permission), [user])
 
-  const value = useMemo(() => ({ user, loading, login, logout, replaceUser, can }), [user, loading, login, logout, replaceUser, can])
+  // Ocultar una opción solo QUITA: sigue haciendo falta el permiso. El servidor también lo hace cumplir (403 `menu_option_hidden`).
+  const canSee = useCallback(
+    (item: { permission?: string; key?: string; adminOnly?: boolean }) =>
+      can(item.permission) && !(item.key && user?.hidden_menu?.includes(item.key)) && (!item.adminOnly || user?.role.slug === 'administrador'),
+    [can, user],
+  )
+
+  const value = useMemo(() => ({ user, loading, login, logout, replaceUser, can, canSee }), [user, loading, login, logout, replaceUser, can, canSee])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

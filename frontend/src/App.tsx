@@ -2,7 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthContext'
 import Layout from './components/Layout'
 import { ToastProvider } from './components/toast'
-import { RequireAuth, RequirePermission, RequireSession } from './components/RouteGuards'
+import { RequireAdministrator, RequireAuth, RequirePermission, RequireSession, RequireVisibleOption } from './components/RouteGuards'
 import HomePage from './pages/HomePage'
 import ImportDetailPage from './pages/ImportDetailPage'
 import ImportsPage from './pages/ImportsPage'
@@ -52,6 +52,7 @@ import SellersPage from './pages/SellersPage'
 import CustomersPage from './pages/CustomersPage'
 import GoalsPage from './pages/GoalsPage'
 import SalesDashboardPage from './pages/SalesDashboardPage'
+import MenuAccessPage from './pages/MenuAccessPage'
 import RolesPage from './pages/RolesPage'
 import UsersPage from './pages/UsersPage'
 
@@ -66,6 +67,7 @@ export default function App() {
             <Route path="/cambiar-clave" element={<ChangePasswordPage />} />
           </Route>
           <Route element={<RequireAuth />}>
+            <Route element={<RequireVisibleOption />}>
             <Route element={<Layout />}>
               <Route index element={<HomePage />} />
               <Route path="notificaciones" element={<NotificationsPage />} />
@@ -157,6 +159,10 @@ export default function App() {
               <Route element={<RequirePermission permission="audit.view" />}>
                 <Route path="admin/auditoria" element={<AuditPage />} />
               </Route>
+              <Route element={<RequireAdministrator />}>
+                <Route path="admin/menu-usuarios" element={<MenuAccessPage />} />
+              </Route>
+            </Route>
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

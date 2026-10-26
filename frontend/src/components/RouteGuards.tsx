@@ -1,6 +1,7 @@
 import { Loader2 } from 'lucide-react'
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { optionForPath } from '../lib/menu'
 
 function Loading() {
   return (
@@ -31,4 +32,18 @@ export function RequireAuth() {
 export function RequirePermission({ permission }: { permission: string }) {
   const { can } = useAuth()
   return can(permission) ? <Outlet /> : <Navigate to="/" replace />
+}
+
+/** Una opción que la administración ocultó tampoco se abre escribiendo la dirección (el servidor además rechaza sus datos). */
+export function RequireVisibleOption() {
+  const { canSee } = useAuth()
+  const { pathname } = useLocation()
+  const option = optionForPath(pathname)
+  return option && option.key && !canSee({ key: option.key }) ? <Navigate to="/" replace /> : <Outlet />
+}
+
+/** Pantallas de uso exclusivo del rol Administrador. */
+export function RequireAdministrator() {
+  const { user } = useAuth()
+  return user?.role.slug === 'administrador' ? <Outlet /> : <Navigate to="/" replace />
 }

@@ -16,7 +16,7 @@ function initials(name: string) {
 }
 
 export default function Layout() {
-  const { user, logout, can } = useAuth()
+  const { user, logout, can, canSee } = useAuth()
   const [open, setOpen] = useState(false)
   const { pathname } = useLocation()
   const menuButton = useRef<HTMLButtonElement>(null)
@@ -59,7 +59,7 @@ export default function Layout() {
   const nav = (
     <nav aria-label="Principal" className="flex-1 space-y-6 overflow-y-auto px-3 py-4">
       {NAV_GROUPS.map((group) => {
-        const items = group.items.filter((i) => can(i.permission))
+        const items = group.items.filter(canSee)
         if (items.length === 0) return null
         return (
           <NavGroupView
