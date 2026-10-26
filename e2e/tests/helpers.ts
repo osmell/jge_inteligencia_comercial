@@ -30,3 +30,10 @@ export async function openReport(page: Page, option: 'Vendedores' | 'Operadores'
   if ((await group.getAttribute('aria-expanded')) !== 'true') await group.click()
   await reportsList(page).getByRole('link', { name: option, exact: true }).click()
 }
+
+/** Abre un grupo del menú (si está cerrado) y devuelve su lista de opciones. */
+export async function openGroup(page: Page, group: string) {
+  const button = menu(page).getByRole('button', { name: group, exact: true })
+  if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click()
+  return menu(page).getByRole('list', { name: group })
+}

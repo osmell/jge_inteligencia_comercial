@@ -6,11 +6,12 @@ import type { NavGroup, NavItem } from './navigation'
 const STORAGE_PREFIX = 'nav-open:'
 
 /** Lo guardado es solo una comodidad de cada navegador: si no se puede leer o escribir, el menú funciona igual. */
-function readOpen(title: string): boolean {
+function readOpen(title: string, fallback: boolean): boolean {
   try {
-    return localStorage.getItem(STORAGE_PREFIX + title) === '1'
+    const stored = localStorage.getItem(STORAGE_PREFIX + title)
+    return stored === null ? fallback : stored === '1'
   } catch {
-    return false
+    return fallback
   }
 }
 
@@ -31,8 +32,8 @@ const heading = 'px-3 text-[11px] font-semibold uppercase tracking-wider text-wh
 export default function NavGroupView({ group, items, renderItem }: { group: NavGroup; items: NavItem[]; renderItem: (item: NavItem) => ReactNode }) {
   const { pathname } = useLocation()
   const listId = useId()
-  const inside = items.some((i) => pathname.startsWith(i.to))
-  const [remembered, setRemembered] = useState(() => (group.collapsible ? readOpen(group.title) : true))
+  const inside = items.some((i) => (i.to === '/' ? pathname === '/' : [i.to, ...(i.also ?? [])].some((p) => pathname === p || pathname.startsWith(`${p}/`))))
+  const [remembered, setRemembered] = useState(() => (group.collapsible ? readOpen(group.title, group.defaultOpen ?? false) : true))
   const open = !group.collapsible || remembered || inside
 
   // Al entrar a una pantalla del grupo queda abierto, también la próxima vez.

@@ -4,7 +4,7 @@ Reportes para evaluar el desempeño de **vendedores, operadores y sucursales**, 
 
 ## Menú
 
-Los reportes están en un menú desplegable **«Reportes»** (Vendedores, Operadores, Sucursales y Conciliación). Empieza cerrado, se abre con el botón (con teclado y lector de pantalla: `aria-expanded`), se abre solo al entrar a cualquiera de sus pantallas y recuerda en el navegador si se dejó abierto. Solo aparece para quien tiene el permiso `reports.view`. La barra de comandos (tecla `/`) los encuentra por su nombre completo («Reporte de vendedores»). Los cuatro comparten la misma barra de periodo, comparación, compañía y sucursal.
+Los reportes están en un menú desplegable **«Reportes»** (Vendedores, Operadores, Sucursales, Productos y Conciliación; todo el menú está organizado en grupos desplegables: General, Administración, Catálogos, Inteligencia, Reportes y Datos, y solo General empieza abierto). Empieza cerrado, se abre con el botón (con teclado y lector de pantalla: `aria-expanded`), se abre solo al entrar a cualquiera de sus pantallas y recuerda en el navegador si se dejó abierto. Solo aparece para quien tiene el permiso `reports.view`. La barra de comandos (tecla `/`) los encuentra por su nombre completo («Reporte de vendedores»). Los cuatro comparten la misma barra de periodo, comparación, compañía y sucursal.
 
 ## Reglas comunes
 

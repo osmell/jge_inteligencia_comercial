@@ -34,6 +34,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Revisión de seguridad del apartado de Reportes** (`docs/28_SEGURIDAD.md`) y `ADR-015`.
 
 ### Cambiado
+- **Menú reorganizado en seis grupos desplegables**: General (Inicio, Conversaciones, Agenda), Administración (Usuarios, Menú por usuario, Roles y permisos, Auditoría, Automatizaciones, Correo, WhatsApp, Webhook), Catálogos (Compañías, Sucursales, Clientes, Productos, Unidades), Inteligencia, Reportes y Datos. Todos se abren con un botón y recuerdan cómo los dejó cada persona; solo General empieza abierto, y cada grupo se abre solo al estar dentro de una de sus pantallas. «Menú por usuario» sigue los mismos grupos.
 - Todo el backend usa `declare(strict_types=1)`; PHPStan sube del nivel 5 al **8** sin *baseline*.
 - Las consultas y transacciones salieron de los controladores hacia servicios; el dashboard, las estadísticas de ventas, la ficha de clientes y los reportes se dividieron en clases por responsabilidad. Sin cambios de comportamiento.
 - Mensaje de rechazo único al escribir o agregar notas en una conversación ajena.

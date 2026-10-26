@@ -10,6 +10,7 @@ import { optionForPath } from './lib/menu'
 import MenuAccessPage from './pages/MenuAccessPage'
 
 const ALL = ['sales.view', 'customers.view', 'credit.view', 'inventory.view', 'reports.view', 'users.manage']
+const EVERYTHING = [...ALL, 'roles.manage', 'audit.view', 'imports.manage', 'companies.manage', 'branches.manage', 'digests.view', 'insights.view', 'conversations.view', 'interactions.manage']
 const REPORTS = ['report_sellers', 'report_operators', 'report_branches', 'report_products', 'report_conciliation']
 
 let me: { role: string; permissions: string[]; hidden: string[] }
@@ -26,6 +27,7 @@ const people = [
 
 beforeEach(() => {
   document.cookie = 'XSRF-TOKEN=x'
+  localStorage.clear()   // lo que cada grupo recuerda del menú no debe pasar de una prueba a otra
   me = { role: 'gerente_general', permissions: ALL, hidden: [] }
   calls = []
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
@@ -79,10 +81,12 @@ describe('opciones del menú', () => {
 describe('menú principal con opciones ocultas', () => {
   it('quita solo las opciones ocultas y deja las demás', async () => {
     me.hidden = ['credit']
+    const user = userEvent.setup()
     shell('/')
     const nav = await menu()
 
-    expect(await within(nav).findByRole('link', { name: 'Ventas' })).toBeInTheDocument()
+    await user.click(await within(nav).findByRole('button', { name: 'Inteligencia' }))
+    expect(within(nav).getByRole('link', { name: 'Ventas' })).toBeInTheDocument()
     expect(within(nav).queryByRole('link', { name: 'Crédito' })).not.toBeInTheDocument()
   })
 
@@ -91,7 +95,7 @@ describe('menú principal con opciones ocultas', () => {
     shell('/')
     const nav = await menu()
 
-    await within(nav).findByRole('link', { name: 'Ventas' })
+    await within(nav).findByRole('button', { name: 'Inteligencia' })
     expect(within(nav).queryByRole('button', { name: 'Reportes' })).not.toBeInTheDocument()
   })
 
@@ -117,21 +121,57 @@ describe('menú principal con opciones ocultas', () => {
 
   it('«Menú por usuario» solo lo ve un administrador', async () => {
     shell('/')
-    await within(await menu()).findByRole('link', { name: 'Ventas' })
-    expect(screen.queryByRole('link', { name: 'Menú por usuario' })).not.toBeInTheDocument()
+    const user = userEvent.setup()
+    const nav = await menu()
+    await user.click(await within(nav).findByRole('button', { name: 'Administración' }))   // el gerente de la prueba sí tiene «Usuarios»
+    expect(within(nav).getByRole('link', { name: 'Usuarios' })).toBeInTheDocument()
+    expect(within(nav).queryByRole('link', { name: 'Menú por usuario' })).not.toBeInTheDocument()
   })
 
   it('un administrador ve la opción y su pantalla; quien no lo es vuelve al inicio', async () => {
     me = { role: 'administrador', permissions: ALL, hidden: [] }
     shell('/admin/menu-usuarios')
     expect(await screen.findByRole('heading', { name: 'Menú por usuario' })).toBeInTheDocument()
-    expect(within(await menu()).getByRole('link', { name: 'Menú por usuario' })).toBeInTheDocument()
+    expect(within(await menu()).getByRole('link', { name: 'Menú por usuario' })).toBeInTheDocument()   // el grupo se abre solo dentro de su pantalla
   })
 
   it('quien no es administrador no abre la pantalla escribiendo la dirección', async () => {
     shell('/admin/menu-usuarios')
 
     expect(await screen.findByText('Inicio de prueba')).toBeInTheDocument()
+  })
+})
+
+describe('grupos del menú', () => {
+  it('todos son desplegables, en este orden, y solo General empieza abierto', async () => {
+    me = { role: 'administrador', permissions: EVERYTHING, hidden: [] }
+    shell('/')
+    const nav = await menu()
+
+    await within(nav).findByRole('button', { name: 'Datos' })
+    const groups = await within(nav).findAllByRole('button')
+    expect(groups.map((b) => b.textContent)).toEqual(['General', 'Administración', 'Catálogos', 'Inteligencia', 'Reportes', 'Datos'])
+    expect(groups.map((b) => b.getAttribute('aria-expanded'))).toEqual(['true', 'false', 'false', 'false', 'false', 'false'])
+    expect(within(nav).getByRole('link', { name: 'Inicio' })).toBeVisible()
+  })
+
+  it('cada opción está en el grupo acordado', async () => {
+    const user = userEvent.setup()
+    me = { role: 'administrador', permissions: EVERYTHING, hidden: [] }
+    shell('/')
+    const nav = await menu()
+    const labels = async (group: string) => {
+      const button = await within(nav).findByRole('button', { name: group })
+      if (button.getAttribute('aria-expanded') !== 'true') await user.click(button)
+      return within(within(nav).getByRole('list', { name: group })).getAllByRole('link').map((a) => a.textContent)
+    }
+
+    expect(await labels('General')).toEqual(['Inicio', 'Conversaciones', 'Agenda'])
+    expect(await labels('Administración')).toEqual(['Usuarios', 'Menú por usuario', 'Roles y permisos', 'Auditoría'])
+    expect(await labels('Catálogos')).toEqual(['Compañías', 'Sucursales', 'Clientes', 'Productos', 'Unidades'])
+    expect(await labels('Inteligencia')).toEqual(['Ventas', 'Metas', 'Seguimiento', 'Cotizaciones', 'Crédito', 'Resúmenes', 'Inteligencia', 'Existencias', 'Rotación', 'Movimientos'])
+    expect(await labels('Reportes')).toEqual(['Vendedores', 'Operadores', 'Sucursales', 'Productos', 'Conciliación'])
+    expect(await labels('Datos')).toEqual(['Importaciones'])
   })
 })
 
