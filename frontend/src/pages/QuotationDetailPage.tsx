@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useToast } from '../components/toast'
+import { InfoTip } from '../components/InfoTip'
 import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TextAreaField, TextField, td, th, tr } from '../components/ui'
 import { api, download } from '../lib/api'
 import { formatBytes, formatMoney } from '../lib/format'
@@ -137,11 +138,11 @@ export default function QuotationDetailPage() {
               <div><dt className="text-ink-muted">Importe</dt><dd className="tabular font-medium">{formatMoney(q.amount)}</dd></div>
               <div><dt className="text-ink-muted">Válida hasta</dt><dd className="font-medium">{q.valid_until ? formatDay(q.valid_until) : '—'}</dd></div>
               <div><dt className="text-ink-muted">Emitida</dt><dd className="font-medium">{q.issued_at ? formatDateTime(q.issued_at) : 'Aún no'}</dd></div>
-              <div><dt className="text-ink-muted">Vendedor del cliente</dt><dd className="font-medium">{q.seller ?? '—'}</dd></div>
+              <div><dt className="flex items-center gap-1 text-ink-muted">Vendedor del cliente<InfoTip info={{ text: 'Vendedor asignado al cliente; no es necesariamente quien registró la cotización (eso está en «La registró»).' }} label="Vendedor del cliente" /></dt><dd className="font-medium">{q.seller ?? '—'}</dd></div>
               <div><dt className="text-ink-muted">La registró</dt><dd className="font-medium">{q.user?.name ?? '—'}</dd></div>
               <div><dt className="text-ink-muted">Referencia externa</dt><dd className="font-medium">{q.external_reference ?? '—'}</dd></div>
               <div className="sm:col-span-2"><dt className="text-ink-muted">Descripción</dt><dd className="whitespace-pre-line font-medium">{q.description ?? '—'}</dd></div>
-              <div><dt className="text-ink-muted">Factura vinculada</dt><dd className="font-medium">{q.document ? `${q.document.number} (${formatDay(q.document.issued_on)})` : '—'}</dd></div>
+              <div><dt className="flex items-center gap-1 text-ink-muted">Factura vinculada<InfoTip info={{ text: 'Factura del cliente con la que se concretó la venta. Al vincularla, la cotización pasa a «Convertida en venta».' }} label="Factura vinculada" /></dt><dd className="font-medium">{q.document ? `${q.document.number} (${formatDay(q.document.issued_on)})` : '—'}</dd></div>
               {q.loss_reason && (
                 <div className="sm:col-span-2 lg:col-span-3"><dt className="text-ink-muted">Motivo</dt><dd className="font-medium">{LOSS_REASON_LABEL[q.loss_reason]}{q.loss_note ? ` — ${q.loss_note}` : ''}</dd></div>
               )}

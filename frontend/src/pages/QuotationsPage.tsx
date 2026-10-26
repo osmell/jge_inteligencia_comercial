@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { Alert, Button, Card, CheckField, DataTable, EmptyRow, FormError, Modal, PageHeader, SearchInput, SelectField, TableSkeleton, TextAreaField, TextField, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, CheckField, DataTable, EmptyRow, FormError, Modal, PageHeader, SearchInput, SelectField, TableSkeleton, TextAreaField, TextField, Th, td, th, tr } from '../components/ui'
 import { api } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { STATUS_LABEL, formatDay, type QuotationDetail, type QuotationList, type QuotationStatus } from '../lib/quotations'
@@ -140,8 +140,8 @@ export default function QuotationsPage() {
       <DataTable label="Cotizaciones">
         <thead>
           <tr>
-            <th className={th}>Número</th><th className={th}>Cliente</th><th className={`${th} text-right`}>Importe</th>
-            <th className={th}>Válida hasta</th><th className={th}>Estado</th><th className={th}>Vendedor</th>
+            <th className={th}>Número</th><th className={th}>Cliente</th><Th right info={{ text: 'Monto cotizado al cliente.' }}>Importe</Th>
+            <Th info={{ text: 'Fecha hasta la que vale la oferta. Una cotización abierta que la pasa se muestra como «Vencida».' }}>Válida hasta</Th><Th info="quotation_status">Estado</Th><th className={th}>Vendedor</th>
           </tr>
         </thead>
         <tbody>

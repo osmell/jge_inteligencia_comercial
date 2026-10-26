@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import CreditSettlementModal, { type SettlementKind } from '../components/CreditSettlementModal'
 import { useToast } from '../components/toast'
-import { Alert, Button, Card, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, TextAreaField, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormActions, FormError, Modal, PageHeader, TextAreaField, Th, td, th, tr } from '../components/ui'
 import { ApiError, api } from '../lib/api'
 import { MOVEMENT_LABEL, bucketLabel, type CreditInvoiceDetail, type CreditMovementRow } from '../lib/credit'
 import { formatMoney } from '../lib/format'
@@ -81,7 +81,7 @@ export default function CreditDetailPage() {
           <p className="mb-2 text-xs text-ink-muted">El saldo es la suma de estos movimientos. No se editan ni se borran: un error se corrige con una anulación.</p>
           <DataTable label="Movimientos de la factura">
             <thead>
-              <tr><th className={th}>Fecha</th><th className={th}>Movimiento</th><th className={`${th} text-right`}>Importe</th><th className={th}>Método y referencia</th><th className={th}>Nota</th><th className={th}>Registró</th><th className={th}><span className="sr-only">Acciones</span></th></tr>
+              <tr><th className={th}>Fecha</th><th className={th}>Movimiento</th><Th right info={{ text: 'Monto del movimiento: un abono o pago reduce el saldo y un ajuste lo corrige.' }}>Importe</Th><th className={th}>Método y referencia</th><th className={th}>Nota</th><th className={th}>Registró</th><th className={th}><span className="sr-only">Acciones</span></th></tr>
             </thead>
             <tbody>
               {d.movements.length === 0 ? <EmptyRow cols={7}>Sin movimientos.</EmptyRow> : d.movements.map((m) => (

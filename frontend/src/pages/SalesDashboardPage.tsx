@@ -1,10 +1,12 @@
 import { ArrowDown, ArrowUp, Download, Minus, X } from 'lucide-react'
 import { useMemo } from 'react'
 import { BarChart, InlineBar } from '../components/charts'
+import { InfoTip } from '../components/InfoTip'
 import RankingsPanel from '../components/RankingsPanel'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, Th, td, th, tr } from '../components/ui'
 import { download } from '../lib/api'
 import { formatMoney } from '../lib/format'
+import type { Info as InfoSource } from '../lib/glossary'
 import {
   COMPARE_LABEL,
   DIMENSION_FILTER,
@@ -63,10 +65,10 @@ function RowChange({ row }: { row: BreakdownRow }) {
   )
 }
 
-function Kpi({ label, value, change, hint, versus }: { label: string; value: string; change?: number | null; hint?: string; versus?: string }) {
+function Kpi({ label, value, change, hint, versus, info }: { label: string; value: string; change?: number | null; hint?: string; versus?: string; info?: InfoSource }) {
   return (
     <Card className="p-4">
-      <p className="text-sm text-ink-muted">{label}</p>
+      <p className="flex items-center gap-1 text-sm text-ink-muted">{label}{info && <InfoTip info={info} label={label} />}</p>
       <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">{value}</p>
       {change !== undefined ? <Delta pct={change} versus={versus} /> : null}
       {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
@@ -238,22 +240,22 @@ export default function SalesDashboardPage() {
       {s && <p className="text-sm text-ink-muted">Periodo: {s.period.from} a {s.period.to} · Comparado con: {s.previous_period.from} a {s.previous_period.to}</p>}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-busy={summary.loading}>
-        <Kpi versus={versus} label="Venta neta" value={s ? formatMoney(s.current.net_total) : '—'} change={s?.change_pct.net_total} />
-        <Kpi versus={versus} label="Impuesto" value={s ? formatMoney(s.current.tax_total) : '—'} change={s?.change_pct.tax_total} />
-        <Kpi versus={versus} label="Total facturado" value={s ? formatMoney(s.current.grand_total) : '—'} change={s?.change_pct.grand_total} />
+        <Kpi versus={versus} label="Venta neta" info="sales_net" value={s ? formatMoney(s.current.net_total) : '—'} change={s?.change_pct.net_total} />
+        <Kpi versus={versus} label="Impuesto" info="sales_tax" value={s ? formatMoney(s.current.tax_total) : '—'} change={s?.change_pct.tax_total} />
+        <Kpi versus={versus} label="Total facturado" info="sales_grand" value={s ? formatMoney(s.current.grand_total) : '—'} change={s?.change_pct.grand_total} />
         <Kpi
           versus={versus}
-          label="Descuento"
+          label="Descuento" info="sales_discount"
           value={s ? formatMoney(s.current.discount_total) : '—'}
           change={s?.change_pct.discount_total}
           hint={s ? (s.current.discount_pct === null ? 'Sin líneas con Sub Total en el periodo.' : `${formatPct(s.current.discount_pct)} sobre el Sub Total. Ya está restado de la venta neta.`) : undefined}
         />
-        <Kpi versus={versus} label="Documentos" value={s ? s.current.documents.toLocaleString('es') : '—'} change={s?.change_pct.documents} />
-        <Kpi versus={versus} label="Clientes compradores" value={s ? s.current.customers.toLocaleString('es') : '—'} change={s?.change_pct.customers} />
-        <Kpi versus={versus} label="Ticket promedio" value={s ? formatMoney(s.current.average_ticket) : '—'} change={s?.change_pct.average_ticket} />
-        <Kpi versus={versus} label="Unidades" value={s ? formatMoney(s.current.units) : '—'} change={s?.change_pct.units} />
+        <Kpi versus={versus} label="Documentos" info="sales_documents" value={s ? s.current.documents.toLocaleString('es') : '—'} change={s?.change_pct.documents} />
+        <Kpi versus={versus} label="Clientes compradores" info="sales_customers" value={s ? s.current.customers.toLocaleString('es') : '—'} change={s?.change_pct.customers} />
+        <Kpi versus={versus} label="Ticket promedio" info="sales_ticket" value={s ? formatMoney(s.current.average_ticket) : '—'} change={s?.change_pct.average_ticket} />
+        <Kpi versus={versus} label="Unidades" info="sales_units" value={s ? formatMoney(s.current.units) : '—'} change={s?.change_pct.units} />
         <Kpi
-          label="Margen estimado"
+          label="Margen estimado" info="sales_margin"
           value={s ? formatMoney(s.current.estimated_margin) : '—'}
           change={s?.change_pct.estimated_margin}
           hint={s ? `${formatPct(s.current.estimated_margin_pct)} sobre venta con costo (${formatPct(s.current.cost_coverage_pct)} de la venta). Usa el costo actual, no el histórico.` : undefined}
@@ -272,7 +274,7 @@ export default function SalesDashboardPage() {
               <div className="mt-2 max-h-64 overflow-auto">
                 <table className="w-full text-left text-sm">
                   <caption className="sr-only">Venta neta por {trendGranularity === 'day' ? 'día' : 'mes'}</caption>
-                  <thead><tr><th className={th}>{trendGranularity === 'day' ? 'Día' : 'Mes'}</th><th className={`${th} text-right`}>Venta neta</th></tr></thead>
+                  <thead><tr><th className={th}>{trendGranularity === 'day' ? 'Día' : 'Mes'}</th><Th right info="sales_net">Venta neta</Th></tr></thead>
                   <tbody>
                     {points.map((p) => <tr key={p.key} className={tr}><td className={td}>{p.key}</td><td className={`${td} tabular text-right`}>{formatMoney(p.value)}</td></tr>)}
                   </tbody>
@@ -306,14 +308,14 @@ export default function SalesDashboardPage() {
             <thead>
               <tr>
                 <th className={th}>{DIMENSION_LABEL[dimension]}</th>
-                <th className={`${th} text-right`}>Venta neta</th>
-                <th className={th}><span className="sr-only">Proporción</span></th>
-                <th className={`${th} text-right`}>vs. comparado</th>
-                <th className={`${th} text-right`}>Docs.</th>
-                <th className={`${th} text-right`}>Clientes</th>
-                <th className={`${th} text-right`}>Descuento</th>
-                <th className={`${th} text-right`}>Ticket prom.</th>
-                <th className={`${th} text-right`}>Margen est.</th>
+                <Th right info="sales_net">Venta neta</Th>
+                <Th info="sales_share"><span className="sr-only">Proporción</span></Th>
+                <Th right info="sales_vs_compared">vs. comparado</Th>
+                <Th right info="sales_documents">Docs.</Th>
+                <Th right info="sales_customers">Clientes</Th>
+                <Th right info="sales_discount">Descuento</Th>
+                <Th right info="sales_ticket">Ticket prom.</Th>
+                <Th right info="sales_margin_pct">Margen est.</Th>
               </tr>
             </thead>
             <tbody>

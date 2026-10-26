@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat } from '../components/ui'
+import { Alert, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, Th, td, th, tr, Stat } from '../components/ui'
 import { CHANNEL_LABEL, type FollowUpKpis, type InteractionChannel, type SellerRow } from '../lib/customers'
 import { formatMoney } from '../lib/format'
 import { LOSS_REASON_LABEL, type LossReason } from '../lib/quotations'
@@ -67,9 +67,9 @@ export default function FollowUpKpisPage() {
 
       <div aria-busy={kpis.loading}>
         <Group title="Contactos" note="Contactos registrados con clientes en el periodo. Efectivo = se habló con el cliente (no cuenta «sin respuesta» ni «contacto incorrecto»).">
-          <Stat label="Contactos" value={k ? n(k.contacts.total) : '—'} hint={k ? `${n(k.contacts.outbound)} iniciados por el vendedor · ${n(k.contacts.inbound)} por el cliente` : undefined} />
-          <Stat label="Clientes contactados" value={k ? n(k.contacts.customers) : '—'} />
-          <Stat label="Contactos efectivos" value={k ? n(k.contacts.effective) : '—'} hint={k ? formatPct(k.contacts.effective_pct) : undefined} />
+          <Stat label="Contactos" info={{ text: 'Contactos registrados con clientes en el periodo (llamadas, mensajes, visitas). Se asignan a quien los registró.' }} value={k ? n(k.contacts.total) : '—'} hint={k ? `${n(k.contacts.outbound)} iniciados por el vendedor · ${n(k.contacts.inbound)} por el cliente` : undefined} />
+          <Stat label="Clientes contactados" info={{ text: 'Clientes distintos con al menos un contacto registrado en el periodo.' }} value={k ? n(k.contacts.customers) : '—'} />
+          <Stat label="Contactos efectivos" info={{ text: 'Contactos en los que se habló con el cliente: hablaron, interesado, pidió cotización, pidió que lo llamen o no le interesa. No cuentan «sin respuesta» ni «número equivocado».', formula: 'Efectivos % = Contactos efectivos ÷ Contactos × 100' }} value={k ? n(k.contacts.effective) : '—'} hint={k ? formatPct(k.contacts.effective_pct) : undefined} />
           <Card className="p-4">
             <p className="text-sm text-ink-muted">Por canal</p>
             <ul className="mt-1 space-y-0.5 text-sm" aria-label="Contactos por canal">
@@ -80,25 +80,25 @@ export default function FollowUpKpisPage() {
         </Group>
 
         <Group title="Cumplimiento de próximas acciones" note="Acciones programadas dentro del periodo. A tiempo = cerrada a más tardar el día programado.">
-          <Stat label="Acciones vencidas" value={k ? n(k.actions.due) : '—'} hint="Programadas con fecha ya pasada" />
-          <Stat label="Cumplidas a tiempo" value={k ? formatPct(k.actions.on_time_pct) : '—'} hint={k ? `${n(k.actions.on_time)} a tiempo · ${n(k.actions.late)} tarde` : undefined} />
-          <Stat label="Cumplidas (a tiempo o tarde)" value={k ? formatPct(k.actions.completed_pct) : '—'} />
-          <Stat label="Sin cumplir" value={k ? n(k.actions.open_overdue) : '—'} hint={k ? `${n(k.actions.upcoming)} todavía no vencen` : undefined} />
+          <Stat label="Acciones vencidas" info={{ text: 'Acciones de seguimiento cuya fecha programada ya pasó dentro del periodo: las cumplidas a tiempo, las cumplidas tarde y las que siguen sin cumplir.', formula: 'Vencidas = A tiempo + Tarde + Sin cumplir' }} value={k ? n(k.actions.due) : '—'} hint="Programadas con fecha ya pasada" />
+          <Stat label="Cumplidas a tiempo" info={{ text: 'Parte de las acciones vencidas que se cumplieron a más tardar el día programado.', formula: 'A tiempo % = Cumplidas a tiempo ÷ Acciones vencidas × 100' }} value={k ? formatPct(k.actions.on_time_pct) : '—'} hint={k ? `${n(k.actions.on_time)} a tiempo · ${n(k.actions.late)} tarde` : undefined} />
+          <Stat label="Cumplidas (a tiempo o tarde)" info={{ text: 'Parte de las acciones vencidas que se cumplieron, sea a tiempo o con retraso.', formula: 'Cumplidas % = (A tiempo + Tarde) ÷ Acciones vencidas × 100' }} value={k ? formatPct(k.actions.completed_pct) : '—'} />
+          <Stat label="Sin cumplir" info={{ text: 'Acciones con fecha ya pasada que siguen abiertas.' }} value={k ? n(k.actions.open_overdue) : '—'} hint={k ? `${n(k.actions.upcoming)} todavía no vencen` : undefined} />
         </Group>
 
         <Group title="Cartera de clientes" note={k ? `Describe la cartera, no el efecto del seguimiento: no se atribuye ninguna venta a un contacto. «Recuperado» = compró tras más de ${k.customers.inactive_days} días sin comprar.` : undefined}>
-          <Stat label="Clientes nuevos" value={k ? n(k.customers.new) : '—'} hint="Primera compra en el periodo (dentro del historial cargado)" />
-          <Stat label="Clientes recuperados" value={k ? n(k.customers.recovered) : '—'} />
+          <Stat label="Clientes nuevos" info={{ text: 'Clientes cuya primera compra del historial cargado ocurre dentro del periodo.' }} value={k ? n(k.customers.new) : '—'} hint="Primera compra en el periodo (dentro del historial cargado)" />
+          <Stat label="Clientes recuperados" info={{ text: 'Clientes que compran en el periodo después de haber pasado más días sin comprar que el límite de inactividad, sin ser clientes nuevos.' }} value={k ? n(k.customers.recovered) : '—'} />
         </Group>
 
         <Group title="Conversión de cotizaciones" note="Cohorte: cotizaciones emitidas en el periodo. Solo cuenta como convertida la que tiene factura vinculada; las abiertas todavía pueden convertirse, así que la tasa puede subir.">
-          <Stat label="Cotizaciones emitidas" value={k ? n(k.quotations.issued) : '—'} hint={k ? `Importe ${formatMoney(k.quotations.issued_amount)}` : undefined} />
-          <Stat label="Convertidas en venta" value={k ? n(k.quotations.converted) : '—'} hint={k ? `${formatPct(k.quotations.conversion_pct)} de las emitidas · ${formatMoney(k.quotations.converted_amount)}` : undefined} />
-          <Stat label="Conversión por importe" value={k ? formatPct(k.quotations.amount_conversion_pct) : '—'} hint={k && k.quotations.avg_days_to_convert !== null ? `Tardan ${String(k.quotations.avg_days_to_convert).replace('.', ',')} días en promedio` : undefined} />
-          <Stat label="Abiertas" value={k ? n(k.quotations.open + k.quotations.accepted_without_invoice) : '—'} hint={k ? `${n(k.quotations.open)} vigentes · ${n(k.quotations.accepted_without_invoice)} aceptadas sin factura` : undefined} />
-          <Stat label="Rechazadas" value={k ? n(k.quotations.rejected) : '—'} />
-          <Stat label="Vencidas" value={k ? n(k.quotations.expired) : '—'} />
-          <Stat label="Canceladas" value={k ? n(k.quotations.cancelled) : '—'} />
+          <Stat label="Cotizaciones emitidas" info={{ text: 'Cotizaciones emitidas en el periodo. El importe es la suma de sus montos.' }} value={k ? n(k.quotations.issued) : '—'} hint={k ? `Importe ${formatMoney(k.quotations.issued_amount)}` : undefined} />
+          <Stat label="Convertidas en venta" info={{ text: 'Cotizaciones emitidas en el periodo que ya se vincularon con una factura.', formula: 'Conversión % = Convertidas ÷ Emitidas × 100' }} value={k ? n(k.quotations.converted) : '—'} hint={k ? `${formatPct(k.quotations.conversion_pct)} de las emitidas · ${formatMoney(k.quotations.converted_amount)}` : undefined} />
+          <Stat label="Conversión por importe" info={{ text: 'Qué parte del dinero cotizado se convirtió en venta. Los días son el promedio entre la emisión y la conversión.', formula: 'Conversión por importe % = Importe convertido ÷ Importe emitido × 100' }} value={k ? formatPct(k.quotations.amount_conversion_pct) : '—'} hint={k && k.quotations.avg_days_to_convert !== null ? `Tardan ${String(k.quotations.avg_days_to_convert).replace('.', ',')} días en promedio` : undefined} />
+          <Stat label="Abiertas" info={{ text: 'Cotizaciones del periodo que siguen vivas: emitidas, enviadas o en seguimiento, más las aceptadas que todavía no tienen factura.' }} value={k ? n(k.quotations.open + k.quotations.accepted_without_invoice) : '—'} hint={k ? `${n(k.quotations.open)} vigentes · ${n(k.quotations.accepted_without_invoice)} aceptadas sin factura` : undefined} />
+          <Stat label="Rechazadas" info={{ text: 'Cotizaciones del periodo que el cliente rechazó.' }} value={k ? n(k.quotations.rejected) : '—'} />
+          <Stat label="Vencidas" info={{ text: 'Cotizaciones del periodo que pasaron su fecha de validez sin cerrarse.' }} value={k ? n(k.quotations.expired) : '—'} />
+          <Stat label="Canceladas" info={{ text: 'Cotizaciones del periodo que se cancelaron.' }} value={k ? n(k.quotations.cancelled) : '—'} />
           <Card className="p-4">
             <p className="text-sm text-ink-muted">Motivos de pérdida</p>
             <ul className="mt-1 space-y-0.5 text-sm" aria-label="Motivos de pérdida">
@@ -112,9 +112,9 @@ export default function FollowUpKpisPage() {
         <DataTable label="Seguimiento por usuario">
           <thead>
             <tr>
-              <th className={th}>Usuario</th><th className={`${th} text-right`}>Contactos</th><th className={`${th} text-right`}>Clientes</th><th className={`${th} text-right`}>Efectivos</th>
-              <th className={`${th} text-right`}>Acciones vencidas</th><th className={`${th} text-right`}>Cumplimiento</th>
-              <th className={`${th} text-right`}>Cotizaciones</th><th className={`${th} text-right`}>Convertidas</th>
+              <th className={th}>Usuario</th><Th right info={{ text: 'Contactos registrados por el usuario en el periodo.' }}>Contactos</Th><Th right info={{ text: 'Clientes distintos que contactó el usuario.' }}>Clientes</Th><Th right info={{ text: 'Contactos del usuario en los que se habló con el cliente.' }}>Efectivos</Th>
+              <Th right info={{ text: 'Acciones del usuario con fecha programada ya pasada dentro del periodo.' }}>Acciones vencidas</Th><Th right info={{ text: 'Parte de las acciones vencidas del usuario que cumplió, a tiempo o tarde.', formula: 'Cumplimiento % = (A tiempo + Tarde) ÷ Acciones vencidas × 100' }}>Cumplimiento</Th>
+              <Th right info={{ text: 'Cotizaciones que emitió el usuario en el periodo.' }}>Cotizaciones</Th><Th right info={{ text: 'Cotizaciones del usuario convertidas en venta. Entre paréntesis, el porcentaje sobre las que emitió.', formula: 'Conversión % = Convertidas ÷ Emitidas × 100' }}>Convertidas</Th>
             </tr>
           </thead>
           <tbody>

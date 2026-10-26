@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { InfoTip } from './InfoTip'
 import { Card } from './ui'
 import { InlineBar } from './charts'
 import { formatMoney } from '../lib/format'
+import type { Info } from '../lib/glossary'
 import { formatPct, type BreakdownRow, type Dimension, type RankingKey, type Rankings } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
 
@@ -15,6 +17,10 @@ interface List {
   value: (r: BreakdownRow) => number
   show: (r: BreakdownRow) => string
   note?: string
+}
+
+const LIST_INFO: Partial<Record<RankingKey, Info>> = {
+  by_net_total: 'sales_net', by_units: 'sales_units', by_documents: 'sales_documents', by_margin: 'sales_margin', by_discount: 'sales_discount',
 }
 
 const LISTS: List[] = [
@@ -87,7 +93,7 @@ export default function RankingsPanel({
           const max = Math.max(...rows.map(list.value), 0)
           return (
             <Card key={list.key} className="p-4">
-              <h3 className="font-semibold">{list.title}</h3>
+              <h3 className="flex items-center gap-1 font-semibold">{list.title}{LIST_INFO[list.key] && <InfoTip info={LIST_INFO[list.key]!} label={list.title} />}</h3>
               {list.note && <p className="text-xs text-ink-muted">{list.note}</p>}
               {loading ? (
                 <div className="skeleton mt-3 h-32 w-full" aria-hidden="true" />

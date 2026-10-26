@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, td, th, tr, Stat } from '../components/ui'
+import { Button, Card, DataTable, EmptyRow, FormError, PageHeader, SearchInput, SelectField, TableSkeleton, Th, td, th, tr, Stat } from '../components/ui'
 import { bucketLabel, type CreditList } from '../lib/credit'
 import { formatMoney } from '../lib/format'
 import { formatDay } from '../lib/quotations'
@@ -37,8 +37,8 @@ export default function CreditPage() {
       <PageHeader title="Crédito y cobranzas" description="Facturas de crédito y su saldo. El saldo se calcula desde los movimientos; la antigüedad se cuenta desde la fecha de la factura." action={<Link className="text-sm text-jge-blue hover:underline" to="/cartera">Antigüedad de cartera por cliente →</Link>} />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2" aria-busy={list.loading}>
-        <Stat label="Saldo por cobrar" value={meta ? formatMoney(meta.open_balance) : '—'} hint="Facturas con saldo, según la compañía y la búsqueda elegidas" />
-        <Stat label="Facturas con saldo" value={meta ? meta.open_count.toLocaleString('es') : '—'} />
+        <Stat label="Saldo por cobrar" info="credit_balance" value={meta ? formatMoney(meta.open_balance) : '—'} hint="Facturas con saldo, según la compañía y la búsqueda elegidas" />
+        <Stat label="Facturas con saldo" info={{ text: 'Facturas de crédito cuyo saldo todavía es mayor que cero.' }} value={meta ? meta.open_count.toLocaleString('es') : '—'} />
       </div>
 
       <Card className="mb-4 p-4">
@@ -64,7 +64,7 @@ export default function CreditPage() {
         <thead>
           <tr>
             <th className={th}>Documento</th><th className={th}>Fecha</th><th className={th}>Cliente</th><th className={th}>Vendedor</th>
-            <th className={`${th} text-right`}>Total</th><th className={`${th} text-right`}>Saldo</th><th className={th}>Antigüedad</th>
+            <Th right info={{ text: 'Total de la factura con impuesto, tal como viene en el archivo de crédito.' }}>Total</Th><Th right info="credit_balance">Saldo</Th><Th info="credit_age">Antigüedad</Th>
           </tr>
         </thead>
         <tbody>

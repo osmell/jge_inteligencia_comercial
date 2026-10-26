@@ -10,7 +10,7 @@ import { formatCompact } from '../lib/sales'
 import { goalTone } from '../lib/tone'
 import { useLoad } from '../lib/useLoad'
 import { BarChart, ChartData, DonutChart, InlineBar, LineChart, ProgressBar } from './charts'
-import { Alert, Button, Card, DataTable, td, th, tr, Stat } from './ui'
+import { Alert, Button, Card, DataTable, Stat, Th, td, th, tr } from './ui'
 
 /** Marco de una sección: título, enlace al detalle y estados de carga y error propios (una sección que falla no afecta a las demás). */
 function Frame<T>({ title, detail, path, children }: { title: string; detail?: { to: string; label: string }; path: string; children: (data: T) => ReactNode }) {
@@ -61,13 +61,14 @@ export function SalesBlock({ query, profile }: BlockProps) {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Stat
                 label="Venta neta"
+                info="sales_net"
                 value={formatMoney(s.current.net_total)}
                 tone={s.previous.change_pct === null ? undefined : s.previous.change_pct >= 0 ? 'good' : 'bad'}
                 hint={<>{changeText('Contra el tramo anterior', s.previous.change_pct)}<br />{s.year_ago ? changeText('Contra el año anterior', s.year_ago.change_pct) : 'Comparación anual: no aplica a este periodo.'}</>}
               />
-              <Stat label="Facturas" value={s.current.documents.toLocaleString('es')} hint={`Anterior: ${s.previous.documents.toLocaleString('es')}`} />
-              <Stat label="Clientes con compra" value={s.current.customers.toLocaleString('es')} />
-              <Stat label="Ticket promedio" value={formatMoney(s.current.average_ticket)} />
+              <Stat label="Facturas" info="sales_documents" value={s.current.documents.toLocaleString('es')} hint={`Anterior: ${s.previous.documents.toLocaleString('es')}`} />
+              <Stat label="Clientes con compra" info="sales_customers" value={s.current.customers.toLocaleString('es')} />
+              <Stat label="Ticket promedio" info="sales_ticket" value={formatMoney(s.current.average_ticket)} />
             </div>
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
               <Card className="p-4">
@@ -75,7 +76,7 @@ export function SalesBlock({ query, profile }: BlockProps) {
                 <LineChart label={`Venta neta diaria, ${s.period.label.toLowerCase()} contra el tramo anterior`} series={[{ name: s.period.label, points: now }, { name: 'Tramo anterior', points: before }]} />
                 <ChartData>
                   <DataTable label="Venta diaria">
-                    <thead><tr><th className={th}>Día</th><th className={`${th} text-right`}>Periodo</th><th className={`${th} text-right`}>Tramo anterior</th></tr></thead>
+                    <thead><tr><th className={th}>Día</th><Th right info="sales_net">Periodo</Th><Th right info={{ text: 'Venta neta del tramo inmediatamente anterior, de la misma duración, alineada día a día.' }}>Tramo anterior</Th></tr></thead>
                     <tbody>{now.map((p, i) => <tr key={p.key} className={tr}><td className={td}>{p.key}</td><td className={`${td} tabular text-right`}>{formatMoney(p.value)}</td><td className={`${td} tabular text-right`}>{formatMoney(before[i]?.value ?? 0)}</td></tr>)}</tbody>
                   </DataTable>
                 </ChartData>
@@ -85,7 +86,7 @@ export function SalesBlock({ query, profile }: BlockProps) {
                 <BarChart label="Venta neta mensual, últimos 12 meses" points={s.monthly.map((m) => ({ key: m.month, value: Number(m.net_total) }))} />
                 <ChartData>
                   <DataTable label="Venta mensual">
-                    <thead><tr><th className={th}>Mes</th><th className={`${th} text-right`}>Venta neta</th><th className={`${th} text-right`}>Facturas</th></tr></thead>
+                    <thead><tr><th className={th}>Mes</th><Th right info="sales_net">Venta neta</Th><Th right info="sales_documents">Facturas</Th></tr></thead>
                     <tbody>{s.monthly.map((m) => <tr key={m.month} className={tr}><td className={td}>{m.month}</td><td className={`${td} tabular text-right`}>{formatMoney(m.net_total)}</td><td className={`${td} tabular text-right`}>{m.documents}</td></tr>)}</tbody>
                   </DataTable>
                 </ChartData>
@@ -132,9 +133,9 @@ export function CreditBlock({ query, profile }: BlockProps) {
       {(c) => (
         <Card className="space-y-4 p-4">
           <div className="grid gap-3 sm:grid-cols-3">
-            <Stat label="Saldo por cobrar" value={formatMoney(c.total)} hint={`${c.invoices} facturas · ${c.customers} clientes`} />
-            <Stat label="Saldo vencido" value={formatMoney(c.overdue)} tone={Number(c.overdue) > 0 ? 'bad' : 'good'} hint={c.overdue_pct === null ? undefined : `${c.overdue_pct.toLocaleString('es')} % del saldo`} />
-            <Stat label="Promesas de pago" value={c.promises.due_next_7_days} hint={`Próximos 7 días (${formatMoney(c.promises.due_amount)}) · incumplidas en 30 días: ${c.promises.broken_30_days}`} />
+            <Stat label="Saldo por cobrar" info="credit_balance" value={formatMoney(c.total)} hint={`${c.invoices} facturas · ${c.customers} clientes`} />
+            <Stat label="Saldo vencido" info="credit_overdue" value={formatMoney(c.overdue)} tone={Number(c.overdue) > 0 ? 'bad' : 'good'} hint={c.overdue_pct === null ? undefined : `${c.overdue_pct.toLocaleString('es')} % del saldo`} />
+            <Stat label="Promesas de pago" info={{ text: 'Promesas de pago registradas por los clientes: cuántas vencen en los próximos 7 días (con su monto) y cuántas se incumplieron en los últimos 30 días.' }} value={c.promises.due_next_7_days} hint={`Próximos 7 días (${formatMoney(c.promises.due_amount)}) · incumplidas en 30 días: ${c.promises.broken_30_days}`} />
           </div>
           {c.promises.attention.length > 0 && (
             <div>
@@ -155,7 +156,7 @@ export function CreditBlock({ query, profile }: BlockProps) {
               {c.top_debtors.length > 0 && (
                 <ChartData summary="Ver principales deudores">
                   <DataTable label="Principales deudores">
-                    <thead><tr><th className={th}>Cliente</th><th className={`${th} text-right`}>Saldo</th><th className={`${th} text-right`}>Días de la más antigua</th></tr></thead>
+                    <thead><tr><th className={th}>Cliente</th><Th right info="credit_balance">Saldo</Th><Th right info="credit_oldest">Días de la más antigua</Th></tr></thead>
                     <tbody>{c.top_debtors.map((d) => <tr key={`${d.company_id}-${d.code}`} className={tr}><td className={td}>{d.name}</td><td className={`${td} tabular text-right`}>{formatMoney(d.total)}</td><td className={`${td} tabular text-right`}>{d.oldest_days}</td></tr>)}</tbody>
                   </DataTable>
                 </ChartData>
@@ -173,10 +174,10 @@ export function QuotationsBlock({ query, profile }: BlockProps) {
     <Frame<QuotationsSection> title={own(profile, 'Tus cotizaciones', 'Cotizaciones')} path={`/dashboard/quotations?${query}`} detail={{ to: '/cotizaciones', label: 'Ver cotizaciones' }}>
       {(q) => (
         <div className="grid gap-3 sm:grid-cols-2">
-          <Stat label="Abiertas" value={q.open.count} hint={`Monto ${formatMoney(q.open.amount)}`} />
-          <Stat label="Por vencer en 3 días" value={q.expiring.count} tone={q.expiring.count > 0 ? 'bad' : undefined} hint={`Monto ${formatMoney(q.expiring.amount)}`} />
-          <Stat label="Vencidas sin cerrar" value={q.expired_unclosed} tone={q.expired_unclosed > 0 ? 'bad' : 'good'} />
-          <Stat label="Emitidas / convertidas en el periodo" value={`${q.issued.count} / ${q.converted.count}`} hint={`Convertidas: ${formatMoney(q.converted.amount)}`} />
+          <Stat label="Abiertas" info="quotation_open" value={q.open.count} hint={`Monto ${formatMoney(q.open.amount)}`} />
+          <Stat label="Por vencer en 3 días" info="quotation_expiring" value={q.expiring.count} tone={q.expiring.count > 0 ? 'bad' : undefined} hint={`Monto ${formatMoney(q.expiring.amount)}`} />
+          <Stat label="Vencidas sin cerrar" info="quotation_expired" value={q.expired_unclosed} tone={q.expired_unclosed > 0 ? 'bad' : 'good'} />
+          <Stat label="Emitidas / convertidas en el periodo" info={{ text: 'Cotizaciones emitidas en el periodo y, de ellas o de otras anteriores, las que se convirtieron en venta en el mismo periodo. El monto es el de las convertidas.' }} value={`${q.issued.count} / ${q.converted.count}`} hint={`Convertidas: ${formatMoney(q.converted.amount)}`} />
         </div>
       )}
     </Frame>
@@ -194,14 +195,14 @@ export function ConversationsBlock({ query, profile }: BlockProps) {
       {(c) => (
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-3">
-            <Stat label="Clientes esperando respuesta" value={c.waiting} tone={c.waiting > 0 ? 'bad' : 'good'} to="/conversaciones" />
-            <Stat label={`Esperan más de ${c.limit_minutes} min`} value={c.over_limit} tone={c.over_limit > 0 ? 'bad' : 'good'} to="/conversaciones" />
-            <Stat label="Respuesta típica" value={c.median_minutes === null ? '—' : waitText(c.median_minutes)} hint={c.within_limit_pct === null ? 'Sin respuestas en el periodo' : `${c.within_limit_pct}% en menos de ${c.limit_minutes} min · ${c.answered} respuestas`} />
+            <Stat label="Clientes esperando respuesta" info={{ text: 'Conversaciones abiertas con un cliente cuyo último mensaje es del cliente y todavía no tiene respuesta.' }} value={c.waiting} tone={c.waiting > 0 ? 'bad' : 'good'} to="/conversaciones" />
+            <Stat label={`Esperan más de ${c.limit_minutes} min`} info={{ text: 'De los clientes que esperan respuesta, los que llevan al menos el tiempo límite configurado sin que nadie les conteste.' }} value={c.over_limit} tone={c.over_limit > 0 ? 'bad' : 'good'} to="/conversaciones" />
+            <Stat label="Respuesta típica" info={{ text: 'Tiempo que tarda una persona en contestar un mensaje del cliente, tomando la mediana del periodo. El porcentaje es la parte de las respuestas dadas dentro del tiempo límite.', formula: 'Respuesta típica = mediana de (Primera respuesta de una persona − Mensaje del cliente)' }} value={c.median_minutes === null ? '—' : waitText(c.median_minutes)} hint={c.within_limit_pct === null ? 'Sin respuestas en el periodo' : `${c.within_limit_pct}% en menos de ${c.limit_minutes} min · ${c.answered} respuestas`} />
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Stat label="Mensajes recibidos" value={c.received} />
-            <Stat label="Mensajes enviados" value={c.sent} />
-            {profile !== 'seller' && <Stat label="Números sin asignar" value={c.unassigned} tone={c.unassigned > 0 ? 'bad' : 'good'} to="/conversaciones" />}
+            <Stat label="Mensajes recibidos" info={{ text: 'Mensajes de clientes recibidos en el periodo (no se cuentan las reacciones).' }} value={c.received} />
+            <Stat label="Mensajes enviados" info={{ text: 'Mensajes enviados por personas del equipo en el periodo (no se cuentan las reacciones ni los envíos automáticos).' }} value={c.sent} />
+            {profile !== 'seller' && <Stat label="Números sin asignar" info={{ text: 'Conversaciones abiertas de números que todavía no están vinculados a un cliente.' }} value={c.unassigned} tone={c.unassigned > 0 ? 'bad' : 'good'} to="/conversaciones" />}
           </div>
           {c.top.length > 0 && (
             <Card className="p-4">
@@ -228,9 +229,9 @@ export function FollowupBlock({ query, profile }: BlockProps) {
       {(f) => (
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-3">
-            <Stat label="Acciones vencidas" value={f.overdue} tone={f.overdue > 0 ? 'bad' : 'good'} to="/agenda" />
-            <Stat label="Acciones para hoy" value={f.today} to="/agenda" />
-            <Stat label={`Sin contacto en ${f.no_contact.days} días`} value={f.no_contact.count} hint="Clientes inactivos o perdidos que aceptan comunicaciones" tone={f.no_contact.count > 0 ? 'bad' : 'good'} to="/agenda" />
+            <Stat label="Acciones vencidas" info={{ text: 'Acciones de seguimiento programadas con fecha ya pasada y sin cumplir.' }} value={f.overdue} tone={f.overdue > 0 ? 'bad' : 'good'} to="/agenda" />
+            <Stat label="Acciones para hoy" info={{ text: 'Acciones de seguimiento programadas para hoy.' }} value={f.today} to="/agenda" />
+            <Stat label={`Sin contacto en ${f.no_contact.days} días`} info={{ text: 'Clientes inactivos o perdidos que aceptan comunicaciones y a los que no se ha contactado en ese lapso. Son los candidatos a reactivar.' }} value={f.no_contact.count} hint="Clientes inactivos o perdidos que aceptan comunicaciones" tone={f.no_contact.count > 0 ? 'bad' : 'good'} to="/agenda" />
           </div>
           {f.actions.length > 0 && (
             <Card className="p-4">
@@ -269,10 +270,10 @@ export function InventoryBlock({ query }: BlockProps) {
     <Frame<InventorySection> title="Inventario" path={`/dashboard/inventory?${query}`} detail={{ to: '/inventario/rotacion', label: 'Ver rotación' }}>
       {(i) => (
         <div className="grid gap-3 sm:grid-cols-2">
-          <Stat label="Agotados con demanda" value={i.out_of_stock} tone={i.out_of_stock > 0 ? 'bad' : 'good'} />
-          <Stat label="Bajo el mínimo" value={i.below_min} tone={i.below_min > 0 ? 'bad' : 'good'} />
-          <Stat label="Sin rotación" value={i.no_rotation} />
-          <Stat label="Sobre el máximo" value={i.above_max} />
+          <Stat label="Agotados con demanda" info={{ text: 'Productos sin existencia que sí se han vendido en el periodo de demanda. Productos sin existencia y sin ventas no se vigilan.' }} value={i.out_of_stock} tone={i.out_of_stock > 0 ? 'bad' : 'good'} />
+          <Stat label="Bajo el mínimo" info={{ text: 'Productos con existencia menor al mínimo. El mínimo cubre la reposición y la seguridad.', formula: 'Mínimo = Demanda diaria × (Días de reposición + Días de seguridad)' }} value={i.below_min} tone={i.below_min > 0 ? 'bad' : 'good'} />
+          <Stat label="Sin rotación" info={{ text: 'Productos con existencia que no se han vendido en los últimos días configurados.' }} value={i.no_rotation} />
+          <Stat label="Sobre el máximo" info={{ text: 'Productos con existencia mayor al máximo, es decir, con sobreinventario.', formula: 'Máximo = Mínimo + Demanda diaria × Ciclo de compra' }} value={i.above_max} />
         </div>
       )}
     </Frame>
@@ -284,10 +285,10 @@ export function InsightsBlock({ query, profile }: BlockProps) {
     <Frame<InsightsSection> title={own(profile, 'Recomendaciones de tus clientes', 'Recomendaciones')} path={`/dashboard/insights?${query}`} detail={{ to: '/inteligencia/alertas', label: 'Ver recomendaciones' }}>
       {(i) => (
         <div className="grid gap-3 sm:grid-cols-2">
-          <Stat label="Abiertas" value={i.open} hint={`Altas ${i.by_severity.high} · medias ${i.by_severity.medium} · bajas ${i.by_severity.low}`} to="/inteligencia/alertas" />
-          <Stat label="Graves" value={i.by_severity.high} tone={i.by_severity.high > 0 ? 'bad' : 'good'} to="/inteligencia/alertas" />
-          <Stat label="Clientes en riesgo" value={i.at_risk} />
-          <Stat label="Clientes con caída de venta" value={i.sales_drop} />
+          <Stat label="Abiertas" info={{ text: 'Recomendaciones del análisis de clientes que siguen sin atender. El detalle indica cuántas son de gravedad alta, media y baja.' }} value={i.open} hint={`Altas ${i.by_severity.high} · medias ${i.by_severity.medium} · bajas ${i.by_severity.low}`} to="/inteligencia/alertas" />
+          <Stat label="Graves" info={{ text: 'Recomendaciones abiertas de gravedad alta.' }} value={i.by_severity.high} tone={i.by_severity.high > 0 ? 'bad' : 'good'} to="/inteligencia/alertas" />
+          <Stat label="Clientes en riesgo" info={{ text: 'Recomendaciones abiertas de cliente en riesgo: por inactividad o por segmento RFM en riesgo.' }} value={i.at_risk} />
+          <Stat label="Clientes con caída de venta" info={{ text: 'Recomendaciones abiertas por caída de venta frente a su comportamiento habitual.' }} value={i.sales_drop} />
         </div>
       )}
     </Frame>
@@ -332,7 +333,7 @@ export function CompaniesBlock({ query }: BlockProps) {
     <Frame<CompaniesSection> title="Por compañía" path={`/dashboard/companies?${query}`}>
       {(c) => (
         <DataTable label="Venta por compañía">
-          <thead><tr><th className={th}>Compañía</th><th className={`${th} text-right`}>Venta neta</th><th className={`${th} text-right`}>Facturas</th><th className={`${th} text-right`}>Tramo anterior</th><th className={`${th} text-right`}>Cambio</th></tr></thead>
+          <thead><tr><th className={th}>Compañía</th><Th right info="sales_net">Venta neta</Th><Th right info="sales_documents">Facturas</Th><Th right info={{ text: 'Venta neta del tramo inmediatamente anterior, de la misma duración.' }}>Tramo anterior</Th><Th right info="sales_vs_compared">Cambio</Th></tr></thead>
           <tbody>
             {c.rows.map((r) => (
               <tr key={r.company_id} className={tr}>

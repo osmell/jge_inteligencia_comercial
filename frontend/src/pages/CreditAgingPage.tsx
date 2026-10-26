@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, td, th, tr } from '../components/ui'
+import { Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, Th, td, th, tr } from '../components/ui'
 import { download } from '../lib/api'
 import { bucketLabel, type AgingReport } from '../lib/credit'
 import { formatMoney } from '../lib/format'
@@ -64,8 +64,8 @@ export default function CreditAgingPage() {
         <thead>
           <tr>
             <th className={th}>Cliente</th>
-            {buckets.map((b) => <th key={b} className={`${th} text-right`}>{bucketLabel(b)}</th>)}
-            <th className={`${th} text-right`}>Total</th>
+            {buckets.map((b) => <Th key={b} right info={{ text: `Saldo de las facturas cuya antigüedad cae en el tramo «${bucketLabel(b)}». La antigüedad se cuenta desde la fecha de emisión.` }}>{bucketLabel(b)}</Th>)}
+            <Th right info={{ text: 'Saldo total del cliente en todos los tramos.', formula: 'Total = suma de los tramos' }}>Total</Th>
           </tr>
         </thead>
         <tbody>

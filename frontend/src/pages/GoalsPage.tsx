@@ -1,6 +1,6 @@
 import { Download, Pencil, Sparkles } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
-import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, td, th, tr, Stat } from '../components/ui'
+import { Alert, Button, Card, DataTable, EmptyRow, FormError, PageHeader, SelectField, TableSkeleton, TextField, Th, td, th, tr, Stat } from '../components/ui'
 import { download } from '../lib/api'
 import { formatMoney } from '../lib/format'
 import { STATUS_LABEL, STATUS_TONE, currentMonth, type GoalsResponse } from '../lib/goals'
@@ -87,10 +87,10 @@ export default function GoalsPage() {
       {totals && !editing && (
         <>
           <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Stat label="Meta efectiva" value={formatMoney(totals.effective_goal)} hint={`${totals.with_goal} de ${totals.sellers} vendedores con meta`} />
-            <Stat label="Vendido" value={formatMoney(totals.actual)} hint="Solo vendedores con meta" />
-            <Stat label="Cumplimiento" value={totals.compliance_pct === null ? '—' : formatPct(totals.compliance_pct)} />
-            <Stat label="Semáforo" value={`${totals.met} · ${totals.warning} · ${totals.danger}`} hint="Cumplida · cerca · por debajo" />
+            <Stat label="Meta efectiva" info="goal_effective" value={formatMoney(totals.effective_goal)} hint={`${totals.with_goal} de ${totals.sellers} vendedores con meta`} />
+            <Stat label="Vendido" info="goal_actual" value={formatMoney(totals.actual)} hint="Solo vendedores con meta" />
+            <Stat label="Cumplimiento" info="goal_compliance" value={totals.compliance_pct === null ? '—' : formatPct(totals.compliance_pct)} />
+            <Stat label="Semáforo" info="goal_status" value={`${totals.met} · ${totals.warning} · ${totals.danger}`} hint="Cumplida · cerca · por debajo" />
           </div>
           {behind.length > 0 && (
             <div className="mb-4">
@@ -123,7 +123,7 @@ export default function GoalsPage() {
             <tr>
               <th className={th}>Vendedor</th>
               <th className={th}>Meta del mes</th>
-              <th className={th}>Días de ausencia</th>
+              <Th info={{ text: 'Días del mes en que el vendedor no trabajó (vacaciones, permisos). Se descuentan de la meta efectiva.' }}>Días de ausencia</Th>
               <th className={th}>Alta</th>
               <th className={th}>Baja</th>
               <th className={th}>Origen</th>
@@ -131,13 +131,13 @@ export default function GoalsPage() {
           ) : (
             <tr>
               <th className={th}>Vendedor</th>
-              <th className={`${th} text-right`}>Meta del mes</th>
-              <th className={`${th} text-right`}>Meta efectiva</th>
-              <th className={`${th} text-right`}>Vendido</th>
-              <th className={th}>Cumplimiento</th>
-              <th className={th}>Estado</th>
-              <th className={`${th} text-right`}>Proyección</th>
-              <th className={`${th} text-right`}>Ritmo</th>
+              <Th right info="goal_month">Meta del mes</Th>
+              <Th right info="goal_effective">Meta efectiva</Th>
+              <Th right info="goal_actual">Vendido</Th>
+              <Th info="goal_compliance">Cumplimiento</Th>
+              <Th info="goal_status">Estado</Th>
+              <Th right info="goal_projected">Proyección</Th>
+              <Th right info="goal_pace">Ritmo</Th>
             </tr>
           )}
         </thead>

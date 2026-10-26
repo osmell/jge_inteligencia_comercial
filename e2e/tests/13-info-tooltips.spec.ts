@@ -32,3 +32,39 @@ for (const [width, height] of [[1366, 768], [375, 667]] as const) {
     }
   })
 }
+
+/** Cada «i» de las pantallas de ventas, seguimiento, cotizaciones y crédito: abre dentro de la ventana y no cambia el tamaño de la página. */
+const SCREENS: [string, number][] = [['/', 1], ['/ventas', 8], ['/metas', 1], ['/seguimiento', 10], ['/cotizaciones', 1], ['/credito', 1], ['/cartera', 1]]
+
+for (const [width, height] of [[1366, 768], [375, 667]] as const) {
+  test(`todas las «i» de las pantallas de ventas se abren dentro de la ventana (${width}×${height})`, async ({ page }) => {
+    test.setTimeout(180_000)
+    await page.setViewportSize({ width, height })
+    await loginOk(page, 'admin')
+    for (const [path, minimum] of SCREENS) {
+      await page.goto(path)
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+      await page.waitForTimeout(1500)
+      const buttons = page.getByRole('button', { name: /^Qué significa/ })
+      const count = await buttons.count()
+      expect(count, path).toBeGreaterThanOrEqual(minimum)
+      const size = () => page.evaluate(() => ({ w: document.documentElement.scrollWidth, h: document.documentElement.scrollHeight }))
+      const before = await size()
+      for (let i = 0; i < Math.min(count, 40); i++) {
+        const b = buttons.nth(i)
+        await b.scrollIntoViewIfNeeded()
+        await b.hover()
+        const tip = page.getByRole('tooltip')
+        await expect(tip, `${path} #${i}`).toBeVisible()
+        const box = await tip.boundingBox()
+        expect(box!.x, `${path} #${i}`).toBeGreaterThanOrEqual(0)
+        expect(box!.x + box!.width, `${path} #${i}`).toBeLessThanOrEqual(width)
+        expect(box!.y, `${path} #${i}`).toBeGreaterThanOrEqual(0)
+        expect(box!.y + box!.height, `${path} #${i}`).toBeLessThanOrEqual(height)
+        await page.keyboard.press('Escape')
+      }
+      const after = await size()
+      expect(after.w, `${path}: ancho`).toBe(before.w)
+    }
+  })
+}
