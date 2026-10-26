@@ -23,3 +23,4 @@ Un ADR es una nota corta que responde **por qué** el sistema está hecho así, 
 | [013](013-cambio-de-clave-obligatorio.md) | Cambio de clave obligatorio con clave temporal | Aceptado |
 | [014](014-epoca-de-sesion.md) | Época de sesión por usuario: el cierre de sesión siempre cierra | Aceptado |
 | [015](015-reportes-de-evaluacion.md) | Reportes de evaluación: alcance, servicios compartidos, salidas y correo | Aceptado |
+| [016](016-menu-por-usuario.md) | Menú por usuario: ocultar y bloquear (solo administradores, solo quita) | Aceptado |

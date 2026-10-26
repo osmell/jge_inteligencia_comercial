@@ -49,8 +49,8 @@ Las dos advertencias y la información que reporta:
 Cómo repetirlo: `e2e/tools/zap-api-scan.sh <API> <origen de la interfaz>` (solo contra una instalación desechable).
 
 ## 4. Lo que se comprobó que ya estaba bien
-- **Autenticación**: 207 de las 210 rutas de la API exigen sesión; las 3 públicas son el inicio de sesión y los dos webhooks de Meta, y estos últimos rechazan lo que no trae firma válida.
-- **Autorización**: toda ruta con permiso rechaza (403) a quien está conectado pero no lo tiene; 189 de las 210 exigen un permiso concreto; las 18 que solo exigen sesión están enumeradas y revisadas, y agregar una nueva falla la prueba hasta revisarla.
+- **Autenticación**: 208 de las 211 rutas de la API exigen sesión; las 3 públicas son el inicio de sesión y los dos webhooks de Meta, y estos últimos rechazan lo que no trae firma válida.
+- **Autorización**: toda ruta con permiso rechaza (403) a quien está conectado pero no lo tiene; 191 de las 211 exigen un permiso concreto o el rol Administrador; las 17 que solo exigen sesión están enumeradas y revisadas, y agregar una nueva falla la prueba hasta revisarla.
 - **Aislamiento entre compañías y entre vendedores**: más de 80 combinaciones de ruta × registro ajeno (cotizaciones, crédito, conversaciones, clientes, contactos, importaciones, administración…) responden 403/404 sin filtrar datos; ninguna lista contiene datos ajenos, tampoco pidiendo otra compañía con `company_id`.
 - **CSRF**: una petición con sesión pero sin el token se rechaza (419); con un origen ajeno la sesión ni se reconoce (401). CORS permite solo el origen de la interfaz.
 - **Inicio de sesión**: mismo mensaje para usuario inexistente y clave errónea; la sesión se regenera al entrar y se invalida al salir; contraseña mínima de 10 caracteres.
@@ -154,6 +154,18 @@ Se revisó el apartado completo (4 reportes, sus detalles y sus salidas) con `te
 Las tres rutas nuevas (`/reports/products`, `/products/sellers/{id}`, `/products/operators/{id}`) entran en las mismas pruebas de `ReportsSecurityTest`: un identificador de otra compañía responde 404, la compañía pedida fuera de alcance no devuelve nada, ninguna respuesta trae costos ni margen, y toda consulta y descarga deja rastro. Además: `level` y `subject` solo aceptan sus listas fijas (los valores hostiles se rechazan con 422 y las columnas SQL salen de listas blancas), y los parámetros hostiles comunes también se rechazan.
 
 - **H15 · El PDF de una tabla larga agotaba la memoria de PHP** (500 con unas 300 filas, p. ej. el ranking de categorías de un año). Se recorta a 100 filas por tabla con aviso; Excel, correo y pantalla conservan todas. Medido: ~35 MB por PDF con el tope.
+
+## Revisión de «Menú por usuario» (2026-10-26)
+
+La administración decide qué opciones del menú ve cada persona que no es administradora (ADR-016).
+
+- **Quién puede**: solo el rol Administrador (`EnsureAdministrator`), no un permiso: ningún otro rol lo recibe desde «Roles y permisos», aunque tenga todos los permisos de pantalla. Un usuario que no lo es recibe 403 aun con un identificador inexistente (no puede sondear usuarios: la comprobación va antes de resolver el modelo). Nadie puede quitarse a sí mismo una restricción, y a un administrador no se le puede restringir.
+- **Restricción real**: el servidor responde 403 `menu_option_hidden` a toda ruta cuyas opciones dueñas estén todas ocultas; no depende de la interfaz. Solo quita: no concede nada que el rol no tenga (un 403 por falta de permiso sigue siendo un 403 normal).
+- **Sin rutas olvidadas**: `MenuCatalogTest` recorre todas las rutas de la API y falla si alguna no pertenece a una opción ni es una excepción declarada; también vigila que las llaves de la interfaz y del servidor coincidan. La matriz de acceso (`AccessMatrixTest`) cuenta «solo administrador» como un requisito más: una cuenta sin permisos es rechazada también por estas rutas.
+- **Entradas**: las llaves solo aceptan la lista fija del catálogo (sin duplicados, sin listas anidadas ni texto libre); lo demás es 422.
+- **Auditoría**: cada cambio queda como `user.updated` con la selección anterior y la nueva.
+- **Prueba de punta a punta** (`e2e/tests/12-menu-por-usuario.spec.ts`, en una instalación de pruebas): con un reporte oculto el enlace desaparece, la dirección escrita vuelve al inicio y el servidor responde `menu_option_hidden`; con el grupo entero oculto el grupo desaparece; la pantalla de administración y su API siguen cerradas para quien no es administrador; al terminar se restablece la cuenta.
+- **Límite conocido**: un dato compartido sigue disponible mientras otra opción visible lo use (regla acordada); por ejemplo, la lista general de clientes mientras «Cotizaciones» esté visible.
 
 ## Vulnerabilidad de PHP «PHP2Shell» (2026-10-24)
 

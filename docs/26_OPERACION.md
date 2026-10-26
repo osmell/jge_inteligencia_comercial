@@ -42,7 +42,8 @@ Responsabilidad de la VM de base de datos; mínimo recomendado:
 
 ## 6. Después de un despliegue
 1. `php artisan migrate --force` y `php artisan db:seed --class=RolePermissionSeeder --force` (da de alta los permisos nuevos; es repetible y no devuelve permisos que administración quitó).
-2. Reiniciar `queue` y `reverb` (cargan el código al arrancar).
+2. Reiniciar `queue` y `reverb` (cargan el código al arrancar) y los procesos de PHP (FPM o contenedores): con una versión de PHP anterior a la 8.5.12 el sistema es vulnerable a PHP2Shell (`docs/28_SEGURIDAD.md`).
+   La migración `users.hidden_menu` (Menú por usuario) es necesaria: sin ella `auth/me` falla.
 3. `php artisan ops:status` en verde.
 4. Revisar la CI del commit desplegado y el `CHANGELOG.md`.
 
