@@ -1,4 +1,4 @@
-import { Scale, Store, ScanLine, ClipboardCheck, BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Mail, Webhook, MessageCircle, MessagesSquare, Newspaper, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
+import { PackageSearch, Scale, Store, ScanLine, ClipboardCheck, BarChart3, CalendarCheck, ClipboardList, FileText, Wallet, Contact, ArrowLeftRight, Mail, Webhook, MessageCircle, MessagesSquare, Newspaper, Workflow, Lightbulb, RefreshCw, Boxes, Warehouse, Package, Target, Building2, FileSpreadsheet, GitBranch, Home, KeyRound, ScrollText, Users, type LucideIcon } from 'lucide-react'
 
 export interface NavItem {
   to: string
@@ -46,6 +46,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { to: '/reportes/vendedores', label: 'Vendedores', title: 'Reporte de vendedores', icon: ClipboardCheck, permission: 'reports.view' },
       { to: '/reportes/operadores', label: 'Operadores', title: 'Reporte de operadores', icon: ScanLine, permission: 'reports.view' },
       { to: '/reportes/sucursales', label: 'Sucursales', title: 'Reporte de sucursales', icon: Store, permission: 'reports.view' },
+      { to: '/reportes/productos', label: 'Productos', title: 'Mezcla de productos', icon: PackageSearch, permission: 'reports.view' },
       { to: '/reportes/conciliacion', label: 'Conciliación', title: 'Conciliación de ventas', icon: Scale, permission: 'reports.view' },
     ],
   },

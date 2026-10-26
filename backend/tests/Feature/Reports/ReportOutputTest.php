@@ -31,7 +31,7 @@ class ReportOutputTest extends TestCase
 {
     use BuildsSalesFixtures, RefreshDatabase;
 
-    private const REPORTS = ['sellers', 'operators', 'branches', 'conciliation'];
+    private const REPORTS = ['sellers', 'operators', 'branches', 'conciliation', 'products'];
 
     private Company $alfa;
 
@@ -373,6 +373,6 @@ class ReportOutputTest extends TestCase
             $this->actingAs($this->manager, 'sanctum')->postJson("/api/v1/reports/$report/email", ['from' => '2026-10-01', 'to' => '2026-10-31', 'format' => 'pdf', 'recipients' => ['jefe@ejemplo.com'], 'confirmed' => true])->assertOk()->assertJsonPath('data.sent', 1);
         }
 
-        Mail::assertSent(AppMail::class, 4);
+        Mail::assertSent(AppMail::class, count(self::REPORTS));
     }
 }

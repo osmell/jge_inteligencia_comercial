@@ -3305,6 +3305,10 @@ export interface components {
             company_id?: number | null;
             branch_id?: number | null;
             page?: number | null;
+            /** @enum {string|null} */
+            subject?: "seller" | "operator" | null;
+            /** @enum {string|null} */
+            level?: "product" | "category" | "line" | "group" | null;
             /** @enum {string} */
             format: "xlsx" | "pdf";
             recipients: string[];
@@ -10007,7 +10011,25 @@ export interface operations {
                             };
                             level: string;
                             summary: {
-                                [key: string]: unknown;
+                                subject: {
+                                    id: number;
+                                    name: string;
+                                    company_id: number;
+                                    is_active: boolean;
+                                };
+                                rank: number | null;
+                                net_total: number;
+                                share_pct: number | null;
+                                documents: number;
+                                products_sold: number;
+                                categories_sold: number;
+                                categories_catalog: number;
+                                category_coverage_pct: number | null;
+                                lines_sold: number;
+                                lines_catalog: number;
+                                line_coverage_pct: number | null;
+                                groups_sold: number;
+                                top5_share_pct: number | null;
                             } | null;
                             ranking: {
                                 items: {
@@ -10102,7 +10124,25 @@ export interface operations {
                             };
                             level: string;
                             summary: {
-                                [key: string]: unknown;
+                                subject: {
+                                    id: number;
+                                    name: string;
+                                    company_id: number;
+                                    is_active: boolean;
+                                };
+                                rank: number | null;
+                                net_total: number;
+                                share_pct: number | null;
+                                documents: number;
+                                products_sold: number;
+                                categories_sold: number;
+                                categories_catalog: number;
+                                category_coverage_pct: number | null;
+                                lines_sold: number;
+                                lines_catalog: number;
+                                line_coverage_pct: number | null;
+                                groups_sold: number;
+                                top5_share_pct: number | null;
                             } | null;
                             ranking: {
                                 items: {
@@ -10540,6 +10580,8 @@ export interface operations {
                 company_id?: number | null;
                 branch_id?: number | null;
                 page?: number | null;
+                subject?: "seller" | "operator" | null;
+                level?: "product" | "category" | "line" | "group" | null;
                 format: "xlsx" | "pdf";
             };
             header?: never;

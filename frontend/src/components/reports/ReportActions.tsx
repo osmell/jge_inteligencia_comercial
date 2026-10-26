@@ -8,13 +8,14 @@ import { useExport } from '../../lib/useExport'
 import { Button, FormError } from '../ui'
 import EmailReportModal from './EmailReportModal'
 
-export type ReportKey = 'sellers' | 'operators' | 'branches' | 'conciliation'
+export type ReportKey = 'sellers' | 'operators' | 'branches' | 'conciliation' | 'products'
 
 /**
  * Las salidas de un reporte: imprimir lo que se ve, descargarlo en Excel o PDF y enviarlo por correo. Todas parten del mismo periodo y
  * filtros de la pantalla. Al imprimir, esta barra y los filtros no salen (`print:hidden`) y se agrega quién lo imprimió.
  */
-export default function ReportActions({ report, filters }: { report: ReportKey; filters: ReportFilters }) {
+/** `extra`: lo que el reporte elige además de los filtros comunes (p. ej. a quién se evalúa y el nivel del catálogo). */
+export default function ReportActions({ report, filters, extra }: { report: ReportKey; filters: ReportFilters; extra?: Record<string, string> }) {
   const user = useCurrentUser()
   const exporter = useExport<'xlsx' | 'pdf'>()
   const [mailing, setMailing] = useState(false)
@@ -28,7 +29,7 @@ export default function ReportActions({ report, filters }: { report: ReportKey; 
   }
 
   function file(format: 'xlsx' | 'pdf') {
-    void exporter.run(format, () => download(`/reports/${report}/export?${filters.query({ format })}`, `reporte.${format}`), 'No se pudo generar el archivo.')
+    void exporter.run(format, () => download(`/reports/${report}/export?${filters.query({ ...extra, format })}`, `reporte.${format}`), 'No se pudo generar el archivo.')
   }
 
   return (
@@ -41,7 +42,7 @@ export default function ReportActions({ report, filters }: { report: ReportKey; 
       </div>
       <FormError message={exporter.error} />
       <p className="mb-2 hidden text-xs text-ink-muted print:block">Impreso por {user?.name} el {printedAt}</p>
-      {mailing && <EmailReportModal report={report} filters={filters} onClose={() => setMailing(false)} />}
+      {mailing && <EmailReportModal report={report} filters={filters} extra={extra} onClose={() => setMailing(false)} />}
     </>
   )
 }

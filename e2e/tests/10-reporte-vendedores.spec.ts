@@ -96,6 +96,34 @@ test.describe('Reporte de sucursales', () => {
   })
 })
 
+test.describe('Mezcla de productos', () => {
+  test('administración ve lo más facturado, cambia el nivel y abre lo que una persona no vende', async ({ page }) => {
+    await loginOk(page, 'admin')
+    await openReport(page, 'Productos')
+
+    await expect(page.getByRole('heading', { name: 'Mezcla de productos' })).toBeVisible()
+    await page.getByLabel('Periodo').selectOption('ytd')
+    await expect(page.getByRole('table', { name: 'Lo más facturado por categoría' })).toBeVisible()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await page.getByLabel('Ver la venta por').selectOption('product')
+    await expect(page.getByRole('table', { name: 'Lo más facturado por producto' })).toBeVisible()
+
+    await page.getByLabel('Evaluar a').selectOption('operator')
+    await expect(page.getByRole('table', { name: 'Amplitud de catálogo por operador' })).toBeVisible()
+    await page.getByRole('table', { name: 'Amplitud de catálogo por operador' }).getByRole('button', { name: /Ver el detalle de/ }).first().click()
+    await expect(page.getByRole('table', { name: 'Categorías sin venta' })).toBeVisible()
+  })
+
+  test('un vendedor no lo ve ni puede abrirlo escribiendo la dirección', async ({ page }) => {
+    await loginOk(page, 'vendedor1')
+    await expect(menu(page).getByRole('button', { name: 'Reportes' })).toHaveCount(0)
+
+    await page.goto('/reportes/productos')
+
+    await expect(page.getByRole('table', { name: 'Lo más facturado por categoría' })).toHaveCount(0)
+  })
+})
+
 test.describe('Conciliación', () => {
   test('administración concilia el periodo y consulta el detalle de facturación de un vendedor', async ({ page }) => {
     await loginOk(page, 'admin')
@@ -131,7 +159,7 @@ test.describe('Menú desplegable «Reportes»', () => {
 
     await group.click()
     await expect(group).toHaveAttribute('aria-expanded', 'true')
-    for (const option of ['Vendedores', 'Operadores', 'Sucursales', 'Conciliación']) {
+    for (const option of ['Vendedores', 'Operadores', 'Sucursales', 'Productos', 'Conciliación']) {
       await expect(reportsList(page).getByRole('link', { name: option, exact: true })).toBeVisible()
     }
 
@@ -160,7 +188,7 @@ test.describe('Menú desplegable «Reportes»', () => {
 test.describe('Salidas de los reportes', () => {
   test('cada reporte ofrece imprimir, Excel, PDF y correo', async ({ page }) => {
     await loginOk(page, 'admin')
-    for (const option of ['Vendedores', 'Operadores', 'Sucursales', 'Conciliación'] as const) {
+    for (const option of ['Vendedores', 'Operadores', 'Sucursales', 'Productos', 'Conciliación'] as const) {
       await openReport(page, option)
       const actions = page.getByRole('group', { name: 'Salidas del reporte' })
       for (const name of ['Imprimir', 'Excel', 'PDF', 'Enviar por correo']) await expect(actions.getByRole('button', { name })).toBeEnabled()

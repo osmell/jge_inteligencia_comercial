@@ -20,7 +20,7 @@ interface Result {
  * Enviar un reporte por correo en dos pasos: primero se escriben las direcciones y el mensaje; luego se revisan una por una y se confirma
  * que esas personas pueden recibir las cifras. Es lo único irreversible de los reportes: las cifras salen de la empresa.
  */
-export default function EmailReportModal({ report, filters, onClose }: { report: ReportKey; filters: ReportFilters; onClose: () => void }) {
+export default function EmailReportModal({ report, filters, extra, onClose }: { report: ReportKey; filters: ReportFilters; extra?: Record<string, string>; onClose: () => void }) {
   const { values: v, set } = useFormValues({ recipients: '', format: 'xlsx', message: '', confirmed: false })
   const { errors, saving, run } = useSubmit()
   const [step, setStep] = useState<'write' | 'confirm' | 'done'>('write')
@@ -32,7 +32,7 @@ export default function EmailReportModal({ report, filters, onClose }: { report:
   async function send(e: FormEvent) {
     e.preventDefault()
     const ok = await run(async () => {
-      const query = Object.fromEntries(new URLSearchParams(filters.query()))
+      const query = Object.fromEntries(new URLSearchParams(filters.query(extra)))
       const res = await api<{ data: { results: Result[] } }>(`/reports/${report}/email`, {
         method: 'POST',
         body: { ...query, format: v.format, recipients: parsed.valid, message: v.message || null, confirmed: v.confirmed },

@@ -6,6 +6,7 @@ import { useExport } from './lib/useExport'
 import { useFilters } from './lib/useFilters'
 import { useFitRows } from './lib/useFitRows'
 import { useFormValues } from './lib/useFormValues'
+import { useLoad } from './lib/useLoad'
 import { useSubmit } from './lib/useSubmit'
 
 afterEach(() => vi.useRealTimers())
@@ -22,6 +23,25 @@ describe('useFilters', () => {
 
     act(() => result.current.setPage(2))
     expect(result.current.filters.status).toBe('closed')
+  })
+})
+
+describe('useLoad', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('descarta la respuesta vieja que llega después de la nueva', async () => {
+    const pending: Record<string, (r: Response) => void> = {}
+    vi.stubGlobal('fetch', vi.fn((url: string) => new Promise<Response>((resolve) => { pending[url.split('/').pop() ?? url] = resolve })))
+    const { result, rerender } = renderHook(({ path }) => useLoad<{ v: string }>(path), { initialProps: { path: '/a' } })
+    rerender({ path: '/b' })
+    await waitFor(() => expect(Object.keys(pending)).toHaveLength(2))
+
+    await act(async () => { pending['b'](new Response(JSON.stringify({ v: 'nueva' }), { status: 200 })) })
+    await waitFor(() => expect(result.current.data).toEqual({ v: 'nueva' }))
+    await act(async () => { pending['a'](new Response(JSON.stringify({ v: 'vieja' }), { status: 200 })) })
+
+    expect(result.current.data).toEqual({ v: 'nueva' })
+    expect(result.current.loading).toBe(false)
   })
 })
 

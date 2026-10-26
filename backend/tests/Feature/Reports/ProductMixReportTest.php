@@ -16,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\BuildsSalesFixtures;
 use Tests\TestCase;
+use ZipArchive;
 
 /** Mezcla de productos: qué se factura y qué tan amplio es el catálogo que mueve cada vendedor y operador, contra ventas declaradas a mano. */
 class ProductMixReportTest extends TestCase
@@ -216,5 +217,29 @@ class ProductMixReportTest extends TestCase
         foreach (['level' => 'product; drop table products', 'subject' => 'customer'] as $key => $value) {
             $this->actingAs($this->manager, 'sanctum')->getJson('/api/v1/reports/products?'.http_build_query(self::PERIOD + [$key => $value]))->assertUnprocessable();
         }
+    }
+
+    public function test_the_export_carries_what_is_seen_on_screen(): void
+    {
+        $query = http_build_query(self::PERIOD + ['format' => 'xlsx', 'subject' => 'operator', 'level' => 'line']);
+        $response = $this->actingAs($this->manager, 'sanctum')->get("/api/v1/reports/products/export?$query")->assertOk();
+
+        $this->assertStringContainsString('filename="reporte-mezcla-de-productos-2026-10-01_2026-10-31.xlsx"', (string) $response->headers->get('Content-Disposition'));
+        $path = tempnam(sys_get_temp_dir(), 'xl');
+        file_put_contents($path, $response->getContent());
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($path) === true);
+        $text = '';
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $text .= (string) $zip->getFromIndex($i);
+        }
+        $zip->close();
+        @unlink($path);
+
+        foreach (['Lo más facturado por línea', 'Amplitud de catálogo por oper', 'Eléctricas', 'Omar', 'Cobertura de categorías'] as $expected) {
+            $this->assertStringContainsString($expected, $text);
+        }
+        $this->assertStringNotContainsString('Amplitud de catálogo por vend', $text);
+        $this->assertTrue(AuditLog::query()->where('event', 'report.exported')->where('new_values->report', 'products')->exists());
     }
 }

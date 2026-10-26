@@ -10,6 +10,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 ## [Sin publicar]
 
 ### Añadido
+- **Mezcla de productos** (`/reportes/productos`, quinta opción del menú Reportes): lo más facturado por producto, categoría, línea o grupo (de mayor a menor, con peso y cambio frente a la comparación) y, de cada vendedor u operador, cuántas categorías y líneas del catálogo vende (cobertura), cuánto depende de sus 5 productos principales, lo que el equipo vende y esa persona no, y qué productos estrella del equipo no vendió. Imprime, Excel, PDF y correo como los demás reportes.
 - **Salidas de los reportes**: imprimir, Excel (cifras como números, nivel de cada semáforo escrito), PDF (las tablas anchas se parten en bloques) y envío por correo con adjunto. El correo exige revisar y confirmar los destinatarios, envía un correo por persona, tiene un tope por persona y hora y deja en Auditoría las direcciones.
 - **Menú desplegable «Reportes»**: agrupa Vendedores, Operadores, Sucursales y Conciliación; cerrado por omisión, se abre solo dentro de sus pantallas y recuerda cómo se dejó. La barra de comandos y el encabezado usan el nombre completo de cada reporte.
 - **Conciliación** (`/reportes/conciliacion`): contrasta la venta consolidada con sus sumas por compañía, sucursal, vendedor y operador, comprueba que cada documento cuadre con sus líneas, compara lo que declaraba cada archivo de ventas importado contra lo guardado y las facturas de crédito contra sus ventas; abre la lista de documentos con diferencias y el detalle de facturación de cualquier vendedor, operador o sucursal.
@@ -37,6 +38,8 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - Mensaje de rechazo único al escribir o agregar notas en una conversación ajena.
 
 ### Corregido
+- **Pantallas con filtros mostraban datos viejos**: si se cambiaba un filtro rápido, una respuesta lenta anterior podía llegar después y reemplazar a la nueva. Ahora toda carga descarta las respuestas superadas.
+- **Pruebas que dependían de la fecha de hoy**: dos pruebas de importación de inventario usaban una fecha «futura» fija que ya pasó.
 - **Reportes desbordaban la pantalla**: el texto oculto de los semáforos (para lectores de pantalla) escapaba del recorte de las tablas y ensanchaba y alargaba toda la página, con barras de desplazamiento de la ventana en ambos sentidos. Ahora las tablas se desplazan dentro de su tarjeta (encabezado fijo, barra horizontal a la vista, celdas compactas) y los reportes aprovechan todo el ancho disponible. Una prueba de navegador (`11-reportes-sin-desborde`) lo vigila en 1366×768 y 1920×1080.
 - **Enviar un mensaje desde Conversaciones fallaba en PostgreSQL**: el tipo de mensaje `conversation` (12 caracteres) no cabía en su columna (10). Se amplió; hay que ejecutar `php artisan migrate --force`.
 - Los archivos descargados desde la interfaz (reportes, exportaciones de ventas…) se guardaban con un nombre genérico: el navegador no podía leer el encabezado con el nombre. Se expone en CORS.

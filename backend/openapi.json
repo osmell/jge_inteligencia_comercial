@@ -19647,7 +19647,101 @@
                                                         "object",
                                                         "null"
                                                     ],
-                                                    "additionalProperties": {}
+                                                    "properties": {
+                                                        "subject": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "company_id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "is_active": {
+                                                                    "type": "boolean"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "name",
+                                                                "company_id",
+                                                                "is_active"
+                                                            ]
+                                                        },
+                                                        "rank": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "net_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "share_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "products_sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "categories_sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "categories_catalog": {
+                                                            "type": "integer"
+                                                        },
+                                                        "category_coverage_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "lines_sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "lines_catalog": {
+                                                            "type": "integer"
+                                                        },
+                                                        "line_coverage_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "groups_sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "top5_share_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "subject",
+                                                        "rank",
+                                                        "net_total",
+                                                        "share_pct",
+                                                        "documents",
+                                                        "products_sold",
+                                                        "categories_sold",
+                                                        "categories_catalog",
+                                                        "category_coverage_pct",
+                                                        "lines_sold",
+                                                        "lines_catalog",
+                                                        "line_coverage_pct",
+                                                        "groups_sold",
+                                                        "top5_share_pct"
+                                                    ]
                                                 },
                                                 "ranking": {
                                                     "type": "object",
@@ -20063,7 +20157,101 @@
                                                         "object",
                                                         "null"
                                                     ],
-                                                    "additionalProperties": {}
+                                                    "properties": {
+                                                        "subject": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "company_id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "is_active": {
+                                                                    "type": "boolean"
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "id",
+                                                                "name",
+                                                                "company_id",
+                                                                "is_active"
+                                                            ]
+                                                        },
+                                                        "rank": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "net_total": {
+                                                            "type": "number"
+                                                        },
+                                                        "share_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "documents": {
+                                                            "type": "integer"
+                                                        },
+                                                        "products_sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "categories_sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "categories_catalog": {
+                                                            "type": "integer"
+                                                        },
+                                                        "category_coverage_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "lines_sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "lines_catalog": {
+                                                            "type": "integer"
+                                                        },
+                                                        "line_coverage_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "groups_sold": {
+                                                            "type": "integer"
+                                                        },
+                                                        "top5_share_pct": {
+                                                            "type": [
+                                                                "number",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "subject",
+                                                        "rank",
+                                                        "net_total",
+                                                        "share_pct",
+                                                        "documents",
+                                                        "products_sold",
+                                                        "categories_sold",
+                                                        "categories_catalog",
+                                                        "category_coverage_pct",
+                                                        "lines_sold",
+                                                        "lines_catalog",
+                                                        "line_coverage_pct",
+                                                        "groups_sold",
+                                                        "top5_share_pct"
+                                                    ]
                                                 },
                                                 "ranking": {
                                                     "type": "object",
@@ -21217,6 +21405,38 @@
                             ],
                             "minimum": 1,
                             "maximum": 100000
+                        }
+                    },
+                    {
+                        "name": "subject",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "seller",
+                                "operator",
+                                null
+                            ]
+                        }
+                    },
+                    {
+                        "name": "level",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "enum": [
+                                "product",
+                                "category",
+                                "line",
+                                "group",
+                                null
+                            ]
                         }
                     },
                     {
@@ -28094,6 +28314,30 @@
                         ],
                         "minimum": 1,
                         "maximum": 100000
+                    },
+                    "subject": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "seller",
+                            "operator",
+                            null
+                        ]
+                    },
+                    "level": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "product",
+                            "category",
+                            "line",
+                            "group",
+                            null
+                        ]
                     },
                     "format": {
                         "type": "string",
