@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Reports\Products;
 
+use App\Services\Sales\SalesBasis;
 use App\Services\Sales\SalesQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -41,10 +42,10 @@ class ProductFigures
         [$column, $name] = $this->query->dimensionColumns($level);
         $query = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
             ->selectRaw("{$column} as item_key, {$name} as item_name")
-            ->selectRaw('coalesce(sum(sales_lines.net_total), 0) as net, coalesce(sum(sales_lines.units), 0) as units')
+            ->selectRaw('coalesce(sum('.SalesBasis::net('sales_lines').'), 0) as net, coalesce(sum(sales_lines.units), 0) as units')
             ->selectRaw('count(distinct sales_lines.sales_document_id) as documents, count(distinct sd.customer_code) as customers')
             ->groupByRaw($column)
-            ->orderByRaw("sum(sales_lines.net_total) desc, {$column} asc");
+            ->orderByRaw('sum('.SalesBasis::net('sales_lines').") desc, {$column} asc");
         if ($limit !== null) {
             $query->limit($limit);
         }
@@ -63,7 +64,7 @@ class ProductFigures
      */
     public function netTotal(?array $companyIds, CarbonImmutable $from, CarbonImmutable $to, array $filters): float
     {
-        return round((float) $this->query->baseForCompanies($from, $to, $filters, $companyIds)->selectRaw('coalesce(sum(sales_lines.net_total), 0) as net')->toBase()->value('net'), 2);
+        return round((float) $this->query->baseForCompanies($from, $to, $filters, $companyIds)->selectRaw('coalesce(sum('.SalesBasis::net('sales_lines').'), 0) as net')->toBase()->value('net'), 2);
     }
 
     /**
@@ -91,11 +92,11 @@ class ProductFigures
         $column = self::SUBJECTS[$subject];
         $totals = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
             ->selectRaw("{$column} as subject_id")
-            ->selectRaw('coalesce(sum(sales_lines.net_total), 0) as net, count(distinct sales_lines.sales_document_id) as documents, count(distinct sales_lines.product_code) as products')
+            ->selectRaw('coalesce(sum('.SalesBasis::net('sales_lines').'), 0) as net, count(distinct sales_lines.sales_document_id) as documents, count(distinct sales_lines.product_code) as products')
             ->groupByRaw($column)->toBase()->get();
 
         $perProduct = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
-            ->selectRaw("{$column} as subject_id, sales_lines.product_code as code, sum(sales_lines.net_total) as net")
+            ->selectRaw("{$column} as subject_id, sales_lines.product_code as code, sum(".SalesBasis::net('sales_lines').') as net')
             ->groupByRaw("{$column}, sales_lines.product_code")->toBase();
         $ranked = DB::query()->fromSub($perProduct, 't')
             ->selectRaw('t.subject_id, t.net, row_number() over (partition by t.subject_id order by t.net desc, t.code asc) as rn');
@@ -128,7 +129,7 @@ class ProductFigures
         $out = [];
         $this->query->baseForCompanies($from, $to, $filters, $companyIds)
             ->selectRaw("{$column} as subject_id, {$item} as item")
-            ->groupByRaw("{$column}, {$item}")->havingRaw('sum(sales_lines.net_total) > 0')
+            ->groupByRaw("{$column}, {$item}")->havingRaw('sum('.SalesBasis::net('sales_lines').') > 0')
             ->toBase()->get()
             ->each(function ($r) use (&$out) {
                 $out[(int) $r->subject_id][] = (string) $r->item;

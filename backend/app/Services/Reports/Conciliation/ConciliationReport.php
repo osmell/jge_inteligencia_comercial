@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Reports\Conciliation;
 
+use App\Services\Sales\SalesBasis;
 use App\Services\Sales\SalesQuery;
 use Carbon\CarbonImmutable;
 
@@ -35,7 +36,7 @@ class ConciliationReport
     public function build(?array $companyIds, CarbonImmutable $from, CarbonImmutable $to, array $filters): array
     {
         $all = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
-            ->selectRaw('coalesce(sum(sales_lines.net_total), 0) as net, coalesce(sum(sales_lines.tax_total), 0) as tax, coalesce(sum(sales_lines.grand_total), 0) as grand, count(distinct sales_lines.sales_document_id) as documents, count(*) as lines')
+            ->selectRaw('coalesce(sum('.SalesBasis::net('sales_lines').'), 0) as net, coalesce(sum('.SalesBasis::tax('sales_lines').'), 0) as tax, coalesce(sum('.SalesBasis::grand('sales_lines').'), 0) as grand, count(distinct sales_lines.sales_document_id) as documents, count(*) as lines')
             ->toBase()->first();
         $consolidated = [
             'net_total' => round((float) ($all->net ?? 0), 2), 'tax_total' => round((float) ($all->tax ?? 0), 2), 'grand_total' => round((float) ($all->grand ?? 0), 2),
@@ -45,7 +46,7 @@ class ConciliationReport
         $breakdowns = [];
         foreach (self::BREAKDOWNS as $dimension => $column) {
             $rows = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
-                ->selectRaw("{$column} as id, sum(sales_lines.net_total) as net, count(distinct sales_lines.sales_document_id) as documents")
+                ->selectRaw("{$column} as id, sum(".SalesBasis::net('sales_lines').') as net, count(distinct sales_lines.sales_document_id) as documents')
                 ->groupByRaw($column)->toBase()->get();
             $net = round((float) $rows->sum('net'), 2);
             $documents = (int) $rows->sum('documents');

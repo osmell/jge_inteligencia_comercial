@@ -6,6 +6,7 @@ namespace App\Services\Customers;
 
 use App\Models\Product;
 use App\Models\SalesDocument;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 
 /** Facturas de un cliente y sus líneas, con el ámbito de compañía/sucursal del usuario aplicado por los global scopes. */
@@ -27,10 +28,11 @@ class CustomerPurchases
             ->join('operators', 'operators.id', '=', 'sales_documents.operator_id')
             ->where('sales_documents.company_id', $companyId)
             ->where('sales_documents.customer_code', $code)
+            ->tap(fn ($q) => SalesBasis::scope($q, 'sl'))
             ->toBase()
             ->selectRaw('sales_documents.id as id, sales_documents.series as series, sales_documents.number as number, sales_documents.issued_on as issued_on')
             ->selectRaw('max(branches.name) as branch, max(sellers.name) as seller, max(operators.name) as operator, count(sl.id) as lines')
-            ->selectRaw('sum(sl.net_total) as net_total, sum(sl.grand_total) as grand_total')
+            ->selectRaw('sum('.SalesBasis::net('sl').') as net_total, sum('.SalesBasis::grand('sl').') as grand_total')
             ->groupBy('sales_documents.id', 'sales_documents.series', 'sales_documents.number', 'sales_documents.issued_on')
             ->orderByDesc('sales_documents.issued_on')->orderByDesc('sales_documents.id')
             ->offset(($page - 1) * self::PER_PAGE)->limit(self::PER_PAGE + 1)

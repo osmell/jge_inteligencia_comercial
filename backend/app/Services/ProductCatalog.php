@@ -6,8 +6,10 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\SalesLine;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Consulta del catálogo de productos y su cobertura frente a las ventas de los últimos 12 meses.
@@ -25,9 +27,9 @@ class ProductCatalog
      */
     public function search(array $f, string $sort, int $page, ?CarbonImmutable $today = null): array
     {
-        $sales = SalesLine::query()->toBase()
+        $sales = SalesLine::query()->tap(fn ($q) => SalesBasis::scope($q))->toBase()
             ->where('sales_lines.issued_on', '>=', $this->since($today)->toDateString())
-            ->selectRaw('sales_lines.company_id as company_id, sales_lines.product_code as code, sum(sales_lines.net_total) as net_total')
+            ->selectRaw('sales_lines.company_id as company_id, sales_lines.product_code as code, sum('.SalesBasis::net('sales_lines').') as net_total')
             ->groupBy('sales_lines.company_id', 'sales_lines.product_code');
 
         $query = Product::query()
@@ -101,9 +103,9 @@ class ProductCatalog
         $rows = $this->soldWithoutCatalog($today)
             ->join('companies', 'companies.id', '=', 'sales_lines.company_id')
             ->selectRaw('sales_lines.company_id as company_id, max(companies.name) as company, sales_lines.product_code as code, max(sales_lines.product_name) as name')
-            ->selectRaw('max(sales_lines.category_name) as category, sum(sales_lines.net_total) as net_total')
+            ->selectRaw('max(sales_lines.category_name) as category, sum('.SalesBasis::net('sales_lines').') as net_total')
             ->groupBy('sales_lines.company_id', 'sales_lines.product_code')
-            ->orderByRaw('sum(sales_lines.net_total) desc')->orderBy('sales_lines.product_code')
+            ->orderByRaw('sum('.SalesBasis::net('sales_lines').') desc')->orderBy('sales_lines.product_code')
             ->offset(($page - 1) * self::PER_PAGE)->limit(self::PER_PAGE + 1)
             ->get();
 
@@ -124,13 +126,13 @@ class ProductCatalog
     public function coverage(?CarbonImmutable $today = null): array
     {
         $since = $this->since($today)->toDateString();
-        $all = SalesLine::query()->toBase()->where('sales_lines.issued_on', '>=', $since);
+        $all = SalesLine::query()->tap(fn ($q) => SalesBasis::scope($q))->toBase()->where('sales_lines.issued_on', '>=', $since);
         $soldProducts = (clone $all)->selectRaw('count(distinct sales_lines.company_id || \'|\' || sales_lines.product_code) as n')->value('n');
-        $net = (float) (clone $all)->sum('sales_lines.net_total');
+        $net = (float) (clone $all)->sum(DB::raw(SalesBasis::net()));
 
         $missing = $this->soldWithoutCatalog($today);
         $missingProducts = (clone $missing)->selectRaw('count(distinct sales_lines.company_id || \'|\' || sales_lines.product_code) as n')->value('n');
-        $missingNet = (float) $missing->sum('sales_lines.net_total');
+        $missingNet = (float) $missing->sum(DB::raw(SalesBasis::net()));
 
         return [
             'catalog_products' => Product::query()->count(),
@@ -144,7 +146,7 @@ class ProductCatalog
 
     private function soldWithoutCatalog(?CarbonImmutable $today): Builder
     {
-        return SalesLine::query()->toBase()
+        return SalesLine::query()->tap(fn ($q) => SalesBasis::scope($q))->toBase()
             ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'sales_lines.company_id')->on('pr.code', '=', 'sales_lines.product_code'))
             ->whereNull('pr.id')
             ->where('sales_lines.issued_on', '>=', $this->since($today)->toDateString());

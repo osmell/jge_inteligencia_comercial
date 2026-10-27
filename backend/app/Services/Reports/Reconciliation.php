@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Reports;
 
+use App\Services\Sales\SalesBasis;
 use App\Services\Sales\SalesQuery;
 
 /**
@@ -22,7 +23,7 @@ class Reconciliation
     public function between(?array $companyIds, ReportPeriod $period, array $filters, float $rowsNet, int $rowsDocuments): array
     {
         $all = $this->query->baseForCompanies($period->from, $period->to, $filters, $companyIds)
-            ->selectRaw('coalesce(sum(sales_lines.net_total), 0) as net, count(distinct sales_lines.sales_document_id) as documents')
+            ->selectRaw('coalesce(sum('.SalesBasis::net('sales_lines').'), 0) as net, count(distinct sales_lines.sales_document_id) as documents')
             ->toBase()->first();
 
         $net = round((float) ($all->net ?? 0), 2);

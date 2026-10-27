@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Reports;
 
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,8 @@ class DocumentListing
             ->when(isset($filters['branch_id']), fn ($q) => $q->where('sd.branch_id', (int) $filters['branch_id']));
 
         $totals = $documents()->join('sales_lines as sl', 'sl.sales_document_id', '=', 'sd.id')
-            ->selectRaw('coalesce(sum(sl.net_total), 0) as net, coalesce(sum(sl.tax_total), 0) as tax, coalesce(sum(sl.grand_total), 0) as grand')->first();
+            ->tap(fn ($q) => SalesBasis::scope($q, 'sl'))
+            ->selectRaw('coalesce(sum('.SalesBasis::net('sl').'), 0) as net, coalesce(sum('.SalesBasis::tax('sl').'), 0) as tax, coalesce(sum('.SalesBasis::grand('sl').'), 0) as grand')->first();
         $count = $documents()->count();
 
         $rows = $documents()
@@ -39,7 +41,8 @@ class DocumentListing
             ->join('operators as o', 'o.id', '=', 'sd.operator_id')
             ->join('sellers as s', 's.id', '=', 'sd.seller_id')
             ->leftJoin('sales_lines as sl', 'sl.sales_document_id', '=', 'sd.id')
-            ->selectRaw('sd.id, sd.series, sd.number, sd.issued_on, sd.customer_code, sd.customer_name, b.name as branch, o.name as operator, s.name as seller, count(sl.id) as lines, coalesce(sum(sl.net_total), 0) as net_total, coalesce(sum(sl.tax_total), 0) as tax_total, coalesce(sum(sl.grand_total), 0) as grand_total')
+            ->tap(fn ($q) => SalesBasis::scope($q, 'sl'))
+            ->selectRaw('sd.id, sd.series, sd.number, sd.issued_on, sd.customer_code, sd.customer_name, b.name as branch, o.name as operator, s.name as seller, count(sl.id) as lines, coalesce(sum('.SalesBasis::net('sl').'), 0) as net_total, coalesce(sum('.SalesBasis::tax('sl').'), 0) as tax_total, coalesce(sum('.SalesBasis::grand('sl').'), 0) as grand_total')
             ->groupBy('sd.id', 'sd.series', 'sd.number', 'sd.issued_on', 'sd.customer_code', 'sd.customer_name', 'b.name', 'o.name', 's.name')
             ->orderByDesc('sd.issued_on')->orderByDesc('sd.id')
             ->offset(($page - 1) * self::PER_PAGE)->limit(self::PER_PAGE)->get();

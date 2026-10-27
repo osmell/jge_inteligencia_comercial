@@ -9,6 +9,7 @@ use App\Models\CrossSellRule;
 use App\Models\InsightAlert;
 use App\Models\InsightRun;
 use App\Models\User;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -101,7 +102,8 @@ class CrossSellAnalysis
         $rows = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')
             ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'l.company_id')->on('pr.code', '=', 'l.product_code'))
             ->where('d.company_id', $companyId)->whereBetween('d.issued_on', [$from->toDateString(), $to->toDateString()])
-            ->groupBy('d.customer_code', DB::raw($expr))->havingRaw('sum(l.net_total) > 0')
+            ->tap(fn ($q) => SalesBasis::scope($q, 'l'))
+            ->groupBy('d.customer_code', DB::raw($expr))->havingRaw('sum('.SalesBasis::net('l').') > 0')
             ->selectRaw("d.customer_code as code, max(d.customer_name) as name, {$expr} as category")->get();
 
         $baskets = [];

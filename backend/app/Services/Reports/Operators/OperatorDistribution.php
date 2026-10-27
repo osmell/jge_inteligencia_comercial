@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Reports\Operators;
 
 use App\Models\Operator;
+use App\Services\Sales\SalesBasis;
 use App\Services\Sales\SalesQuery;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
@@ -27,11 +28,11 @@ class OperatorDistribution
         $base = fn () => $this->query->baseForCompanies($from, $to, ['operator_id' => $operator->id] + $filters, $companyIds);
 
         $sellers = $base()->join('sellers as dist_s', 'dist_s.id', '=', 'sd.seller_id')
-            ->selectRaw('sd.seller_id as id, max(dist_s.name) as name, max(dist_s.normalized_name) as normalized, sum(sales_lines.net_total) as net')
-            ->groupBy('sd.seller_id')->orderByRaw('sum(sales_lines.net_total) desc')->toBase()->get();
+            ->selectRaw('sd.seller_id as id, max(dist_s.name) as name, max(dist_s.normalized_name) as normalized, sum('.SalesBasis::net('sales_lines').') as net')
+            ->groupBy('sd.seller_id')->orderByRaw('sum('.SalesBasis::net('sales_lines').') desc')->toBase()->get();
         $branches = $base()->join('branches as dist_b', 'dist_b.id', '=', 'sales_lines.branch_id')
-            ->selectRaw('sales_lines.branch_id as id, max(dist_b.name) as name, sum(sales_lines.net_total) as net')
-            ->groupBy('sales_lines.branch_id')->orderByRaw('sum(sales_lines.net_total) desc')->toBase()->get();
+            ->selectRaw('sales_lines.branch_id as id, max(dist_b.name) as name, sum('.SalesBasis::net('sales_lines').') as net')
+            ->groupBy('sales_lines.branch_id')->orderByRaw('sum('.SalesBasis::net('sales_lines').') desc')->toBase()->get();
         $total = (float) $sellers->sum('net');
         $share = fn ($net) => $total > 0 ? round((float) $net / $total * 100, 2) : null;
 

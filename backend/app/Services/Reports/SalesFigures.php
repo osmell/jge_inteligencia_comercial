@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Reports;
 
+use App\Services\Sales\SalesBasis;
 use App\Services\Sales\SalesMetrics;
 use App\Services\Sales\SalesQuery;
 use Carbon\CarbonImmutable;
@@ -35,8 +36,8 @@ class SalesFigures
         $rows = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
             ->selectRaw("{$column} as subject_id")
             ->selectRaw($this->query->aggregates())
-            ->selectRaw('coalesce(sum(case when sales_lines.normal_price > 0 and sales_lines.unit_price < sales_lines.normal_price - 0.005 then sales_lines.net_total end), 0) as below_list_net')
-            ->selectRaw('coalesce(sum(case when sales_lines.normal_price > 0 then sales_lines.net_total end), 0) as listed_net')
+            ->selectRaw('coalesce(sum(case when sales_lines.normal_price > 0 and sales_lines.unit_price < sales_lines.normal_price - 0.005 then '.SalesBasis::net('sales_lines').' end), 0) as below_list_net')
+            ->selectRaw('coalesce(sum(case when sales_lines.normal_price > 0 then '.SalesBasis::net('sales_lines').' end), 0) as listed_net')
             ->selectRaw("count(distinct sd.customer_code || '|' || sales_lines.category_name) as customer_categories")
             ->groupByRaw($column)
             ->toBase()->get();
@@ -71,7 +72,7 @@ class SalesFigures
     private function concentration(?array $companyIds, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $column): array
     {
         $byCustomer = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
-            ->selectRaw("{$column} as subject_id, sd.customer_code as code, sum(sales_lines.net_total) as net")
+            ->selectRaw("{$column} as subject_id, sd.customer_code as code, sum(".SalesBasis::net('sales_lines').') as net')
             ->groupByRaw("{$column}, sd.customer_code")
             ->toBase()->get()->groupBy('subject_id');
 

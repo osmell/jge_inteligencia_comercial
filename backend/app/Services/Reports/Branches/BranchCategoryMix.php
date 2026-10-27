@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Reports\Branches;
 
+use App\Services\Sales\SalesBasis;
 use App\Services\Sales\SalesQuery;
 use Carbon\CarbonImmutable;
 
@@ -28,7 +29,7 @@ class BranchCategoryMix
         [$category] = $this->query->dimensionColumns('category');
         $rows = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
             ->join('branches as mix_b', 'mix_b.id', '=', 'sales_lines.branch_id')
-            ->selectRaw("sales_lines.branch_id as branch_id, max(mix_b.name) as branch, {$category} as category, sum(sales_lines.net_total) as net")
+            ->selectRaw("sales_lines.branch_id as branch_id, max(mix_b.name) as branch, {$category} as category, sum(".SalesBasis::net('sales_lines').') as net')
             ->groupByRaw("sales_lines.branch_id, {$category}")
             ->toBase()->get();
 

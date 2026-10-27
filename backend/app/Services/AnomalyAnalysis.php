@@ -9,6 +9,7 @@ use App\Models\Company;
 use App\Models\InsightAlert;
 use App\Models\InsightRun;
 use App\Models\User;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -68,7 +69,8 @@ class AnomalyAnalysis
         $baselineFrom = $evaluated->subMonths($baselineMonths)->startOfMonth();
         $rows = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')->where('d.company_id', $companyId)
             ->whereBetween('d.issued_on', [$baselineFrom->toDateString(), $evaluated->endOfMonth()->toDateString()])
-            ->groupBy('d.customer_code', DB::raw($month))->selectRaw("d.customer_code as code, max(d.customer_name) as name, {$month} as month, sum(l.net_total) as net, count(distinct d.issued_on) as days")->get();
+            ->tap(fn ($q) => SalesBasis::scope($q, 'l'))
+            ->groupBy('d.customer_code', DB::raw($month))->selectRaw("d.customer_code as code, max(d.customer_name) as name, {$month} as month, sum(".SalesBasis::net('l').') as net, count(distinct d.issued_on) as days')->get();
 
         $dropPct = $this->parameters->get('anomaly.drop_pct');
         $risePct = $this->parameters->get('anomaly.rise_pct');
@@ -127,7 +129,8 @@ class AnomalyAnalysis
         $rows = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')
             ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'l.company_id')->on('pr.code', '=', 'l.product_code'))
             ->where('d.company_id', $companyId)->whereBetween('d.issued_on', [$from->toDateString(), $to->toDateString()])
-            ->groupBy('d.customer_code', DB::raw($category), DB::raw($month))->havingRaw('sum(l.net_total) > 0')
+            ->tap(fn ($q) => SalesBasis::scope($q, 'l'))
+            ->groupBy('d.customer_code', DB::raw($category), DB::raw($month))->havingRaw('sum('.SalesBasis::net('l').') > 0')
             ->selectRaw("d.customer_code as code, max(d.customer_name) as name, {$category} as category, {$month} as month, max(d.issued_on) as last_on")->get();
 
         $recent = [];      // meses de la ventana reciente

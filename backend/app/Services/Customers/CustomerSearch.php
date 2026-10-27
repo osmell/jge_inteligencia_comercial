@@ -7,6 +7,7 @@ namespace App\Services\Customers;
 use App\Models\Customer;
 use App\Models\SalesDocument;
 use App\Services\CustomerActivity;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -28,9 +29,10 @@ class CustomerSearch
     {
         $sales = SalesDocument::query()
             ->join('sales_lines as sl', 'sl.sales_document_id', '=', 'sales_documents.id')
+            ->tap(fn ($q) => SalesBasis::scope($q, 'sl'))
             ->toBase()
             ->selectRaw('sales_documents.company_id as company_id, sales_documents.customer_code as code')
-            ->selectRaw('count(distinct sales_documents.id) as documents, sum(sl.net_total) as net_total')
+            ->selectRaw('count(distinct sales_documents.id) as documents, sum('.SalesBasis::net('sl').') as net_total')
             ->selectRaw('min(sales_documents.issued_on) as first_purchase, max(sales_documents.issued_on) as last_purchase')
             ->groupBy('sales_documents.company_id', 'sales_documents.customer_code');
 

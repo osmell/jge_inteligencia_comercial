@@ -9,6 +9,7 @@ use App\Models\Company;
 use App\Models\InsightAlert;
 use App\Models\InsightRun;
 use App\Models\User;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -122,7 +123,8 @@ class RfmSegmentation
     {
         $sales = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')
             ->where('d.company_id', $companyId)->whereBetween('d.issued_on', [$from->toDateString(), $to->toDateString()])
-            ->groupBy('d.customer_code')->selectRaw('d.customer_code as code, max(d.customer_name) as name, max(d.issued_on) as last_on, count(distinct d.issued_on) as days, sum(l.net_total) as net')->get();
+            ->tap(fn ($q) => SalesBasis::scope($q, 'l'))
+            ->groupBy('d.customer_code')->selectRaw('d.customer_code as code, max(d.customer_name) as name, max(d.issued_on) as last_on, count(distinct d.issued_on) as days, sum('.SalesBasis::net('l').') as net')->get();
         $first = DB::table('sales_documents')->where('company_id', $companyId)->groupBy('customer_code')->selectRaw('customer_code, min(issued_on) as first_on')->pluck('first_on', 'customer_code');
         $returns = DB::table('credit_notes')->where('company_id', $companyId)->whereBetween('issued_on', [$from->toDateString(), $to->toDateString()])
             ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('credit_movements as m')->join('credit_movements as r', 'r.reverses_id', '=', 'm.id')->whereColumn('m.credit_note_id', 'credit_notes.id'))

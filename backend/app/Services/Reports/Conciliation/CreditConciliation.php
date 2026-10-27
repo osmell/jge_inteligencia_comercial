@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Reports\Conciliation;
 
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -79,11 +80,12 @@ class CreditConciliation
         return DB::table('credit_invoices as ci')
             ->join('sales_documents as sd', 'sd.id', '=', 'ci.sales_document_id')
             ->join('sales_lines as sl', 'sl.sales_document_id', '=', 'sd.id')
+            ->tap(fn ($q) => SalesBasis::scope($q, 'sl'))
             ->join('branches as b', 'b.id', '=', 'ci.branch_id')
             ->where('ci.issued_on', '>=', $from->toDateString())->where('ci.issued_on', '<', $to->addDay()->toDateString())
             ->when($companyIds !== null, fn ($q) => $q->whereIn('ci.company_id', (array) $companyIds))
-            ->selectRaw('ci.id, ci.series, ci.number, ci.issued_on, ci.customer_name, ci.customer_code, b.name as branch, sd.customer_code as sale_customer, (ci.subtotal - ci.discount_total) as credit_net, ci.tax_total as credit_tax, sum(sl.net_total) as sale_net, sum(sl.tax_total) as sale_tax')
+            ->selectRaw('ci.id, ci.series, ci.number, ci.issued_on, ci.customer_name, ci.customer_code, b.name as branch, sd.customer_code as sale_customer, (ci.subtotal - ci.discount_total) as credit_net, ci.tax_total as credit_tax, sum('.SalesBasis::net('sl').') as sale_net, sum('.SalesBasis::tax('sl').') as sale_tax')
             ->groupBy('ci.id', 'ci.series', 'ci.number', 'ci.issued_on', 'ci.customer_name', 'ci.customer_code', 'b.name', 'sd.customer_code', 'ci.subtotal', 'ci.discount_total', 'ci.tax_total')
-            ->havingRaw('ci.customer_code <> sd.customer_code or abs((ci.subtotal - ci.discount_total) - sum(sl.net_total)) > cast(? as numeric) or abs(ci.tax_total - sum(sl.tax_total)) > cast(? as numeric)', [$tolerance, $tolerance]);
+            ->havingRaw('ci.customer_code <> sd.customer_code or abs((ci.subtotal - ci.discount_total) - sum('.SalesBasis::net('sl').')) > cast(? as numeric) or abs(ci.tax_total - sum('.SalesBasis::tax('sl').')) > cast(? as numeric)', [$tolerance, $tolerance]);
     }
 }

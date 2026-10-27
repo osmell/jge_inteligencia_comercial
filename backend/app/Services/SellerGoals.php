@@ -8,6 +8,7 @@ use App\Models\SalesLine;
 use App\Models\Seller;
 use App\Models\SellerGoal;
 use App\Models\User;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -183,7 +184,8 @@ class SellerGoals
         $query = SalesLine::query()
             ->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id')
             ->where('sales_lines.issued_on', '>=', $from->toDateString())
-            ->where('sales_lines.issued_on', '<', $to->addDay()->toDateString());
+            ->where('sales_lines.issued_on', '<', $to->addDay()->toDateString())
+            ->tap(fn ($q) => SalesBasis::scope($q, 'sales_lines'));
 
         $full = $this->scope->fullCompanyIds($user);
         if ($full !== null) {
@@ -195,7 +197,7 @@ class SellerGoals
 
         return $query->groupBy('sd.seller_id')
             ->toBase()
-            ->selectRaw('sd.seller_id as seller_id, sum(sales_lines.net_total) as net')
+            ->selectRaw('sd.seller_id as seller_id, sum('.SalesBasis::net('sales_lines').') as net')
             ->get()
             ->mapWithKeys(fn ($r) => [(int) $r->seller_id => (float) $r->net])
             ->all();

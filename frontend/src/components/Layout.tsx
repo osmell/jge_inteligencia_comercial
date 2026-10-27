@@ -6,6 +6,7 @@ import { BrandEmblem, BrandPlate } from './Brand'
 import { onConversationEvent, startRealtime } from '../lib/realtime'
 import { playMessageSound } from '../lib/sound'
 import { useUnreadConversations } from '../lib/useUnread'
+import BasisToggle from './BasisToggle'
 import CommandBar from './CommandBar'
 import NavGroupView from './NavGroupView'
 import NotificationBell from './NotificationBell'
@@ -142,6 +143,7 @@ export default function Layout() {
           <CommandBar />
 
           <div className="ml-auto flex shrink-0 items-center gap-3">
+            <BasisToggle />
             <NotificationBell />
             <div className="flex items-center gap-2.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-jge-blue-50 text-xs font-semibold text-jge-blue" aria-hidden="true">

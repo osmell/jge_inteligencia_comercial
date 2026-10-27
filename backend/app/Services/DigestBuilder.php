@@ -11,6 +11,7 @@ use App\Models\InsightAlert;
 use App\Models\Quotation;
 use App\Models\Role;
 use App\Models\User;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -73,7 +74,7 @@ class DigestBuilder
     private function sales(int $companyId, CarbonImmutable $from, CarbonImmutable $to): array
     {
         $r = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')->where('d.company_id', $companyId)
-            ->whereBetween('d.issued_on', [$from->toDateString(), $to->toDateString()])->selectRaw('coalesce(sum(l.net_total), 0) as net, count(distinct d.id) as documents')->first();
+            ->whereBetween('d.issued_on', [$from->toDateString(), $to->toDateString()])->tap(fn ($q) => SalesBasis::scope($q, 'l'))->selectRaw('coalesce(sum('.SalesBasis::net('l').'), 0) as net, count(distinct d.id) as documents')->first();
 
         return ['net' => round((float) $r?->net, 2), 'documents' => (int) $r?->documents];
     }
@@ -120,9 +121,9 @@ class DigestBuilder
         $change = $this->change($now['net'], $before['documents'] > 0 ? $before['net'] : null);
 
         $customers = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')->where('d.company_id', $company->id)->whereBetween('d.issued_on', [$from->toDateString(), $to->toDateString()])
-            ->groupBy('d.customer_code')->selectRaw('max(d.customer_name) as name, sum(l.net_total) as net')->orderByDesc('net')->limit(5)->get();
+            ->tap(fn ($q) => SalesBasis::scope($q, 'l'))->groupBy('d.customer_code')->selectRaw('max(d.customer_name) as name, sum('.SalesBasis::net('l').') as net')->orderByDesc('net')->limit(5)->get();
         $products = DB::table('sales_lines as l')->where('l.company_id', $company->id)->whereBetween('l.issued_on', [$from->toDateString(), $to->toDateString()])
-            ->groupBy('l.product_code')->selectRaw('max(l.product_name) as name, sum(l.net_total) as net')->orderByDesc('net')->limit(5)->get();
+            ->tap(fn ($q) => SalesBasis::scope($q, 'l'))->groupBy('l.product_code')->selectRaw('max(l.product_name) as name, sum('.SalesBasis::net('l').') as net')->orderByDesc('net')->limit(5)->get();
 
         return ['key' => 'sales', 'title' => 'Ventas de la semana', 'metrics' => [
             ['label' => 'Venta neta de la semana', 'value' => $now['net'], 'format' => 'money', 'tone' => $this->tone($change),

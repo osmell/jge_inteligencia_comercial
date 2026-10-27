@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Reports\Operators;
 
+use App\Services\Sales\SalesBasis;
 use App\Services\Sales\SalesQuery;
 use Carbon\CarbonImmutable;
 
@@ -37,7 +38,7 @@ class OperatorControlFigures
             ->selectRaw('count(distinct case when sd.issued_at is not null then sales_lines.sales_document_id end) as timed_documents')
             ->selectRaw('sum(case when sales_lines.subtotal > 0 and coalesce(sales_lines.discount_total, 0) >= sales_lines.subtotal * ? / 100 then 1 else 0 end) as high_discount_lines', [(float) config('reports.high_discount_line_pct')])
             ->selectRaw('sum(case when sales_lines.units > 0 and (sales_lines.unit_price = 0 or sales_lines.net_total = 0) then 1 else 0 end) as zero_price_lines')
-            ->selectRaw('coalesce(sum(case when ctl_s.normalized_name = ctl_o.normalized_name then sales_lines.net_total end), 0) as direct_net')
+            ->selectRaw('coalesce(sum(case when ctl_s.normalized_name = ctl_o.normalized_name then '.SalesBasis::net('sales_lines').' end), 0) as direct_net')
             ->groupBy('sd.operator_id')
             ->toBase()->get();
 
@@ -70,7 +71,7 @@ class OperatorControlFigures
     private function documentFlags(?array $companyIds, CarbonImmutable $from, CarbonImmutable $to, array $filters): array
     {
         $documents = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
-            ->selectRaw('sd.id as document_id, sd.company_id as company_id, sd.operator_id as operator_id, sum(sales_lines.net_total) as net')
+            ->selectRaw('sd.id as document_id, sd.company_id as company_id, sd.operator_id as operator_id, sum('.SalesBasis::net('sales_lines').') as net')
             ->groupBy('sd.id', 'sd.company_id', 'sd.operator_id')
             ->toBase()->get();
 

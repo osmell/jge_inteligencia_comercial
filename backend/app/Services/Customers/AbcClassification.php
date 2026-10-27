@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Customers;
 
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -29,10 +30,11 @@ class AbcClassification
             ->where('d.company_id', $companyId)
             ->where('d.issued_on', '>=', $today->subYear()->addDay()->toDateString())
             ->where('d.issued_on', '<', $today->addDay()->toDateString())
+            ->tap(fn ($q) => SalesBasis::scope($q, 'sl'))
             ->groupBy('d.customer_code')
-            ->selectRaw('d.customer_code as code, sum(sl.net_total) as net_total')
-            ->havingRaw('sum(sl.net_total) > 0')
-            ->orderByRaw('sum(sl.net_total) desc, d.customer_code asc')
+            ->selectRaw('d.customer_code as code, sum('.SalesBasis::net('sl').') as net_total')
+            ->havingRaw('sum('.SalesBasis::net('sl').') > 0')
+            ->orderByRaw('sum('.SalesBasis::net('sl').') desc, d.customer_code asc')
             ->pluck('net_total', 'code');
 
         $grand = (float) $totals->sum();

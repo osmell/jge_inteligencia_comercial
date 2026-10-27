@@ -16,6 +16,7 @@ use App\Models\Customer;
 use App\Models\Quotation;
 use App\Models\SalesDocument;
 use App\Services\QuotationWorkflow;
+use App\Services\Sales\SalesBasis;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -120,8 +121,9 @@ class QuotationController extends Controller
             ->where('sales_documents.customer_code', $record->customer?->code)
             ->whereNotIn('sales_documents.id', Quotation::withoutGlobalScopes()->whereNotNull('sales_document_id')->select('sales_document_id'))
             ->when($record->issued_at, fn (Builder $q) => $q->where('sales_documents.issued_on', '>=', $record->issued_at?->toDateString()))
+            ->tap(fn ($q) => SalesBasis::scope($q, 'sl'))
             ->toBase()
-            ->selectRaw('sales_documents.id as id, sales_documents.series as series, sales_documents.number as number, sales_documents.issued_on as issued_on, sum(sl.net_total) as net_total')
+            ->selectRaw('sales_documents.id as id, sales_documents.series as series, sales_documents.number as number, sales_documents.issued_on as issued_on, sum('.SalesBasis::net('sl').') as net_total')
             ->groupBy('sales_documents.id', 'sales_documents.series', 'sales_documents.number', 'sales_documents.issued_on')
             ->orderByDesc('sales_documents.issued_on')->orderByDesc('sales_documents.id')->limit(50)->get();
 

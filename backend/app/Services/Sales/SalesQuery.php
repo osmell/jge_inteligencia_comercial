@@ -70,6 +70,7 @@ class SalesQuery
         $query
             ->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id')
             ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'sales_lines.company_id')->on('pr.code', '=', 'sales_lines.product_code'));
+        SalesBasis::scope($query);
 
         if ($from && $to) {
             // Medio abierto (>= desde, < hasta + 1 día): incluye el último día aunque el motor guarde la fecha con hora.
@@ -140,10 +141,12 @@ class SalesQuery
 
     public function aggregates(): string
     {
+        $net = SalesBasis::net();
+
         return implode(', ', [
-            'coalesce(sum(sales_lines.net_total), 0) as net_total',
-            'coalesce(sum(sales_lines.tax_total), 0) as tax_total',
-            'coalesce(sum(sales_lines.grand_total), 0) as grand_total',
+            "coalesce(sum({$net}), 0) as net_total",
+            'coalesce(sum('.SalesBasis::tax().'), 0) as tax_total',
+            'coalesce(sum('.SalesBasis::grand().'), 0) as grand_total',
             // Descuento (ya restado de net_total). El % se calcula solo sobre líneas que traen Sub Total.
             'coalesce(sum(sales_lines.discount_total), 0) as discount_total',
             'coalesce(sum(case when sales_lines.subtotal is not null then sales_lines.subtotal end), 0) as discounted_gross',
@@ -152,15 +155,15 @@ class SalesQuery
             'count(distinct sales_lines.sales_document_id) as documents',
             'count(distinct sd.customer_code) as customers',
             // Margen solo sobre líneas con costo válido (> 0); el costo es el ACTUAL, no el de la fecha de venta.
-            'coalesce(sum(case when sales_lines.line_cost_total > 0 then sales_lines.net_total end), 0) as costed_net',
+            "coalesce(sum(case when sales_lines.line_cost_total > 0 then {$net} end), 0) as costed_net",
             'coalesce(sum(case when sales_lines.line_cost_total > 0 then sales_lines.line_cost_total end), 0) as costed_cost',
         ]);
     }
 
     public function sortExpression(string $sort): string
     {
-        return $sort === 'margin' ? '(sum(case when sales_lines.line_cost_total > 0 then sales_lines.net_total - sales_lines.line_cost_total end))'
-            : ['net_total' => 'sum(sales_lines.net_total)', 'tax_total' => 'sum(sales_lines.tax_total)', 'grand_total' => 'sum(sales_lines.grand_total)', 'discount_total' => 'sum(sales_lines.discount_total)',
+        return $sort === 'margin' ? '(sum(case when sales_lines.line_cost_total > 0 then '.SalesBasis::net().' - sales_lines.line_cost_total end))'
+            : ['net_total' => 'sum('.SalesBasis::net().')', 'tax_total' => 'sum('.SalesBasis::tax().')', 'grand_total' => 'sum('.SalesBasis::grand().')', 'discount_total' => 'sum(sales_lines.discount_total)',
                 'units' => 'sum(sales_lines.units)', 'documents' => 'count(distinct sales_lines.sales_document_id)',
                 'customers' => 'count(distinct sd.customer_code)'][$sort];
     }

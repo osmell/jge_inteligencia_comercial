@@ -1,3 +1,5 @@
+import { withBasis } from './salesBasis'
+
 export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000/api/v1'
 
 export class ApiError extends Error {
@@ -36,7 +38,7 @@ export async function api<T>(path: string, options: { method?: string; body?: un
   const isForm = options.body instanceof FormData
   if (options.body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${API_URL}${withBasis(path)}`, {
     method,
     headers,
     credentials: 'include',
@@ -56,7 +58,7 @@ export async function api<T>(path: string, options: { method?: string; body?: un
 
 /** Descarga un archivo autenticado (plantilla, CSV…) y lo entrega al navegador. */
 export async function download(path: string, fallbackName: string): Promise<void> {
-  const response = await fetch(`${API_URL}${path}`, { credentials: 'include', headers: { Accept: '*/*' } })
+  const response = await fetch(`${API_URL}${withBasis(path)}`, { credentials: 'include', headers: { Accept: '*/*' } })
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     throw new ApiError(response.status, data.message ?? 'No se pudo descargar el archivo.')

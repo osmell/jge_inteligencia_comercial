@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Reports\Branches;
 
+use App\Services\Sales\SalesBasis;
 use App\Services\Sales\SalesQuery;
 use Carbon\CarbonImmutable;
 
@@ -25,7 +26,7 @@ class BranchSellerFigures
     {
         $rows = $this->query->baseForCompanies($from, $to, $filters, $companyIds)
             ->join('sellers as dep_s', 'dep_s.id', '=', 'sd.seller_id')
-            ->selectRaw('sales_lines.branch_id as branch_id, sd.seller_id as seller_id, max(dep_s.name) as name, max(case when dep_s.is_default then 1 else 0 end) as is_default, sum(sales_lines.net_total) as net')
+            ->selectRaw('sales_lines.branch_id as branch_id, sd.seller_id as seller_id, max(dep_s.name) as name, max(case when dep_s.is_default then 1 else 0 end) as is_default, sum('.SalesBasis::net('sales_lines').') as net')
             ->groupBy('sales_lines.branch_id', 'sd.seller_id')
             ->toBase()->get()->groupBy('branch_id');
 

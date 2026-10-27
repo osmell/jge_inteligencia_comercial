@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Company;
 use App\Models\InsightRun;
 use App\Models\User;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -151,7 +152,8 @@ class SeasonalityAnalysis
         $month = 'substr(cast(d.issued_on as varchar(10)), 1, 7)';
         $sales = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')->where('d.company_id', $companyId)
             ->whereBetween('d.issued_on', [$months[0].'-01', CarbonImmutable::parse(end($months).'-01')->endOfMonth()->toDateString()])
-            ->groupBy(DB::raw($month))->selectRaw("{$month} as month, sum(l.net_total) as net")->pluck('net', 'month');
+            ->tap(fn ($q) => SalesBasis::scope($q, 'l'))
+            ->groupBy(DB::raw($month))->selectRaw("{$month} as month, sum(".SalesBasis::net('l').') as net')->pluck('net', 'month');
 
         return array_map(fn (string $m) => (float) ($sales[$m] ?? 0), $months);
     }
@@ -169,7 +171,8 @@ class SeasonalityAnalysis
         $rows = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')
             ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'l.company_id')->on('pr.code', '=', 'l.product_code'))
             ->where('d.company_id', $companyId)->whereBetween('d.issued_on', [$months[0].'-01', CarbonImmutable::parse(end($months).'-01')->endOfMonth()->toDateString()])
-            ->groupBy(DB::raw($line), DB::raw($month))->selectRaw("{$line} as line, {$month} as month, sum(l.net_total) as net")->get();
+            ->tap(fn ($q) => SalesBasis::scope($q, 'l'))
+            ->groupBy(DB::raw($line), DB::raw($month))->selectRaw("{$line} as line, {$month} as month, sum(".SalesBasis::net('l').') as net')->get();
 
         $position = array_flip($months);
         $series = [];

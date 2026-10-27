@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Customer;
 use App\Models\SalesLine;
 use App\Models\Seller;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 
 /**
@@ -55,14 +56,15 @@ class CustomerSalesReport
             ->when($companyId, fn ($q) => $q->where('sales_lines.company_id', $companyId))
             ->when($branchId, fn ($q) => $q->where('sales_lines.branch_id', $branchId))
             // Solo clientes que el usuario puede ver (p. ej. un vendedor ve únicamente los suyos).
-            ->whereExists(Customer::query()->selectRaw('1')->whereColumn('customers.company_id', 'sd.company_id')->whereColumn('customers.code', 'sd.customer_code')->toBase());
+            ->whereExists(Customer::query()->selectRaw('1')->whereColumn('customers.company_id', 'sd.company_id')->whereColumn('customers.code', 'sd.customer_code')->toBase())
+            ->tap(fn ($q) => SalesBasis::scope($q));
 
         $totals = $base()->toBase()
             ->selectRaw('sd.company_id as company_id, sd.customer_code as code')
-            ->selectRaw('sum(sales_lines.net_total) as net_total, count(distinct sd.id) as documents, max(sd.issued_on) as last_purchase')
-            ->selectRaw('sum(case when se.normalized_name = op.normalized_name then sales_lines.net_total else 0 end) as direct_net_total')
+            ->selectRaw('sum('.SalesBasis::net().') as net_total, count(distinct sd.id) as documents, max(sd.issued_on) as last_purchase')
+            ->selectRaw('sum(case when se.normalized_name = op.normalized_name then '.SalesBasis::net().' else 0 end) as direct_net_total')
             ->groupBy('sd.company_id', 'sd.customer_code')
-            ->orderByRaw('sum(sales_lines.net_total) desc')->orderBy('sd.company_id')->orderBy('sd.customer_code')
+            ->orderByRaw('sum('.SalesBasis::net().') desc')->orderBy('sd.company_id')->orderBy('sd.customer_code')
             ->offset($offset)->limit($limit)
             ->get();
         if ($totals->isEmpty()) {
@@ -74,9 +76,9 @@ class CustomerSalesReport
         $companies = $totals->pluck('company_id')->unique()->all();
         $people = fn (string $table) => $base()->toBase()
             ->whereIn('sd.customer_code', $codes)->whereIn('sd.company_id', $companies)
-            ->selectRaw("sd.company_id as company_id, sd.customer_code as code, {$table}.name as person, sum(sales_lines.net_total) as net_total")
+            ->selectRaw("sd.company_id as company_id, sd.customer_code as code, {$table}.name as person, sum(".SalesBasis::net().') as net_total')
             ->groupBy('sd.company_id', 'sd.customer_code', "{$table}.id", "{$table}.name")
-            ->orderByRaw('sum(sales_lines.net_total) desc')
+            ->orderByRaw('sum('.SalesBasis::net().') desc')
             ->get()
             ->groupBy(fn ($r) => ((int) $r->company_id).'|'.$r->code)
             ->map(fn ($g) => $g->map(fn ($r) => ['name' => (string) $r->person, 'net_total' => $this->money($r->net_total)])->values()->all());

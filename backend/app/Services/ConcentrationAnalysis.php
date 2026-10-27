@@ -8,6 +8,7 @@ use App\Imports\Decimal;
 use App\Models\Company;
 use App\Models\InsightRun;
 use App\Models\User;
+use App\Services\Sales\SalesBasis;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -97,7 +98,7 @@ class ConcentrationAnalysis
     private function customers(int $companyId, CarbonImmutable $from, CarbonImmutable $to): array
     {
         $sales = DB::table('sales_documents as d')->join('sales_lines as l', 'l.sales_document_id', '=', 'd.id')->where('d.company_id', $companyId)
-            ->whereBetween('d.issued_on', [$from->toDateString(), $to->toDateString()])->groupBy('d.customer_code')->selectRaw('d.customer_code as code, max(d.customer_name) as name, sum(l.net_total) as net')->get();
+            ->whereBetween('d.issued_on', [$from->toDateString(), $to->toDateString()])->tap(fn ($q) => SalesBasis::scope($q, 'l'))->groupBy('d.customer_code')->selectRaw('d.customer_code as code, max(d.customer_name) as name, sum('.SalesBasis::net('l').') as net')->get();
         $returns = DB::table('credit_notes')->where('company_id', $companyId)->whereBetween('issued_on', [$from->toDateString(), $to->toDateString()])
             ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('credit_movements as m')->join('credit_movements as r', 'r.reverses_id', '=', 'm.id')->whereColumn('m.credit_note_id', 'credit_notes.id'))
             ->groupBy('customer_code')->selectRaw('customer_code, sum(subtotal) as total')->pluck('total', 'customer_code');
@@ -118,7 +119,8 @@ class ConcentrationAnalysis
     {
         $rows = [];
         foreach (DB::table('sales_lines as l')->where('l.company_id', $companyId)->whereBetween('l.issued_on', [$from->toDateString(), $to->toDateString()])
-            ->groupBy('l.product_code')->selectRaw('l.product_code as code, max(l.product_name) as name, sum(l.net_total) as net')->get() as $p) {
+            ->tap(fn ($q) => SalesBasis::scope($q, 'l'))
+            ->groupBy('l.product_code')->selectRaw('l.product_code as code, max(l.product_name) as name, sum('.SalesBasis::net('l').') as net')->get() as $p) {
             $net = $this->units($p->net);
             if ($net > 0) {
                 $rows[] = ['code' => (string) $p->code, 'name' => (string) $p->name, 'net' => $net];
