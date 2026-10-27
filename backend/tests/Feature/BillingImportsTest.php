@@ -7,14 +7,18 @@ namespace Tests\Feature;
 use App\Enums\ImportStatus;
 use App\Imports\ImportRunner;
 use App\Models\BillingDetailLine;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\ImportBatch;
+use App\Models\Operator;
 use App\Models\Role;
+use App\Models\SalesDocumentVoid;
 use App\Models\Seller;
 use App\Models\SellerSalesSummary;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\Xlsx;
 use Tests\TestCase;
@@ -181,5 +185,37 @@ class BillingImportsTest extends TestCase
         $batch = $this->imported('seller_summary', self::SUMMARY, [$this->seller(['Total' => 999])]);
 
         $this->assertSame(['total_mismatch'], $batch->errors()->pluck('code')->all());
+    }
+
+    public function test_documents_with_the_fa_series_are_registered_as_voided_and_linked_to_their_sale(): void
+    {
+        $branch = Branch::factory()->create(['company_id' => $this->alfa->id]);
+        $this->documentFor($branch, '19845');
+
+        $batch = $this->imported('billing_detail', self::DETAIL, [
+            $this->detail(['Docu.No.' => 19845]), $this->detail(['Docu.No.' => 19845, 'Serie' => 'FA']),
+            $this->detail(['Docu.No.' => 19846]), $this->detail(['Docu.No.' => 19847, 'Serie' => 'FA']),
+        ]);
+
+        $this->assertSame(['19845', '19847'], SalesDocumentVoid::orderBy('document')->pluck('document')->all());
+        $this->assertNotNull(SalesDocumentVoid::where('document', '19845')->value('sales_document_id'));
+        $this->assertNull(SalesDocumentVoid::where('document', '19847')->value('sales_document_id'));
+        $this->assertSame([2, 2, 1], [$batch->summary['billing']['voids_in_file'], $batch->summary['billing']['voids_new'], $batch->summary['billing']['voids_with_sales']]);
+
+        // Repetir la carga no duplica las anuladas.
+        $again = $this->imported('billing_detail', self::DETAIL, [$this->detail(['Docu.No.' => 19847, 'Serie' => 'FA']), $this->detail(['Docu.No.' => 19848, 'Serie' => 'FA'])]);
+        $this->assertSame(3, SalesDocumentVoid::count());
+        $this->assertSame(1, $again->summary['billing']['voids_new']);
+    }
+
+    private function documentFor(Branch $branch, string $number): void
+    {
+        $seller = Seller::create(['company_id' => $this->alfa->id, 'name' => 'S', 'normalized_name' => 'S']);
+        $operator = Operator::create(['company_id' => $this->alfa->id, 'name' => 'O', 'normalized_name' => 'O']);
+        $batch = ImportBatch::factory()->create();
+        DB::table('sales_documents')->insert([
+            'company_id' => $this->alfa->id, 'branch_id' => $branch->id, 'series' => 'FC-A', 'number' => $number, 'issued_on' => '2026-08-03', 'customer_code' => '1', 'customer_name' => 'C',
+            'seller_id' => $seller->id, 'operator_id' => $operator->id, 'import_batch_id' => $batch->id, 'lines_count' => 1, 'content_hash' => 'x', 'created_at' => now(), 'updated_at' => now(),
+        ]);
     }
 }

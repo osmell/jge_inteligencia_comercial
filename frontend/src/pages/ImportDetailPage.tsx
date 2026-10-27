@@ -224,10 +224,14 @@ function BillingSummary({ batch }: { batch: ImportBatch }) {
   return (
     <section>
       <PageHeader level={2} title="Resumen" description={b.date_from ? `Detalle de facturación del ${b.date_from} al ${b.date_to}` : undefined} />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <Stat label="Venta total del reporte" info={{ text: 'Suma de «Venta Total» de todas las líneas del archivo, tal como la calcula el reporte del sistema de origen. Incluye las facturas anuladas, que el reporte repite.' }} value={formatMoney(b.sale_total)} />
         <Stat label="Documentos a reemplazar" info={{ text: 'Documentos que ya se habían cargado y ahora traen un detalle distinto (por ejemplo, anulados después de la carga anterior). Su detalle anterior se reemplaza.' }} value={b.documents_replaced} />
         <Stat label="Sin cambios" info={{ text: 'Documentos que ya estaban cargados con exactamente el mismo detalle: se omiten.' }} value={batch.documents_duplicate} />
+        <Stat label="Facturas anuladas" info={{ text: 'Documentos del archivo que traen alguna línea de serie «FA»: el reporte repite así las facturas anuladas. Quedan registradas como anuladas y no cuentan como venta.' }} value={b.voids_in_file ?? 0} hint={b.voids_new !== undefined ? `${b.voids_new} nuevas registradas` : undefined} />
+        {b.voids_with_sales !== undefined && (
+          <Stat label="Anuladas con venta cargada" info={{ text: 'Facturas anuladas que ya tienen una venta importada con el mismo número. Esa venta deja de contarse cuando los reportes usan la facturación corregida.' }} tone={b.voids_with_sales > 0 ? 'bad' : undefined} value={b.voids_with_sales} />
+        )}
       </div>
     </section>
   )

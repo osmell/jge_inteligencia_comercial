@@ -16,6 +16,7 @@ use App\Models\BillingDetailLine;
 use App\Models\ImportBatch;
 use App\Models\User;
 use App\Services\DataScope;
+use App\Services\Sales\VoidDetection;
 
 /**
  * Detalle de facturación del sistema de origen: una fila por línea de factura con el precio establecido en la factura.
@@ -55,10 +56,15 @@ final class BillingDetailImportType implements ImportType
 
     private int $sale = 0;
 
+    /** @var array<string, true> documentos del archivo con alguna línea de serie «FA» (anulados) */
+    private array $voided = [];
+
+    private int $voidsInFile = 0;
+
     /** @var array<int, int> documentos por compañía */
     private array $updated = [];
 
-    public function __construct(private readonly DataScope $scope) {}
+    public function __construct(private readonly DataScope $scope, private readonly VoidDetection $voids) {}
 
     public function key(): string
     {
@@ -72,6 +78,8 @@ final class BillingDetailImportType implements ImportType
         $this->min = $this->max = null;
         $this->sale = 0;
         $this->updated = [];
+        $this->voided = [];
+        $this->voidsInFile = 0;
     }
 
     public function columns(): array
@@ -107,6 +115,9 @@ final class BillingDetailImportType implements ImportType
         $this->min = $this->min === null || $day < $this->min ? $day : $this->min;
         $this->max = $this->max === null || $day > $this->max ? $day : $this->max;
         $this->sale += Decimal::units($amounts['sale_total']);
+        if ($series === VoidDetection::VOID_SERIES) {
+            $this->voided["{$company->id}|{$document}"] = true;
+        }
 
         return new ParsedRow(
             $row->number,
@@ -122,6 +133,7 @@ final class BillingDetailImportType implements ImportType
     public function finalize(ImportContext $context): void
     {
         $existing = $this->existingDocuments($context);
+        $this->voidsInFile = count($this->voided);
 
         foreach ($context->groups as $key => $group) {
             if (! isset($existing[$key])) {
@@ -146,6 +158,7 @@ final class BillingDetailImportType implements ImportType
             'date_to' => $this->max,
             'sale_total' => Decimal::format($this->sale),
             'documents_replaced' => $updated,
+            'voids_in_file' => $this->voidsInFile,
         ]];
     }
 
@@ -198,6 +211,10 @@ final class BillingDetailImportType implements ImportType
                 throw new \RuntimeException("El documento {$key} no coincide con lo validado: el archivo cambió durante la importación.");
             }
         }
+
+        // Facturas anuladas (serie «FA»): se registran y se enlazan con su venta si ya está cargada.
+        $voids = $this->voids->run($context->batch->id);
+        $context->summary['billing'] = [...$context->summary['billing'] ?? [], 'voids_new' => $voids['new'], 'voids_with_sales' => $voids['with_sales']];
     }
 
     /** @return array<string, string> clave de documento => huella ya guardada */

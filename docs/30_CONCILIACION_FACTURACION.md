@@ -1,6 +1,6 @@
 # 30 · Conciliación de la facturación y corrección de equivalencias
 
-Estado: **pasos 1 y 2 de 6 hechos**. Los pasos 3 a 6 están pendientes.
+Estado: **pasos 1, 2 y 3 de 6 hechos**. Los pasos 4 a 6 están pendientes.
 
 ## El problema
 
@@ -40,7 +40,7 @@ Reglas de carga:
 
 1. **Hecho:** importar el detalle y el resumen, acumulativos por día, sin duplicar.
 2. **Hecho:** neto corregido por línea en `sales_line_corrections` (causa `portion`, regla versión 1: unidades entre 0 y 1, precio unitario ≥ 1 y neto > 0 → neto = precio unitario, impuesto con la tasa de la línea). Se calcula al importar ventas y con `php artisan sales:correct-net` (idempotente); los importes importados no se tocan. Sobre agosto da 9 050 306 contra 9 080 837 oficial (0,34 %). Las causas «varias porciones» y «precio por galón» no se pueden distinguir con los datos actuales.
-3. Marcar las facturas anuladas (con fila `FA`) para que no sumen.
+3. **Hecho:** las facturas con alguna línea de serie `FA` en el detalle se registran en `sales_document_voids` (compañía + número, enlazadas a su venta si existe, ahora o cuando se cargue). En agosto las 188 con `FA` son exactamente las 188 que el archivo de ventas deja en cero. Al importar ventas, un documento anulado avisa (`document_voided`). Falta que los reportes dejen de contar esas ventas: se hace en el paso 4 junto con el neto corregido.
 4. Reportes con el neto corregido y un interruptor para ver el importado.
 5. Conciliación contra el resumen por vendedor, con las diferencias.
 6. Líneas de componentes (catalizador, reductor, thinner; precio simbólico 0,01): costo reasignado a la línea principal y fuera de precio promedio y conteo de unidades.

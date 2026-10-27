@@ -24,6 +24,7 @@ use App\Models\Seller;
 use App\Models\User;
 use App\Services\DataScope;
 use App\Services\Sales\NetCorrection;
+use App\Services\Sales\VoidDetection;
 use DateTimeImmutable;
 
 /**
@@ -82,7 +83,7 @@ final class SalesImportType implements ImportType
     /** @var array<string, mixed> */
     private array $stats = ['lines' => [], 'min' => null, 'max' => null, 'net' => 0, 'tax' => 0, 'grand' => 0, 'cost' => 0, 'skipped' => 0];
 
-    public function __construct(private readonly DataScope $scope, private readonly NetCorrection $netCorrection) {}
+    public function __construct(private readonly DataScope $scope, private readonly NetCorrection $netCorrection, private readonly VoidDetection $voids) {}
 
     public function key(): string
     {
@@ -186,8 +187,13 @@ final class SalesImportType implements ImportType
     public function finalize(ImportContext $context): void
     {
         $existing = $this->existingDocuments($context);
+        $voided = $this->voids->voidedAmong(array_map(fn ($g) => [(int) $g->fields['company'], $g->fields['document']], $context->groups));
 
         foreach ($context->groups as $key => $group) {
+            if (isset($voided[(int) $group->fields['company'].'|'.$group->fields['document']])) {
+                $context->errors->warning('document_voided', "El documento {$group->fields['series']}-{$group->fields['document']} figura como anulado en el detalle de facturación.", $group->firstRow, config('imports.sales.columns.document.0'), $group->fields['document']);
+            }
+
             if (! isset($existing[$key])) {
                 $context->documentsNew++;
             } elseif ($existing[$key] === $group->contentHash()) {
@@ -213,6 +219,9 @@ final class SalesImportType implements ImportType
 
         // Neto corregido de las líneas por equivalencia (dato derivado; las líneas importadas no cambian).
         $this->netCorrection->run();
+
+        // Si el detalle de facturación ya había marcado alguno de estos documentos como anulado, se enlaza con su venta.
+        $this->voids->linkSales();
 
         // Facturas de crédito que se cargaron antes que su venta quedan enlazadas ahora.
         CreditInvoicesImportType::linkPendingToSales(array_values(collect($context->groups)->map(fn ($g) => (int) $g->fields['company'])->unique()->all()));

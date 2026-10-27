@@ -116,7 +116,7 @@ export interface ImportSummary {
   }
   inventory?: { new: number; unchanged: number; conflicts: number; branches: { id: number; name: string; products: number; cutoff: string | null }[] }
   entries?: { new: number; unchanged: number; lines: number; skipped_before_cutoff: number; branches_without_opening: string[] }
-  billing?: { date_from: string | null; date_to: string | null; sale_total: string; documents_replaced: number }
+  billing?: { date_from: string | null; date_to: string | null; sale_total: string; documents_replaced: number; voids_in_file?: number; voids_new?: number; voids_with_sales?: number }
   seller_summary?: { cutoffs: string[]; replaced: number; net_sale: string; tax: string; invoices: number; unknown_sellers: string[] }
   units?: { bases_set: number; new: number; updated: number; unchanged: number }
   new_sellers?: string[]
