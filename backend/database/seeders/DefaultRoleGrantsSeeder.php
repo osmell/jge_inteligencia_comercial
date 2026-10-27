@@ -16,7 +16,7 @@ use RuntimeException;
  * Criterio (decisión #19 de docs/10_DECISIONES_PENDIENTES.md, propuesta confirmada por administración):
  *  - Gerente: consulta de todo lo comercial, costos de inventario y reportes; las conversaciones solo en lectura (nunca escribe a clientes).
  *  - Supervisor: lo de gerente sin costos, más el trato con clientes de su equipo: seguimiento, promesas de pago, asignaciones y responder conversaciones.
- *  - Vendedor: sus clientes (seguimiento, crédito y promesas) y sus conversaciones.
+ *  - Vendedor: sus resultados de venta (solo ve lo suyo), sus clientes (seguimiento, crédito y promesas) y sus conversaciones.
  *  - La configuración (usuarios, roles, compañías, sucursales, correo, WhatsApp, webhook, automatizaciones, importaciones y auditoría) es solo del administrador.
  *
  * @see RolePermissionSeeder::PERMISSIONS
@@ -34,7 +34,7 @@ class DefaultRoleGrantsSeeder extends Seeder
             'inventory.view', 'insights.view', 'digests.view', 'reports.view', 'conversations.view', 'conversations.reply',
         ],
         Role::VENDEDOR => [
-            'customers.view', 'interactions.manage', 'credit.view', 'credit.promises', 'conversations.view', 'conversations.reply',
+            'sales.view', 'customers.view', 'interactions.manage', 'credit.view', 'credit.promises', 'conversations.view', 'conversations.reply',
         ],
     ];
 
