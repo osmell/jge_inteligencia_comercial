@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Imports\Billing\BillingDetailImportType;
+use App\Imports\Billing\SellerSummaryImportType;
 use App\Imports\Credit\CreditInvoicesImportType;
 use App\Imports\Customers\CustomersImportType;
 use App\Imports\Inventory\InventoryEntriesImportType;
@@ -40,10 +42,12 @@ return [
         'inventory_opening' => InventoryOpeningImportType::class,
         'product_units' => ProductUnitsImportType::class,
         'inventory_entries' => InventoryEntriesImportType::class,
+        'billing_detail' => BillingDetailImportType::class,
+        'seller_summary' => SellerSummaryImportType::class,
     ],
 
     // Nombre visible de cada tipo.
-    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes', 'products' => 'Productos', 'credit_invoices' => 'Facturas de crédito', 'inventory_opening' => 'Inventario inicial', 'product_units' => 'Unidades y equivalencias', 'inventory_entries' => 'Entradas de inventario'],
+    'labels' => ['sales' => 'Ventas', 'customers' => 'Clientes', 'products' => 'Productos', 'credit_invoices' => 'Facturas de crédito', 'inventory_opening' => 'Inventario inicial', 'product_units' => 'Unidades y equivalencias', 'inventory_entries' => 'Entradas de inventario', 'billing_detail' => 'Detalle de facturación', 'seller_summary' => 'Resumen por vendedor'],
 
     // Filas mostradas en la vista previa.
     'preview_rows' => 20,
@@ -220,5 +224,48 @@ return [
 
         // Descuento e Iva vacíos = 0; Observaciones es libre.
         'optional' => ['discount', 'tax', 'observations'],
+    ],
+
+    // Detalle de facturación del sistema de origen (factura × producto con el precio establecido en la factura). Se carga por día
+    // acumulado: cada archivo trae del primer día del período al día de corte. El archivo no trae compañía: se agrega la columna.
+    'billing_detail' => [
+        'sheet' => null,
+
+        'columns' => [
+            'company' => ['Compañía', 'Compania', 'Código Compañía'],
+            'customer_name' => ['Nombre del Cliente', 'Nombre Cliente'],
+            'issued_on' => ['Fecha'],
+            'series' => ['Serie'],
+            'document' => ['Docu. No.', 'Docu.No.', 'Documento'],
+            'product_code' => ['Código de Producto', 'Código del Producto', 'Codigo de Producto'],
+            'product_name' => ['Nombre del Producto'],
+            'units' => ['Unidades', 'Und.Vendidas'],
+            'unit_cost' => ['Costo'],
+            'price' => ['Precio'],
+            'sale_total' => ['Venta Total'],
+            'cost_total' => ['Costo Total'],
+            'profit_total' => ['Utilidad Total'],
+        ],
+    ],
+
+    // Resumen de ventas por vendedor del sistema de origen (totales oficiales acumulados hasta la fecha de corte).
+    'seller_summary' => [
+        'sheet' => null,
+
+        'columns' => [
+            'company' => ['Compañía', 'Compania', 'Código Compañía'],
+            'cutoff' => ['Fecha Corte', 'Fecha de Corte'],
+            'period_from' => ['Fecha Desde'],
+            'seller_name' => ['Nombre del Vendedor', 'Nombre Vendedor', 'Vendedor'],
+            'gross_sale' => ['Venta Bruta'],
+            'discount' => ['Descuento'],
+            'sale' => ['Venta'],
+            'returns' => ['Devoluciones'],
+            'net_sale' => ['Venta Neta'],
+            'tax' => ['Impuesto'],
+            'withholding' => ['Retención', 'Retencion'],
+            'total' => ['Total'],
+            'invoices' => ['No.Fact.', 'No. Fact.', 'No.Fact'],
+        ],
     ],
 ];

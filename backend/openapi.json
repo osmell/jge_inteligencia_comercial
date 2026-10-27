@@ -10688,7 +10688,9 @@
                                             "credit_invoices",
                                             "inventory_opening",
                                             "product_units",
-                                            "inventory_entries"
+                                            "inventory_entries",
+                                            "billing_detail",
+                                            "seller_summary"
                                         ]
                                     },
                                     "file": {

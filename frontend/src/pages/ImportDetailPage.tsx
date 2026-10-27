@@ -217,8 +217,48 @@ function UnitsSummary({ batch }: { batch: ImportBatch }) {
   )
 }
 
+function BillingSummary({ batch }: { batch: ImportBatch }) {
+  const b = batch.summary?.billing
+  if (!b) return null
+
+  return (
+    <section>
+      <PageHeader level={2} title="Resumen" description={b.date_from ? `Detalle de facturación del ${b.date_from} al ${b.date_to}` : undefined} />
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label="Venta total del reporte" info={{ text: 'Suma de «Venta Total» de todas las líneas del archivo, tal como la calcula el reporte del sistema de origen. Incluye las facturas anuladas, que el reporte repite.' }} value={formatMoney(b.sale_total)} />
+        <Stat label="Documentos a reemplazar" info={{ text: 'Documentos que ya se habían cargado y ahora traen un detalle distinto (por ejemplo, anulados después de la carga anterior). Su detalle anterior se reemplaza.' }} value={b.documents_replaced} />
+        <Stat label="Sin cambios" info={{ text: 'Documentos que ya estaban cargados con exactamente el mismo detalle: se omiten.' }} value={batch.documents_duplicate} />
+      </div>
+    </section>
+  )
+}
+
+function SellerSummarySummary({ batch }: { batch: ImportBatch }) {
+  const r = batch.summary?.seller_summary
+  if (!r) return null
+
+  return (
+    <section>
+      <PageHeader level={2} title="Resumen" description={r.cutoffs.length ? `Corte al ${r.cutoffs.join(', ')}` : undefined} />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat label="Venta neta oficial" info={{ text: 'Suma de la «Venta Neta» de los vendedores del archivo: el dato oficial del sistema de origen contra el que se concilian las ventas importadas.' }} value={formatMoney(r.net_sale)} />
+        <Stat label="Impuesto" info={{ text: 'Suma del impuesto de la venta neta de todos los vendedores del archivo.' }} value={formatMoney(r.tax)} />
+        <Stat label="Facturas" info={{ text: 'Suma del número de facturas de todos los vendedores, incluidas las anuladas que el sistema de origen cuenta.' }} value={r.invoices} />
+        <Stat label="Se reemplazarán" info={{ text: 'Vendedores que ya tenían un resumen para ese mismo corte: se reemplaza por el del archivo.' }} value={r.replaced} />
+      </div>
+      {r.unknown_sellers.length > 0 && (
+        <div className="mt-4">
+          <Alert tone="info">Vendedores del resumen que todavía no existen en el sistema (se conciliarán cuando lleguen sus ventas): <strong>{r.unknown_sellers.join(', ')}</strong>.</Alert>
+        </div>
+      )}
+    </section>
+  )
+}
+
 function SummarySection({ batch }: { batch: ImportBatch }) {
   const s = batch.summary
+  if (s?.billing) return <BillingSummary batch={batch} />
+  if (s?.seller_summary) return <SellerSummarySummary batch={batch} />
   if (s?.credit) return <CreditSummary batch={batch} />
   if (s?.inventory) return <InventorySummary batch={batch} />
   if (s?.units) return <UnitsSummary batch={batch} />
@@ -372,7 +412,15 @@ export default function ImportDetailPage() {
 
       {dialog === 'confirm' && (
         <ConfirmDialog title="Confirmar importación" confirmLabel="Importar" busy={busy} onConfirm={() => void act('confirm')} onCancel={() => setDialog(null)}>
-          {batch.type === 'inventory_opening' ? (
+          {batch.type === 'billing_detail' || batch.type === 'seller_summary' ? (
+            <>
+              <p>
+                Se cargarán <strong>{batch.documents_new}</strong> {batch.type === 'billing_detail' ? 'documentos del detalle de facturación' : 'resúmenes de vendedor'}
+                {batch.documents_duplicate > 0 && <> ({batch.documents_duplicate} {batch.type === 'billing_detail' ? 'ya cargados sin cambios se omitirán' : 'ya existentes para ese corte se reemplazarán'})</>}.
+              </p>
+              <p className="mt-2">Son datos de referencia del sistema de origen: no modifican las ventas importadas. Si algo falla no se escribe nada.</p>
+            </>
+          ) : batch.type === 'inventory_opening' ? (
             <>
               <p>Se cargarán <strong>{batch.documents_new}</strong> filas de inventario inicial{batch.documents_duplicate > 0 && <> (las {batch.documents_duplicate} ya cargadas se omitirán)</>}.</p>
               <p className="mt-2">Cada fila queda como un movimiento inicial en el libro de inventario, con la fecha de corte de su sucursal. No se pueden modificar: un cambio posterior se registra como ajuste. Si algo falla no se escribe nada.</p>

@@ -64,6 +64,36 @@ final class LocationResolver
         return [$company, $branch];
     }
 
+    /** Resuelve solo la compañía (archivos que no traen sucursal). */
+    public function resolveCompany(ImportRow $row, string $companyKey = 'company'): ?Company
+    {
+        $companyText = $row->text($companyKey);
+        if ($companyText === null) {
+            return null;
+        }
+
+        $company = $this->companies()[Seller::normalize($companyText)] ?? null;
+        if (! $company) {
+            $row->fail($companyKey, 'unknown_company', "La compañía «{$companyText}» no existe (se busca por código o nombre).");
+
+            return null;
+        }
+        if (! $company->is_active) {
+            $row->fail($companyKey, 'inactive_company', "La compañía «{$companyText}» está inactiva.");
+
+            return null;
+        }
+
+        $allowed = $this->user ? $this->scope->fullCompanyIds($this->user) : null;
+        if ($allowed !== null && ! in_array($company->id, $allowed, true)) {
+            $row->fail($companyKey, 'company_out_of_scope', "No tienes acceso completo a la compañía «{$companyText}».");
+
+            return null;
+        }
+
+        return $company;
+    }
+
     /** @return array<string, Company> código o nombre normalizado => compañía (el código tiene prioridad) */
     public function companies(): array
     {

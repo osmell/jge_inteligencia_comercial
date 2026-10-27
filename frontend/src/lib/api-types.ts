@@ -7141,7 +7141,7 @@ export interface operations {
             content: {
                 "multipart/form-data": {
                     /** @enum {string} */
-                    type: "sales" | "customers" | "products" | "credit_invoices" | "inventory_opening" | "product_units" | "inventory_entries";
+                    type: "sales" | "customers" | "products" | "credit_invoices" | "inventory_opening" | "product_units" | "inventory_entries" | "billing_detail" | "seller_summary";
                     /**
                      * Format: binary
                      * @description Maximum file size: 20480 kilobytes.
