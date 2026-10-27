@@ -6,13 +6,12 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MenuAccessRequest;
-use App\Models\Role;
 use App\Models\User;
 use App\Services\Menu\MenuCatalog;
 use Illuminate\Http\JsonResponse;
 
 /**
- * Qué opciones del menú ve cada persona que no es administradora. Solo QUITA (la persona sigue necesitando el permiso de su rol) y el
+ * Qué opciones del menú ve cada persona, incluidos los administradores (que pueden ocultarse las suyas; esta pantalla no se puede ocultar). Solo QUITA (la persona sigue necesitando el permiso de su rol) y el
  * servidor lo hace cumplir (`EnsureMenuOptionIsVisible`). Solo administradores; los cambios quedan en Auditoría (`user.updated`).
  */
 class MenuAccessController extends Controller
@@ -22,9 +21,7 @@ class MenuAccessController extends Controller
      */
     public function index(): JsonResponse
     {
-        $users = User::query()->with('role.permissions')
-            ->whereHas('role', fn ($q) => $q->where('slug', '!=', Role::ADMINISTRADOR))
-            ->orderBy('name')->get();
+        $users = User::query()->with('role.permissions')->orderBy('name')->get();
 
         return response()->json(['data' => [
             'options' => collect(MenuCatalog::OPTIONS)->map(fn (array $o, string $key) => ['key' => $key] + $o)->values(),
@@ -37,8 +34,6 @@ class MenuAccessController extends Controller
      */
     public function update(MenuAccessRequest $request, User $user): JsonResponse
     {
-        abort_if($user->isAdministrator(), 422, 'Un administrador siempre ve todo el menú.');
-
         $hidden = $request->hidden();
         $user->hidden_menu = $hidden === [] ? null : $hidden;
         $user->save();

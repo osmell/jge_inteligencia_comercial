@@ -94,11 +94,20 @@ class MenuAccessTest extends TestCase
         $this->assertTrue($this->blocked($this->manager, '/api/v1/reports/context'));
     }
 
-    public function test_an_administrator_is_never_restricted_even_with_a_stale_selection(): void
+    public function test_an_administrator_can_hide_options_of_their_own_menu_and_the_server_enforces_it(): void
     {
         $this->hide($this->admin, ['credit']);
 
-        $this->assertFalse($this->blocked($this->admin, '/api/v1/credit/aging'));
+        $this->assertTrue($this->blocked($this->admin, '/api/v1/credit/aging'));
+        $this->assertSame(['credit'], $this->admin->fresh()->hiddenMenu());
+    }
+
+    public function test_an_administrator_can_never_lock_themself_out_of_the_menu_screen(): void
+    {
+        $this->hide($this->admin, MenuCatalog::keys());
+
+        $this->actingAs($this->admin, 'sanctum')->getJson('/api/v1/admin/menu-access')->assertOk();
+        $this->actingAs($this->admin, 'sanctum')->putJson("/api/v1/admin/menu-access/{$this->admin->id}", ['hidden' => []])->assertOk();
         $this->assertSame([], $this->admin->fresh()->hiddenMenu());
     }
 
@@ -129,7 +138,8 @@ class MenuAccessTest extends TestCase
         $ids = array_column($data['users'], 'id');
         $this->assertContains($seller->id, $ids);
         $this->assertContains($this->manager->id, $ids);
-        $this->assertNotContains($this->admin->id, $ids, 'Los administradores no se configuran.');
+        $this->assertContains($this->admin->id, $ids, 'Los administradores también se configuran.');
+        $this->assertSame(MenuCatalog::keys(), array_column($data['users'], null, 'id')[$this->admin->id]['available']);
         $row = array_column($data['users'], null, 'id')[$seller->id];
         $this->assertNotContains('audit', $row['available']);
         $this->assertContains('credit', array_column($data['users'], null, 'id')[$this->manager->id]['available']);
@@ -158,13 +168,6 @@ class MenuAccessTest extends TestCase
             $this->actingAs($this->admin, 'sanctum')->putJson("/api/v1/admin/menu-access/{$this->manager->id}", $body)->assertUnprocessable();
         }
         $this->assertNull($this->manager->fresh()->hidden_menu);
-    }
-
-    public function test_an_administrator_cannot_be_restricted(): void
-    {
-        $other = User::factory()->role(Role::ADMINISTRADOR)->create();
-
-        $this->actingAs($this->admin, 'sanctum')->putJson("/api/v1/admin/menu-access/{$other->id}", ['hidden' => ['credit']])->assertUnprocessable();
     }
 
     public function test_only_administrators_can_see_or_change_it_even_with_every_permission(): void

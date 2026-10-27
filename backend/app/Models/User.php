@@ -102,13 +102,14 @@ class User extends Authenticatable
     }
 
     /**
-     * Opciones del menú que la administración le ocultó. Un administrador nunca tiene opciones ocultas.
+     * Opciones del menú que la administración le ocultó (también a un administrador: la pantalla «Menú por usuario» no es una opción
+     * ocultable, así que siempre puede volver a mostrarlas).
      *
      * @return list<string>
      */
     public function hiddenMenu(): array
     {
-        return $this->isAdministrator() ? [] : array_values(array_filter((array) $this->hidden_menu, 'is_string'));
+        return array_values(array_filter((array) $this->hidden_menu, 'is_string'));
     }
 
     public function hasPermission(string $slug): bool

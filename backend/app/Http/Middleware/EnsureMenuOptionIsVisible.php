@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Cumple lo que la administración decidió en «Menú por usuario»: si se ocultaron TODAS las opciones que usan una ruta, el servidor la
  * rechaza con 403 y el código `menu_option_hidden` (ocultar solo en la interfaz no sería seguridad). Una ruta que otra opción visible
- * también usa sigue disponible. Los administradores nunca tienen opciones ocultas.
+ * también usa sigue disponible. Vale también para un administrador que oculte opciones de su propio menú; «Menú por usuario» no se puede ocultar.
  */
 class EnsureMenuOptionIsVisible
 {

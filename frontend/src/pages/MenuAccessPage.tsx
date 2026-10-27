@@ -23,7 +23,7 @@ function GroupCheck({ label, checked, mixed, disabled, onChange }: { label: stri
 const ALL_KEYS = MENU_GROUPS.flatMap((g) => g.items.map((i) => i.key))
 
 /**
- * «Menú por usuario»: el administrador elige a una persona que no es administradora y marca qué opciones del menú ve. Solo QUITA
+ * «Menú por usuario»: el administrador elige a una persona (incluido él mismo) y marca qué opciones del menú ve. Solo QUITA
  * (siempre hace falta el permiso de su rol) y el servidor lo hace cumplir; un grupo sin opciones visibles desaparece del menú.
  */
 export default function MenuAccessPage() {
@@ -81,12 +81,12 @@ export default function MenuAccessPage() {
       />
       <div className="mb-4 space-y-2">
         <Alert tone="info">
-          Una opción oculta desaparece del menú y de la barra de comandos, y el servidor rechaza esa pantalla y sus datos. Si una pantalla comparte datos con otra opción que sigue visible (la ficha de un cliente muestra su crédito, por ejemplo), esos datos siguen disponibles para esa otra opción. Si desmarcas todas las opciones de un grupo, el grupo desaparece del menú. Los administradores siempre ven todo. El menú de la persona se actualiza al recargar la página o volver a iniciar sesión; el servidor aplica el cambio de inmediato.
+          Una opción oculta desaparece del menú y de la barra de comandos, y el servidor rechaza esa pantalla y sus datos. Si una pantalla comparte datos con otra opción que sigue visible (la ficha de un cliente muestra su crédito, por ejemplo), esos datos siguen disponibles para esa otra opción. Si desmarcas todas las opciones de un grupo, el grupo desaparece del menú. Un administrador también puede ocultarse opciones de su propio menú; esta pantalla («Menú por usuario») nunca se oculta, así que siempre puede volver a mostrarlas. El menú de la persona se actualiza al recargar la página o volver a iniciar sesión; el servidor aplica el cambio de inmediato.
         </Alert>
         <FormError message={access.error ?? error} />
       </div>
 
-      {access.data && users.length === 0 && <Alert tone="info">No hay usuarios que no sean administradores.</Alert>}
+      {access.data && users.length === 0 && <Alert tone="info">No hay usuarios.</Alert>}
 
       {user && (
         <>
