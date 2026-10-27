@@ -117,7 +117,7 @@ export default function ReportSellersPage() {
       <ReportLegend><span>Haz clic en un vendedor para ver sus facturas.</span></ReportLegend>
 
       {open && (
-        <Modal title={`Facturación de ${open.seller.name}`} onClose={() => setOpen(null)} wide>
+        <Modal title={`Facturación de ${open.seller.name}`} onClose={() => setOpen(null)} extraWide>
           <BillingTable path={`/reports/sellers/${open.seller.id}/documents`} query={filters.query()} label={`Documentos facturados por ${open.seller.name}`} />
         </Modal>
       )}

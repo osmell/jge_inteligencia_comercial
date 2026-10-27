@@ -117,7 +117,7 @@ export default function ReportOperatorsPage() {
       </ReportLegend>
 
       {open && (
-        <Modal title={`Detalle de ${open.operator.name}`} onClose={() => setOpen(null)} wide>
+        <Modal title={`Detalle de ${open.operator.name}`} onClose={() => setOpen(null)} extraWide>
           <div role="tablist" aria-label="Detalle del operador" className="mb-4 flex gap-2 border-b border-line">
             {([['documents', 'Facturas'], ['distribution', 'A quién y cuándo factura']] as const).map(([key, label]) => (
               <button

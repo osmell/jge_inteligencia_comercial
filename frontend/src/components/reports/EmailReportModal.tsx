@@ -45,7 +45,7 @@ export default function EmailReportModal({ report, filters, extra, onClose }: { 
   if (step === 'done') {
     const failed = results.filter((r) => r.status !== 'sent')
     return (
-      <Modal title="Reporte enviado" onClose={onClose}>
+      <Modal title="Reporte enviado" onClose={onClose} extraWide>
         <ul className="mb-4 space-y-2 text-sm">
           {results.map((r) => (
             <li key={r.to} className="flex items-start gap-2">
@@ -63,7 +63,7 @@ export default function EmailReportModal({ report, filters, extra, onClose }: { 
   }
 
   return (
-    <Modal title="Enviar el reporte por correo" onClose={onClose}>
+    <Modal title="Enviar el reporte por correo" onClose={onClose} extraWide>
       {step === 'write' ? (
         <form onSubmit={(e) => { e.preventDefault(); if (canReview) setStep('confirm') }} className="space-y-4" noValidate>
           <TextAreaField

@@ -44,12 +44,14 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Revisión de seguridad del apartado de Reportes** (`docs/28_SEGURIDAD.md`) y `ADR-015`.
 
 ### Cambiado
+- **Ventanas de los reportes más anchas:** el detalle de facturación de Vendedores y Sucursales, el detalle de Operadores los documentos con diferencias de Conciliación y el envío por correo se abren ahora con el ancho de la ventana de Mezcla de productos (hasta 72 rem, sin pasar del ancho de la pantalla). Una prueba de navegador vigila el ancho de las cuatro.
 - **Menú reorganizado en seis grupos desplegables**: General (Inicio, Conversaciones, Agenda), Administración (Usuarios, Menú por usuario, Roles y permisos, Auditoría, Automatizaciones, Correo, WhatsApp, Webhook), Catálogos (Compañías, Sucursales, Clientes, Productos, Unidades), Inteligencia, Reportes y Datos. Todos se abren con un botón y recuerdan cómo los dejó cada persona; solo General empieza abierto, y cada grupo se abre solo al estar dentro de una de sus pantallas. «Menú por usuario» sigue los mismos grupos.
 - Todo el backend usa `declare(strict_types=1)`; PHPStan sube del nivel 5 al **8** sin *baseline*.
 - Las consultas y transacciones salieron de los controladores hacia servicios; el dashboard, las estadísticas de ventas, la ficha de clientes y los reportes se dividieron en clases por responsabilidad. Sin cambios de comportamiento.
 - Mensaje de rechazo único al escribir o agregar notas en una conversación ajena.
 
 ### Corregido
+- **Reportes con cifras corregidas lentos:** la reasignación del costo de componentes unía una subconsulta agregada en cada consulta de ventas y volvía unas 24 veces más lento el detalle de Mezcla de productos (3,5 s en SQLite). El costo vigente se guarda ahora por línea en `sales_line_effective_costs` y se une por llave única: el mismo detalle tarda 0,18 s. En producción, `sales:correct-net` lo llena para las ventas ya cargadas.
 - **Mezcla de productos**: la ventana del detalle de un vendedor u operador es más ancha (hasta 72 rem) para leer completas las descripciones de los productos.
 - **Pantallas con filtros mostraban datos viejos**: si se cambiaba un filtro rápido, una respuesta lenta anterior podía llegar después y reemplazar a la nueva. Ahora toda carga descarta las respuestas superadas.
 - **Pruebas que dependían de la fecha de hoy**: dos pruebas de importación de inventario usaban una fecha «futura» fija que ya pasó.

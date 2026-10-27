@@ -70,7 +70,7 @@ class SalesQuery
         $query
             ->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id')
             ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'sales_lines.company_id')->on('pr.code', '=', 'sales_lines.product_code'));
-        SalesBasis::scope($query, 'sales_lines', withCost: true);
+        SalesBasis::scope($query);
 
         if ($from && $to) {
             // Medio abierto (>= desde, < hasta + 1 día): incluye el último día aunque el motor guarde la fecha con hora.

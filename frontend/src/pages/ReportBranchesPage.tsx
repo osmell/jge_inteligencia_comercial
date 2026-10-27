@@ -124,7 +124,7 @@ export default function ReportBranchesPage() {
       {mix.data && mix.data.data.categories.length > 0 && <BranchMixTable mix={mix.data.data} />}
 
       {open && (
-        <Modal title={`Facturación de ${open.branch.name}`} onClose={() => setOpen(null)} wide>
+        <Modal title={`Facturación de ${open.branch.name}`} onClose={() => setOpen(null)} extraWide>
           <BillingTable path={`/reports/branches/${open.branch.id}/documents`} query={filters.query()} label={`Documentos facturados en ${open.branch.name}`} />
         </Modal>
       )}

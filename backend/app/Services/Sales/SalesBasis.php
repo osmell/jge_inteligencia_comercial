@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Sales;
 
 use Illuminate\Contracts\Database\Query\Builder as BuilderContract;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Base de las cifras de venta: «corregida» (por omisión) o «tal como se importó».
@@ -34,30 +33,19 @@ final class SalesBasis
     }
 
     /**
-     * Agrega a la consulta lo que necesitan las expresiones de esta clase: la corrección de cada línea y la exclusión de las facturas anuladas.
+     * Agrega a la consulta lo que necesitan las expresiones de esta clase: la corrección de cada línea, su costo vigente y la exclusión de las facturas anuladas.
      *
      * @param  BuilderContract  $query  consulta que ya tiene `sales_lines` (o su alias) en el FROM o en un JOIN
      * @param  literal-string  $alias
-     * @param  bool  $withCost  también la reasignación del costo de los componentes (solo si la consulta usa `cost`)
      */
-    public static function scope(BuilderContract $query, string $alias = 'sales_lines', bool $withCost = false): void
+    public static function scope(BuilderContract $query, string $alias = 'sales_lines'): void
     {
         if (! self::corrected()) {
             return;
         }
 
-        if ($withCost) {
-            $query->leftJoin("sales_line_component_costs as cc_{$alias}", "cc_{$alias}.component_line_id", '=', "{$alias}.id");
-            $query->leftJoinSub(
-                DB::table('sales_line_component_costs')->selectRaw('main_line_id, sum(cost) as extra')->groupBy('main_line_id'),
-                "mx_{$alias}",
-                "mx_{$alias}.main_line_id",
-                '=',
-                "{$alias}.id",
-            );
-        }
-
         $query->leftJoin("sales_line_corrections as cx_{$alias}", "cx_{$alias}.sales_line_id", '=', "{$alias}.id");
+        $query->leftJoin("sales_line_effective_costs as lc_{$alias}", "lc_{$alias}.sales_line_id", '=', "{$alias}.id");
         $query->whereNotExists(fn ($q) => $q->selectRaw('1')->from("sales_document_voids as vd_{$alias}")->whereColumn("vd_{$alias}.sales_document_id", "{$alias}.sales_document_id"));
     }
 
@@ -96,15 +84,12 @@ final class SalesBasis
 
     /**
      * Costo de la línea (SQL), con el de sus componentes sumado a la línea principal y en cero en las líneas de componente.
-     * Solo en consultas con `scope(..., withCost: true)`.
      *
      * @param  literal-string  $alias
      * @return literal-string
      */
     public static function cost(string $alias = 'sales_lines'): string
     {
-        return self::corrected()
-            ? "(case when cc_{$alias}.id is not null then 0 else {$alias}.line_cost_total + coalesce(mx_{$alias}.extra, 0) end)"
-            : "{$alias}.line_cost_total";
+        return self::corrected() ? "coalesce(lc_{$alias}.cost, {$alias}.line_cost_total)" : "{$alias}.line_cost_total";
     }
 }

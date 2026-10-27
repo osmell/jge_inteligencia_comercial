@@ -11,7 +11,7 @@ export default function IssuesModal({ code, query, onClose }: { code: string; qu
   const data = load.data?.data
 
   return (
-    <Modal title={INTEGRITY_LABEL[code] ?? code} onClose={onClose} wide>
+    <Modal title={INTEGRITY_LABEL[code] ?? code} onClose={onClose} extraWide>
       <FormError message={load.error} />
       {data && <p className="mb-3 text-sm text-ink-muted">{data.total.toLocaleString('es')} con diferencia.</p>}
       <DataTable label={`Diferencias: ${INTEGRITY_LABEL[code] ?? code}`}>

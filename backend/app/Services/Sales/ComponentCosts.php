@@ -36,9 +36,31 @@ final class ComponentCosts
             ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('sales_line_component_costs as x')->whereColumn('x.component_line_id', 'c.id'))
             ->select(['c.id', 'main.id as main_id', 'c.company_id', 'c.branch_id', 'c.issued_on', 'c.line_cost_total', DB::raw(self::RULE_VERSION), DB::raw('current_timestamp'), DB::raw('current_timestamp')]);
 
-        return DB::table('sales_line_component_costs')->insertUsing(
+        $assigned = DB::table('sales_line_component_costs')->insertUsing(
             ['component_line_id', 'main_line_id', 'company_id', 'branch_id', 'issued_on', 'cost', 'rule_version', 'created_at', 'updated_at'],
             $query,
+        );
+
+        $this->materialize();
+
+        return $assigned;
+    }
+
+    /** Deja en sales_line_effective_costs el costo vigente de cada línea tocada: 0 en el componente y la suma en la línea principal. */
+    private function materialize(): void
+    {
+        DB::table('sales_line_effective_costs')->insertUsing(
+            ['sales_line_id', 'cost'],
+            DB::table('sales_line_component_costs as k')->whereNotExists(fn ($q) => $q->selectRaw('1')->from('sales_line_effective_costs as e')->whereColumn('e.sales_line_id', 'k.component_line_id'))
+                ->selectRaw('k.component_line_id, 0'),
+        );
+
+        DB::table('sales_line_effective_costs')->insertUsing(
+            ['sales_line_id', 'cost'],
+            DB::table('sales_line_component_costs as k')->join('sales_lines as l', 'l.id', '=', 'k.main_line_id')
+                ->whereNotExists(fn ($q) => $q->selectRaw('1')->from('sales_line_effective_costs as e')->whereColumn('e.sales_line_id', 'k.main_line_id'))
+                ->groupBy('k.main_line_id', 'l.line_cost_total')
+                ->selectRaw('k.main_line_id, l.line_cost_total + sum(k.cost)'),
         );
     }
 }
