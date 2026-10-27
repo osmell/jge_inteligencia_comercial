@@ -23,6 +23,7 @@ use App\Models\SalesDocument;
 use App\Models\Seller;
 use App\Models\User;
 use App\Services\DataScope;
+use App\Services\Sales\ComponentCosts;
 use App\Services\Sales\NetCorrection;
 use App\Services\Sales\VoidDetection;
 use DateTimeImmutable;
@@ -83,7 +84,7 @@ final class SalesImportType implements ImportType
     /** @var array<string, mixed> */
     private array $stats = ['lines' => [], 'min' => null, 'max' => null, 'net' => 0, 'tax' => 0, 'grand' => 0, 'cost' => 0, 'skipped' => 0];
 
-    public function __construct(private readonly DataScope $scope, private readonly NetCorrection $netCorrection, private readonly VoidDetection $voids) {}
+    public function __construct(private readonly DataScope $scope, private readonly NetCorrection $netCorrection, private readonly ComponentCosts $components, private readonly VoidDetection $voids) {}
 
     public function key(): string
     {
@@ -219,6 +220,7 @@ final class SalesImportType implements ImportType
 
         // Neto corregido de las líneas por equivalencia (dato derivado; las líneas importadas no cambian).
         $this->netCorrection->run();
+        $this->components->run();
 
         // Si el detalle de facturación ya había marcado alguno de estos documentos como anulado, se enlaza con su venta.
         $this->voids->linkSales();

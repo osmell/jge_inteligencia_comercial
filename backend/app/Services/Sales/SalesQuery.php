@@ -70,7 +70,7 @@ class SalesQuery
         $query
             ->join('sales_documents as sd', 'sd.id', '=', 'sales_lines.sales_document_id')
             ->leftJoin('products as pr', fn ($j) => $j->on('pr.company_id', '=', 'sales_lines.company_id')->on('pr.code', '=', 'sales_lines.product_code'));
-        SalesBasis::scope($query);
+        SalesBasis::scope($query, 'sales_lines', withCost: true);
 
         if ($from && $to) {
             // Medio abierto (>= desde, < hasta + 1 día): incluye el último día aunque el motor guarde la fecha con hora.
@@ -142,6 +142,7 @@ class SalesQuery
     public function aggregates(): string
     {
         $net = SalesBasis::net();
+        $cost = SalesBasis::cost();
 
         return implode(', ', [
             "coalesce(sum({$net}), 0) as net_total",
@@ -155,14 +156,14 @@ class SalesQuery
             'count(distinct sales_lines.sales_document_id) as documents',
             'count(distinct sd.customer_code) as customers',
             // Margen solo sobre líneas con costo válido (> 0); el costo es el ACTUAL, no el de la fecha de venta.
-            "coalesce(sum(case when sales_lines.line_cost_total > 0 then {$net} end), 0) as costed_net",
-            'coalesce(sum(case when sales_lines.line_cost_total > 0 then sales_lines.line_cost_total end), 0) as costed_cost',
+            "coalesce(sum(case when {$cost} > 0 then {$net} end), 0) as costed_net",
+            "coalesce(sum(case when {$cost} > 0 then {$cost} end), 0) as costed_cost",
         ]);
     }
 
     public function sortExpression(string $sort): string
     {
-        return $sort === 'margin' ? '(sum(case when sales_lines.line_cost_total > 0 then '.SalesBasis::net().' - sales_lines.line_cost_total end))'
+        return $sort === 'margin' ? '(sum(case when '.SalesBasis::cost().' > 0 then '.SalesBasis::net().' - '.SalesBasis::cost().' end))'
             : ['net_total' => 'sum('.SalesBasis::net().')', 'tax_total' => 'sum('.SalesBasis::tax().')', 'grand_total' => 'sum('.SalesBasis::grand().')', 'discount_total' => 'sum(sales_lines.discount_total)',
                 'units' => 'sum(sales_lines.units)', 'documents' => 'count(distinct sales_lines.sales_document_id)',
                 'customers' => 'count(distinct sd.customer_code)'][$sort];

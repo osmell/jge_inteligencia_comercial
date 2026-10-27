@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\SalesLine;
+use App\Services\Sales\SalesBasis;
 use App\Services\Sales\SalesMetrics;
 use App\Services\Sales\SalesQuery;
 use Carbon\CarbonImmutable;
@@ -163,7 +164,7 @@ class SalesStatistics
             ->groupByRaw($key);
 
         if ($costedOnly) {
-            $rows->havingRaw('sum(case when sales_lines.line_cost_total > 0 then 1 else 0 end) > 0');
+            $rows->havingRaw('sum(case when '.SalesBasis::cost().' > 0 then 1 else 0 end) > 0');
         }
 
         if ($discountedOnly) {

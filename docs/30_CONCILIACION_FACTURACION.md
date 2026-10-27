@@ -1,6 +1,6 @@
 # 30 · Conciliación de la facturación y corrección de equivalencias
 
-Estado: **pasos 1 a 5 de 6 hechos**. El paso 6 están pendientes.
+Estado: **los 6 pasos hechos**. Queda abierta la diferencia de 0,34 % contra el origen (ver abajo).
 
 ## El problema
 
@@ -43,4 +43,14 @@ Reglas de carga:
 3. **Hecho:** las facturas con alguna línea de serie `FA` en el detalle se registran en `sales_document_voids` (compañía + número, enlazadas a su venta si existe, ahora o cuando se cargue). En agosto las 188 con `FA` son exactamente las 188 que el archivo de ventas deja en cero. Al importar ventas, un documento anulado avisa (`document_voided`). Falta que los reportes dejen de contar esas ventas: se hace en el paso 4 junto con el neto corregido.
 4. **Hecho:** todas las cifras de venta (Inicio, Ventas, Clientes, Productos, Reportes, Inteligencia, Metas y resumen semanal) usan el neto y el impuesto corregidos y dejan fuera las facturas anuladas. Todo pasa por `App\Services\Sales\SalesBasis` (unión con `sales_line_corrections` y exclusión de `sales_document_voids`); una consulta nueva de importes de venta debe usarlo. Con el parámetro `basis=imported` se ven los importes tal como se importaron; en la aplicación se elige con «Cifras de venta» en el encabezado (guardado por navegador, solo en pantallas anchas). Quedan en importe importado, a propósito: la conciliación del archivo contra lo guardado y los controles de integridad de documentos. El descuento y su porcentaje (Sub Total − Descuento) todavía no se corrigen. Las fechas de última compra y los estados de cliente siguen contando las facturas anuladas que tengan venta cargada.
 5. **Hecho:** sección «Contra el sistema de origen» en Reportes ▸ Conciliación. Por compañía toma el último corte del resumen por vendedor hasta el fin del periodo y compara, por vendedor, la venta neta oficial contra la que calcula el sistema (corregida) y la importada, más las facturas (el origen cuenta también las anuladas). Estado: cuadra (hasta 1 córdoba), cerca (hasta 1 % de lo oficial) o diferencia (`origin_match_tolerance` y `origin_near_pct` en `config/reports.php`). Aparecen también los vendedores que solo existen en un lado. Cuenta como un problema de la conciliación mientras el total no cuadre.
-6. Líneas de componentes (catalizador, reductor, thinner; precio simbólico 0,01): costo reasignado a la línea principal y fuera de precio promedio y conteo de unidades.
+6. **Hecho:** líneas de componente (catalizador, reductor, thinner: unidades > 0, precio unitario entre 0 y 1, costo > 0). Su costo se suma a la línea principal de la misma factura (la de mayor neto que no sea componente) y queda en cero en el componente, en `sales_line_component_costs`; el margen de Ventas (por producto, categoría, vendedor…) usa ese costo en las cifras corregidas y el costo del archivo en «Como se importaron». En agosto: 3 032 componentes y 338 671 de costo reasignados a 1 321 líneas; 20 componentes sin línea principal conservan su costo. Se calcula al importar ventas y con `sales:correct-net`. Decisión: las unidades de los componentes se siguen contando (son consumo real y alimentan el inventario) y no hay un «precio promedio» calculado en ningún reporte que corregir.
+
+## Diferencia abierta contra el origen (agosto de 2026)
+
+Venta neta del origen (suma de la columna Venta del resumen) 9 080 836,59; sistema 9 050 306,09; faltan 30 530,49 (0,34 %). Hallazgos:
+
+- La venta bruta y el descuento del origen se comportan igual: quedan 39 415 y 8 893 abajo, es decir, el faltante son ventas normales (descuento de ~13 %) y no un problema del descuento.
+- Diez vendedores cuadran al centavo. En casi todos los demás la diferencia lleva exactamente 15 % de impuesto: son ventas gravadas que faltan o sobran.
+- Las anuladas no explican nada (Fabio Matus tiene 128 mil en anuladas y cuadra exacto).
+- Los saldos grandes se compensan entre vendedores (María Teresa −53 mil, Iris −26 mil frente a Stephany +30 mil, Jennifer +21 mil, Laysha +21 mil, Yefrín +13 mil), señal de documentos que el origen atribuye a otro vendedor; el faltante neto real queda en unos 30 mil.
+- Para ubicar los documentos exactos hace falta el detalle consolidado de facturas del origen (una fila por factura con vendedor y venta neta).
