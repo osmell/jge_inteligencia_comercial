@@ -44,6 +44,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Revisión de seguridad del apartado de Reportes** (`docs/28_SEGURIDAD.md`) y `ADR-015`.
 
 ### Cambiado
+- **Menú por usuario:** cuando el rol de la persona no permite todas las opciones, la pantalla lo explica (cuántas permite) y enlaza a «Roles y permisos», donde se otorgan; antes solo salía «su rol no la permite» en cada casilla.
 - **Ventanas de los reportes más anchas:** el detalle de facturación de Vendedores y Sucursales, el detalle de Operadores los documentos con diferencias de Conciliación y el envío por correo se abren ahora con el ancho de la ventana de Mezcla de productos (hasta 72 rem, sin pasar del ancho de la pantalla). Una prueba de navegador vigila el ancho de las cuatro.
 - **Menú reorganizado en seis grupos desplegables**: General (Inicio, Conversaciones, Agenda), Administración (Usuarios, Menú por usuario, Roles y permisos, Auditoría, Automatizaciones, Correo, WhatsApp, Webhook), Catálogos (Compañías, Sucursales, Clientes, Productos, Unidades), Inteligencia, Reportes y Datos. Todos se abren con un botón y recuerdan cómo los dejó cada persona; solo General empieza abierto, y cada grupo se abre solo al estar dentro de una de sus pantallas. «Menú por usuario» sigue los mismos grupos.
 - Todo el backend usa `declare(strict_types=1)`; PHPStan sube del nivel 5 al **8** sin *baseline*.

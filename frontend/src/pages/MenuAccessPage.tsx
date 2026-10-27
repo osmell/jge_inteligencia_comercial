@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useToast } from '../components/toast'
 import { Alert, Button, Card, FormError, PageHeader, SelectField } from '../components/ui'
 import { api, ApiError } from '../lib/api'
@@ -18,6 +19,8 @@ function GroupCheck({ label, checked, mixed, disabled, onChange }: { label: stri
     </label>
   )
 }
+
+const ALL_KEYS = MENU_GROUPS.flatMap((g) => g.items.map((i) => i.key))
 
 /**
  * «Menú por usuario»: el administrador elige a una persona que no es administradora y marca qué opciones del menú ve. Solo QUITA
@@ -93,6 +96,15 @@ export default function MenuAccessPage() {
             </SelectField>
             {dirty && <p className="mt-1 text-xs text-ink-muted">Hay cambios sin guardar: guárdalos o descártalos para elegir a otra persona.</p>}
           </div>
+
+          {available.length < ALL_KEYS.length && (
+            <div className="mb-4">
+              <Alert tone="info">
+                El rol {user.role.name} permite {available.length} de {ALL_KEYS.length} opciones del menú; las demás salen deshabilitadas porque este menú solo quita opciones, no las otorga.
+                {' '}Para que {user.name} pueda ver más, otorgue los permisos de ese rol en <Link to="/admin/roles" className="font-medium text-jge-blue underline">Roles y permisos</Link> y vuelva aquí para ocultar lo que no quiera mostrarle.
+              </Alert>
+            </div>
+          )}
 
           {vanish.length > 0 && (
             <div className="mb-4"><Alert tone="warning">{user.name} dejará de ver {vanish.length === 1 ? 'el grupo' : 'los grupos'} {vanish.join(', ')}: ya no le queda ninguna opción visible.</Alert></div>

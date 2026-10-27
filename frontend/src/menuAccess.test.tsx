@@ -191,6 +191,13 @@ describe('pantalla «Menú por usuario»', () => {
     expect(screen.getByRole('checkbox', { name: 'Inteligencia: Existencias' })).toBeDisabled()   // su rol no lo permite
   })
 
+  it('cuando el rol no permite todo explica por qué y lleva a «Roles y permisos»', async () => {
+    await open()
+
+    expect(screen.getByText(/El rol Gerente General permite \d+ de \d+ opciones del menú/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Roles y permisos' })).toHaveAttribute('href', '/admin/roles')
+  })
+
   it('al desmarcar todas las opciones de un grupo avisa que el grupo desaparece, y guarda lo elegido', async () => {
     const user = userEvent.setup()
     await open()
