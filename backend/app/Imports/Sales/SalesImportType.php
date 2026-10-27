@@ -23,6 +23,7 @@ use App\Models\SalesDocument;
 use App\Models\Seller;
 use App\Models\User;
 use App\Services\DataScope;
+use App\Services\Sales\NetCorrection;
 use DateTimeImmutable;
 
 /**
@@ -81,7 +82,7 @@ final class SalesImportType implements ImportType
     /** @var array<string, mixed> */
     private array $stats = ['lines' => [], 'min' => null, 'max' => null, 'net' => 0, 'tax' => 0, 'grand' => 0, 'cost' => 0, 'skipped' => 0];
 
-    public function __construct(private readonly DataScope $scope) {}
+    public function __construct(private readonly DataScope $scope, private readonly NetCorrection $netCorrection) {}
 
     public function key(): string
     {
@@ -209,6 +210,9 @@ final class SalesImportType implements ImportType
     public function persist(ImportContext $context): void
     {
         (new SalesPersister)->persist($context);
+
+        // Neto corregido de las líneas por equivalencia (dato derivado; las líneas importadas no cambian).
+        $this->netCorrection->run();
 
         // Facturas de crédito que se cargaron antes que su venta quedan enlazadas ahora.
         CreditInvoicesImportType::linkPendingToSales(array_values(collect($context->groups)->map(fn ($g) => (int) $g->fields['company'])->unique()->all()));

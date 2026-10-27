@@ -32,7 +32,7 @@ class DataReset
 
     /** Se borran siempre: todo dato que nace de operar el sistema. */
     public const WIPE = [
-        'sales_documents', 'sales_lines', 'billing_detail_lines', 'seller_sales_summaries', 'import_batches', 'import_errors', 'seller_goals',
+        'sales_line_corrections', 'sales_documents', 'sales_lines', 'billing_detail_lines', 'seller_sales_summaries', 'import_batches', 'import_errors', 'seller_goals',
         'customers', 'customer_interactions',
         'quotations', 'quotation_events',
         'credit_invoices', 'credit_movements', 'credit_notes', 'payment_promises',
