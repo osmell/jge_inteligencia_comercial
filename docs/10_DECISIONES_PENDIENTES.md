@@ -53,7 +53,7 @@ Como `Costo Unit.Vta.` es el costo **actual** y no el de la fecha de la venta, e
 16. ~~Metas mensuales y tratamiento de vendedores nuevos/ausencias~~ **Resuelta:** meta sobre venta neta; sugerida por el sistema y ajustable; la captura la hace Gerencia general; reglas de prorrateo propuestas aceptadas (ver `03_FASE_03_INTELIGENCIA_VENTAS.md`, paso 7).
 17. Periodos de inactividad según frecuencia de compra.
 18. Definiciones de cliente nuevo, recuperado y perdido.
-19. Permisos de supervisores y política de asignación múltiple.
+19. Permisos de supervisores y política de asignación múltiple. *(Permisos de partida de gerente, supervisor y vendedor sembrados con `DefaultRoleGrantsSeeder`; la política de asignación múltiple sigue pendiente.)*
 20. Paleta corporativa final y modo oscuro opcional. *(Logos recibidos: colores muestreados y aplicados; falta confirmar el tono oficial —2023 vs 2024— y decidir el modo oscuro. Ver `12_SISTEMA_DE_DISENO.md`.)*
 
 ## Recomendación
