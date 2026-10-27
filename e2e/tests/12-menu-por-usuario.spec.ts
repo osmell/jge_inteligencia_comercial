@@ -1,10 +1,10 @@
 import { expect, test, type Browser, type Page } from '@playwright/test'
-import { loginOk, menu } from './helpers'
+import { loginOk, menu, reportsList } from './helpers'
 
 /**
  * Cambia lo que ve una cuenta (y lo restablece al terminar): solo con E2E_ALLOW_WRITES=1, en una base de pruebas.
  * Verifica de punta a punta que lo que el administrador oculta desaparece del menú, no se abre escribiendo la dirección y el servidor
- * rechaza sus datos.
+ * rechaza sus datos; también para un administrador sobre su propio menú.
  */
 test.skip(process.env.E2E_ALLOW_WRITES !== '1', 'Cambia el menú de una cuenta: use E2E_ALLOW_WRITES=1 en una base de pruebas.')
 
@@ -96,4 +96,53 @@ test('lo que el administrador oculta desaparece del menú, no se abre por la dir
   await asGerente(browser, async (g) => {
     await expect(menu(g).getByRole('button', { name: 'Reportes' })).toBeVisible()
   })
+})
+
+/** El grupo del menú recuerda si quedó abierto: solo se hace clic si está cerrado. */
+async function openReportsGroup(page: Page) {
+  const group = menu(page).getByRole('button', { name: 'Reportes' })
+  if ((await group.getAttribute('aria-expanded')) !== 'true') await group.click()
+}
+
+const ADMIN = 'Administrador Demo (@admin) · Administrador'
+
+test('un administrador puede ocultarse opciones de su propio menú y siempre puede volver a mostrarlas', async ({ page }) => {
+  await loginOk(page, 'admin')
+  await page.goto('/admin/menu-usuarios')
+  await expect(page.getByRole('heading', { name: 'Menú por usuario' })).toBeVisible()
+
+  try {
+    // Un administrador aparece en la lista y todas sus opciones están disponibles (su rol las permite todas).
+    await page.getByLabel('Persona').selectOption({ label: ADMIN })
+    await expect(page.getByRole('checkbox', { name: 'Reportes: Mezcla de productos' })).toBeEnabled()
+    await page.getByRole('checkbox', { name: 'Reportes: Mezcla de productos' }).uncheck()
+    await save(page)
+
+    // El menú cambia al recargar; la pantalla se bloquea por la dirección y el servidor rechaza sus datos.
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'Menú por usuario' })).toBeVisible()
+    await openReportsGroup(page)
+    await expect(reportsList(page).getByRole('link', { name: 'Vendedores', exact: true })).toBeVisible()
+    await expect(reportsList(page).getByRole('link', { name: 'Productos', exact: true })).toHaveCount(0)
+    expect(await ask(page, '/reports/products?from=2026-01-01&to=2026-10-31')).toEqual({ status: 403, code: 'menu_option_hidden' })
+    await page.goto('/reportes/productos')
+    await expect(page).toHaveURL(/\/$/)
+
+    // «Menú por usuario» nunca se oculta: sigue abriendo y permite deshacer.
+    await page.goto('/admin/menu-usuarios')
+    await expect(page.getByRole('heading', { name: 'Menú por usuario' })).toBeVisible()
+  } finally {
+    await page.goto('/admin/menu-usuarios')
+    await expect(page.getByRole('heading', { name: 'Menú por usuario' })).toBeVisible()
+    await page.getByLabel('Persona').selectOption({ label: ADMIN })
+    const showAll = page.getByRole('button', { name: 'Mostrar todo' })
+    if (await showAll.isEnabled()) {
+      await showAll.click()
+      await save(page)
+    }
+  }
+
+  await page.reload()
+  await openReportsGroup(page)
+  await expect(reportsList(page).getByRole('link', { name: 'Productos', exact: true })).toBeVisible()
 })
