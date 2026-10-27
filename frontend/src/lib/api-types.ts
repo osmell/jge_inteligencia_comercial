@@ -4511,6 +4511,39 @@ export interface operations {
                                 mismatched: number;
                                 unlinked: number;
                             };
+                            origin: {
+                                company: {
+                                    id: number;
+                                    name: string;
+                                };
+                                period_from: string;
+                                cutoff: string;
+                                voided_without_sale: number;
+                                totals: {
+                                    seller: string;
+                                    erp_net: number;
+                                    system_net: number;
+                                    imported_net: number;
+                                    difference: number;
+                                    difference_pct: number | null;
+                                    erp_invoices: number;
+                                    system_documents: number;
+                                    voided_documents: number;
+                                    status: string;
+                                };
+                                rows: {
+                                    seller: string;
+                                    erp_net: number;
+                                    system_net: number;
+                                    imported_net: number;
+                                    difference: number;
+                                    difference_pct: number | null;
+                                    erp_invoices: number;
+                                    system_documents: number;
+                                    voided_documents: number;
+                                    status: string;
+                                }[];
+                            }[];
                             problems: number;
                         };
                     };

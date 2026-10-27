@@ -2,6 +2,7 @@ import { CircleAlert, CircleCheck } from 'lucide-react'
 import { useState } from 'react'
 import BillingTable from '../components/reports/BillingTable'
 import IssuesModal from '../components/reports/IssuesModal'
+import OriginConciliationView from '../components/reports/OriginConciliationView'
 import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
 import { ReportStat } from '../components/reports/ReportParts'
@@ -152,6 +153,8 @@ export default function ReportConciliationPage() {
             </tbody>
           </DataTable>
           {d.imports.out_of_scope > 0 && <p className="mt-2 text-xs text-ink-muted">{d.imports.out_of_scope} importación(es) incluyen compañías fuera de tu alcance y no se evalúan.</p>}
+
+          <OriginConciliationView cuts={d.origin} />
 
           <h2 className="mb-2 mt-8 text-sm font-semibold">Facturas de crédito contra ventas</h2>
           <Card className="flex flex-wrap items-center gap-x-8 gap-y-2 p-4 text-sm">

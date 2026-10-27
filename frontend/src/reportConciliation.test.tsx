@@ -19,6 +19,7 @@ const clean = () => ({
   integrity: ['lines_count_mismatch', 'documents_without_lines', 'line_company_mismatch', 'line_branch_mismatch', 'line_date_mismatch', 'line_total_mismatch'].map((code) => ({ code, count: 0, ok: true })),
   imports: { batches: [] as Conciliation['imports']['batches'], matched: 0, differing: 0, not_comparable: 0, out_of_scope: 0 },
   credit: { linked: 0, mismatched: 0, unlinked: 0 },
+  origin: [],
   problems: 0,
 })
 

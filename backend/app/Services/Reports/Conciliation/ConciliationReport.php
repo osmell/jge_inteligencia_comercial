@@ -14,6 +14,7 @@ use Carbon\CarbonImmutable;
  *  2. Integridad: que cada documento cuadre con sus líneas.
  *  3. Importaciones: lo que declaraba cada archivo contra lo guardado.
  *  4. Crédito: las facturas de crédito contra los documentos de venta a los que se enlazaron.
+ *  5. Origen: la venta neta oficial del resumen por vendedor del sistema de origen contra la que calcula el sistema.
  * El detalle de facturación de cada vendedor, operador y sucursal se abre desde los reportes de evaluación.
  */
 class ConciliationReport
@@ -26,6 +27,7 @@ class ConciliationReport
         private readonly SalesIntegrityChecks $integrity,
         private readonly ImportConciliation $imports,
         private readonly CreditConciliation $credit,
+        private readonly OriginConciliation $origin,
     ) {}
 
     /**
@@ -63,9 +65,11 @@ class ConciliationReport
         }
         $credit = $this->credit->counts($companyIds, $from, $to);
         $imports = $this->imports->build($companyIds, $from, $to);
+        $origin = $this->origin->build($companyIds, $to);
 
         $problems = count(array_filter($breakdowns, fn (array $b) => ! $b['matches'])) + count(array_filter($integrity, fn (array $i) => ! $i['ok']))
-            + ($credit['mismatched'] > 0 ? 1 : 0) + ($imports['differing'] > 0 ? 1 : 0);
+            + ($credit['mismatched'] > 0 ? 1 : 0) + ($imports['differing'] > 0 ? 1 : 0)
+            + count(array_filter($origin, fn (array $c) => $c['totals']['status'] !== OriginConciliation::OK));
 
         return [
             'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString(), 'days' => (int) $from->diffInDays($to) + 1],
@@ -74,6 +78,7 @@ class ConciliationReport
             'integrity' => $integrity,
             'imports' => $imports,
             'credit' => $credit,
+            'origin' => $origin,
             'problems' => $problems,
         ];
     }

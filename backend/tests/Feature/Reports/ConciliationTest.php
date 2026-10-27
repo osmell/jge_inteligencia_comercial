@@ -13,6 +13,7 @@ use App\Models\Operator;
 use App\Models\Role;
 use App\Models\Seller;
 use App\Models\User;
+use App\Services\Sales\NetCorrection;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -344,5 +345,46 @@ class ConciliationTest extends TestCase
     {
         $this->actingAs($this->manager, 'sanctum')->getJson('/api/v1/reports/conciliation')->assertStatus(422)->assertJsonValidationErrors('from');
         $this->actingAs($this->manager, 'sanctum')->getJson('/api/v1/reports/conciliation?from=2026-10-31&to=2026-10-01')->assertStatus(422);
+    }
+
+    /** @param  array<string, mixed>  $o */
+    private function erpRow(string $seller, array $o = []): void
+    {
+        DB::table('seller_sales_summaries')->insert([
+            'company_id' => $this->alfa->id, 'import_batch_id' => ImportBatch::factory()->create()->id, 'period_from' => '2026-10-01', 'cutoff_on' => '2026-10-31',
+            'seller_name' => $seller, 'normalized_name' => Seller::normalize($seller), 'gross_sale' => 0, 'discount' => 0, 'sale' => 0, 'returns' => 0, 'net_sale' => 0,
+            'tax' => 0, 'withholding' => 0, 'total' => 0, 'invoices_count' => 0, 'created_at' => now(), 'updated_at' => now(), ...$o,
+        ]);
+    }
+
+    public function test_the_origin_summary_is_compared_with_the_corrected_and_the_imported_net_per_seller(): void
+    {
+        // Ana: una línea entera (400) y una por equivalencia que el reporte dejó en 25 y vale 100; una factura anulada de 300 con su venta cargada.
+        $this->sale($this->ana, $this->operator, $this->centro, '2026-10-05', 'C1', [['net' => 400.0], ['net' => 25.0, 'qty' => 0.25, 'price' => 100.0]]);
+        $void = $this->sale($this->ana, $this->operator, $this->norte, '2026-10-06', 'C2', [['net' => 300.0]]);
+        DB::table('sales_document_voids')->insert(['company_id' => $this->alfa->id, 'document' => 'void', 'sales_document_id' => $void, 'import_batch_id' => ImportBatch::factory()->create()->id, 'created_at' => now(), 'updated_at' => now()]);
+        app(NetCorrection::class)->run();
+        $this->erpRow('Ana', ['net_sale' => 500, 'invoices_count' => 3]);
+        $this->erpRow('Beto', ['net_sale' => 80, 'invoices_count' => 1]);   // el origen trae un vendedor que el sistema no conoce
+
+        $cut = $this->report()['origin'][0];
+
+        $this->assertSame(['Alfa', '2026-10-01', '2026-10-31'], [$cut['company']['name'], $cut['period_from'], $cut['cutoff']]);
+        $ana = collect($cut['rows'])->firstWhere('seller', 'Ana');
+        $this->assertEquals([500, 500, 725, 0, 1, 1, 'ok'], [$ana['erp_net'], $ana['system_net'], $ana['imported_net'], $ana['difference'], $ana['system_documents'], $ana['voided_documents'], $ana['status']]);
+        $beto = collect($cut['rows'])->firstWhere('seller', 'Beto');
+        $this->assertEquals([80, 0, 80, 'differs'], [$beto['erp_net'], $beto['system_net'], $beto['difference'], $beto['status']]);
+        $this->assertEquals([580, 500, 80, 4], [$cut['totals']['erp_net'], $cut['totals']['system_net'], $cut['totals']['difference'], $cut['totals']['erp_invoices']]);
+        $this->assertGreaterThan(0, $this->report()['problems']);
+    }
+
+    public function test_no_origin_section_without_a_loaded_summary_and_a_small_gap_is_only_near(): void
+    {
+        $this->assertSame([], $this->report()['origin']);
+
+        $this->sale($this->ana, $this->operator, $this->centro, '2026-10-05', 'C1', [['net' => 1000.0]]);
+        $this->erpRow('Ana', ['net_sale' => 1005, 'invoices_count' => 1]);
+
+        $this->assertSame('near', $this->report()['origin'][0]['rows'][0]['status']);
     }
 }

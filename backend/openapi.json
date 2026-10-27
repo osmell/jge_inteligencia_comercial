@@ -3021,6 +3021,149 @@
                                                         "unlinked"
                                                     ]
                                                 },
+                                                "origin": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "company": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id",
+                                                                    "name"
+                                                                ]
+                                                            },
+                                                            "period_from": {
+                                                                "type": "string"
+                                                            },
+                                                            "cutoff": {
+                                                                "type": "string"
+                                                            },
+                                                            "voided_without_sale": {
+                                                                "type": "integer"
+                                                            },
+                                                            "totals": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "seller": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "erp_net": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "system_net": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "imported_net": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "difference": {
+                                                                        "type": "number"
+                                                                    },
+                                                                    "difference_pct": {
+                                                                        "type": [
+                                                                            "number",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "erp_invoices": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "system_documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "voided_documents": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "status": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "seller",
+                                                                    "erp_net",
+                                                                    "system_net",
+                                                                    "imported_net",
+                                                                    "difference",
+                                                                    "difference_pct",
+                                                                    "erp_invoices",
+                                                                    "system_documents",
+                                                                    "voided_documents",
+                                                                    "status"
+                                                                ]
+                                                            },
+                                                            "rows": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "type": "object",
+                                                                    "properties": {
+                                                                        "seller": {
+                                                                            "type": "string"
+                                                                        },
+                                                                        "erp_net": {
+                                                                            "type": "number"
+                                                                        },
+                                                                        "system_net": {
+                                                                            "type": "number"
+                                                                        },
+                                                                        "imported_net": {
+                                                                            "type": "number"
+                                                                        },
+                                                                        "difference": {
+                                                                            "type": "number"
+                                                                        },
+                                                                        "difference_pct": {
+                                                                            "type": [
+                                                                                "number",
+                                                                                "null"
+                                                                            ]
+                                                                        },
+                                                                        "erp_invoices": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "system_documents": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "voided_documents": {
+                                                                            "type": "integer"
+                                                                        },
+                                                                        "status": {
+                                                                            "type": "string"
+                                                                        }
+                                                                    },
+                                                                    "required": [
+                                                                        "seller",
+                                                                        "erp_net",
+                                                                        "system_net",
+                                                                        "imported_net",
+                                                                        "difference",
+                                                                        "difference_pct",
+                                                                        "erp_invoices",
+                                                                        "system_documents",
+                                                                        "voided_documents",
+                                                                        "status"
+                                                                    ]
+                                                                }
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "company",
+                                                            "period_from",
+                                                            "cutoff",
+                                                            "voided_without_sale",
+                                                            "totals",
+                                                            "rows"
+                                                        ]
+                                                    }
+                                                },
                                                 "problems": {
                                                     "type": "integer"
                                                 }
@@ -3032,6 +3175,7 @@
                                                 "integrity",
                                                 "imports",
                                                 "credit",
+                                                "origin",
                                                 "problems"
                                             ]
                                         }

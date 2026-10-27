@@ -25,6 +25,10 @@ return [
     'atypical_min_documents' => 20,
     'atypical_iqr_factor' => 3,
 
+    /** Conciliación contra el sistema de origen: una diferencia de hasta este importe es «cuadra»; hasta este porcentaje de la venta oficial es «cerca». */
+    'origin_match_tolerance' => 1.0,
+    'origin_near_pct' => 1.0,
+
     /** Filas por tabla en el PDF: pasado esto Dompdf agota la memoria (128 MB). Excel y la pantalla traen todas. */
     'pdf_max_rows' => 100,
 
