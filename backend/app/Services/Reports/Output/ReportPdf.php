@@ -33,7 +33,7 @@ class ReportPdf
             if (count($s->rows) <= $max) {
                 return $s;
             }
-            $cut = "El PDF muestra las primeras {$max} filas de ".number_format(count($s->rows), 0, ',', '.').'; el Excel trae todas.';
+            $cut = "El PDF muestra las primeras {$max} filas de ".number_format(count($s->rows), 0, '.', ',').'; el Excel trae todas.';
 
             return new ReportSection($s->title, $s->columns, array_slice($s->rows, 0, $max), trim(($s->note ?? '').' '.$cut), $s->anchors);
         }, $document->sections);
@@ -53,11 +53,11 @@ class ReportPdf
         $n = (float) $value;
 
         return match ($kind) {
-            ReportColumn::MONEY => number_format($n, 2, ',', '.'),
-            ReportColumn::PCT => number_format($n, 1, ',', '.').' %',
-            ReportColumn::SIGNED_PCT => ($n > 0 ? '+' : '').number_format($n, 1, ',', '.').' %',
-            ReportColumn::DECIMAL => number_format($n, 2, ',', '.'),
-            ReportColumn::INT => number_format($n, 0, ',', '.'),
+            ReportColumn::MONEY => number_format($n, 2, '.', ','),
+            ReportColumn::PCT => number_format($n, 1, '.', ',').' %',
+            ReportColumn::SIGNED_PCT => ($n > 0 ? '+' : '').number_format($n, 1, '.', ',').' %',
+            ReportColumn::DECIMAL => number_format($n, 2, '.', ','),
+            ReportColumn::INT => number_format($n, 0, '.', ','),
             default => (string) $value,
         };
     }

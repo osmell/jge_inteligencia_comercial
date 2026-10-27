@@ -61,7 +61,7 @@ describe('ayudas del dashboard', () => {
   })
 
   it('escribe el cambio con signo y dice cuando no hay base', () => {
-    expect([formatChange(12.54), formatChange(-3), formatChange(0), formatChange(null)]).toEqual(['+12,5 %', '−3 %', '0 %', 'Sin base de comparación'])
+    expect([formatChange(12.54), formatChange(-3), formatChange(0), formatChange(null)]).toEqual(['+12.5 %', '−3 %', '0 %', 'Sin base de comparación'])
   })
 })
 
@@ -71,9 +71,9 @@ describe('dashboard de inicio', () => {
 
     expect(await screen.findByText('Hola, Ana')).toBeInTheDocument()
     const sales_ = await screen.findByRole('region', { name: 'Ventas' })
-    await waitFor(() => expect(sales_.querySelector('p.tabular')).toHaveTextContent('3500,00'))
+    await waitFor(() => expect(sales_.querySelector('p.tabular')).toHaveTextContent('3,500.00'))
     expect(within(sales_).getByText(/Contra el tramo anterior: \+75 %/)).toBeInTheDocument()
-    expect(within(sales_).getByText(/Contra el año anterior: \+483,3 %/)).toBeInTheDocument()
+    expect(within(sales_).getByText(/Contra el año anterior: \+483\.3 %/)).toBeInTheDocument()
     expect(within(sales_).getByRole('img', { name: /Venta neta diaria/ })).toBeInTheDocument()
     expect(within(sales_).getByRole('img', { name: 'Venta neta mensual, últimos 12 meses' })).toBeInTheDocument()
 
@@ -188,7 +188,7 @@ describe('dashboard de inicio', () => {
 
     const goals = screen.getByRole('region', { name: 'Tu meta del mes' })
     expect(await within(goals).findByRole('progressbar', { name: 'Tu avance 2026-10' })).toBeInTheDocument()
-    expect(within(goals).getByText(/necesitas vender 318,18 por día en los 11 días que quedan/)).toBeInTheDocument()
+    expect(within(goals).getByText(/necesitas vender 318\.18 por día en los 11 días que quedan/)).toBeInTheDocument()
     expect(within(goals).queryByRole('progressbar', { name: 'Vera' })).not.toBeInTheDocument()            // sin desglose por vendedor
 
     const credit = screen.getByRole('region', { name: 'Tus clientes por cobrar' })

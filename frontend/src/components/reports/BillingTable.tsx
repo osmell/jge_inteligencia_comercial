@@ -19,7 +19,7 @@ export default function BillingTable({ path, query, label }: { path: string; que
       <FormError message={detail.error} />
       {data && (
         <p className="mb-3 text-sm text-ink-muted">
-          {data.totals.documents.toLocaleString('es')} documentos · venta neta <span className="tabular font-medium text-ink">{formatMoney(data.totals.net_total)}</span> ·
+          {data.totals.documents.toLocaleString('en-US')} documentos · venta neta <span className="tabular font-medium text-ink">{formatMoney(data.totals.net_total)}</span> ·
           IVA <span className="tabular">{formatMoney(data.totals.tax_total)}</span> · total <span className="tabular">{formatMoney(data.totals.grand_total)}</span>
         </p>
       )}

@@ -195,7 +195,7 @@ describe('importaciones', () => {
     renderAt('/importaciones/7')
 
     expect(await screen.findByText('Resumen')).toBeInTheDocument()
-    expect(screen.getAllByText('130,00')).toHaveLength(2)             // total neto formateado (tarjeta y tabla por compañía)
+    expect(screen.getAllByText('130.00')).toHaveLength(2)             // total neto formateado (tarjeta y tabla por compañía)
     expect(screen.getByText('Compañía Alfa')).toBeInTheDocument()
     expect(screen.getByText('María López')).toBeInTheDocument()       // altas automáticas
     expect(screen.getByText('Vista previa')).toBeInTheDocument()
@@ -256,7 +256,7 @@ describe('importaciones', () => {
     renderAt('/importaciones/7')
 
     expect(await screen.findByText('Facturas de crédito del 2026-10-01 al 2026-10-15')).toBeInTheDocument()
-    expect(screen.getByText('Total a crédito').closest('div')).toHaveTextContent('1265,00')
+    expect(screen.getByText('Total a crédito').closest('div')).toHaveTextContent('1,265.00')
     expect(screen.getByText('Enlazadas con su venta').closest('div')).toHaveTextContent('1')
     expect(screen.getByText('Diferencias con la venta').closest('div')).toHaveTextContent('Avisos')
     expect(screen.getByText('IRIS')).toBeInTheDocument()

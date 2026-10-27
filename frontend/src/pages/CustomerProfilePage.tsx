@@ -270,7 +270,7 @@ export default function CustomerProfilePage() {
             <Stat
               label="Frecuencia"
               info={{ text: 'Cada cuántos días compra en promedio el cliente, según sus días con compra.', formula: 'Frecuencia = Días entre la primera y la última compra ÷ (Días con compra − 1)' }}
-              value={p.frequency.average_days_between === null ? '—' : `cada ${String(p.frequency.average_days_between).replace('.', ',')} días`}
+              value={p.frequency.average_days_between === null ? '—' : `cada ${String(p.frequency.average_days_between)} días`}
               hint={`${p.frequency.purchase_days} días con compra`}
             />
             <Stat

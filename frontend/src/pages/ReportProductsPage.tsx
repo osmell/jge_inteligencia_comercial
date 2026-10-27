@@ -10,7 +10,7 @@ import { formatPct } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
 import { useReportFilters } from '../lib/useReportFilters'
 
-const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('es'))
+const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
 const signed = (v: number | null) => (v === null ? '—' : `${v > 0 ? '+' : ''}${formatPct(v)}`)
 
 /** La cobertura se dibuja como barra y como número: nunca solo con color. */

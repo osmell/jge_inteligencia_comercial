@@ -7,8 +7,8 @@ import { useLoad } from '../lib/useLoad'
 function show(value: number | string | null, format: MetricFormat): string {
   if (value === null || value === undefined || value === '') return '—'
   if (format === 'money') return formatMoney(value)
-  if (format === 'pct') return `${Number(value).toLocaleString('es', { maximumFractionDigits: 1 })} %`
-  if (format === 'int') return Number(value).toLocaleString('es')
+  if (format === 'pct') return `${Number(value).toLocaleString('en-US', { maximumFractionDigits: 1 })} %`
+  if (format === 'int') return Number(value).toLocaleString('en-US')
   return String(value)
 }
 

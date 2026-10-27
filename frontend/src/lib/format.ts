@@ -1,6 +1,6 @@
-const money = new Intl.NumberFormat('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const money = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-/** '1234.5000' → '1.234,50' (solo para mostrar; los importes viajan como texto). */
+/** '1234.5000' → '1,234.50' (punto decimal y coma de miles; solo para mostrar: los importes viajan como texto). */
 export function formatMoney(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === '') return '—'
   return money.format(Number(value))

@@ -28,7 +28,7 @@ class QuotationExpiringHandler extends NoticeHandler
             $expired = $validUntil->lt($today);
             $days = (int) $today->diffInDays($validUntil);
             $when = $expired ? 'venció' : ($days === 0 ? 'vence hoy' : 'vence en '.$this->plural($days, 'día', 'días'));
-            $amount = number_format((float) $q->amount, 2, ',', '.');
+            $amount = number_format((float) $q->amount, 2, '.', ',');
             foreach ($this->recipients($q) as $user) {
                 if (! $this->notifier->scopedAs($user, fn () => Customer::query()->whereKey($q->customer_id)->exists())) {
                     continue;

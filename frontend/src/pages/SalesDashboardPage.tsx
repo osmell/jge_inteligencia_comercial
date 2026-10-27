@@ -250,8 +250,8 @@ export default function SalesDashboardPage() {
           change={s?.change_pct.discount_total}
           hint={s ? (s.current.discount_pct === null ? 'Sin líneas con Sub Total en el periodo.' : `${formatPct(s.current.discount_pct)} sobre el Sub Total. Ya está restado de la venta neta.`) : undefined}
         />
-        <Kpi versus={versus} label="Documentos" info="sales_documents" value={s ? s.current.documents.toLocaleString('es') : '—'} change={s?.change_pct.documents} />
-        <Kpi versus={versus} label="Clientes compradores" info="sales_customers" value={s ? s.current.customers.toLocaleString('es') : '—'} change={s?.change_pct.customers} />
+        <Kpi versus={versus} label="Documentos" info="sales_documents" value={s ? s.current.documents.toLocaleString('en-US') : '—'} change={s?.change_pct.documents} />
+        <Kpi versus={versus} label="Clientes compradores" info="sales_customers" value={s ? s.current.customers.toLocaleString('en-US') : '—'} change={s?.change_pct.customers} />
         <Kpi versus={versus} label="Ticket promedio" info="sales_ticket" value={s ? formatMoney(s.current.average_ticket) : '—'} change={s?.change_pct.average_ticket} />
         <Kpi versus={versus} label="Unidades" info="sales_units" value={s ? formatMoney(s.current.units) : '—'} change={s?.change_pct.units} />
         <Kpi
@@ -331,8 +331,8 @@ export default function SalesDashboardPage() {
                   <td className={`${td} tabular text-right`}>{formatMoney(r.net_total)}</td>
                   <td className={`${td} w-40`}><InlineBar value={Number(r.net_total)} max={maxNet} /></td>
                   <td className={`${td} tabular text-right`}><RowChange row={r} /></td>
-                  <td className={`${td} tabular text-right`}>{r.documents.toLocaleString('es')}</td>
-                  <td className={`${td} tabular text-right`}>{r.customers.toLocaleString('es')}</td>
+                  <td className={`${td} tabular text-right`}>{r.documents.toLocaleString('en-US')}</td>
+                  <td className={`${td} tabular text-right`}>{r.customers.toLocaleString('en-US')}</td>
                   <td className={`${td} tabular text-right`}>{formatMoney(r.discount_total)}</td>
                   <td className={`${td} tabular text-right`}>{formatMoney(r.average_ticket)}</td>
                   <td className={`${td} tabular text-right`}>{r.estimated_margin_pct === null ? '—' : formatPct(r.estimated_margin_pct)}</td>

@@ -35,7 +35,7 @@ class PromiseDueHandler extends NoticeHandler
                 if ($row === null) {
                     continue;
                 }
-                $amount = number_format((float) $promise->amount, 2, ',', '.');
+                $amount = number_format((float) $promise->amount, 2, '.', ',');
                 $url = '/clientes/ficha?'.http_build_query(['codigo' => $promise->customer_code, 'compania' => $promise->company_id]);
                 if ($row['status'] === PaymentPromises::OPEN && $row['promised_on'] === $today->toDateString()) {
                     $this->notify($user, 'promise_due', "La promesa de pago de {$promise->customer_name} vence hoy", "Prometió {$amount} para hoy.", $url, "promise:{$promise->id}:due", 'warning', $promise->company_id);

@@ -43,8 +43,8 @@ class CrossSellRule extends Model
     /** Frase que explica la regla con los conteos que la respaldan. */
     public function explain(): string
     {
-        $pct = number_format((float) $this->confidence * 100, 1, ',', '.');
-        $lift = number_format((float) $this->lift, 2, ',', '.');
+        $pct = number_format((float) $this->confidence * 100, 1, '.', ',');
+        $lift = number_format((float) $this->lift, 2, '.', ',');
 
         return "{$this->both_customers} de {$this->antecedent_customers} clientes que compran «{$this->antecedent}» ({$pct} %) también compran «{$this->consequent}». "
             ."La elevación es {$lift}: compran «{$this->consequent}» {$lift} veces más que el cliente promedio ({$this->consequent_customers} de {$this->total_customers}).";

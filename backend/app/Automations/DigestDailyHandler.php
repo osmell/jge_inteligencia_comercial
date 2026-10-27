@@ -51,7 +51,7 @@ class DigestDailyHandler extends NoticeHandler
         if ($metric === null) {
             return 'Abre el resumen para ver las cifras.';
         }
-        $value = $metric['format'] === 'money' ? number_format((float) $metric['value'], 2, ',', '.') : (string) $metric['value'];
+        $value = $metric['format'] === 'money' ? number_format((float) $metric['value'], 2, '.', ',') : (string) $metric['value'];
 
         return "{$metric['label']}: {$value}".(isset($metric['hint']) ? " ({$metric['hint']})" : '');
     }

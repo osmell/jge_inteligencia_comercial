@@ -183,11 +183,11 @@ class ReportOutputTest extends TestCase
 
     public function test_the_pdf_formatter_writes_spanish_numbers(): void
     {
-        $this->assertSame('1.234,50', ReportPdf::format(1234.5, ReportColumn::MONEY));
-        $this->assertSame('12,5 %', ReportPdf::format(12.5, ReportColumn::PCT));
-        $this->assertSame('+12,5 %', ReportPdf::format(12.5, ReportColumn::SIGNED_PCT));
-        $this->assertSame('-3,0 %', ReportPdf::format(-3, ReportColumn::SIGNED_PCT));
-        $this->assertSame('1.200', ReportPdf::format(1200, ReportColumn::INT));
+        $this->assertSame('1,234.50', ReportPdf::format(1234.5, ReportColumn::MONEY));
+        $this->assertSame('12.5 %', ReportPdf::format(12.5, ReportColumn::PCT));
+        $this->assertSame('+12.5 %', ReportPdf::format(12.5, ReportColumn::SIGNED_PCT));
+        $this->assertSame('-3.0 %', ReportPdf::format(-3, ReportColumn::SIGNED_PCT));
+        $this->assertSame('1,200', ReportPdf::format(1200, ReportColumn::INT));
         $this->assertSame('—', ReportPdf::format(null, ReportColumn::MONEY));
         $this->assertSame('no comparable', ReportPdf::format('no comparable', ReportColumn::MONEY));
         $this->assertSame('sin usuario', ReportPdf::format('sin usuario', ReportColumn::TEXT));

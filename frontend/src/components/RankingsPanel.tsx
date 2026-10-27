@@ -30,7 +30,7 @@ const LISTS: List[] = [
     key: 'by_documents',
     title: 'Por frecuencia',
     value: (r) => r.documents,
-    show: (r) => `${r.documents.toLocaleString('es')} ${r.documents === 1 ? 'factura' : 'facturas'}`,
+    show: (r) => `${r.documents.toLocaleString('en-US')} ${r.documents === 1 ? 'factura' : 'facturas'}`,
     note: 'Facturas distintas que incluyen el artículo.',
   },
   {

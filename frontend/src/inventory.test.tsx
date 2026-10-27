@@ -200,7 +200,7 @@ describe('unidades y equivalencias', () => {
 
     const table = await screen.findByRole('table', { name: 'Existencias por sucursal' })
     await waitFor(() => expect(table).toHaveTextContent('Aceite 20W50'))
-    expect(table).toHaveTextContent('6,5')
+    expect(table).toHaveTextContent('6.5')
     expect(table).toHaveTextContent('Sin inventario inicial')
     expect(table).not.toHaveTextContent('Costo promedio')
     expect(screen.queryByText('Valor del inventario')).not.toBeInTheDocument()
@@ -214,8 +214,8 @@ describe('unidades y equivalencias', () => {
 
     const table = await screen.findByRole('table', { name: 'Existencias por sucursal' })
     await waitFor(() => expect(table).toHaveTextContent('Costo promedio'))
-    expect(table).toHaveTextContent('65,00')
-    expect(screen.getByText('Valor del inventario').closest('div')).toHaveTextContent('110,00')
+    expect(table).toHaveTextContent('65.00')
+    expect(screen.getByText('Valor del inventario').closest('div')).toHaveTextContent('110.00')
   })
 
   it('envía los filtros de existencias al servidor', async () => {

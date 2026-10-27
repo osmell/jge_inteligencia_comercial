@@ -11,8 +11,8 @@ import { formatPct } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
 import { useReportFilters } from '../lib/useReportFilters'
 
-const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('es'))
-const dec = (v: number | null) => (v === null ? '—' : v.toLocaleString('es', { maximumFractionDigits: 2 }))
+const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
+const dec = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US', { maximumFractionDigits: 2 }))
 
 const GROUPS: [string, number][] = [['', 2], ['Resultado', 3], ['Meta', 1], ['Disciplina de precio', 3], ['Cartera de clientes (hoy)', 3], ['Cobranza (hoy)', 2], ['Seguimiento', 3]]
 

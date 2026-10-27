@@ -13,7 +13,7 @@ import { DIMENSION_LABEL, INTEGRITY_LABEL, type Conciliation } from '../lib/repo
 import { useLoad } from '../lib/useLoad'
 import { useReportFilters } from '../lib/useReportFilters'
 
-const n = (v: number) => v.toLocaleString('es')
+const n = (v: number) => v.toLocaleString('en-US')
 
 /** Estado con ícono y texto, no solo con color. */
 function Status({ ok, good = 'Cuadra', bad = 'Diferencia' }: { ok: boolean; good?: string; bad?: string }) {

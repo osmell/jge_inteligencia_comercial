@@ -6,7 +6,7 @@ import { MOVEMENT_TYPE_LABEL, type Kardex } from '../lib/inventory'
 import { formatDay } from '../lib/quotations'
 import { useLoad } from '../lib/useLoad'
 
-const num = (v: string) => Number(v).toLocaleString('es', { maximumFractionDigits: 8 })
+const num = (v: string) => Number(v).toLocaleString('en-US', { maximumFractionDigits: 8 })
 
 /** Movimientos de un producto en una sucursal con el saldo corrido. */
 export default function InventoryKardexPage() {

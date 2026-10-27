@@ -10,7 +10,7 @@ import { formatDay } from '../lib/quotations'
 import type { Company } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
-const pct = (v: number) => `${v.toLocaleString('es', { maximumFractionDigits: 1 })} %`
+const pct = (v: number) => `${v.toLocaleString('en-US', { maximumFractionDigits: 1 })} %`
 
 /** Venta cruzada: asociaciones entre categorías y los clientes a los que se les puede ofrecer lo que aún no compran. */
 export default function InsightsCrossSellPage() {
@@ -85,7 +85,7 @@ export default function InsightsCrossSellPage() {
             Una regla se guarda con al menos {run.parameters['cross_sell.min_support_customers']} clientes que la respalden y {run.parameters['cross_sell.min_confidence_pct']} % de confianza.
           </p>
 
-          <h2 className="mb-2 text-sm font-semibold text-ink">Oportunidades por cliente{opportunities.data ? ` (${opportunities.data.meta.total.toLocaleString('es')})` : ''}</h2>
+          <h2 className="mb-2 text-sm font-semibold text-ink">Oportunidades por cliente{opportunities.data ? ` (${opportunities.data.meta.total.toLocaleString('en-US')})` : ''}</h2>
           <DataTable label="Oportunidades de venta cruzada">
             <thead><tr><th className={th}>Cliente</th><Th info={{ text: 'Categoría que se sugiere ofrecer al cliente: la compran otros clientes que compran lo mismo que él.' }}>Ofrecer</Th><Th info={{ text: 'Categoría que el cliente ya compra y de la que sale la regla.' }}>Porque compra</Th><Th right info={{ text: 'De los clientes que compran la categoría de origen (A), qué porcentaje compra también la categoría sugerida (B).', formula: 'Confianza % = Clientes que compran A y B ÷ Clientes que compran A × 100' }}>Confianza</Th><Th right info={{ text: 'Clientes que compran las dos categorías y sustentan la regla. Se exige un mínimo de clientes para guardarla.' }}>Clientes que lo respaldan</Th></tr></thead>
             <tbody>
@@ -118,7 +118,7 @@ export default function InsightsCrossSellPage() {
                   <td className={td}>{r.antecedent}<div className="max-w-md text-xs text-ink-muted">{r.explanation}</div></td>
                   <td className={td}>{r.consequent}</td>
                   <td className={`${td} tabular text-right`}>{pct(r.confidence_pct)}</td>
-                  <td className={`${td} tabular text-right`}>{r.lift.toLocaleString('es')}</td>
+                  <td className={`${td} tabular text-right`}>{r.lift.toLocaleString('en-US')}</td>
                   <td className={`${td} tabular text-right`}>{r.both_customers} de {r.antecedent_customers}</td>
                 </tr>
               ))}

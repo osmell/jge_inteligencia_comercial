@@ -180,7 +180,7 @@ class CrossSellTest extends TestCase
 
         $rules = $this->actingAs($this->viewer, 'sanctum')->getJson($url)->assertOk();
         $this->assertSame(['Frenos', 'Filtros', 100.0], [$rules->json('data.0.antecedent'), $rules->json('data.0.consequent'), (float) $rules->json('data.0.confidence_pct')]);
-        $this->assertStringContainsString('20 de 20 clientes que compran «Frenos» (100,0 %) también compran «Filtros»', $rules->json('data.0.explanation'));
+        $this->assertStringContainsString('20 de 20 clientes que compran «Frenos» (100.0 %) también compran «Filtros»', $rules->json('data.0.explanation'));
         $this->assertSame(['ok', 'categoría'], [$rules->json('meta.run.status'), $rules->json('meta.run.level')]);
 
         $opp = $this->getJson('/api/v1/insights/cross-sell/opportunities?company_id='.$this->a->id)->assertOk();

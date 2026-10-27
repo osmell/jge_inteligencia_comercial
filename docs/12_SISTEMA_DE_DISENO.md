@@ -35,3 +35,7 @@ Originales en `branding/originals/`. Derivados en `frontend/src/assets/brand/` (
 - Una explicación describe lo que el sistema **hace de verdad**: se verifica contra el código del servicio o el documento de la fase antes de escribirla. La fórmula solo va en datos calculados y se escribe con palabras del negocio.
 - Una cadena suelta no sirve como `info`: o es una clave del glosario o es un objeto `{ text, formula? }` (el compilador lo exige).
 - La prueba de navegador `e2e/tests/13-info-tooltips.spec.ts` abre las «i» de cada pantalla y comprueba que el globo queda dentro de la ventana y que no cambia el ancho de la página. Una pantalla nueva con datos se agrega a su lista `SCREENS`.
+
+## Formato de números
+
+Punto decimal y coma de miles (`1,234.50`, `12.5 %`). En la interfaz se usa `formatMoney` (`lib/format.ts`) o `toLocaleString('en-US', …)`; en PHP, `number_format($n, $decimales)` con los separadores por omisión (`'.'` y `','`). Las fechas y horas conservan el formato en español (`toLocaleDateString('es', …)`).

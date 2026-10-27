@@ -107,7 +107,7 @@ class DigestBuilder
 
         return ['key' => 'sales', 'title' => 'Ventas', 'metrics' => [
             ['label' => "Venta neta del {$name} {$day->format('d/m')}", 'value' => $now['net'], 'format' => 'money', 'tone' => $this->tone($change),
-                'hint' => $average === null ? 'Sin suficientes días comparables en las últimas 4 semanas.' : 'Contra el promedio de los '.count($samples)." {$name}s anteriores con ventas (".number_format($average, 2, ',', '.').')'.($change === null ? '' : ($change >= 0 ? ' · +' : ' · ').number_format($change, 1, ',', '.').' %')],
+                'hint' => $average === null ? 'Sin suficientes días comparables en las últimas 4 semanas.' : 'Contra el promedio de los '.count($samples)." {$name}s anteriores con ventas (".number_format($average, 2, '.', ',').')'.($change === null ? '' : ($change >= 0 ? ' · +' : ' · ').number_format($change, 1, '.', ',').' %')],
             ['label' => 'Facturas del día', 'value' => $now['documents'], 'format' => 'int'],
             ['label' => 'Venta neta del mes a la fecha', 'value' => $month['net'], 'format' => 'money', 'hint' => "Del 1 al {$day->day} de ".$day->format('m/Y')],
         ]];
@@ -127,7 +127,7 @@ class DigestBuilder
 
         return ['key' => 'sales', 'title' => 'Ventas de la semana', 'metrics' => [
             ['label' => 'Venta neta de la semana', 'value' => $now['net'], 'format' => 'money', 'tone' => $this->tone($change),
-                'hint' => $before['documents'] > 0 ? 'Semana anterior: '.number_format($before['net'], 2, ',', '.').($change === null ? '' : ($change >= 0 ? ' · +' : ' · ').number_format($change, 1, ',', '.').' %') : 'Sin ventas la semana anterior para comparar.'],
+                'hint' => $before['documents'] > 0 ? 'Semana anterior: '.number_format($before['net'], 2, '.', ',').($change === null ? '' : ($change >= 0 ? ' · +' : ' · ').number_format($change, 1, '.', ',').' %') : 'Sin ventas la semana anterior para comparar.'],
             ['label' => 'Facturas', 'value' => $now['documents'], 'format' => 'int'],
         ], 'tables' => [
             ['title' => 'Principales clientes', 'columns' => [['key' => 'name', 'label' => 'Cliente', 'format' => 'text'], ['key' => 'net', 'label' => 'Venta neta', 'format' => 'money']], 'rows' => $customers->map(fn ($r) => ['name' => (string) $r->name, 'net' => round((float) $r->net, 2)])->all()],
@@ -189,15 +189,15 @@ class DigestBuilder
         $soon = $alive->filter(fn (Quotation $q) => $q->valid_until !== null && CarbonImmutable::parse($q->valid_until)->lte($today->addDays(3)));
         $expired = $open->count() - $alive->count();
         $metrics = [
-            ['label' => 'Cotizaciones abiertas', 'value' => $alive->count(), 'format' => 'int', 'hint' => 'Monto: '.number_format((float) $alive->sum('amount'), 2, ',', '.')],
-            ['label' => 'Por vencer en 3 días', 'value' => $soon->count(), 'format' => 'int', 'hint' => 'Monto: '.number_format((float) $soon->sum('amount'), 2, ',', '.'), 'tone' => $soon->count() > 0 ? 'bad' : 'neutral'],
+            ['label' => 'Cotizaciones abiertas', 'value' => $alive->count(), 'format' => 'int', 'hint' => 'Monto: '.number_format((float) $alive->sum('amount'), 2, '.', ',')],
+            ['label' => 'Por vencer en 3 días', 'value' => $soon->count(), 'format' => 'int', 'hint' => 'Monto: '.number_format((float) $soon->sum('amount'), 2, '.', ','), 'tone' => $soon->count() > 0 ? 'bad' : 'neutral'],
             ['label' => 'Vencidas sin cerrar', 'value' => $expired, 'format' => 'int', 'tone' => $expired > 0 ? 'bad' : 'good'],
         ];
         if ($week !== null) {
             $issued = Quotation::withoutGlobalScopes()->where('company_id', $company->id)->whereBetween('issued_at', [$week[0]->startOfDay(), $week[1]->endOfDay()])->get(['amount']);
             $converted = Quotation::withoutGlobalScopes()->where('company_id', $company->id)->whereBetween('converted_at', [$week[0]->startOfDay(), $week[1]->endOfDay()])->get(['amount']);
-            $metrics[] = ['label' => 'Cotizaciones emitidas en la semana', 'value' => $issued->count(), 'format' => 'int', 'hint' => 'Monto: '.number_format((float) $issued->sum('amount'), 2, ',', '.')];
-            $metrics[] = ['label' => 'Convertidas en factura en la semana', 'value' => $converted->count(), 'format' => 'int', 'hint' => 'Monto: '.number_format((float) $converted->sum('amount'), 2, ',', '.')];
+            $metrics[] = ['label' => 'Cotizaciones emitidas en la semana', 'value' => $issued->count(), 'format' => 'int', 'hint' => 'Monto: '.number_format((float) $issued->sum('amount'), 2, '.', ',')];
+            $metrics[] = ['label' => 'Convertidas en factura en la semana', 'value' => $converted->count(), 'format' => 'int', 'hint' => 'Monto: '.number_format((float) $converted->sum('amount'), 2, '.', ',')];
         }
 
         return ['key' => 'quotations', 'title' => 'Cotizaciones', 'metrics' => $metrics];

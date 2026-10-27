@@ -11,7 +11,7 @@ import { formatDay } from '../lib/quotations'
 import type { Branch } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
-const num = (v: string) => Number(v).toLocaleString('es', { maximumFractionDigits: 8 })
+const num = (v: string) => Number(v).toLocaleString('en-US', { maximumFractionDigits: 8 })
 const TYPES: InventoryMovementType[] = ['entry', 'adjustment_in', 'adjustment_out', 'return_in', 'supplier_return', 'transfer_in', 'transfer_out', 'reversal']
 
 /** Ajustes, devoluciones, traslados y entradas: consulta, captura y reversas. */

@@ -38,7 +38,7 @@ export default function CreditPage() {
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2" aria-busy={list.loading}>
         <Stat label="Saldo por cobrar" info="credit_balance" value={meta ? formatMoney(meta.open_balance) : '—'} hint="Facturas con saldo, según la compañía y la búsqueda elegidas" />
-        <Stat label="Facturas con saldo" info={{ text: 'Facturas de crédito cuyo saldo todavía es mayor que cero.' }} value={meta ? meta.open_count.toLocaleString('es') : '—'} />
+        <Stat label="Facturas con saldo" info={{ text: 'Facturas de crédito cuyo saldo todavía es mayor que cero.' }} value={meta ? meta.open_count.toLocaleString('en-US') : '—'} />
       </div>
 
       <Card className="mb-4 p-4">

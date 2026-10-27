@@ -1,8 +1,8 @@
 @extends('pdf.layout')
 @section('title', 'Metas de ventas')
 @php
-    $m = fn ($v) => $v === null ? '—' : number_format((float) $v, 2, ',', '.');
-    $p = fn ($v) => $v === null ? '—' : number_format((float) $v, 1, ',', '.').' %';
+    $m = fn ($v) => $v === null ? '—' : number_format((float) $v, 2, '.', ',');
+    $p = fn ($v) => $v === null ? '—' : number_format((float) $v, 1, '.', ',').' %';
     $labels = ['met' => 'Meta cumplida', 'warning' => 'Cerca de la meta', 'danger' => 'Por debajo', 'no_goal' => 'Sin meta', 'exempt' => 'Exento'];
     $tone = ['met' => 'ok', 'warning' => 'mid', 'danger' => 'bad', 'no_goal' => '', 'exempt' => ''];
 @endphp

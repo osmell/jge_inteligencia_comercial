@@ -122,8 +122,8 @@ class DigestsTest extends TestCase
         $sales = $this->metrics($d, 'sales');
         $day = $sales['Venta neta del martes 20/10'];
         $this->assertEquals([1200, 'money', 'good'], [$day['value'], $day['format'], $day['tone']]);
-        $this->assertStringContainsString('promedio de los 3 martess anteriores con ventas (933,33)', $day['hint']);      // 1000, 800 y 1000: el 29-sep no vendió
-        $this->assertStringContainsString('+28,6 %', $day['hint']);
+        $this->assertStringContainsString('promedio de los 3 martess anteriores con ventas (933.33)', $day['hint']);      // 1000, 800 y 1000: el 29-sep no vendió
+        $this->assertStringContainsString('+28.6 %', $day['hint']);
         $this->assertEquals(2, $sales['Facturas del día']['value']);
 
         $credit = $this->metrics($d, 'credit');
@@ -178,7 +178,7 @@ class DigestsTest extends TestCase
         $this->assertSame(2, Digest::count());                                         // una por compañía activa
         $notice = UserNotification::where('user_id', $this->manager->id)->where('type', 'digest')->sole();
         $this->assertSame('Resumen diario de Alfa: martes 20/10/2026', $notice->title);
-        $this->assertStringContainsString('Venta neta del martes 20/10: 1.200,00', (string) $notice->body);
+        $this->assertStringContainsString('Venta neta del martes 20/10: 1,200.00', (string) $notice->body);
         $this->assertSame('/resumenes/'.Digest::where('company_id', $this->a->id)->value('id'), $notice->url);
         $this->assertCount(2, UserNotification::where('user_id', $this->admin->id)->get());     // el administrador ve las dos compañías
         $this->assertSame(0, UserNotification::where('user_id', $branchOnly->id)->count());       // restringido a una sucursal: no ve cifras de toda la compañía

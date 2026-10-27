@@ -37,7 +37,7 @@ export function ReconciliationNote({ rec, who }: { rec: Rec; who: string }) {
   return (
     <div className="mb-4">
       {rec.matches ? (
-        <p className="flex items-center gap-2 text-sm text-success"><CircleCheck className="h-4 w-4" aria-hidden="true" />Contraste: la venta consolidada ({formatMoney(rec.consolidated_net)}, {rec.consolidated_documents.toLocaleString('es')} documentos) coincide con la suma de {who}.</p>
+        <p className="flex items-center gap-2 text-sm text-success"><CircleCheck className="h-4 w-4" aria-hidden="true" />Contraste: la venta consolidada ({formatMoney(rec.consolidated_net)}, {rec.consolidated_documents.toLocaleString('en-US')} documentos) coincide con la suma de {who}.</p>
       ) : (
         <Alert tone="danger">La venta consolidada ({formatMoney(rec.consolidated_net)}) no coincide con la suma de {who} ({formatMoney(rec.rows_net)}): diferencia de {formatMoney(rec.net_difference)} y {rec.documents_difference} documentos.</Alert>
       )}

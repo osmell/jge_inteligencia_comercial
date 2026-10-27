@@ -14,7 +14,7 @@ function CompanyStatus({ c }: { c: InsightCompany }) {
     <Card className="p-4">
       <h2 className="text-sm font-semibold text-ink">{c.company}</h2>
       <p className="mt-1 text-sm text-ink-muted">
-        {c.first_sale ? <>Ventas del {formatDay(c.first_sale)} al {formatDay(c.last_sale ?? c.first_sale)}: <strong className="text-ink">{c.history_months} meses</strong> de historial y <strong className="text-ink">{c.documents.toLocaleString('es')}</strong> facturas.</> : 'Todavía no hay ventas cargadas.'}
+        {c.first_sale ? <>Ventas del {formatDay(c.first_sale)} al {formatDay(c.last_sale ?? c.first_sale)}: <strong className="text-ink">{c.history_months} meses</strong> de historial y <strong className="text-ink">{c.documents.toLocaleString('en-US')}</strong> facturas.</> : 'Todavía no hay ventas cargadas.'}
       </p>
       {c.stale && <div className="mt-2"><Alert tone="warning">La última venta es de hace {c.days_since_last_sale} días: los análisis estarían desactualizados.</Alert></div>}
       <ul className="mt-3 space-y-2" aria-label={`Análisis de ${c.company}`}>

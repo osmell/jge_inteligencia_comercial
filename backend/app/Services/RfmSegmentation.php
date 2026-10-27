@@ -111,7 +111,7 @@ class RfmSegmentation
      */
     public static function explain(array $c): string
     {
-        $monetary = number_format((float) $c['monetary'], 2, ',', '.');
+        $monetary = number_format((float) $c['monetary'], 2, '.', ',');
 
         return "Compró por última vez hace {$c['recency_days']} días (recencia {$c['r']}/5), tuvo {$c['frequency']} días con compra (frecuencia {$c['f']}/5) y una venta neta de {$monetary} (valor {$c['m']}/5): ".self::SEGMENTS[$c['segment']]['label'].'.';
     }

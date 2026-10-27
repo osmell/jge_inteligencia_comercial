@@ -61,10 +61,10 @@ describe('reporte de sucursales', () => {
     renderPage()
     const centro = (await screen.findByRole('button', { name: /Ver la facturación de Centro/ })).closest('tr')!
 
-    expect(within(centro).getByText('1500,00')).toBeInTheDocument()
+    expect(within(centro).getByText('1,500.00')).toBeInTheDocument()
     expect(within(centro).getByText('Ana · 2 vend.')).toBeInTheDocument()
     expect(within(centro).getAllByText('Crítico').length).toBeGreaterThanOrEqual(5)
-    expect(within(centro).getByText('2 · 66,7 %')).toBeInTheDocument()
+    expect(within(centro).getByText('2 · 66.7 %')).toBeInTheDocument()
   })
 
   it('una sucursal que solo vende de mostrador no muestra dependencia de nadie', async () => {

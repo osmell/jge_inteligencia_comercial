@@ -12,7 +12,7 @@ import { formatPct } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
 import { useReportFilters } from '../lib/useReportFilters'
 
-const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('es'))
+const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
 const signed = (v: number | null) => (v === null ? '—' : `${v > 0 ? '+' : ''}${formatPct(v)}`)
 
 const GROUPS: [string, number][] = [['', 2], ['Resultado', 4], ['Precio', 2], ['Dependencia', 2], ['Cartera de clientes (hoy)', 2], ['Cobranza (hoy)', 2], ['Existencias (hoy)', 4]]

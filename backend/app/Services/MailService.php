@@ -177,8 +177,8 @@ class MailService
                 $lines[] = $section['title'];
                 foreach ($section['metrics'] as $metric) {
                     $value = match ($metric['format']) {
-                        'money' => number_format((float) $metric['value'], 2, ',', '.'),
-                        'pct' => number_format((float) $metric['value'], 1, ',', '.').' %',
+                        'money' => number_format((float) $metric['value'], 2, '.', ','),
+                        'pct' => number_format((float) $metric['value'], 1, '.', ',').' %',
                         default => (string) $metric['value'],
                     };
                     $lines[] = "  · {$metric['label']}: {$value}".(isset($metric['hint']) ? " ({$metric['hint']})" : '');

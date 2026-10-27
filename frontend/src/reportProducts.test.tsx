@@ -73,8 +73,8 @@ describe('mezcla de productos', () => {
     const beto = screen.getByRole('button', { name: /Ver el detalle de Beto/ }).closest('tr')!
 
     expect(within(ana).getByText('3 de 4')).toBeInTheDocument()
-    expect(within(ana).getByText('75,0 %')).toBeInTheDocument()
-    expect(within(beto).getByText('25,0 %')).toBeInTheDocument()
+    expect(within(ana).getByText('75.0 %')).toBeInTheDocument()
+    expect(within(beto).getByText('25.0 %')).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Lo más facturado por categoría' })).toHaveTextContent('Taladros')
     expect(screen.getByText(/«no vendió» no prueba que no lo haya ofrecido/)).toBeInTheDocument()
     expect(await screen.findByText(/coincide con la suma de los vendedores/)).toBeInTheDocument()

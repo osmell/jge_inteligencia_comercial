@@ -25,7 +25,7 @@ beforeEach(() => {
       body = { data: {
         id: 7, company_id: 1, kind: 'weekly', period_key: '2026-W42', period_from: '2026-10-12', period_to: '2026-10-18', title: 'Resumen semanal de Alfa: 12/10 al 18/10/2026', generated_at: '2026-10-19T12:00:00Z',
         sections: [
-          { key: 'sales', title: 'Ventas de la semana', metrics: [{ label: 'Venta neta de la semana', value: 5300, format: 'money', tone: 'good', hint: 'Semana anterior: 4.000,00 · +32,5 %' }, { label: 'Facturas', value: 3, format: 'int' }],
+          { key: 'sales', title: 'Ventas de la semana', metrics: [{ label: 'Venta neta de la semana', value: 5300, format: 'money', tone: 'good', hint: 'Semana anterior: 4,000.00 · +32.5 %' }, { label: 'Facturas', value: 3, format: 'int' }],
             tables: [{ title: 'Principales clientes', columns: [{ key: 'name', label: 'Cliente', format: 'text' }, { key: 'net', label: 'Venta neta', format: 'money' }], rows: [{ name: 'Cliente C3', net: 4000 }, { name: 'Cliente C1', net: 1000 }] }] },
           { key: 'credit', title: 'Cartera', metrics: [{ label: 'Saldo vencido (con 1 día o más)', value: 1500, format: 'money', tone: 'bad' }, { label: 'Cumplimiento del equipo', value: 82.5, format: 'pct' }] },
         ],
@@ -75,12 +75,12 @@ describe('resúmenes para gerencia', () => {
 
     expect(await screen.findByRole('heading', { name: 'Resumen semanal de Alfa: 12/10 al 18/10/2026' })).toBeInTheDocument()
     const sales = screen.getByRole('region', { name: 'Ventas de la semana' })
-    expect(sales.querySelector('p.tabular')).toHaveTextContent('5300,00')
-    expect(within(sales).getByText('Semana anterior: 4.000,00 · +32,5 %')).toBeInTheDocument()
+    expect(sales.querySelector('p.tabular')).toHaveTextContent('5,300.00')
+    expect(within(sales).getByText('Semana anterior: 4,000.00 · +32.5 %')).toBeInTheDocument()
     expect(within(sales).getByRole('table', { name: 'Principales clientes' })).toHaveTextContent('Cliente C3')
     const credit = screen.getByRole('region', { name: 'Cartera' })
-    expect(within(credit).getByText('Saldo vencido (con 1 día o más)').closest('div')).toHaveTextContent('1500,00')
-    expect(within(credit).getByText('Cumplimiento del equipo').closest('div')).toHaveTextContent('82,5 %')
+    expect(within(credit).getByText('Saldo vencido (con 1 día o más)').closest('div')).toHaveTextContent('1,500.00')
+    expect(within(credit).getByText('Cumplimiento del equipo').closest('div')).toHaveTextContent('82.5 %')
     expect(screen.getByText(/Las cifras quedan tal como estaban al generarse/)).toBeInTheDocument()
   })
 })

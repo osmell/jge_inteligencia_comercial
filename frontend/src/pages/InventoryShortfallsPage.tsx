@@ -9,7 +9,7 @@ import { SHORTFALL_REASON, type ShortfallList } from '../lib/inventory'
 import type { Branch } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
-const num = (v: string) => Number(v).toLocaleString('es', { maximumFractionDigits: 8 })
+const num = (v: string) => Number(v).toLocaleString('en-US', { maximumFractionDigits: 8 })
 
 /** Ventas que no pudieron descontar todo su inventario: se concilian al registrar la entrada o el ajuste que falta. */
 export default function InventoryShortfallsPage() {

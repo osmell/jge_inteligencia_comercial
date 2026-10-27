@@ -202,7 +202,7 @@ class OperationalNoticesTest extends TestCase
         $mine = $this->notices($this->seller, 'credit_bucket')->sole();
         $this->assertSame('1 factura pasó a otro tramo de cartera', $mine->title);
         $this->assertStringContainsString('A-1 (31 a 60 días)', (string) $mine->body);
-        $this->assertStringContainsString('Saldo 1.000,00', (string) $mine->body);
+        $this->assertStringContainsString('Saldo 1,000.00', (string) $mine->body);
         $this->assertStringNotContainsString('A-3', (string) $mine->body);
         $this->assertSame('2 facturas pasaron a otro tramo de cartera', $this->notices($this->admin, 'credit_bucket')->sole()->title);
 

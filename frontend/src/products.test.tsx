@@ -42,7 +42,7 @@ describe('catálogo de productos', () => {
     const table = await screen.findByRole('table', { name: 'Catálogo de productos' })
     expect(within(table).getByText('Filtro de aceite')).toBeInTheDocument()
     expect(within(table).getByText('Repuestos')).toBeInTheDocument()
-    expect(screen.getByText('Venta con catálogo').closest('div')).toHaveTextContent('96,25 %')
+    expect(screen.getByText('Venta con catálogo').closest('div')).toHaveTextContent('96.25 %')
     expect(screen.getByText(/2 productos vendidos no están en el catálogo/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Cargar catálogo' })).toHaveAttribute('href', '/importaciones')
 

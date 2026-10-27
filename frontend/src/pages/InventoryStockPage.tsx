@@ -40,7 +40,7 @@ export default function InventoryStockPage() {
       <PageHeader title="Existencias" description="Existencias por sucursal, en la unidad base de cada producto. Se calculan con los movimientos del libro de inventario." />
 
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2" aria-busy={stock.loading}>
-        <Stat label="Productos" info={{ text: 'Productos con movimientos de inventario que cumplen los filtros elegidos.' }} value={meta ? meta.totals.products.toLocaleString('es') : '—'} hint="Según los filtros elegidos" />
+        <Stat label="Productos" info={{ text: 'Productos con movimientos de inventario que cumplen los filtros elegidos.' }} value={meta ? meta.totals.products.toLocaleString('en-US') : '—'} hint="Según los filtros elegidos" />
         {costs && <Stat label="Valor del inventario" info={{ text: 'Valor de todas las existencias del filtro a costo promedio ponderado.', formula: 'Valor = suma de (Existencia × Costo promedio)' }} value={meta?.totals.value ? formatMoney(meta.totals.value) : '—'} hint="A costo promedio ponderado" />}
       </div>
 
@@ -86,7 +86,7 @@ export default function InventoryStockPage() {
             <tr key={`${r.branch_id}-${r.product.id}`} className={tr}>
               <td className={td}>{r.product.name}<div className="text-xs text-ink-muted">{r.product.code} · {r.company}</div></td>
               <td className={td}>{r.branch}{!r.reconciled && <div className="mt-0.5"><Badge>Sin inventario inicial</Badge></div>}</td>
-              <td className={`${td} tabular text-right font-medium`}>{Number(r.quantity).toLocaleString('es', { maximumFractionDigits: 8 })}</td>
+              <td className={`${td} tabular text-right font-medium`}>{Number(r.quantity).toLocaleString('en-US', { maximumFractionDigits: 8 })}</td>
               <td className={td}>{r.unit ?? '—'}</td>
               {costs && <><td className={`${td} tabular text-right`}>{formatMoney(r.average_cost)}</td><td className={`${td} tabular text-right`}>{formatMoney(r.value)}</td></>}
               <td className={td}>

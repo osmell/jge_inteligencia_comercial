@@ -1,9 +1,9 @@
 @extends('pdf.layout')
 @section('title', 'Reporte de ventas')
 @php
-    $m = fn ($v) => $v === null ? '—' : number_format((float) $v, 2, ',', '.');
-    $i = fn ($v) => $v === null ? '—' : number_format((float) $v, 0, ',', '.');
-    $p = fn ($v) => $v === null ? '—' : ($v > 0 ? '+' : '').number_format((float) $v, 1, ',', '.').' %';
+    $m = fn ($v) => $v === null ? '—' : number_format((float) $v, 2, '.', ',');
+    $i = fn ($v) => $v === null ? '—' : number_format((float) $v, 0, '.', ',');
+    $p = fn ($v) => $v === null ? '—' : ($v > 0 ? '+' : '').number_format((float) $v, 1, '.', ',').' %';
 @endphp
 @section('content')
 <h1>Reporte de ventas</h1>

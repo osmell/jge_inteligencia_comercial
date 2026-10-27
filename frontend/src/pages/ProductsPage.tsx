@@ -72,7 +72,7 @@ export default function ProductsPage() {
           <Stat label="Productos en el catálogo" value={String(c.catalog_products)} info={{ text: 'Productos registrados en el catálogo de la aplicación (cargados desde el archivo de existencias o creados a mano).' }} />
           <Stat label="Productos vendidos (12 meses)" value={String(c.sold_products)} info={{ text: 'Productos distintos que aparecen en las líneas de venta de los últimos 12 meses, estén o no en el catálogo.' }} />
           <Stat label="Vendidos sin catálogo" value={String(c.missing_products)} info={{ text: 'Productos vendidos en los últimos 12 meses que todavía no están en el catálogo. La venta neta que se muestra es la de esos productos.' }}  hint={c.missing_products > 0 ? `${formatMoney(c.missing_net_total)} de venta neta` : undefined} />
-          <Stat label="Venta con catálogo" info={{ text: 'Qué parte de la venta neta de los últimos 12 meses corresponde a productos que sí están en el catálogo.', formula: '(Venta neta − Venta neta de productos sin catálogo) ÷ Venta neta × 100' }} value={c.covered_pct === null ? '—' : `${String(c.covered_pct).replace('.', ',')} %`} hint="de la venta neta de 12 meses" />
+          <Stat label="Venta con catálogo" info={{ text: 'Qué parte de la venta neta de los últimos 12 meses corresponde a productos que sí están en el catálogo.', formula: '(Venta neta − Venta neta de productos sin catálogo) ÷ Venta neta × 100' }} value={c.covered_pct === null ? '—' : `${String(c.covered_pct)} %`} hint="de la venta neta de 12 meses" />
         </div>
       )}
       {c && c.missing_products > 0 && (

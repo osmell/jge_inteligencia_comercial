@@ -101,7 +101,7 @@ export default function InsightsSegmentsPage() {
               <button key={s.key} type="button" aria-pressed={segment === s.key} title={s.rule} onClick={() => { setSegment(segment === s.key ? '' : s.key); setPage(1) }}
                 className={`rounded-xl border p-3 text-left transition-colors ${segment === s.key ? 'border-jge-blue bg-surface-muted' : 'border-line bg-surface hover:bg-surface-muted'}`}>
                 <p className="text-xs text-ink-muted">{s.label}</p>
-                <p className="tabular mt-0.5 text-xl font-semibold">{meta.counts[s.key].toLocaleString('es')}</p>
+                <p className="tabular mt-0.5 text-xl font-semibold">{meta.counts[s.key].toLocaleString('en-US')}</p>
               </button>
             ))}
           </div>

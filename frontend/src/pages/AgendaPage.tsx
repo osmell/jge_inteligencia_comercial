@@ -21,7 +21,7 @@ function Stat({ label, value, hint, tone, info }: { label: string; value: number
   return (
     <Card className="p-4">
       <p className="flex items-center gap-1 text-sm text-ink-muted">{label}{info && <InfoTip info={info} label={label} />}</p>
-      <p className={`tabular mt-0.5 text-2xl font-semibold tracking-tight ${tone === 'danger' && value > 0 ? 'text-danger' : ''}`}>{value.toLocaleString('es')}</p>
+      <p className={`tabular mt-0.5 text-2xl font-semibold tracking-tight ${tone === 'danger' && value > 0 ? 'text-danger' : ''}`}>{value.toLocaleString('en-US')}</p>
       {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
     </Card>
   )

@@ -64,11 +64,11 @@ describe('reporte de operadores', () => {
     renderPage()
     const omar = (await screen.findByRole('button', { name: /Ver el detalle de Omar/ })).closest('tr')!
 
-    expect(within(omar).getByText('1600,00')).toBeInTheDocument()
-    expect(within(omar).getByText('1,33 por documento')).toBeInTheDocument()
+    expect(within(omar).getByText('1,600.00')).toBeInTheDocument()
+    expect(within(omar).getByText('1.33 por documento')).toBeInTheDocument()
     expect(within(omar).getAllByText('Crítico').length).toBe(2)   // bajo precio normal y descuento alto
     expect(within(omar).getByText('Sin dato')).toBeInTheDocument() // atípicos sin base suficiente
-    expect(within(omar).getByText('35,0 %')).toBeInTheDocument()   // venta directa
+    expect(within(omar).getByText('35.0 %')).toBeInTheDocument()   // venta directa
   })
 
   it('avisa que el sistema no conoce las anulaciones por operador', async () => {

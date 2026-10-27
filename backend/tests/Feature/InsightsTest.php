@@ -98,7 +98,7 @@ class InsightsTest extends TestCase
         $this->assertSame([false, 'Historial insuficiente: tiene 9 de 24 meses de historial.'], [$seasonality['available'], $seasonality['reason']]);
         $crossSell = $this->analysis($alfa, 'cross_sell');
         $this->assertFalse($crossSell['available']);
-        $this->assertStringContainsString('tiene 2 de 1.000 facturas', $crossSell['reason']);
+        $this->assertStringContainsString('tiene 2 de 1,000 facturas', $crossSell['reason']);
 
         $beta = $status['Beta'];                                               // sin ventas
         $this->assertSame([0, 0, null], [$beta['history_months'], $beta['documents'], $beta['first_sale']]);

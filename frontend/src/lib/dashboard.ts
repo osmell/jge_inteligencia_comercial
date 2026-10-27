@@ -144,7 +144,7 @@ export function dailyPoints(rows: { date: string; net_total: string }[], from: s
 /** «+12,5 %» / «−3 %» / «Sin base de comparación». */
 export function formatChange(pct: number | null): string {
   if (pct === null) return 'Sin base de comparación'
-  const abs = Math.abs(pct).toLocaleString('es', { maximumFractionDigits: 1 })
+  const abs = Math.abs(pct).toLocaleString('en-US', { maximumFractionDigits: 1 })
   return `${pct > 0 ? '+' : pct < 0 ? '−' : ''}${abs} %`
 }
 

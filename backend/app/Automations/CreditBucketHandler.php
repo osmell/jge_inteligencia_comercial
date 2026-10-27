@@ -45,7 +45,7 @@ class CreditBucketHandler extends NoticeHandler
             }
             sort($visible);
             $rows = array_map(fn (int $id) => $crossed[$id], $visible);
-            $total = number_format(array_sum(array_column($rows, 'balance')), 2, ',', '.');
+            $total = number_format(array_sum(array_column($rows, 'balance')), 2, '.', ',');
             $tramo = fn (string $bucket) => $bucket === CreditAging::CURRENT ? 'al día' : (str_ends_with($bucket, '+') ? 'más de '.((int) $bucket - 1).' días' : str_replace('-', ' a ', $bucket).' días');
             $list = implode(', ', array_map(fn (array $r) => "{$r['label']} (".$tramo($r['bucket']).')', array_slice($rows, 0, 5)));
             $signature = md5(implode('|', array_map(fn (int $id) => $id.':'.$crossed[$id]['bucket'], $visible)));

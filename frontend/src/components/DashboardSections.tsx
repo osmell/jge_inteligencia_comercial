@@ -66,8 +66,8 @@ export function SalesBlock({ query, profile }: BlockProps) {
                 tone={s.previous.change_pct === null ? undefined : s.previous.change_pct >= 0 ? 'good' : 'bad'}
                 hint={<>{changeText('Contra el tramo anterior', s.previous.change_pct)}<br />{s.year_ago ? changeText('Contra el año anterior', s.year_ago.change_pct) : 'Comparación anual: no aplica a este periodo.'}</>}
               />
-              <Stat label="Facturas" info="sales_documents" value={s.current.documents.toLocaleString('es')} hint={`Anterior: ${s.previous.documents.toLocaleString('es')}`} />
-              <Stat label="Clientes con compra" info="sales_customers" value={s.current.customers.toLocaleString('es')} />
+              <Stat label="Facturas" info="sales_documents" value={s.current.documents.toLocaleString('en-US')} hint={`Anterior: ${s.previous.documents.toLocaleString('en-US')}`} />
+              <Stat label="Clientes con compra" info="sales_customers" value={s.current.customers.toLocaleString('en-US')} />
               <Stat label="Ticket promedio" info="sales_ticket" value={formatMoney(s.current.average_ticket)} />
             </div>
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
@@ -111,7 +111,7 @@ export function GoalsBlock({ query, profile }: BlockProps) {
           <p className="text-xs text-ink-muted">
             Falta {formatMoney(g.totals.remaining)}.
             {g.totals.needed_per_day !== null && ` Para llegar a la meta necesitas vender ${formatMoney(g.totals.needed_per_day)} por día en los ${g.totals.days_left} días que quedan del mes.`}
-            {g.totals.projected !== null && ` Al ritmo actual ${mine ? 'cerrarías' : 'cerraría'} en ${formatMoney(g.totals.projected)} (${g.totals.projected_pct?.toLocaleString('es', { maximumFractionDigits: 1 })} % de la meta; la marca en la barra).`}
+            {g.totals.projected !== null && ` Al ritmo actual ${mine ? 'cerrarías' : 'cerraría'} en ${formatMoney(g.totals.projected)} (${g.totals.projected_pct?.toLocaleString('en-US', { maximumFractionDigits: 1 })} % de la meta; la marca en la barra).`}
             {!mine && ` Vendedores que cumplen: ${g.totals.met} de ${g.totals.sellers_with_goal}.`}
           </p>
           {!mine && (
@@ -134,7 +134,7 @@ export function CreditBlock({ query, profile }: BlockProps) {
         <Card className="space-y-4 p-4">
           <div className="grid gap-3 sm:grid-cols-3">
             <Stat label="Saldo por cobrar" info="credit_balance" value={formatMoney(c.total)} hint={`${c.invoices} facturas · ${c.customers} clientes`} />
-            <Stat label="Saldo vencido" info="credit_overdue" value={formatMoney(c.overdue)} tone={Number(c.overdue) > 0 ? 'bad' : 'good'} hint={c.overdue_pct === null ? undefined : `${c.overdue_pct.toLocaleString('es')} % del saldo`} />
+            <Stat label="Saldo vencido" info="credit_overdue" value={formatMoney(c.overdue)} tone={Number(c.overdue) > 0 ? 'bad' : 'good'} hint={c.overdue_pct === null ? undefined : `${c.overdue_pct.toLocaleString('en-US')} % del saldo`} />
             <Stat label="Promesas de pago" info={{ text: 'Promesas de pago registradas por los clientes: cuántas vencen en los próximos 7 días (con su monto) y cuántas se incumplieron en los últimos 30 días.' }} value={c.promises.due_next_7_days} hint={`Próximos 7 días (${formatMoney(c.promises.due_amount)}) · incumplidas en 30 días: ${c.promises.broken_30_days}`} />
           </div>
           {c.promises.attention.length > 0 && (

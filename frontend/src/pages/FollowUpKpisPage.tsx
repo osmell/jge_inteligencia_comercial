@@ -19,7 +19,7 @@ function Group({ title, note, children }: { title: string; note?: string; childr
   )
 }
 
-const n = (v: number) => v.toLocaleString('es')
+const n = (v: number) => v.toLocaleString('en-US')
 
 export default function FollowUpKpisPage() {
   const [range, setRange] = useState(() => presetRange('30d'))
@@ -94,7 +94,7 @@ export default function FollowUpKpisPage() {
         <Group title="Conversión de cotizaciones" note="Cohorte: cotizaciones emitidas en el periodo. Solo cuenta como convertida la que tiene factura vinculada; las abiertas todavía pueden convertirse, así que la tasa puede subir.">
           <Stat label="Cotizaciones emitidas" info={{ text: 'Cotizaciones emitidas en el periodo. El importe es la suma de sus montos.' }} value={k ? n(k.quotations.issued) : '—'} hint={k ? `Importe ${formatMoney(k.quotations.issued_amount)}` : undefined} />
           <Stat label="Convertidas en venta" info={{ text: 'Cotizaciones emitidas en el periodo que ya se vincularon con una factura.', formula: 'Conversión % = Convertidas ÷ Emitidas × 100' }} value={k ? n(k.quotations.converted) : '—'} hint={k ? `${formatPct(k.quotations.conversion_pct)} de las emitidas · ${formatMoney(k.quotations.converted_amount)}` : undefined} />
-          <Stat label="Conversión por importe" info={{ text: 'Qué parte del dinero cotizado se convirtió en venta. Los días son el promedio entre la emisión y la conversión.', formula: 'Conversión por importe % = Importe convertido ÷ Importe emitido × 100' }} value={k ? formatPct(k.quotations.amount_conversion_pct) : '—'} hint={k && k.quotations.avg_days_to_convert !== null ? `Tardan ${String(k.quotations.avg_days_to_convert).replace('.', ',')} días en promedio` : undefined} />
+          <Stat label="Conversión por importe" info={{ text: 'Qué parte del dinero cotizado se convirtió en venta. Los días son el promedio entre la emisión y la conversión.', formula: 'Conversión por importe % = Importe convertido ÷ Importe emitido × 100' }} value={k ? formatPct(k.quotations.amount_conversion_pct) : '—'} hint={k && k.quotations.avg_days_to_convert !== null ? `Tardan ${String(k.quotations.avg_days_to_convert)} días en promedio` : undefined} />
           <Stat label="Abiertas" info={{ text: 'Cotizaciones del periodo que siguen vivas: emitidas, enviadas o en seguimiento, más las aceptadas que todavía no tienen factura.' }} value={k ? n(k.quotations.open + k.quotations.accepted_without_invoice) : '—'} hint={k ? `${n(k.quotations.open)} vigentes · ${n(k.quotations.accepted_without_invoice)} aceptadas sin factura` : undefined} />
           <Stat label="Rechazadas" info={{ text: 'Cotizaciones del periodo que el cliente rechazó.' }} value={k ? n(k.quotations.rejected) : '—'} />
           <Stat label="Vencidas" info={{ text: 'Cotizaciones del periodo que pasaron su fecha de validez sin cerrarse.' }} value={k ? n(k.quotations.expired) : '—'} />

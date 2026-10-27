@@ -45,6 +45,7 @@ Cómo mantenerlo: cada Pull Request que cambie algo visible para quien usa el si
 - **Revisión de seguridad del apartado de Reportes** (`docs/28_SEGURIDAD.md`) y `ADR-015`.
 
 ### Cambiado
+- **Formato de números:** punto como separador decimal y coma como separador de miles (1,234.50; 12.5 %) en toda la pantalla, en los PDF de reportes y de ventas, en los correos y avisos (resúmenes, promesas de pago, cotizaciones por vencer, saldos por tramo) y en los textos de recomendaciones. Las fechas y las horas siguen en español. Los archivos de Excel llevan números reales: su aspecto lo define la configuración regional de Excel.
 - **Menú por usuario también para administradores:** un administrador puede ocultarse opciones de su propio menú (y las de otros administradores) igual que las de cualquier persona; el servidor lo hace cumplir. La pantalla «Menú por usuario» no se puede ocultar, así que siempre puede volver a mostrarlas. Antes un administrador siempre veía todo.
 - **Menú por usuario:** cuando el rol de la persona no permite todas las opciones, la pantalla lo explica (cuántas permite) y enlaza a «Roles y permisos», donde se otorgan; antes solo salía «su rol no la permite» en cada casilla.
 - **Ventanas de los reportes más anchas:** el detalle de facturación de Vendedores y Sucursales, el detalle de Operadores los documentos con diferencias de Conciliación y el envío por correo se abren ahora con el ancho de la ventana de Mezcla de productos (hasta 72 rem, sin pasar del ancho de la pantalla). Una prueba de navegador vigila el ancho de las cuatro.

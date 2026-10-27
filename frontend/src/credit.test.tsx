@@ -76,12 +76,12 @@ describe('crédito y cobranzas', () => {
 
     const table = await screen.findByRole('table', { name: 'Facturas de crédito' })
     expect(within(table).getByRole('link', { name: 'FC-D-3088' })).toHaveAttribute('href', '/credito/1')
-    expect(table).toHaveTextContent('785,00')
+    expect(table).toHaveTextContent('785.00')
     expect(table).toHaveTextContent('31 a 60 días')
     expect(table).toHaveTextContent('40 días desde la factura')
     expect(table).toHaveTextContent('Al día')
     expect(table).toHaveTextContent('Pagada')
-    expect(screen.getByText('Saldo por cobrar').closest('div')).toHaveTextContent('885,00')
+    expect(screen.getByText('Saldo por cobrar').closest('div')).toHaveTextContent('885.00')
     expect(screen.getByText('Facturas con saldo').closest('div')).toHaveTextContent('2')
   })
 
@@ -115,7 +115,7 @@ describe('crédito y cobranzas', () => {
     renderDetail()
 
     expect(await screen.findByRole('heading', { name: 'Factura de crédito FC-D-3088' })).toBeInTheDocument()
-    expect(screen.getByText('Saldo').closest('div')).toHaveTextContent('785,00')
+    expect(screen.getByText('Saldo').closest('div')).toHaveTextContent('785.00')
     expect(screen.getByText(/todavía no está enlazada con una factura de venta/)).toBeInTheDocument()
     const table = screen.getByRole('table', { name: 'Movimientos de la factura' })
     expect(table).toHaveTextContent('Factura')
@@ -209,17 +209,17 @@ describe('crédito y cobranzas', () => {
     expect(table).toHaveTextContent('LYDIA LUDIC')
     expect(table).toHaveTextContent('la más antigua, 172 días')
     expect(table).toHaveTextContent('Más de 120 días')
-    expect(table).toHaveTextContent('700,00')
-    expect(screen.getByLabelText('Saldo por tramo')).toHaveTextContent('800,00')
+    expect(table).toHaveTextContent('700.00')
+    expect(screen.getByLabelText('Saldo por tramo')).toHaveTextContent('800.00')
     expect(screen.getByRole('button', { name: 'Exportar CSV' })).toBeInTheDocument()
   })
 
   it('la ficha del cliente muestra el saldo por tramo y las devoluciones aparte de las ventas', async () => {
     render(<AuthProvider><MemoryRouter><CustomerCredit companyId="1" code="3892" name="LYDIA LUDIC" netTotal="5000.00" /></MemoryRouter></AuthProvider>)
 
-    expect(await screen.findByText(/Saldo por cobrar/)).toHaveTextContent('800,00')
-    expect(screen.getByText(/Devoluciones \(notas de crédito vigentes\)/)).toHaveTextContent('200,00')
-    expect(screen.getByText(/Venta neta menos devoluciones/)).toHaveTextContent('4800,00')
+    expect(await screen.findByText(/Saldo por cobrar/)).toHaveTextContent('800.00')
+    expect(screen.getByText(/Devoluciones \(notas de crédito vigentes\)/)).toHaveTextContent('200.00')
+    expect(screen.getByText(/Venta neta menos devoluciones/)).toHaveTextContent('4,800.00')
   })
 
   it('la ficha lista las promesas de pago y permite registrarlas con el permiso', async () => {
@@ -229,7 +229,7 @@ describe('crédito y cobranzas', () => {
 
     const list = await screen.findByRole('list', { name: 'Promesas de pago del cliente' })
     expect(list).toHaveTextContent('Pendiente')
-    expect(list).toHaveTextContent('Abonado 150,00')
+    expect(list).toHaveTextContent('Abonado 150.00')
     expect(list).toHaveTextContent('Incumplida')
 
     await u.click(await screen.findByRole('button', { name: 'Registrar promesa' }))
@@ -256,7 +256,7 @@ describe('crédito y cobranzas', () => {
     const table = await screen.findByRole('table', { name: 'Factores de la calificación' })
     expect(screen.getByText('Riesgo medio')).toBeInTheDocument()
     expect(table).toHaveTextContent('Puntualidad de abonos')
-    expect(table).toHaveTextContent('61,5 %')
+    expect(table).toHaveTextContent('61.5 %')
     expect(within(table).getByText('Promesas de pago cumplidas').closest('tr')).toHaveTextContent('Sin datos')
     expect(screen.getByText(/No aprueba ni modifica límites de crédito/)).toBeInTheDocument()
   })

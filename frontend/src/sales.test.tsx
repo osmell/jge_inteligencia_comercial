@@ -66,17 +66,17 @@ describe('dashboard de ventas', () => {
   it('muestra los KPI con su variación en texto y el desglose por vendedor', async () => {
     render(<SalesDashboardPage />)
 
-    expect(await screen.findByText('1000,00', { selector: 'p' })).toBeInTheDocument()
-    expect(card('Venta neta')).toHaveTextContent('+25,0 %')
-    expect(card('Documentos')).toHaveTextContent('-10,0 %')
-    expect(card('Descuento')).toHaveTextContent('50,00')
+    expect(await screen.findByText('1,000.00', { selector: 'p' })).toBeInTheDocument()
+    expect(card('Venta neta')).toHaveTextContent('+25.0 %')
+    expect(card('Documentos')).toHaveTextContent('-10.0 %')
+    expect(card('Descuento')).toHaveTextContent('50.00')
     expect(card('Descuento')).toHaveTextContent('Ya está restado de la venta neta')
     expect(card('Clientes compradores')).toHaveTextContent('Sin base de comparación')
     expect(screen.getByText(/Usa el costo actual, no el histórico/)).toBeInTheDocument()
 
     const table = await screen.findByRole('table', { name: 'Ventas por vendedor' })
     expect(within(table).getByRole('button', { name: 'María López' })).toBeInTheDocument()
-    expect(within(table).getByText('700,00')).toBeInTheDocument()
+    expect(within(table).getByText('700.00')).toBeInTheDocument()
   })
 
   it('avisa cuando el historial no cubre el periodo anterior', async () => {
@@ -236,7 +236,7 @@ describe('comparación de periodos', () => {
     render(<SalesDashboardPage />)
     const table = await screen.findByRole('table', { name: 'Ventas por vendedor' })
 
-    expect(await within(table).findByText('+75,0 %')).toBeInTheDocument()
+    expect(await within(table).findByText('+75.0 %')).toBeInTheDocument()
     expect(within(table).getByText('Sin ventas antes')).toBeInTheDocument()
   })
 
@@ -275,10 +275,10 @@ describe('rankings', () => {
     expect(within(byAmount).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
       expect.stringContaining('Filtro de aceite'), expect.stringContaining('Pastillas de freno'),
     ])
-    expect(within(byAmount).getByText('500,00')).toBeInTheDocument()
+    expect(within(byAmount).getByText('500.00')).toBeInTheDocument()
     expect(within(screen.getByRole('list', { name: 'Por frecuencia' })).getByText('1 factura')).toBeInTheDocument()
-    expect(within(screen.getByRole('list', { name: 'Por margen estimado' })).getByText('120,00 (40,0 %)')).toBeInTheDocument()
-    expect(within(screen.getByRole('list', { name: 'Por descuento' })).getByText('35,00 (10,5 %)')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Por margen estimado' })).getByText('120.00 (40.0 %)')).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Por descuento' })).getByText('35.00 (10.5 %)')).toBeInTheDocument()
     expect(screen.getByText(/Solo artículos con costo válido/)).toBeInTheDocument()
     expect(last('/sales/rankings')).toContain('dimension=product&limit=10')
   })

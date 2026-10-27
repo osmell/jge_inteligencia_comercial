@@ -124,10 +124,10 @@ export function daysBetween(from: string, to: string): number {
 
 export function formatPct(value: number | null | undefined): string {
   if (value === null || value === undefined) return '—'
-  return `${value.toLocaleString('es', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`
+  return `${value.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`
 }
 
-const compact = new Intl.NumberFormat('es', { notation: 'compact', maximumFractionDigits: 1 })
+const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
 export const formatCompact = (value: number): string => compact.format(value)
 
 /** '2026-10-05' → '5 oct'; '2026-10' → 'oct 2026'. */

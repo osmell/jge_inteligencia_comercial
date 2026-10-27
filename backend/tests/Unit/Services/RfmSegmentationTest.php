@@ -74,6 +74,6 @@ final class RfmSegmentationTest extends TestCase
             'recency_days' => 12, 'frequency' => 3, 'monetary' => '1234.5', 'r' => 4, 'f' => 3, 'm' => 5, 'segment' => 'champion',
         ]);
 
-        $this->assertSame('Compró por última vez hace 12 días (recencia 4/5), tuvo 3 días con compra (frecuencia 3/5) y una venta neta de 1.234,50 (valor 5/5): Campeones.', $text);
+        $this->assertSame('Compró por última vez hace 12 días (recencia 4/5), tuvo 3 días con compra (frecuencia 3/5) y una venta neta de 1,234.50 (valor 5/5): Campeones.', $text);
     }
 }

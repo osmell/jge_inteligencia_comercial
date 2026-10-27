@@ -99,7 +99,7 @@ class AnomalyAnalysis
             $current = $c['months'][$key]['net'] ?? 0;
             $change = ($current - $average) / $average * 100;
             $facts = ['month' => $key, 'current' => Decimal::format($current), 'baseline_average' => Decimal::format((int) round($average)), 'baseline_months' => $baselineMonths, 'baseline_purchase_days' => $baselineDays, 'change_pct' => round($change, 1)];
-            $format = fn (int $u) => number_format($u / 10 ** Decimal::SCALE, 2, ',', '.');
+            $format = fn (int $u) => number_format($u / 10 ** Decimal::SCALE, 2, '.', ',');
 
             if ($change <= -$dropPct) {
                 $out[] = [

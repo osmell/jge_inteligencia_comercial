@@ -5,7 +5,7 @@ import { useLoad } from '../../lib/useLoad'
 import { DataTable, EmptyRow, FormError, TableSkeleton, td, th, tr, Th } from '../ui'
 import { ReportStat } from './ReportParts'
 
-const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('es'))
+const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
 const signed = (v: number | null) => (v === null ? '—' : `${v > 0 ? '+' : ''}${formatPct(v)}`)
 
 const INDEX_HIGH = 150

@@ -140,7 +140,7 @@ export default function InsightsAlertsPage() {
           <button key={t} type="button" aria-pressed={f.type === t} onClick={() => set({ type: f.type === t ? '' : t })}
             className={`rounded-xl border p-3 text-left transition-colors ${f.type === t ? 'border-jge-blue bg-surface-muted' : 'border-line bg-surface hover:bg-surface-muted'}`}>
             <p className="text-xs text-ink-muted">{ALERT_LABEL[t]}</p>
-            <p className="tabular mt-0.5 text-xl font-semibold">{counts ? counts[t].toLocaleString('es') : '—'}</p>
+            <p className="tabular mt-0.5 text-xl font-semibold">{counts ? counts[t].toLocaleString('en-US') : '—'}</p>
           </button>
         ))}
       </div>

@@ -11,7 +11,7 @@ import { formatDay } from '../lib/quotations'
 import type { Company } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
-const idx = (v: number | null) => (v === null ? '—' : v.toLocaleString('es', { maximumFractionDigits: 1 }))
+const idx = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US', { maximumFractionDigits: 1 }))
 
 function Verdict({ s, points }: { s: SeasonalIndex; points: number }) {
   if (s.peak === null || s.trough === null) return <span>Sin datos suficientes</span>
@@ -83,7 +83,7 @@ export default function InsightsSeasonalityPage() {
                   <tr key={MONTH_NAMES[i]} className={tr}>
                     <td className={td}>{MONTH_NAMES[i]}{summary.company.peak === i + 1 && <> <Badge>Mejor</Badge></>}{summary.company.trough === i + 1 && <> <Badge>Más bajo</Badge></>}</td>
                     <td className={`${td} tabular text-right font-medium`}>{idx(v)}</td>
-                    <td className={`${td} tabular text-right`}>{v === null ? '—' : `${v - 100 > 0 ? '+' : ''}${(v - 100).toLocaleString('es', { maximumFractionDigits: 1 })} %`}</td>
+                    <td className={`${td} tabular text-right`}>{v === null ? '—' : `${v - 100 > 0 ? '+' : ''}${(v - 100).toLocaleString('en-US', { maximumFractionDigits: 1 })} %`}</td>
                     <td className={`${td} tabular text-right`}>{summary.company.observations[i]}</td>
                   </tr>
                 ))}
@@ -120,7 +120,7 @@ export default function InsightsSeasonalityPage() {
                       <td className={td}>{formatDay(`${y.month}-01`).replace(/^\d+ /, '')}</td>
                       <td className={`${td} tabular text-right`}>{formatMoney(y.value)}</td>
                       <td className={`${td} tabular text-right`}>{formatMoney(y.previous)}</td>
-                      <td className={`${td} tabular text-right`}>{y.change_pct === null ? '—' : `${y.change_pct > 0 ? '+' : ''}${y.change_pct.toLocaleString('es', { maximumFractionDigits: 1 })} %`}</td>
+                      <td className={`${td} tabular text-right`}>{y.change_pct === null ? '—' : `${y.change_pct > 0 ? '+' : ''}${y.change_pct.toLocaleString('en-US', { maximumFractionDigits: 1 })} %`}</td>
                     </tr>
                   ))}
                 </tbody>

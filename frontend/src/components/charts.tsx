@@ -159,7 +159,7 @@ export function ProgressBar({ label, value, target, marker, tone = 'neutral', fo
     <div>
       <div className="mb-1 flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
         <span className="font-medium">{label}</span>
-        <span className="tabular text-ink-muted">{format(value)} de {format(target)} · {pct.toLocaleString('es', { maximumFractionDigits: 1 })} %{TONE_TEXT[tone] && ` · ${TONE_TEXT[tone]}`}</span>
+        <span className="tabular text-ink-muted">{format(value)} de {format(target)} · {pct.toLocaleString('en-US', { maximumFractionDigits: 1 })} %{TONE_TEXT[tone] && ` · ${TONE_TEXT[tone]}`}</span>
       </div>
       <div className="relative h-2.5 w-full rounded-full bg-jge-blue-50" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(Math.round(pct), 100)}>
         <div className={`h-2.5 rounded-full ${TONE_BAR[tone]}`} style={{ width: `${Math.min(pct, 100)}%` }} />
@@ -203,7 +203,7 @@ export function DonutChart({ slices, label, center, format = formatMoney }: { sl
         {slices.map((s, i) => (
           <li key={s.key} className="flex items-center justify-between gap-3">
             <span className="inline-flex items-center gap-2"><span className={`inline-block h-2.5 w-2.5 rounded-sm ${SLICE_SWATCH[i % SLICE_SWATCH.length]}`} aria-hidden="true" />{s.label}</span>
-            <span className="tabular text-ink-muted">{format(s.value)} · {total > 0 ? ((s.value / total) * 100).toLocaleString('es', { maximumFractionDigits: 1 }) : 0} %</span>
+            <span className="tabular text-ink-muted">{format(s.value)} · {total > 0 ? ((s.value / total) * 100).toLocaleString('en-US', { maximumFractionDigits: 1 }) : 0} %</span>
           </li>
         ))}
       </ul>

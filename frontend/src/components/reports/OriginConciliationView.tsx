@@ -7,7 +7,7 @@ import type { Conciliation } from '../../lib/reports'
 type Cut = Conciliation['origin'][number]
 type Row = Cut['rows'][number]
 
-const n = (v: number) => v.toLocaleString('es')
+const n = (v: number) => v.toLocaleString('en-US')
 
 const STATUS = {
   ok: { icon: CircleCheck, text: 'Cuadra', tone: 'text-success' },
@@ -30,7 +30,7 @@ function Line({ row, total = false }: { row: Row; total?: boolean }) {
       <td className={`${td} tabular text-right`}>{formatMoney(row.erp_net)}</td>
       <td className={`${td} tabular text-right`}>{formatMoney(row.system_net)}</td>
       <td className={`${td} tabular text-right ${row.difference === 0 ? '' : 'font-medium'}`}>{formatMoney(row.difference)}</td>
-      <td className={`${td} tabular text-right`}>{row.difference_pct === null ? '—' : `${row.difference_pct.toLocaleString('es')} %`}</td>
+      <td className={`${td} tabular text-right`}>{row.difference_pct === null ? '—' : `${row.difference_pct.toLocaleString('en-US')} %`}</td>
       <td className={`${td} tabular text-right text-ink-muted`}>{formatMoney(row.imported_net)}</td>
       <td className={`${td} tabular text-right`}>{n(row.erp_invoices)}</td>
       <td className={`${td} tabular text-right`}>{n(row.system_documents + row.voided_documents)}</td>

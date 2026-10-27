@@ -12,7 +12,7 @@ import { formatDay } from '../lib/quotations'
 import type { Company } from '../lib/types'
 import { useLoad } from '../lib/useLoad'
 
-const pct = (v: number | null) => (v === null ? '' : `${v.toLocaleString('es', { maximumFractionDigits: 1 })} %`)
+const pct = (v: number | null) => (v === null ? '' : `${v.toLocaleString('en-US', { maximumFractionDigits: 1 })} %`)
 
 function RunNote<S>({ run }: { run: AnalysisRun<S> | null | undefined }) {
   if (run === undefined) return null
@@ -29,8 +29,8 @@ function Block({ title, kind, data }: { title: string; kind: 'clientes' | 'produ
       <div className="mb-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label={kind === 'clientes' ? 'Peso del cliente principal' : 'Peso del producto principal'} info={{ text: 'Parte de la venta de los últimos 12 meses que aporta el principal.', formula: 'Peso % = Venta del principal ÷ Venta total × 100' }} value={pct(data.top1_pct)} />
         <Stat label={`Peso de los ${Math.min(10, data.count)} principales`} info={{ text: 'Parte de la venta de los últimos 12 meses que aportan los 10 principales juntos.', formula: 'Peso % = Venta de los 10 principales ÷ Venta total × 100' }} value={pct(data.top10_pct)} />
-        <Stat label="Suman el 80 % de la venta" info={{ text: 'Cuántos hacen falta, de mayor a menor venta, para llegar al 80 % de la venta (curva de Pareto). Entre paréntesis, qué parte del total son.' }} value={`${data.n80.toLocaleString('es')} ${kind}`} hint={`${pct(data.n80_pct)} de ${data.count.toLocaleString('es')}`} />
-        <Stat label="Índice de concentración (HHI)" info={{ text: 'Mide qué tan concentrada está la venta. Va de 0 (muy repartida) a 10.000 (todo en uno).', formula: 'HHI = suma de (Peso % de cada uno)²' }} value={data.hhi.toLocaleString('es')} hint="0 a 10.000; más alto = más concentrado" />
+        <Stat label="Suman el 80 % de la venta" info={{ text: 'Cuántos hacen falta, de mayor a menor venta, para llegar al 80 % de la venta (curva de Pareto). Entre paréntesis, qué parte del total son.' }} value={`${data.n80.toLocaleString('en-US')} ${kind}`} hint={`${pct(data.n80_pct)} de ${data.count.toLocaleString('en-US')}`} />
+        <Stat label="Índice de concentración (HHI)" info={{ text: 'Mide qué tan concentrada está la venta. Va de 0 (muy repartida) a 10,000 (todo en uno).', formula: 'HHI = suma de (Peso % de cada uno)²' }} value={data.hhi.toLocaleString('en-US')} hint="0 a 10.000; más alto = más concentrado" />
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-4">

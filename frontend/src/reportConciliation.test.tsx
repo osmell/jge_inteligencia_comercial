@@ -83,7 +83,7 @@ describe('conciliación', () => {
     const table = await screen.findByRole('table', { name: 'Sumas por dimensión contra el consolidado' })
     const sellers = within(table).getByText('Vendedores').closest('tr')!
     expect(within(sellers).getByText('Diferencia')).toBeInTheDocument()
-    expect(within(sellers).getByText('100,00')).toBeInTheDocument()
+    expect(within(sellers).getByText('100.00')).toBeInTheDocument()
   })
 
   it('una importación con venta no comparable lo explica y una que no cuadra se marca', async () => {

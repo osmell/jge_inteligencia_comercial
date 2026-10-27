@@ -27,7 +27,7 @@ export default function CustomerCreditScore({ companyId, code }: { companyId: st
                   <tr key={f.key} className="border-t border-line align-top">
                     <td className="py-1.5 pr-3">{f.label}</td>
                     <td className="tabular py-1.5 pr-3 text-right">{f.score === null ? 'Sin datos' : f.score}</td>
-                    <td className="tabular py-1.5 pr-3 text-right">{f.score === null ? '—' : `${String(f.effective_weight).replace('.', ',')} %`}</td>
+                    <td className="tabular py-1.5 pr-3 text-right">{f.score === null ? '—' : `${String(f.effective_weight)} %`}</td>
                     <td className="py-1.5 text-ink-muted">{f.detail}</td>
                   </tr>
                 ))}

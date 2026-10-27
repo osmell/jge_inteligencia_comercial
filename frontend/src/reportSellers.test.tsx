@@ -53,10 +53,10 @@ describe('reporte de vendedores', () => {
     renderPage()
     const ana = (await screen.findByRole('button', { name: /Ver la facturación de Ana/ })).closest('tr')!
 
-    expect(within(ana).getByText('1500,00')).toBeInTheDocument()
+    expect(within(ana).getByText('1,500.00')).toBeInTheDocument()
     expect(within(ana).getAllByText('Atención').length).toBeGreaterThan(0)   // cumplimiento en amarillo
     expect(within(ana).getAllByText('Crítico').length).toBeGreaterThan(0)    // bajo precio normal en rojo
-    expect(within(ana).getByText('meta 2000,00')).toBeInTheDocument()
+    expect(within(ana).getByText('meta 2,000.00')).toBeInTheDocument()
     expect(screen.getByText('Indicadores críticos')).toBeInTheDocument()
   })
 

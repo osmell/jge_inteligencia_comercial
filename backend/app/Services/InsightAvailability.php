@@ -45,7 +45,7 @@ class InsightAvailability
                     $missing[] = "tiene {$months} de {$needMonths} meses de historial";
                 }
                 if ($needDocs !== null && $documents < $needDocs) {
-                    $missing[] = 'tiene '.number_format($documents, 0, ',', '.').' de '.number_format($needDocs, 0, ',', '.').' facturas';
+                    $missing[] = 'tiene '.number_format($documents, 0, '.', ',').' de '.number_format($needDocs, 0, '.', ',').' facturas';
                 }
                 $run = $lastRuns[$company->id][$key] ?? null;
                 $analyses[] = [

@@ -129,7 +129,7 @@ describe('ficha de cliente', () => {
     expect(await screen.findByRole('heading', { name: 'Taller Pérez S.A.' })).toBeInTheDocument()
     expect(screen.getByText('5555-1234')).toBeInTheDocument()
     expect(screen.getByText('Pérez Motors')).toBeInTheDocument()
-    expect(screen.getByText('Venta neta total', { selector: 'p' }).closest('div')).toHaveTextContent('650,00')
+    expect(screen.getByText('Venta neta total', { selector: 'p' }).closest('div')).toHaveTextContent('650.00')
     expect(screen.getByText('cada 15 días')).toBeInTheDocument()
     expect(screen.getByText('hace 50 días')).toBeInTheDocument()
     expect(screen.getByText(/Historial de ventas disponible desde el 1 nov 2025/)).toBeInTheDocument()

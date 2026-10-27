@@ -10,7 +10,7 @@ import { useFilters } from '../lib/useFilters'
 import { useLoad } from '../lib/useLoad'
 
 const STATUSES: RotationStatus[] = ['out_of_stock', 'below_min', 'no_rotation', 'above_max', 'ok']
-const num = (v: string | null) => (v === null ? '—' : Number(v).toLocaleString('es', { maximumFractionDigits: 4 }))
+const num = (v: string | null) => (v === null ? '—' : Number(v).toLocaleString('en-US', { maximumFractionDigits: 4 }))
 
 /** Rotación, cobertura, mínimos y máximos por producto y sucursal, con alertas de reposición. */
 export default function InventoryRotationPage() {
@@ -48,7 +48,7 @@ export default function InventoryRotationPage() {
           <button key={s} type="button" onClick={() => set({ status: status === s ? 'all' : s })} aria-pressed={status === s}
             className={`rounded-xl border p-4 text-left transition-colors ${status === s ? 'border-jge-blue bg-surface-muted' : 'border-line bg-surface hover:bg-surface-muted'}`}>
             <p className="text-sm text-ink-muted">{ROTATION_LABEL[s]}</p>
-            <p className={`tabular mt-0.5 text-2xl font-semibold ${(s === 'out_of_stock' || s === 'below_min') && (meta?.counts[s] ?? 0) > 0 ? 'text-danger' : ''}`}>{meta ? meta.counts[s].toLocaleString('es') : '—'}</p>
+            <p className={`tabular mt-0.5 text-2xl font-semibold ${(s === 'out_of_stock' || s === 'below_min') && (meta?.counts[s] ?? 0) > 0 ? 'text-danger' : ''}`}>{meta ? meta.counts[s].toLocaleString('en-US') : '—'}</p>
           </button>
         ))}
       </div>
@@ -114,7 +114,7 @@ export default function InventoryRotationPage() {
 
       <div className="mt-3 flex items-center justify-between text-sm">
         <button type="button" className="rounded border border-line px-3 py-1.5 disabled:opacity-50" disabled={page === 1} onClick={() => setPage(page - 1)}>Anterior</button>
-        <span className="text-ink-muted">Página {page}{meta ? ` · ${meta.total.toLocaleString('es')} productos` : ''}</span>
+        <span className="text-ink-muted">Página {page}{meta ? ` · ${meta.total.toLocaleString('en-US')} productos` : ''}</span>
         <button type="button" className="rounded border border-line px-3 py-1.5 disabled:opacity-50" disabled={!meta?.has_more} onClick={() => setPage(page + 1)}>Siguiente</button>
       </div>
     </section>
