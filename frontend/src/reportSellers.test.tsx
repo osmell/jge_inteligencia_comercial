@@ -123,6 +123,20 @@ describe('reporte de vendedores', () => {
   })
 })
 
+describe('paginación de reportes', () => {
+  it('muestra 50 filas por página y deja recorrer el resto', async () => {
+    payload = report({ rows: Array.from({ length: 120 }, (_, i) => row(i + 1, `Vendedor ${i + 1}`)) })
+    renderPage()
+    expect(await screen.findByRole('button', { name: /Ver la facturación de Vendedor 50$/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Ver la facturación de Vendedor 51$/ })).not.toBeInTheDocument()
+    expect(screen.getByText(/1–50 de 120 · Página 1 de 3/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(await screen.findByRole('button', { name: /Ver la facturación de Vendedor 51$/ })).toBeInTheDocument()
+    expect(screen.getByText(/51–100 de 120 · Página 2 de 3/)).toBeInTheDocument()
+  })
+})
+
 describe('filtros de reportes', () => {
   it('valida el periodo y la comparación personalizada', () => {
     const f = initialReportFilters()

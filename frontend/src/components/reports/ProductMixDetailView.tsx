@@ -2,7 +2,8 @@ import { formatMoney } from '../../lib/format'
 import { MIX_LEVEL_LABEL, type MixLevel, type MixSubject, type ProductMixDetail } from '../../lib/reports'
 import { formatPct } from '../../lib/sales'
 import { useLoad } from '../../lib/useLoad'
-import { DataTable, EmptyRow, FormError, TableSkeleton, td, th, tr, Th } from '../ui'
+import { usePaged } from '../../lib/usePaged'
+import { DataTable, EmptyRow, FormError, Pager, TableSkeleton, td, th, tr, Th } from '../ui'
 import { ReportStat } from './ReportParts'
 
 const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
@@ -48,6 +49,7 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
   const detail = useLoad<{ data: ProductMixDetail }>(`/reports/products/${subject === 'seller' ? 'sellers' : 'operators'}/${id}?${query}&level=${level}`)
   const d = detail.data?.data
   const s = d?.summary
+  const paged = usePaged(d?.ranking.items ?? [])
   const who = subject === 'seller' ? 'vendedor' : 'operador'
 
   return (
@@ -74,7 +76,7 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
         <tbody>
           {detail.loading && !d && <TableSkeleton cols={8} />}
           {d && d.ranking.items.length === 0 && <EmptyRow cols={8}>No tuvo venta en el periodo.</EmptyRow>}
-          {d?.ranking.items.map((i) => (
+          {paged.rows.map((i) => (
             <tr key={i.key} className={tr}>
               <td className={`${td} tabular text-right text-ink-muted`}>{i.rank}</td>
               <td className={`${td} font-medium`}>{i.name}</td>
@@ -88,6 +90,7 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
           ))}
         </tbody>
       </DataTable>
+      <Pager paged={paged} />
       {d?.ranking.truncated && <p className="mt-1 text-xs text-ink-muted">Se muestran los {d.ranking.items.length} con más venta de {d.ranking.total_items}.</p>}
 
       {d && (

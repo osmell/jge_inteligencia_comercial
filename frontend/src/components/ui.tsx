@@ -1,4 +1,5 @@
 import { AlertCircle, CheckCircle2, Info, Loader2, Search, TriangleAlert, X } from 'lucide-react'
+import type { Paged } from '../lib/usePaged'
 import {
   useEffect,
   useRef,
@@ -309,6 +310,21 @@ export function DataTable({ children, label, scroll = false }: { children: React
         <table className={`w-full text-left text-sm print:text-[9px]${dense}`} aria-label={label}>{children}</table>
       </div>
     </Card>
+  )
+}
+
+/** Paginador de una tabla ya cargada (ver `usePaged`). No se muestra si todo cabe en una página. */
+export function Pager({ paged: { page, pages, total, size, setPage } }: { paged: Paged }) {
+  if (pages <= 1) return null
+  const from = (page - 1) * size + 1
+  return (
+    <div className="mt-3 flex items-center justify-between text-sm text-ink-muted print:hidden">
+      <span>{from}–{Math.min(page * size, total)} de {total.toLocaleString('en-US')} · Página {page} de {pages}</span>
+      <div className="flex gap-2">
+        <Button variant="secondary" disabled={page === 1} onClick={() => setPage(page - 1)}>Anterior</Button>
+        <Button variant="secondary" disabled={page >= pages} onClick={() => setPage(page + 1)}>Siguiente</Button>
+      </div>
+    </div>
   )
 }
 

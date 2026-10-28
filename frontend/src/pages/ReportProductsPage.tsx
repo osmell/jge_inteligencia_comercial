@@ -3,11 +3,12 @@ import ProductMixDetailView from '../components/reports/ProductMixDetailView'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
 import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
-import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, SelectField, TableSkeleton, td, th, tr, Th } from '../components/ui'
+import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, Pager, SelectField, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import { MIX_LEVEL_LABEL, MIX_SUBJECT_LABEL, type MixLevel, type MixSubject, type ProductMixReport, type ProductMixRow } from '../lib/reports'
 import { formatPct } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
+import { usePaged } from '../lib/usePaged'
 import { useReportFilters } from '../lib/useReportFilters'
 
 const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
@@ -56,6 +57,9 @@ export default function ReportProductsPage() {
   const data = loaded && loaded.subject === subject && loaded.level === level ? loaded : undefined
   const t = data?.totals
   const items = data?.ranking.items ?? []
+  const pagedItems = usePaged(items)
+  const people = data?.rows ?? []
+  const pagedPeople = usePaged(people)
   const who = subject === 'seller' ? 'vendedor' : 'operador'
   const levelName = MIX_LEVEL_LABEL[level].toLowerCase()
 
@@ -105,7 +109,7 @@ export default function ReportProductsPage() {
         <tbody>
           {filters.valid && report.loading && !data && <TableSkeleton cols={8} />}
           {data && items.length === 0 && <EmptyRow cols={8}>No hay venta en el periodo.</EmptyRow>}
-          {items.map((i) => (
+          {pagedItems.rows.map((i) => (
             <tr key={i.key} className={tr}>
               <td className={`${td} tabular text-right text-ink-muted`}>{i.rank}</td>
               <td className={`${td} font-medium`}>{i.name}{level === 'product' && <span className="ml-2 text-xs font-normal text-ink-muted">{i.key}</span>}</td>
@@ -119,6 +123,7 @@ export default function ReportProductsPage() {
           ))}
         </tbody>
       </DataTable>
+      <Pager paged={pagedItems} />
       {data?.ranking.truncated && <p className="mt-1 text-xs text-ink-muted">Se muestran los {items.length} con más venta de {data.ranking.total_items}.</p>}
 
       <h2 className="mb-1 mt-8 text-sm font-semibold">Amplitud de catálogo por {who}</h2>
@@ -138,9 +143,10 @@ export default function ReportProductsPage() {
         <tbody>
           {filters.valid && report.loading && !data && <TableSkeleton cols={8} />}
           {data && data.rows.length === 0 && <EmptyRow cols={8}>No hay personas con venta ni actividad en el periodo.</EmptyRow>}
-          {data?.rows.map((r) => <PersonRow key={r.subject.id} r={r} onOpen={() => setOpen(r)} />)}
+          {pagedPeople.rows.map((r) => <PersonRow key={r.subject.id} r={r} onOpen={() => setOpen(r)} />)}
         </tbody>
       </DataTable>
+      <Pager paged={pagedPeople} />
 
       <ReportLegend>
         <span>Cobertura: categorías (o líneas) del catálogo con venta positiva. «Top 5 productos»: cuánto de su venta sale de solo cinco productos; mientras más alto, más repite lo mismo. Haz clic en un nombre para ver qué no vende.</span>

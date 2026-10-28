@@ -21,9 +21,6 @@ class ProductFigures
 
     public const SUBJECTS = ['seller' => 'sd.seller_id', 'operator' => 'sd.operator_id'];
 
-    /** Productos individuales que se listan como máximo (el catálogo llega a miles); los demás niveles se listan completos. */
-    public const PRODUCT_LIMIT = 200;
-
     public function __construct(private readonly SalesQuery $query) {}
 
     /**
@@ -65,19 +62,6 @@ class ProductFigures
     public function netTotal(?array $companyIds, CarbonImmutable $from, CarbonImmutable $to, array $filters): float
     {
         return round((float) $this->query->baseForCompanies($from, $to, $filters, $companyIds)->selectRaw('coalesce(sum('.SalesBasis::net('sales_lines').'), 0) as net')->toBase()->value('net'), 2);
-    }
-
-    /**
-     * Cuántos elementos distintos hay en la venta del periodo (para decir «mostrando 200 de N»).
-     *
-     * @param  list<int>|null  $companyIds
-     * @param  array<string, mixed>  $filters
-     */
-    public function distinctItems(?array $companyIds, CarbonImmutable $from, CarbonImmutable $to, array $filters, string $level): int
-    {
-        [$column] = $this->query->dimensionColumns($level);
-
-        return (int) $this->query->baseForCompanies($from, $to, $filters, $companyIds)->selectRaw("count(distinct {$column}) as n")->toBase()->value('n');
     }
 
     /**

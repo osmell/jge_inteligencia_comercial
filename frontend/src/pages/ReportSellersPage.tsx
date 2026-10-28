@@ -4,11 +4,12 @@ import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
 import BillingTable from '../components/reports/BillingTable'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
-import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, Th, td, th, tr } from '../components/ui'
+import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, Pager, TableSkeleton, Th, td, th, tr } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import type { SellerReport, SellerReportRow } from '../lib/reports'
 import { formatPct } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
+import { usePaged } from '../lib/usePaged'
 import { useReportFilters } from '../lib/useReportFilters'
 
 const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
@@ -57,6 +58,7 @@ export default function ReportSellersPage() {
   const report = useLoad<{ data: SellerReport }>(`/reports/sellers?${filters.query()}`, { enabled: filters.valid })
   const data = report.data?.data
   const rows = data?.rows ?? []
+  const paged = usePaged(rows)
   const t = data?.totals
   const rec = data?.reconciliation
 
@@ -110,9 +112,10 @@ export default function ReportSellersPage() {
         <tbody>
           {filters.valid && report.loading && !data && <TableSkeleton cols={17} />}
           {data && rows.length === 0 && <EmptyRow cols={17}>No hay vendedores con ventas ni actividad en el periodo.</EmptyRow>}
-          {rows.map((r) => <Row key={r.seller.id} r={r} onOpen={() => setOpen(r)} />)}
+          {paged.rows.map((r) => <Row key={r.seller.id} r={r} onOpen={() => setOpen(r)} />)}
         </tbody>
       </DataTable>
+      <Pager paged={paged} />
 
       <ReportLegend><span>Haz clic en un vendedor para ver sus facturas.</span></ReportLegend>
 

@@ -5,11 +5,12 @@ import OperatorDistributionView from '../components/reports/OperatorDistribution
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
 import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
-import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr, Th } from '../components/ui'
+import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, Pager, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import type { OperatorReport, OperatorReportRow } from '../lib/reports'
 import { formatPct } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
+import { usePaged } from '../lib/usePaged'
 import { useReportFilters } from '../lib/useReportFilters'
 
 const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
@@ -54,6 +55,7 @@ export default function ReportOperatorsPage() {
   const report = useLoad<{ data: OperatorReport }>(`/reports/operators?${filters.query()}`, { enabled: filters.valid })
   const data = report.data?.data
   const rows = data?.rows ?? []
+  const paged = usePaged(rows)
   const t = data?.totals
 
   function openOperator(r: OperatorReportRow) {
@@ -108,9 +110,10 @@ export default function ReportOperatorsPage() {
         <tbody>
           {filters.valid && report.loading && !data && <TableSkeleton cols={14} />}
           {data && rows.length === 0 && <EmptyRow cols={14}>No hay operadores con facturación en el periodo.</EmptyRow>}
-          {rows.map((r) => <Row key={r.operator.id} r={r} onOpen={() => openOperator(r)} />)}
+          {paged.rows.map((r) => <Row key={r.operator.id} r={r} onOpen={() => openOperator(r)} />)}
         </tbody>
       </DataTable>
+      <Pager paged={paged} />
 
       <ReportLegend>
         <span>Descuento alto, sin precio y atípicos: ver cómo se definen en el documento de reportes. «Venta directa»: el vendedor y el operador son la misma persona.</span>

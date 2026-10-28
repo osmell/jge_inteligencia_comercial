@@ -5,11 +5,12 @@ import LevelValue from '../components/reports/LevelValue'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
 import ReportActions from '../components/reports/ReportActions'
 import ReportFilters from '../components/reports/ReportFilters'
-import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, TableSkeleton, td, th, tr, Th } from '../components/ui'
+import { Alert, DataTable, EmptyRow, FormError, Modal, PageHeader, Pager, TableSkeleton, td, th, tr, Th } from '../components/ui'
 import { formatMoney } from '../lib/format'
 import type { BranchMix, BranchReport, BranchReportRow } from '../lib/reports'
 import { formatPct } from '../lib/sales'
 import { useLoad } from '../lib/useLoad'
+import { usePaged } from '../lib/usePaged'
 import { useReportFilters } from '../lib/useReportFilters'
 
 const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
@@ -60,6 +61,7 @@ export default function ReportBranchesPage() {
   const mix = useLoad<{ data: BranchMix }>(`/reports/branches/mix?${filters.query()}`, { enabled: filters.valid })
   const data = report.data?.data
   const rows = data?.rows ?? []
+  const paged = usePaged(rows)
   const t = data?.totals
 
   return (
@@ -113,9 +115,10 @@ export default function ReportBranchesPage() {
         <tbody>
           {filters.valid && report.loading && !data && <TableSkeleton cols={18} />}
           {data && rows.length === 0 && <EmptyRow cols={18}>No hay sucursales con ventas ni actividad en el periodo.</EmptyRow>}
-          {rows.map((r) => <Row key={r.branch.id} r={r} onOpen={() => setOpen(r)} />)}
+          {paged.rows.map((r) => <Row key={r.branch.id} r={r} onOpen={() => setOpen(r)} />)}
         </tbody>
       </DataTable>
+      <Pager paged={paged} />
 
       <ReportLegend>
         <span>«Vendedor principal»: parte de la venta de la sucursal que aporta el vendedor que más vende; no cuenta al vendedor «Tienda …» de mostrador. Haz clic en una sucursal para ver sus facturas.</span>

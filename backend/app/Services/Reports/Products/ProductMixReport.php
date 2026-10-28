@@ -101,15 +101,14 @@ class ProductMixReport
      */
     public function ranking(?array $companyIds, ReportPeriod $period, array $filters, string $level): array
     {
-        $limit = $level === 'product' ? ProductFigures::PRODUCT_LIMIT : null;
-        $items = $this->figures->ranking($companyIds, $period->from, $period->to, $filters, $level, $limit);
+        $items = $this->figures->ranking($companyIds, $period->from, $period->to, $filters, $level);
         $before = [];
         foreach ($this->figures->ranking($companyIds, $period->compareFrom, $period->compareTo, $filters, $level) as $r) {
             $before[$r['key']] = $r['net_total'];
         }
 
         $total = $this->figures->netTotal($companyIds, $period->from, $period->to, $filters);
-        $count = $limit === null ? count($items) : $this->figures->distinctItems($companyIds, $period->from, $period->to, $filters, $level);
+        $count = count($items);
 
         foreach ($items as $i => &$item) {
             $previous = $before[$item['key']] ?? 0.0;
