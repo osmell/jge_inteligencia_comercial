@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+// `FRONTEND_URL`: una o varias direcciones separadas por coma. Un `*` dentro de una dirección vale por un tramo (sin puntos ni dos puntos), por
+// ejemplo `http://192.168.0.*:5173` acepta todo el segmento 192.168.0.0/24; esas se comparan como patrón y las demás, tal cual.
+$origins = array_values(array_filter(array_map('trim', explode(',', (string) env('FRONTEND_URL', 'http://localhost:5173')))));
+$exact = array_values(array_filter($origins, fn (string $o) => ! str_contains($o, '*')));
+$patterns = array_map(
+    fn (string $o) => '#^'.str_replace('\\*', '[A-Za-z0-9-]+', preg_quote($o, '#')).'$#',
+    array_values(array_filter($origins, fn (string $o) => str_contains($o, '*'))),
+);
+
 return [
 
     /*
@@ -21,10 +30,9 @@ return [
 
     'allowed_methods' => ['*'],
 
-    // `FRONTEND_URL` admite varias direcciones separadas por coma (por ejemplo, localhost y la IP de la red local).
-    'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env('FRONTEND_URL', 'http://localhost:5173'))))),
+    'allowed_origins' => $exact,
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => $patterns,
 
     'allowed_headers' => ['*'],
 
