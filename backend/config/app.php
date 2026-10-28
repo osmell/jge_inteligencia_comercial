@@ -56,8 +56,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
-    // Dirección de la aplicación web (para los enlaces de los correos).
-    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+    // Dirección de la aplicación web (para los enlaces de los correos). `FRONTEND_URL` admite varias separadas por coma (ver config/cors.php):
+    // los enlaces usan la primera.
+    'frontend_url' => trim(explode(',', (string) env('FRONTEND_URL', 'http://localhost:5173'))[0]),
 
     /*
     |--------------------------------------------------------------------------

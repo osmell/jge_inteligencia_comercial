@@ -21,7 +21,8 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173')],
+    // `FRONTEND_URL` admite varias direcciones separadas por coma (por ejemplo, localhost y la IP de la red local).
+    'allowed_origins' => array_values(array_filter(array_map('trim', explode(',', (string) env('FRONTEND_URL', 'http://localhost:5173'))))),
 
     'allowed_origins_patterns' => [],
 
