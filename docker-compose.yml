@@ -45,7 +45,7 @@ services:
       # Documento de la API generado por el backend: de él salen los tipos de TypeScript (npm run api:types).
       - ./backend/openapi.json:/api-spec/openapi.json:ro
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api/v1}
+      VITE_API_URL: ${VITE_API_URL:-http://%host%:8000/api/v1}
 
   redis:
     image: redis:7-alpine

@@ -1,8 +1,8 @@
 import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
 import { api } from './api'
+import { API_URL, withPageHost } from './apiUrl'
 
-const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000/api/v1'
 
 export type RealtimeConfig = { key: string; host: string; port: number; scheme: string }
 
@@ -92,7 +92,7 @@ export async function startRealtime(userId: number, conversations: boolean): Pro
   const client = new Echo({
     broadcaster: 'reverb',
     key: config.key,
-    wsHost: config.host,
+    wsHost: withPageHost(config.host),
     wsPort: config.port,
     wssPort: config.port,
     forceTLS: config.scheme === 'https',

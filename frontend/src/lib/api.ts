@@ -1,6 +1,7 @@
+import { API_URL } from './apiUrl'
 import { withBasis } from './salesBasis'
 
-export const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000/api/v1'
+export { API_URL }
 
 export class ApiError extends Error {
   status: number
