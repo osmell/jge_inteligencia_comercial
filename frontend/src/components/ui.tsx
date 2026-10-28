@@ -134,6 +134,9 @@ export function FormError({ message }: { message: string | null }) {
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 /** `wide`: tablas medianas; `extraWide`: varias tablas o descripciones largas (hasta 72 rem, sin pasar del ancho de la pantalla). */
+/** Ventanas abiertas, de la más antigua a la más reciente: solo la de arriba atiende Escape y Tab cuando hay una ventana sobre otra. */
+const openModals: object[] = []
+
 export function Modal({ title, onClose, children, wide = false, extraWide = false }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean; extraWide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
@@ -149,7 +152,10 @@ export function Modal({ title, onClose, children, wide = false, extraWide = fals
     document.body.style.overflow = 'hidden'
     node?.querySelector<HTMLElement>('input:not([disabled]), select:not([disabled]), textarea')?.focus()
 
+    const token = {}
+    openModals.push(token)
     const onKey = (e: KeyboardEvent) => {
+      if (openModals[openModals.length - 1] !== token) return
       if (e.key === 'Escape') return onCloseRef.current()
       if (e.key !== 'Tab' || !node) return
       const items = Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE))
@@ -162,6 +168,7 @@ export function Modal({ title, onClose, children, wide = false, extraWide = fals
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('keydown', onKey)
+      openModals.splice(openModals.indexOf(token), 1)
       document.body.style.overflow = overflow
       previous?.focus()
     }

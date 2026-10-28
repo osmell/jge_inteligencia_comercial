@@ -104,6 +104,53 @@ describe('mezcla de productos', () => {
     expect(calls.some((c) => c.includes('/reports/products/sellers/2') && c.includes('level=category'))).toBe(true)
   })
 
+  it('abre en una ventana los clientes detrás de la cifra «Clientes»', async () => {
+    const user = userEvent.setup()
+    const customers = { level: 'category', item: { key: 'Taladros', name: 'Taladros' }, rows: [{ code: 'C1', name: 'Cliente C1', documents: 2, units: 5, net_total: 600, last_purchase: '2026-10-05' }, { code: 'C4', name: 'Cliente C4', documents: 1, units: 1, net_total: 100, last_purchase: '2026-10-07' }], totals: { customers: 2, net_total: 700 } }
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      calls.push(url)
+      if (url.includes('/reports/context')) return new Response(JSON.stringify({ data: context }), { status: 200 })
+      if (url.includes('/reports/products/customers')) return new Response(JSON.stringify({ data: customers }), { status: 200 })
+      if (url.includes('/reports/products/')) return new Response(JSON.stringify({ data: detail }), { status: 200 })
+      return new Response(JSON.stringify({ data: report() }), { status: 200 })
+    }))
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Ver los 2 clientes de Taladros' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Clientes de Taladros' })
+    expect(await within(dialog).findByText('Cliente C4')).toBeInTheDocument()
+    expect(within(dialog).getByText('600.00')).toBeInTheDocument()
+    const request = calls.find((c) => c.includes('/reports/products/customers'))!
+    expect(request).toContain('level=category')
+    expect(request).toContain('key=Taladros')
+    expect(request).not.toContain('seller_id')
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cerrar' }))
+    expect(screen.queryByRole('dialog', { name: 'Clientes de Taladros' })).not.toBeInTheDocument()
+  })
+
+  it('en el detalle de una persona, los clientes son solo los suyos y Escape cierra solo la ventana de arriba', async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      calls.push(url)
+      if (url.includes('/reports/context')) return new Response(JSON.stringify({ data: context }), { status: 200 })
+      if (url.includes('/reports/products/customers')) return new Response(JSON.stringify({ data: { level: 'category', item: { key: 'Taladros', name: 'Taladros' }, rows: [], totals: { customers: 0, net_total: 0 } } }), { status: 200 })
+      if (url.includes('/reports/products/')) return new Response(JSON.stringify({ data: detail }), { status: 200 })
+      return new Response(JSON.stringify({ data: report() }), { status: 200 })
+    }))
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: /Ver el detalle de Beto/ }))
+    const table = await screen.findByRole('table', { name: 'Lo que más factura por categoría' })
+    await user.click(within(table).getAllByRole('button', { name: /Ver los 2 clientes de Taladros/ })[0])
+    expect(await screen.findByRole('dialog', { name: 'Clientes de Taladros' })).toBeInTheDocument()
+    expect(calls.some((c) => c.includes('/reports/products/customers') && c.includes('seller_id=2'))).toBe(true)
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: 'Clientes de Taladros' })).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: 'Mezcla de productos de Beto' })).toBeInTheDocument()
+  })
+
   it('avisa cuando la lista de productos está recortada', async () => {
     vi.stubGlobal('fetch', vi.fn(async (url: string) => new Response(JSON.stringify({ data: url.includes('/reports/context') ? context : report({ ranking: { items: [item(1, 'P1', 'Taladro', 700)], total_items: 5000, truncated: true, net_total: 1050 } }) }), { status: 200 })))
     renderPage()

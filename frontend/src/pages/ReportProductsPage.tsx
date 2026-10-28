@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ProductCustomersModal, { CustomersCount, type CustomersTarget } from '../components/reports/ProductCustomersModal'
 import ProductMixDetailView from '../components/reports/ProductMixDetailView'
 import { PeriodLine, ReconciliationNote, ReportLegend, ReportNotes, ReportStat } from '../components/reports/ReportParts'
 import ReportActions from '../components/reports/ReportActions'
@@ -50,6 +51,7 @@ export default function ReportProductsPage() {
   const [subject, setSubject] = useState<MixSubject>('seller')
   const [level, setLevel] = useState<MixLevel>('category')
   const [open, setOpen] = useState<ProductMixRow | null>(null)
+  const [customers, setCustomers] = useState<CustomersTarget | null>(null)
   const extra = { subject, level }
   const report = useLoad<{ data: ProductMixReport }>(`/reports/products?${filters.query(extra)}`, { enabled: filters.valid })
   // Mientras llegan los datos de otro nivel o de otra persona evaluada no se muestran los anteriores bajo la etiqueta nueva.
@@ -118,7 +120,7 @@ export default function ReportProductsPage() {
               <td className={`${td} tabular text-right`}>{signed(i.growth_pct)}</td>
               <td className={`${td} tabular text-right`}>{n(Math.round(i.units))}</td>
               <td className={`${td} tabular text-right`}>{n(i.documents)}</td>
-              <td className={`${td} tabular text-right`}>{n(i.customers)}</td>
+              <td className={`${td} tabular text-right`}><CustomersCount value={i.customers} label={i.name} onOpen={() => setCustomers({ level, itemKey: i.key, name: i.name })} /></td>
             </tr>
           ))}
         </tbody>
@@ -151,6 +153,8 @@ export default function ReportProductsPage() {
       <ReportLegend>
         <span>Cobertura: categorías (o líneas) del catálogo con venta positiva. «Top 5 productos»: cuánto de su venta sale de solo cinco productos; mientras más alto, más repite lo mismo. Haz clic en un nombre para ver qué no vende.</span>
       </ReportLegend>
+
+      {customers && <ProductCustomersModal target={customers} query={filters.query()} onClose={() => setCustomers(null)} />}
 
       {open && (
         <Modal title={`Mezcla de productos de ${open.subject.name}`} onClose={() => setOpen(null)} extraWide>

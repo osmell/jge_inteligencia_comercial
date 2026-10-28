@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ProductMixCustomersRequest;
 use App\Http\Requests\ProductMixRequest;
 use App\Models\Operator;
 use App\Models\Seller;
+use App\Services\Reports\Products\ProductCustomers;
 use App\Services\Reports\Products\ProductMixDetail;
 use App\Services\Reports\Products\ProductMixReport;
 use App\Services\Reports\ReportAudit;
@@ -49,5 +51,18 @@ class ProductMixReportController extends Controller
         $this->audit->viewed($request->user(), 'product_mix_operator', ['operator_id' => $operator->id, 'company_id' => $operator->company_id] + $request->auditFilters());
 
         return response()->json(['data' => $detail->for('operator', $operator->id, $operator->name, $operator->company_id, $request->period(), $request->salesFilters(), $request->level())]);
+    }
+
+    /**
+     * Clientes que compraron un producto, categoría, línea o grupo en el periodo (el detalle de la cifra «Clientes»).
+     *
+     * @response array{data: array{level: string, item: array{key: string, name: string}, rows: list<array{code: string, name: string, documents: int, units: float, net_total: float, last_purchase: string}>, totals: array{customers: int, net_total: float}}}
+     */
+    public function customers(ProductMixCustomersRequest $request, ProductCustomers $customers): JsonResponse
+    {
+        $this->audit->viewed($request->user(), 'product_mix_customers', $request->auditFilters());
+        $filters = $request->salesFilters() + array_filter(['seller_id' => $request->validated('seller_id'), 'operator_id' => $request->validated('operator_id')], fn ($v) => $v !== null);
+
+        return response()->json(['data' => $customers->for($this->scope->companyIds($request->user(), $request->companyId()), $request->from(), $request->to(), $filters, $request->level(), $request->key())]);
     }
 }

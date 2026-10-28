@@ -2332,6 +2332,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reports/products/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Clientes que compraron un producto, categoría, línea o grupo en el periodo (el detalle de la cifra «Clientes») */
+        get: operations["productMixReport.customers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports/products/sellers/{seller}": {
         parameters: {
             query?: never;
@@ -10122,6 +10139,60 @@ export interface operations {
                                 matches: boolean;
                             };
                             notes: string[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "productMixReport.customers": {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                compare?: "previous" | "last_year" | "custom" | null;
+                compare_from?: string | null;
+                compare_to?: string | null;
+                company_id?: number | null;
+                branch_id?: number | null;
+                subject?: "seller" | "operator" | null;
+                level?: "product" | "category" | "line" | "group" | null;
+                key: string;
+                seller_id?: number | null;
+                operator_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            level: string;
+                            item: {
+                                key: string;
+                                name: string;
+                            };
+                            rows: {
+                                code: string;
+                                name: string;
+                                documents: number;
+                                units: number;
+                                net_total: number;
+                                last_purchase: string;
+                            }[];
+                            totals: {
+                                customers: number;
+                                net_total: number;
+                            };
                         };
                     };
                 };

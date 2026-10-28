@@ -82,6 +82,7 @@ Route::middleware(['auth:sanctum', 'session.current', 'active', 'password.curren
         Route::get('branches/mix', [BranchReportController::class, 'mix']);
         Route::get('branches/{branch}/documents', [BranchReportController::class, 'documents']);
         Route::get('products', [ProductMixReportController::class, 'index']);
+        Route::get('products/customers', [ProductMixReportController::class, 'customers']);
         Route::get('products/sellers/{seller}', [ProductMixReportController::class, 'seller']);
         Route::get('products/operators/{operator}', [ProductMixReportController::class, 'operator']);
         Route::get('operators', [OperatorReportController::class, 'index']);

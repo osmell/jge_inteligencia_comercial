@@ -105,3 +105,5 @@ export type MixLevel = 'product' | 'category' | 'line' | 'group'
 
 export const MIX_LEVEL_LABEL: Record<MixLevel, string> = { product: 'Producto', category: 'Categoría', line: 'Línea', group: 'Grupo' }
 export const MIX_SUBJECT_LABEL: Record<MixSubject, string> = { seller: 'Vendedores', operator: 'Operadores' }
+
+export type ProductCustomers = Body<'/reports/products/customers'>['data']

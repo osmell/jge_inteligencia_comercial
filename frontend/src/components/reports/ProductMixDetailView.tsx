@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { formatMoney } from '../../lib/format'
 import { MIX_LEVEL_LABEL, type MixLevel, type MixSubject, type ProductMixDetail } from '../../lib/reports'
 import { formatPct } from '../../lib/sales'
 import { useLoad } from '../../lib/useLoad'
 import { usePaged } from '../../lib/usePaged'
 import { DataTable, EmptyRow, FormError, Pager, TableSkeleton, td, th, tr, Th } from '../ui'
+import ProductCustomersModal, { CustomersCount, type CustomersTarget } from './ProductCustomersModal'
 import { ReportStat } from './ReportParts'
 
 const n = (v: number | null) => (v === null ? '—' : v.toLocaleString('en-US'))
@@ -19,7 +21,7 @@ function MixIndex({ value }: { value: number | null }) {
   return <span className={`tabular ${tone}`}>{value}{value >= INDEX_HIGH && <span className="sr-only"> (vende más que el equipo)</span>}{value <= INDEX_LOW && <span className="sr-only"> (vende menos que el equipo)</span>}</span>
 }
 
-function Gaps({ title, items, empty }: { title: string; items: ProductMixDetail['gaps']['categories']; empty: string }) {
+function Gaps({ title, items, empty, onCustomers }: { title: string; items: ProductMixDetail['gaps']['categories']; empty: string; onCustomers: (g: ProductMixDetail['gaps']['categories'][number]) => void }) {
   return (
     <section className="min-w-0">
       <h3 className="mb-1 text-sm font-semibold">{title}</h3>
@@ -32,7 +34,7 @@ function Gaps({ title, items, empty }: { title: string; items: ProductMixDetail[
               <td className={`${td} font-medium`}>{g.name}</td>
               <td className={`${td} tabular text-right`}>{formatMoney(g.net_total)}</td>
               <td className={`${td} tabular text-right`}>{formatPct(g.share_pct)}</td>
-              <td className={`${td} tabular text-right`}>{n(g.customers)}</td>
+              <td className={`${td} tabular text-right`}><CustomersCount value={g.customers} label={g.name} onOpen={() => onCustomers(g)} /></td>
             </tr>
           ))}
         </tbody>
@@ -51,6 +53,8 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
   const s = d?.summary
   const paged = usePaged(d?.ranking.items ?? [])
   const who = subject === 'seller' ? 'vendedor' : 'operador'
+  const own = subject === 'seller' ? { seller_id: id } : { operator_id: id }
+  const [customers, setCustomers] = useState<CustomersTarget | null>(null)
 
   return (
     <>
@@ -85,7 +89,7 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
               <td className={`${td} tabular text-right`}>{formatPct(i.team_share_pct)}</td>
               <td className={`${td} text-right`}><MixIndex value={i.mix_index} /></td>
               <td className={`${td} tabular text-right`}>{signed(i.growth_pct)}</td>
-              <td className={`${td} tabular text-right`}>{n(i.customers)}</td>
+              <td className={`${td} tabular text-right`}><CustomersCount value={i.customers} label={i.name} onOpen={() => setCustomers({ level, itemKey: i.key, name: i.name, scope: own })} /></td>
             </tr>
           ))}
         </tbody>
@@ -98,8 +102,8 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
           <h3 className="mb-1 mt-6 text-sm font-semibold">Lo que el equipo vende y esta persona no</h3>
           <p className="mb-2 text-xs text-ink-muted">Son las directrices más directas: categorías y líneas con venta en el equipo en las que no hay venta de este {who}. «No vendió» no prueba que no lo haya ofrecido.</p>
           <div className="grid gap-4 lg:grid-cols-2">
-            <Gaps title="Categorías sin venta" items={d.gaps.categories} empty="Vendió todas las categorías que vendió el equipo." />
-            <Gaps title="Líneas sin venta" items={d.gaps.lines} empty="Vendió todas las líneas que vendió el equipo." />
+            <Gaps onCustomers={(g) => setCustomers({ level: 'category', itemKey: g.key, name: g.name })} title="Categorías sin venta" items={d.gaps.categories} empty="Vendió todas las categorías que vendió el equipo." />
+            <Gaps onCustomers={(g) => setCustomers({ level: 'line', itemKey: g.key, name: g.name })} title="Líneas sin venta" items={d.gaps.lines} empty="Vendió todas las líneas que vendió el equipo." />
           </div>
 
           <h3 className="mb-1 mt-6 text-sm font-semibold">Productos estrella del equipo</h3>
@@ -116,7 +120,7 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
                     <td className={`${td} tabular`}>{p.key}</td>
                     <td className={`${td} font-medium`}>{p.name}</td>
                     <td className={`${td} tabular text-right`}>{formatMoney(p.net_total)}</td>
-                    <td className={`${td} tabular text-right`}>{n(p.customers)}</td>
+                    <td className={`${td} tabular text-right`}><CustomersCount value={p.customers} label={p.name} onOpen={() => setCustomers({ level: 'product', itemKey: p.key, name: p.name })} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -124,6 +128,7 @@ export default function ProductMixDetailView({ subject, id, query, level }: { su
           )}
         </>
       )}
+      {customers && <ProductCustomersModal target={customers} query={query} onClose={() => setCustomers(null)} />}
     </>
   )
 }

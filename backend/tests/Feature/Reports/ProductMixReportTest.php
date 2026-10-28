@@ -87,6 +87,29 @@ class ProductMixReportTest extends TestCase
         $this->assertSame(2, $ranking['items'][0]['customers']);
     }
 
+    public function test_customers_behind_an_item_match_the_customers_count_of_the_ranking(): void
+    {
+        $query = fn (array $q) => $this->actingAs($this->manager, 'sanctum')->getJson('/api/v1/reports/products/customers?'.http_build_query(self::PERIOD + $q))->assertOk()->json('data');
+
+        $p1 = $query(['level' => 'product', 'key' => 'P1']);
+        $this->assertSame('Taladro', $p1['item']['name']);
+        $this->assertSame(['C1', 'C4'], array_column($p1['rows'], 'code'));
+        $this->assertSame(['Cliente C1', 'Cliente C4'], array_column($p1['rows'], 'name'));
+        $this->assertEquals([600, 100], array_column($p1['rows'], 'net_total'));
+        $this->assertSame('2026-10-05', $p1['rows'][0]['last_purchase']);
+        $this->assertSame(2, $p1['totals']['customers']);
+        $this->assertEquals(700, $p1['totals']['net_total']);
+
+        // Solo lo que compró un vendedor, y por categoría.
+        $ana = $query(['level' => 'category', 'key' => 'Taladros', 'seller_id' => $this->ana->id]);
+        $this->assertSame(['C1'], array_column($ana['rows'], 'code'));
+    }
+
+    public function test_customers_behind_an_item_require_the_item(): void
+    {
+        $this->actingAs($this->manager, 'sanctum')->getJson('/api/v1/reports/products/customers?'.http_build_query(self::PERIOD + ['level' => 'product']))->assertUnprocessable();
+    }
+
     public function test_ranking_shows_growth_against_the_comparison_period(): void
     {
         $items = array_column($this->report(['level' => 'product'])['ranking']['items'], null, 'key');
